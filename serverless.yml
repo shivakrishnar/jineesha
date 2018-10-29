@@ -1,0 +1,50 @@
+service: asure-hr-services
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  timeout: 900   # AWS Lambda MAX runtime limit (15 mins)
+  versionFunctions: false
+  memorySize: 128
+  vpc:
+    securityGroupIds:
+      - ${file(${opt:variables}):lambdaExecutionSecurityGroup}
+    subnetIds:
+      - ${file(${opt:variables}):privateSubnetId1}
+      - ${file(${opt:variables}):privateSubnetId2}
+    
+  environment:  #environment variables
+    awsRegion: ${file(${opt:variables}):awsRegion}
+    dbUsername: ${file(${opt:variables}):dbUsername}
+    dbPassword: ${file(${opt:variables}):dbPassword}
+    dbEndpoints: ${file(${opt:variables}):dbEndpoints}
+    errorsTriggered: true
+
+  iamRoleStatements: 
+    - Effect: Allow
+      Action: # Gives permission to create the necessary ENIs for execution in VPC
+        - ec2:CreateNetworkInterface
+        - ec2:DescribeNetworkInterfaces
+        - ec2:DeleteNetworkInterface
+        - ec2:DetachNetworkInterface
+      Resource: "arn:aws:ec2:us-east-1:*:*"
+
+functions:
+  listDirectDeposits:
+    handler: src/direct-deposits/handler.list
+    events:
+        - http:
+            path: /employee/{employeeId}/direct-deposits
+            method: get
+            #authorizer: tokenVerifier
+            cors: true
+        
+plugins:
+  - serverless-webpack
+  - serverless-cloudformation-resource-counter
+
+custom:
+  webpack: 
+    webpackConfig: ./webpack/${file(${opt:variables}):webpackConfigurationFile}
+    includeModules: true   
+    packager: 'npm'

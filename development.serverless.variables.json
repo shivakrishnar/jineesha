@@ -1,0 +1,10 @@
+{
+    "awsRegion": "us-east-1",
+    "dbUsername": "MeMyselfAndI",
+    "dbPassword": "KeepItSafeKeepItSecretForTheDarkLordCometh",
+    "dbEndpoints": "xxxx.xxxx.us-east-1.rds.amazonaws.com",
+    "lambdaExecutionSecurityGroup": "sg-0756bd31bbf1fd4c5",
+    "privateSubnetId1": "subnet-0477debff4096bfc0",
+    "privateSubnetId2": "subnet-046cc667231919ef4",
+    "webpackConfigurationFile": "pre-production.config.js"
+}
