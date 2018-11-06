@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "title": "Bank Account Schema",
+  "$id": "BankAccount",
+  "type": "object",
+  "properties": {
+    "routingNumber": {
+      "description": "The routing number of the banking institution.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "accountNumber": {
+      "description": "The unique identifier associated with the account.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "designation": {
+      "description": "The type of account.",
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "Checking",
+        "Savings",
+        "Money Market"
+      ]
+    },
+    "accountHolder": {
+      "description": "The name of the person who owns the bank account.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "accountHolder"
+  ]
+}

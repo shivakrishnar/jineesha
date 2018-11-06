@@ -1,0 +1,15 @@
+{  
+    "testRegex": "(/int-specs/.*|\\.(spec))\\.ts$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx"
+    ],
+    "roots": ["<rootDir>/tests/"],
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    },
+    "globals": {
+      "NODE_ENV": "test"
+    },
+    "verbose": true
+}

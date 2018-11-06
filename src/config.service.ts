@@ -1,40 +1,24 @@
-/**
- * Module that wraps environment variables available on Lambda and makes them
- * accessible to the various lambda functions.
- *
- * @author swallace
- */
 
-// The values of the constants need to match the variable names assigned to
-// environment variables in the serverless.yml file.
-const AWS_REGION = 'awsRegion';
-const PAGE_LIMIT_DEFAULT = 'pageLimitDefault';
-const PAGE_LIMIT_MAX = 'pageLimitMax';
+export const getAwsRegion = () => process.env.awsRegion;
 
-// gets the full enviroment variable object
-function getConfiguration(): any {
-  return process.env;
-}
+export const getApiDomain = () => process.env.apiDomain;
 
-// returns a named config value if it is found in the process.env variables
-function getConfigValue(property: string): string {
-  const config = getConfiguration();
+export const getPageLimitDefault = () => Number(process.env.pageLimitDefault);
 
-  if (config && config[property]) {
-    return config[property];
-  } else {
-    return undefined;
-  }
-}
+export const getPageLimitMax = () => Number(process.env.pageLimitMax);
 
-export function getAwsRegion(): string {
-  return getConfigValue(AWS_REGION);
-}
+export const getEvoHrUserTypeSuperAdmin = () => process.env.evoHrUserTypeSuperAdmin;
 
-export function getPageLimitDefault(): number {
-  return Number(getConfigValue(PAGE_LIMIT_DEFAULT));
-}
+export const getEvoHrUserTypeSBAdmin = () => process.env.evoHrUserTypeSBAdmin;
 
-export function getPageLimitMax(): number {
-  return Number(getConfigValue(PAGE_LIMIT_MAX));
-}
+export const getEvoHrGroupEmployee = () => process.env.evoHrGroupEmployee;
+
+export const getEvoHrGroupPayroll = () => process.env.evoHrGroupPayroll;
+
+export const getEvoHrGroupCompany = () => process.env.evoHrGroupCompany;
+
+export const getApiSecretId = () => process.env.apiSecretId;
+
+export const getSecretsAwsEndpoint = () => process.env.getSecretsAwsEndpoint;
+
+export const getRdsCredentials = () => process.env.rdsCredentialsId;

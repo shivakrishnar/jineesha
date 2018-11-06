@@ -1,13 +1,14 @@
 {
   "name": "asure.hr.services",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Builds RESTful services for Asure HR",
   "engine": {
     "node": ">=8.10.0"
   },
   "main": "./dist/index.js",
   "scripts": {
-    "build": "webpack --mode development"
+    "test": "node_modules/.bin/jest",
+    "lint": "tslint -p tsconfig.json"
   },
   "dependencies": {
     "@smallwins/validate": "^4.3.0",
@@ -16,28 +17,34 @@
     "aws-auth-policy": "^0.1.0",
     "aws-sdk": "^2.307.0",
     "axios": "^0.16.2",
+    "io-ts": "^1.4.0",
+    "io-ts-types": "^0.3.14",
     "jsonwebtoken": "^7.3.0",
     "lodash": "^4.17.4",
     "mssql": "^4.1.0",
-    "p-settle": "^2.1.0",
+    "request-promise-native": "^1.0.5",
     "speakeasy": "^2.0.0",
     "uid-generator": "^1.0.0",
-    "uuid": "^3.0.1",
-    "webpack-merge": "^4.1.4"
+    "uuid": "^3.0.1"
   },
   "devDependencies": {
-    "@types/p-settle": "^2.0.1",
     "@types/aws-lambda": "0.0.9",
     "@types/jest": "^21.1.8",
     "@types/jsonwebtoken": "^7.2.0",
+    "@types/mssql": "^4.0.9",
     "@types/node": "^7.0.10",
     "@types/uuid": "^2.0.29",
     "ajv": "^5.1.6",
     "aws-sdk-mock": "^1.6.1",
+    "copy-webpack-plugin": "^4.5.2",
     "fs": "0.0.1-security",
     "istanbul-lib-instrument": "~1.8.0",
     "jest": "^21.2.1",
-    "njwt": "^0.4.0",
+    "serverless": "^1.32.0",
+    "serverless-aws-documentation": "^1.1.0",
+    "serverless-cloudformation-resource-counter": "^0.1.1",
+    "serverless-stack-output": "^0.2.3",
+    "serverless-webpack": "^5.2.0",
     "superagent": "~3.5.2",
     "supertest": "~3.0.0",
     "ts-jest": "^21.2.4",
@@ -47,10 +54,9 @@
     "typescript": "^3.0.1",
     "typescript-with-globs": "^0.1.4",
     "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.2",
     "webpack-glob-entries": "^1.0.1",
-    "copy-webpack-plugin": "^4.5.2",
-    "serverless-cloudformation-resource-counter": "^0.1.1",
-    "serverless-webpack": "^5.2.0"
+    "webpack-merge": "^4.1.4"
   },
   "jest": {
     "transform": {
