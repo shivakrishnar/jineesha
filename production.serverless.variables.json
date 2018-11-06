@@ -1,16 +1,16 @@
 {
     "awsRegion": "us-east-1",
-    "lambdaExecutionSecurityGroup": "sg-031752f9402eec181",
-    "privateSubnetId1": "subnet-053fb4f924f839d19",
-    "privateSubnetId2": "subnet-04331ec9789323822",
+    "lambdaExecutionSecurityGroup": "sg-0adeb4ed3187e1438",
+    "privateSubnetId1": "subnet-05ae5833144ef3591",
+    "privateSubnetId2": "subnet-01bd1407811d4af21",
     "apiSecretId": "EvolutionApiSecret",
     "rdsCredentialsId": "RdsCredentials",
     "secretsAwsEndPoint": "https://secretsmanager.us-east-1.amazonaws.com",
-    "webpackConfigurationFile": "pre-production.config.js",
+    "webpackConfigurationFile": "production.config.js",
     "evoHrUserTypeSuperAdmin": "ad4a9359-d118-41cb-963c-dd4937ba71e0",
     "evoHrUserTypeSBAdmin": "05d70b54-4477-4b8f-b6c5-b4f13bd85233",
     "evoHrGroupPayroll": "c029eee1-ca80-4327-9075-9bc71b64e218",
     "evoHrGroupCompany": "aae0d97b-43f1-4dea-ad89-f05b08dbc322",
     "evoHrGroupEmployee": "0ddee358-37c6-49b1-b587-53d38bd82424",
-    "stage": "development"
+    "stage": "production"
 }

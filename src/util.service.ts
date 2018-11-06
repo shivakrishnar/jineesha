@@ -1,11 +1,11 @@
 import * as validate from '@smallwins/validate';
+import * as AWS from 'aws-sdk';
 import * as util from 'util';
-
-import { APIGatewayEvent, Context, ProxyCallback, ProxyResult } from 'aws-lambda';
-
 import * as  configService from './config.service';
 import * as errorService from './errors/error.service';
 
+import { APIGatewayEvent, Context, ProxyCallback, ProxyResult } from 'aws-lambda';
+import { SecurityContext } from './authentication/securityContext';
 import { ErrorMessage } from './errors/errorMessage';
 import { Headers } from './models/headers';
 
@@ -49,6 +49,7 @@ export function isEmpty(obj: object): boolean {
 }
 
 export interface IGatewayEventInput {
+  securityContext: SecurityContext;
   event: APIGatewayEvent;
   requestBody?: any;
 }
@@ -75,13 +76,16 @@ export function gatewayEventHandler<T>(delegate: (gatewayEventInput: IGatewayEve
 
     (async () => {
       try {
+        const requestContext: any = event.requestContext;
+        const json = requestContext.authorizer ? requestContext.authorizer.principalId : undefined;
+        const securityContext = SecurityContext.fromJSON(json);
 
         let requestBody: any;
         if (event.body) {
           requestBody = parseJson(event.body, true);
         }
 
-        const result = await delegate({ event,  requestBody });
+        const result = await delegate({ securityContext, event,  requestBody });
 
         if (isHttpResponse(result)) {
           callback(undefined, buildLambdaResponse(result.statusCode, result.headers, result.body, event.path));
@@ -217,4 +221,30 @@ function getNormalizedHeaders(headers: { [name: string]: string }): { [name: str
  */
 export function normalizeHeaders(event: { headers: { [name: string]: string } }): void {
   event.headers = getNormalizedHeaders(event.headers);
+}
+
+export function makeSerializable(error: any): any {
+  // Built-in javascript Error objects are not JSON serializale
+  if (!(error instanceof Error)) {
+    return error;
+  }
+  const serializableError: { [name: string]: any } = {};
+  Object.getOwnPropertyNames(error).forEach((key: string) => {
+    // @ts-ignore
+    const value: any = error[key];
+    serializableError[key] = value;
+  });
+  return serializableError;
+}
+
+export async function getSecret(id: string): Promise<string> {
+  console.info('utilService.getSecret');
+
+  const client = new AWS.SecretsManager({
+    endpoint: configService.getSecretsAwsEndpoint(),
+    region: configService.getAwsRegion()
+  });
+
+  const data = await client.getSecretValue({ SecretId: id }).promise();
+  return data.SecretString;
 }

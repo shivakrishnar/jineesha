@@ -11,6 +11,16 @@ export function getErrorResponse(code: number): ErrorMessage {
   return findErrorMessage(code);
 }
 
+export function notAuthenticated(): ErrorMessage {
+  return findErrorMessage(10);
+}
+
+export function notAuthorized(role: string): ErrorMessage {
+  const errorMessage = findErrorMessage(20);
+  errorMessage.setDeveloperMessage(`The principal does not have the required role (${role}).`)
+  return errorMessage;
+}
+
 /**
  * Private function which locates an error message based on the code that is
  * passed in. If a message with the code is not found then the default message
@@ -20,11 +30,7 @@ export function getErrorResponse(code: number): ErrorMessage {
  */
 function findErrorMessage(code: number): ErrorMessage {
   let message = errorMessages().find((d) => {
-    if (d.code === code) {
-      return true;
-    } else {
-      return false;
-    }
+    return d.code === code;
   });
 
   if (message === undefined) {
@@ -41,6 +47,27 @@ function errorMessages(): ErrorMessage[] {
       "code": 0,
       "message": "Unexpected error occured.",
       "developerMessage": "Something happened on the server and we have no idea what. Blame the architect.",
+      "moreInfo": ""
+    },
+    {
+      "statusCode": 401,
+      "code": 10,
+      "message": "User is not authenticated",
+      "developerMessage": "The provided token was invalid or expired, so the user is not authenticated to perform this action.",
+      "moreInfo": ""
+    },
+    {
+      "statusCode": 403,
+      "code": 20,
+      "message": "Not authorized.",
+      "developerMessage": "",
+      "moreInfo": ""
+    },
+    {
+      "statusCode": 400,
+      "code": 30,
+      "message": "The provided request object was not valid for the requested operation.",
+      "developerMessage": "",
       "moreInfo": ""
     }
   ]`);

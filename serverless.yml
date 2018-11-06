@@ -1,9 +1,10 @@
 service: asure-hr-services
 
 provider:
+  stage: ${file(${opt:variables}):stage}
   name: aws
   runtime: nodejs8.10
-  timeout: 900   # AWS Lambda MAX runtime limit (15 mins)
+  timeout: 30  # AWS API Gateway timeout limit (30s)
   versionFunctions: false
   memorySize: 128
   vpc:
@@ -15,10 +16,17 @@ provider:
     
   environment:  #environment variables
     awsRegion: ${file(${opt:variables}):awsRegion}
-    dbUsername: ${file(${opt:variables}):dbUsername}
-    dbPassword: ${file(${opt:variables}):dbPassword}
-    dbEndpoints: ${file(${opt:variables}):dbEndpoints}
+    secretsAwsEndPoint: ${file(${opt:variables}):secretsAwsEndPoint}
+    apiSecretId: ${file(${opt:variables}):apiSecretId}
+    rdsCredentialsId: ${file(${opt:variables}):rdsCredentialsId}
     errorsTriggered: true
+    pageLimitDefault: 30
+    pageLimitMax: 100
+    evoHrUserTypeSuperAdmin: ${file(${opt:variables}):evoHrUserTypeSuperAdmin}
+    evoHrUserTypeSBAdmin: ${file(${opt:variables}):evoHrUserTypeSBAdmin}
+    evoHrGroupPayroll: ${file(${opt:variables}):evoHrGroupPayroll}
+    evoHrGroupCompany: ${file(${opt:variables}):evoHrGroupCompany}
+    evoHrGroupEmployee: ${file(${opt:variables}):evoHrGroupEmployee}
 
   iamRoleStatements: 
     - Effect: Allow
@@ -28,20 +36,49 @@ provider:
         - ec2:DeleteNetworkInterface
         - ec2:DetachNetworkInterface
       Resource: "arn:aws:ec2:us-east-1:*:*"
+    - Effect: Allow
+      Action:
+        - secretsmanager:*
+        - kms:DescribeKey
+        - kms:ListAliases
+        - kms:ListKeys
+      Resource: "*"
 
 functions:
   listDirectDeposits:
-    handler: src/direct-deposits/handler.list
+    handler: src/api/direct-deposits/handler.list
     events:
         - http:
-            path: /employee/{employeeId}/direct-deposits
+            path: /employees/{employeeId}/direct-deposits
             method: get
-            #authorizer: tokenVerifier
+            authorizer: tokenVerifier
             cors: true
-        
+  tokenVerifier:
+    handler: src/authentication/handler.tokenVerifier
+
+resources:
+  Outputs:
+    TokenVerifierArn:
+      Value: { "Fn::GetAtt": ["TokenVerifierLambdaFunction", "Arn" ] }
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+  
 plugins:
   - serverless-webpack
+  - serverless-aws-documentation
   - serverless-cloudformation-resource-counter
+
+package:
+  individually: true
+  excludeDevDependencies: true
 
 custom:
   webpack: 

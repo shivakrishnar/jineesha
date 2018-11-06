@@ -1,0 +1,20 @@
+{
+  "teamEmail": "team_mojojojo@asuresoftware.com",
+  "slackRoomName": "#mojojojo",
+  "slackCredentials": "jenkins-slack-token",
+  "awsConfig": {
+    "development": {
+      "credentialsId": "f7f7f096-ea3a-4534-b153-5b3446c96d85",
+      "storageBucket": "dev-tf-states-bucket"
+    },
+    "staging": {
+      "credentialsId": "4fbf85ae-aa0d-4cfa-b3d5-cd34ea9f6f25",
+      "storageBucket": "staging-tf-states-bucket"
+    },
+    "production": {
+      "credentialsId": "5305679f-1782-44ee-b4e1-29c2cf3f6071",
+      "storageBucket": "production-tf-states-bucket"
+    }
+  }
+}
+  
