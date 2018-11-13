@@ -12,7 +12,6 @@ export class BankAccount {
   routingNumber: string;
   accountNumber: string;
   designation: string;
-  accountHolder: string;
 
   public constructor(init?: Partial<BankAccount>) {
     Object.assign(this, init);

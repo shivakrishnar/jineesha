@@ -18,4 +18,4 @@ select
 from 
     dbo.EmployeeDirectDeposit 
 where 
-    EmployeeID = @employeeId
+    ID = @directDepositId

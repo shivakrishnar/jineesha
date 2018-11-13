@@ -1,10 +1,12 @@
 import * as validate from '@smallwins/validate';
 import * as AWS from 'aws-sdk';
 import * as util from 'util';
-import * as  configService from './config.service';
+import { ObjectSchema } from 'yup';
+import * as configService from './config.service';
 import * as errorService from './errors/error.service';
 
 import { APIGatewayEvent, Context, ProxyCallback, ProxyResult } from 'aws-lambda';
+import { DirectDeposit } from './api/direct-deposits/directDeposit';
 import { SecurityContext } from './authentication/securityContext';
 import { ErrorMessage } from './errors/errorMessage';
 import { Headers } from './models/headers';
@@ -177,6 +179,18 @@ export function validateAndThrow(params: { [name: string]: string }, schema: { [
   if (errors) {
     throw errorService.getErrorResponse(30).setDeveloperMessage(errors[0].message).setMoreInfo(errors.toString());
   }
+}
+
+/**
+ * Validate an object against a schema, and throw the appropriate exception if it fails.
+ * @param schema Yup schema to validate the request body against.
+ * @param requestBody Request body to validate.
+ */
+export async function validateRequestBody(schema: ObjectSchema<{}>, requestBody: DirectDeposit): Promise<void> {
+  await schema.validate(requestBody, { abortEarly: false }).catch((error) => {
+    console.error(error.errors[0]);
+    throw errorService.getErrorResponse(30).setDeveloperMessage(error.errors[0]);
+  });
 }
 
 /**

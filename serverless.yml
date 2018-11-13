@@ -53,6 +53,14 @@ functions:
             method: get
             authorizer: tokenVerifier
             cors: true
+  createDirectDeposit:
+    handler: src/api/direct-deposits/handler.create
+    events:
+        - http:
+            path: /employees/{employeeId}/direct-deposits
+            method: post
+            authorizer: tokenVerifier
+            cors: true
   tokenVerifier:
     handler: src/authentication/handler.tokenVerifier
 
