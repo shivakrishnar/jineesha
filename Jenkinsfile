@@ -57,6 +57,7 @@ stage("Build")
 
                     nvm(nodeVersion) {
                         sh "npm install"
+                        sh "npm test"
                     }
 
                 }

@@ -40,6 +40,8 @@ describe('ErrorMessage ', () => {
   });
 
   test('addResourceDetails correctly replaces placeholder', () => {
+    errorMessage.setMessage('message: {$}');
+    errorMessage.setDeveloperMessage('developerMessage: {$}');
     errorMessage.addResourceDetails(testString);
     expect(errorMessage.message).toContain(testString);
     expect(errorMessage.developerMessage).toContain(testString);

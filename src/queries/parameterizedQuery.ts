@@ -14,7 +14,7 @@ export class ParameterizedQuery extends Query {
    * @param {string} name The identifier of the parameter
    * @param {string} value The parameter's valiue
    */
-  public setParameter(name: string, value: string): void {
+  public setParameter(name: string, value: any): void {
     this._query = this._query.replace(name, value);
   }
 }

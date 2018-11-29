@@ -14,9 +14,11 @@
     "@smallwins/validate": "^4.3.0",
     "@types/lodash": "^4.14.88",
     "@types/speakeasy": "^2.0.2",
+    "@types/yup": "^0.26.2",
     "aws-auth-policy": "^0.1.0",
     "aws-sdk": "^2.307.0",
     "axios": "^0.16.2",
+    "bank-routing-number-validator": "0.0.4",
     "io-ts": "^1.4.0",
     "io-ts-types": "^0.3.14",
     "jsonwebtoken": "^7.3.0",
@@ -25,7 +27,8 @@
     "request-promise-native": "^1.0.5",
     "speakeasy": "^2.0.0",
     "uid-generator": "^1.0.0",
-    "uuid": "^3.0.1"
+    "uuid": "^3.0.1",
+    "yup": "^0.26.6"
   },
   "devDependencies": {
     "@types/aws-lambda": "0.0.9",

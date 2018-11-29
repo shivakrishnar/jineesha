@@ -17,7 +17,7 @@ export function notAuthenticated(): ErrorMessage {
 
 export function notAuthorized(role: string): ErrorMessage {
   const errorMessage = findErrorMessage(20);
-  errorMessage.setDeveloperMessage(`The principal does not have the required role (${role}).`)
+  errorMessage.setDeveloperMessage(`The principal does not have the required role (${role}).`);
   return errorMessage;
 }
 
@@ -45,7 +45,7 @@ function errorMessages(): ErrorMessage[] {
     {
       "statusCode": 500,
       "code": 0,
-      "message": "Unexpected error occured.",
+      "message": "Unexpected error occurred.",
       "developerMessage": "Something happened on the server and we have no idea what. Blame the architect.",
       "moreInfo": ""
     },
@@ -68,6 +68,13 @@ function errorMessages(): ErrorMessage[] {
       "code": 30,
       "message": "The provided request object was not valid for the requested operation.",
       "developerMessage": "",
+      "moreInfo": ""
+    },
+    {
+      "statusCode": 409,
+      "code": 40,
+      "message": "Conflict. The provided request object already exists.",
+      "developerMessage": "There are already records in the database with the same provided information.",
       "moreInfo": ""
     }
   ]`);
