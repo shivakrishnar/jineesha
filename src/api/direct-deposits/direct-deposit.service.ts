@@ -101,7 +101,7 @@ export async function create(employeeId: string, tenantId: string, requestBody: 
 
     const createQuery = new ParameterizedQuery('DirectDepositCreate', Queries.directDepositCreate);
     // Truncate the amount field by removing excess decimal places. This will not round the value.
-    const truncatedAmount = parseInt('' + (amount * 100), 10) / 100;
+    const truncatedAmount = (parseInt('' + (amount * 100), 10) / 100) || 0;
     createQuery.setParameter('@employeeId', employeeId);
     createQuery.setParameter('@routingNumber', routingNumber);
     createQuery.setParameter('@accountNumber', accountNumber);
