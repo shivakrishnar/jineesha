@@ -1,4 +1,5 @@
 select 
+    DuplicateType = 'accounts',
     * 
 from
     dbo.EmployeeDirectDeposit 
