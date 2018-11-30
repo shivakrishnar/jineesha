@@ -54,7 +54,7 @@ describe('directDepositService.list', () => {
 describe('directDepositService.create', () => {
   test('creates and returns a direct deposit', () => {
     (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
-      if (query.name === 'CheckForDuplicateDirectDeposits') {
+      if (query.name === 'CheckForDuplicateBankAccounts') {
         return Promise.resolve(mockData.emptyResponseObject);
       } else if (query.name === 'DirectDepositCreate') {
         return Promise.resolve(mockData.scopeIdentityResponseObject);
@@ -71,7 +71,7 @@ describe('directDepositService.create', () => {
 
   test('returns a 409 error when a record already exists with the same routing or account number', () => {
     (directDepositDao as any).executeQuery = jest.fn((params: any) => {
-      return Promise.resolve(mockData.postResponseObject);
+      return Promise.resolve(mockData.duplicateBankAccountResponseObject);
     });
     return directDepositService.create(mockData.employeeId, mockData.tenantId, mockData.postObject).catch((error: any) => {
       expect(error).toBeInstanceOf(ErrorMessage);
@@ -82,6 +82,24 @@ describe('directDepositService.create', () => {
       const moreInfo = 'Routing number, account number and designation must be collectively unique.';
       expect(error.developerMessage).toEqual(developerMessage);
       expect(error.moreInfo).toEqual(moreInfo);
+    });
+  });
+
+  test('returns a 409 error when a record already exists with an amountType of Balance Remainder', () => {
+    (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
+      if (query.name === 'CheckForDuplicateBankAccounts-union-CheckForDuplicateRemainderOfPay') {
+        return Promise.resolve(mockData.duplicateRemainderResponseObject);
+      } else {
+        return Promise.resolve(mockData.postResponseObject);
+      }
+    });
+    return directDepositService.create(mockData.employeeId, mockData.tenantId, mockData.balanceRemainderPostObject).catch((error: any) => {
+      expect(error).toBeInstanceOf(ErrorMessage);
+      expect(error.statusCode).toEqual(409);
+      expect(error.code).toEqual(40);
+      expect(error.message).toEqual('Conflict. The provided request object already exists.');
+      expect(error.developerMessage).toEqual('There are already records in the database with the same provided information.');
+      expect(error.moreInfo).toEqual('You can only have one direct deposit with an amountType of Balance Remainder');
     });
   });
 });

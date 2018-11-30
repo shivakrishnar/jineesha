@@ -11,7 +11,7 @@ import * as configService from '../../config.service';
 import * as dbConnections from '../../dbConnections';
 import * as errorService from '../../errors/error.service';
 import { ErrorMessage } from '../../errors/errorMessage';
-import { IQuery } from '../../queries/query';
+import { IQuery, Query } from '../../queries/query';
 import * as utilService from '../../util.service';
 
 /**
@@ -97,7 +97,7 @@ export async function create(employeeId: string, tenantId: string, requestBody: 
         connectionString.databaseName,
     );
 
-    await checkForDuplicates(pool, routingNumber, accountNumber, designation);
+    await checkForDuplicates(pool, routingNumber, accountNumber, designation, amountType, employeeId);
 
     const createQuery = new ParameterizedQuery('DirectDepositCreate', Queries.directDepositCreate);
     // Truncate the amount field by removing excess decimal places. This will not round the value.
@@ -160,28 +160,42 @@ async function getResultSet(pool: ConnectionPool, query: IQuery): Promise<Direct
 }
 
 /**
- * Executes a query that checks for duplicate direct deposits in the database.
+ * Executes queries that check for duplicate bank accounts and
+ * duplicate remainder of pay direct deposits in the database.
  * @param {ConnectionPool} pool: The open connection to the database.
  * @param {string} routingNumber: The routing number of the bank account.
  * @param {string} accountNumber: The account number of the bank account.
  * @param {string} designation: The bank account type.
+ * @param {string} amountType: The direct deposit type.
+ * @param {string} employeeId: The unique identifier of the employee.
  */
-async function checkForDuplicates(pool: ConnectionPool, routingNumber: string, accountNumber: string, designation: string): Promise<void> {
-    const checkForDuplicatesQuery = new ParameterizedQuery('CheckForDuplicateDirectDeposits', Queries.checkForDuplicateDirectDeposits);
-    checkForDuplicatesQuery.setParameter('@routingNumber', routingNumber);
-    checkForDuplicatesQuery.setParameter('@accountNumber', accountNumber);
+async function checkForDuplicates(pool: ConnectionPool, routingNumber: string, accountNumber: string, designation: string, amountType: string, employeeId: string): Promise<void> {
+    const bankAccountsQuery = new ParameterizedQuery('CheckForDuplicateBankAccounts', Queries.checkForDuplicateBankAccounts);
+    bankAccountsQuery.setParameter('@routingNumber', routingNumber);
+    bankAccountsQuery.setParameter('@accountNumber', accountNumber);
     if (designation === 'Checking') {
-        checkForDuplicatesQuery.setParameter('@designationColumnName', 'Checking');
+        bankAccountsQuery.setParameter('@designationColumnName', 'Checking');
     } else if (designation === 'Savings') {
-        checkForDuplicatesQuery.setParameter('@designationColumnName', 'IsSavings');
+        bankAccountsQuery.setParameter('@designationColumnName', 'IsSavings');
     } else {
-        checkForDuplicatesQuery.setParameter('@designationColumnName', 'IsMoneyMarket');
+        bankAccountsQuery.setParameter('@designationColumnName', 'IsMoneyMarket');
     }
-    const duplicatesResult: IResult<any> = await directDepositDao.executeQuery(pool.transaction(), checkForDuplicatesQuery);
+
+    let duplicatesCheckQuery;
+    if (amountType === 'Balance Remainder') {
+        const remainderOfPayQuery = new ParameterizedQuery('CheckForDuplicateRemainderOfPay', Queries.checkForDuplicateRemainderOfPay);
+        remainderOfPayQuery.setParameter('@employeeId', employeeId);
+        duplicatesCheckQuery = bankAccountsQuery.union(remainderOfPayQuery);
+    }
+
+    const duplicatesResult: IResult<any> = await directDepositDao.executeQuery(pool.transaction(), duplicatesCheckQuery || bankAccountsQuery);
     const duplicates: any[] = duplicatesResult.recordset;
 
     if (duplicates.length > 0) {
-        const moreInfo = 'Routing number, account number and designation must be collectively unique.';
+        let moreInfo = 'Routing number, account number and designation must be collectively unique.';
+        if (duplicates[0].DuplicateType === 'remainder') {
+            moreInfo = 'You can only have one direct deposit with an amountType of Balance Remainder';
+        }
         throw errorService.getErrorResponse(40).setMoreInfo(moreInfo);
     }
 }

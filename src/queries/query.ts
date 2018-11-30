@@ -33,4 +33,10 @@ export class Query implements IQuery {
   public get value(): string {
     return this._query;
   }
+
+  public union(queryToAppend: Query): Query {
+    const newName = `${this._name}-union-${queryToAppend.name}`;
+    const combinedValue = `${this._query} union ${queryToAppend.value}`;
+    return new Query(newName, combinedValue);
+  }
 }

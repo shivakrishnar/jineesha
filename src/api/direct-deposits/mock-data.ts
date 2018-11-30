@@ -89,6 +89,17 @@ export const postObject = {
   amountType: 'Flat',
   status: 'No Status'
 };
+export const balanceRemainderPostObject = {
+  id: 37,
+  amount: 9000,
+  bankAccount: {
+    routingNumber: '211274450',
+    accountNumber: '49309909',
+    designation: 'Checking',
+  },
+  amountType: 'Balance Remainder',
+  status: 'No Status'
+};
 export const postResponseObject = {
   recordsets: [
     [
@@ -107,6 +118,74 @@ export const postResponseObject = {
   ],
   recordset: [
     {
+      id: '37',
+      amount: '9000',
+      routingNumber: '211274450',
+      accountNumber: '49309909',
+      amountType: 'Flat',
+      status: 'No Status',
+      designation: 'Checking'
+    },
+  ],
+  output: {},
+  rowsAffected: [
+    1
+  ]
+};
+export const duplicateBankAccountResponseObject = {
+  recordsets: [
+    [
+      [
+        {
+          DuplicateType: 'accounts',
+          id: '37',
+          amount: '9000',
+          routingNumber: '211274450',
+          accountNumber: '49309909',
+          amountType: 'Flat',
+          status: 'No Status',
+          designation: 'Checking'
+        }
+      ],
+    ]
+  ],
+  recordset: [
+    {
+      DuplicateType: 'accounts',
+      id: '37',
+      amount: '9000',
+      routingNumber: '211274450',
+      accountNumber: '49309909',
+      amountType: 'Flat',
+      status: 'No Status',
+      designation: 'Checking'
+    },
+  ],
+  output: {},
+  rowsAffected: [
+    1
+  ]
+};
+export const duplicateRemainderResponseObject = {
+  recordsets: [
+    [
+      [
+        {
+          DuplicateType: 'remainder',
+          id: '37',
+          amount: '9000',
+          routingNumber: '211274450',
+          accountNumber: '49309909',
+          amountType: 'Flat',
+          status: 'No Status',
+          designation: 'Checking'
+        }
+      ],
+    ]
+  ],
+  recordset: [
+    {
+      DuplicateType: 'remainder',
       id: '37',
       amount: '9000',
       routingNumber: '211274450',
