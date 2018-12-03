@@ -11,7 +11,9 @@ const headerSchema = {
 };
 
 const directDepositsResourceUriSchema = {
-  employeeId:   { required: true, type: String},
+  tenantId: { required: true, type: String },
+  companyId: { required: true, type: String },
+  employeeId:   { required: true, type: String },
 };
 
 const bankAccountValidationSchema = {
