@@ -62,7 +62,7 @@ functions:
     handler: src/api/direct-deposits/handler.list
     events:
         - http:
-            path: /employees/{employeeId}/direct-deposits
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits
             method: get
             authorizer: tokenVerifier
             cors: true
@@ -70,7 +70,7 @@ functions:
     handler: src/api/direct-deposits/handler.create
     events:
         - http:
-            path: /employees/{employeeId}/direct-deposits
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits
             method: post
             authorizer: tokenVerifier
             cors: true
