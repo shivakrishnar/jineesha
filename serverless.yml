@@ -108,6 +108,6 @@ custom:
     includeModules: true   
     packager: 'npm'
   customDomain:
-    domainName: api.direct-deposits.${file(${opt:variables}):domain}
+    domainName: direct-deposits.${file(${opt:variables}):domain}
     certificateName: '*.${file(${opt:variables}):domain}'
     createRoute53Record: false
