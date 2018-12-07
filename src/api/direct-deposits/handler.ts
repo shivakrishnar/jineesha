@@ -96,7 +96,10 @@ const directDepositPostSchema = Yup.object().shape({
 export const list = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
   console.info('directDeposits.handler.list');
 
-  // TODO: MJ-1177: Check role and apply appropriate security permissions
+  const tenantId =  securityContext.principal.tenantId;
+  const email =  securityContext.principal.email;
+
+  await securityContext.checkSecurityRoles(tenantId, email, 'EmployeeDirectDepositList', 'CanRead');
 
   utilService.normalizeHeaders(event);
   utilService.validateAndThrow(event.headers, headerSchema);
@@ -104,7 +107,6 @@ export const list = utilService.gatewayEventHandler(async ({ securityContext, ev
 
   const employeeId = event.pathParameters.employeeId;
 
-  const tenantId =  securityContext.principal.tenantId;
   return await directDepositService.list(employeeId, tenantId);
 });
 
@@ -114,7 +116,10 @@ export const list = utilService.gatewayEventHandler(async ({ securityContext, ev
 export const create = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
   console.info('directDeposits.handler.post');
 
-  // TODO: MJ-1177: Check role and apply appropriate security permissions
+  const tenantId = securityContext.principal.tenantId;
+  const email =  securityContext.principal.email;
+
+  await securityContext.checkSecurityRoles(tenantId, email, 'EmployeeDirectDepositList', 'CanCreate');
 
   utilService.normalizeHeaders(event);
   utilService.validateAndThrow(event.headers, headerSchema);
@@ -126,7 +131,6 @@ export const create = utilService.gatewayEventHandler(async ({ securityContext, 
   utilService.checkAdditionalProperties(bankAccountValidationSchema, requestBody.bankAccount, 'bank account');
 
   const employeeId = event.pathParameters.employeeId;
-  const tenantId = securityContext.principal.tenantId;
 
   const directDeposit = await directDepositService.create(employeeId, tenantId, requestBody);
   return { statusCode: 201, headers: new Headers(), body: directDeposit };

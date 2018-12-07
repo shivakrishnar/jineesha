@@ -2,6 +2,9 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 
 export const Queries = {
+  // Security
+  checkSecurityRoles: fs.readFileSync(path.join(__dirname, 'security/checkSecurityRoles.sql')).toString(),
+
   // Direct Deposits
   directDepositList: fs.readFileSync(path.join(__dirname, 'direct-deposits/listDirectDepositsByEmployeeId.sql')).toString(),
   getDirectDeposit: fs.readFileSync(path.join(__dirname, 'direct-deposits/getDirectDepositById.sql')).toString(),
