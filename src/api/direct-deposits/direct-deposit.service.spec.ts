@@ -62,7 +62,7 @@ describe('directDepositService.create', () => {
         return Promise.resolve(mockData.postResponseObject);
       }
     });
-    return directDepositService.create(mockData.employeeId, mockData.tenantId, mockData.postObject).then((directDeposit) => {
+    return directDepositService.create(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.postObject)).then((directDeposit) => {
       expect(directDeposit).toBeInstanceOf(DirectDeposit);
       expect(directDeposit.bankAccount).toMatchObject(new BankAccount());
       expect(directDeposit).toEqual(mockData.expectedObjects[0]);
@@ -73,7 +73,7 @@ describe('directDepositService.create', () => {
     (directDepositDao as any).executeQuery = jest.fn((params: any) => {
       return Promise.resolve(mockData.duplicateBankAccountResponseObject);
     });
-    return directDepositService.create(mockData.employeeId, mockData.tenantId, mockData.postObject).catch((error: any) => {
+    return directDepositService.create(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.postObject)).catch((error: any) => {
       expect(error).toBeInstanceOf(ErrorMessage);
       expect(error.statusCode).toEqual(409);
       expect(error.code).toEqual(40);
@@ -93,7 +93,7 @@ describe('directDepositService.create', () => {
         return Promise.resolve(mockData.postResponseObject);
       }
     });
-    return directDepositService.create(mockData.employeeId, mockData.tenantId, mockData.balanceRemainderPostObject).catch((error: any) => {
+    return directDepositService.create(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.balanceRemainderPostObject)).catch((error: any) => {
       expect(error).toBeInstanceOf(ErrorMessage);
       expect(error.statusCode).toEqual(409);
       expect(error.code).toEqual(40);

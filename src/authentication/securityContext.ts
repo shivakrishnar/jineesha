@@ -23,6 +23,7 @@ export class SecurityContext {
   principal: IAccount;
   roleMemberships: IRoleMembership[];
   accessToken: string;
+  currentRoleLevel: ApplicationRoleLevel;
 
   public constructor(principal: IAccount, roleMemberships: IRoleMembership[] = [], accessToken: string) {
     this.principal = principal;
@@ -94,6 +95,8 @@ export class SecurityContext {
               const moreInfo = 'The user does not have the appropriate role level to use this endpoint.';
               throw errorService.getErrorResponse(11).setMoreInfo(moreInfo);
           }
+
+          this.currentRoleLevel = recordSet[0].ApplicationRoleLevel;
       } catch (error) {
           console.error(error);
           if (error instanceof ErrorMessage) {
