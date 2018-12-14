@@ -39,6 +39,7 @@ const bankAccountSchema = Yup.object().shape({
   accountNumber: Yup
     .string()
     .test('accountNumber-empty', 'accountNumber is a required field', (value) => (value ? value.trim() !== '' : true))
+    .matches(new RegExp('^[a-zA-Z0-9]+$'), { message: 'accountNumber cannot contain special characters.'})
     .required(),
   designation: Yup
     .string()
