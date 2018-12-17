@@ -39,4 +39,13 @@ export class DirectDeposit {
   public constructor(init?: Partial<DirectDeposit>) {
     Object.assign(this, init);
   }
+
+  /**
+   * Obfuscates every digit in the account number except the last four
+   */
+  public obfuscate(): void {
+    const accountNumber = this.bankAccount.accountNumber;
+    const last4Digits = accountNumber.slice(-4);
+    this.bankAccount.accountNumber = last4Digits.padStart(accountNumber.length, '*');
+  }
 }

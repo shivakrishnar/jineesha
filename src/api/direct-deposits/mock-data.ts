@@ -98,7 +98,7 @@ export const balanceRemainderPostObject = {
     designation: 'Checking',
   },
   amountType: 'Balance Remainder',
-  status: 'No Status'
+  status: 'No Status',
 };
 export const postResponseObject = {
   recordsets: [

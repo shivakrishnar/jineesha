@@ -57,6 +57,13 @@ function errorMessages(): ErrorMessage[] {
       "moreInfo": ""
     },
     {
+      "statusCode": 401,
+      "code": 11,
+      "message": "User is not authorized.",
+      "developerMessage": "The user does not have authorization to use this endpoint.",
+      "moreInfo": ""
+    },
+    {
       "statusCode": 403,
       "code": 20,
       "message": "Not authorized.",

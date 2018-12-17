@@ -11,7 +11,7 @@ import * as configService from '../../config.service';
 import * as dbConnections from '../../dbConnections';
 import * as errorService from '../../errors/error.service';
 import { ErrorMessage } from '../../errors/errorMessage';
-import { IQuery, Query } from '../../queries/query';
+import { IQuery } from '../../queries/query';
 import * as utilService from '../../util.service';
 
 /**
