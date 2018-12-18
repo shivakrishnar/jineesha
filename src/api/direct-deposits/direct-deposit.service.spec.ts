@@ -103,3 +103,76 @@ describe('directDepositService.create', () => {
     });
   });
 });
+
+describe('directDepositService.update', () => {
+  test('updates and returns a direct deposit', () => {
+    (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
+      if (query.name === 'CheckForDuplicateRemainderOfPay' || query.name === 'DirectDepositUpdate') {
+        return Promise.resolve(mockData.emptyResponseObject);
+      } else if (query.name === 'CheckThatResourceExists') {
+        return Promise.resolve(mockData.putResponseObject);
+      } else {
+        return Promise.resolve(mockData.putResponseObject);
+      }
+    });
+    return directDepositService.update(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.putObject), mockData.directDepositId).then((directDeposit) => {
+      expect(directDeposit).toBeInstanceOf(DirectDeposit);
+      expect(directDeposit.bankAccount).toMatchObject(new BankAccount());
+      expect(directDeposit).toEqual(mockData.putExpectedObjects[0]);
+    });
+  });
+
+  test('returns a 400 when the supplied id is not an integer', () => {
+    return directDepositService.update(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.putObject), mockData.directDepositIdWithCharacter).catch((error) => {
+      expect(error).toBeInstanceOf(ErrorMessage);
+      expect(error.statusCode).toEqual(400);
+      expect(error.code).toEqual(30);
+      expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+      expect(error.developerMessage).toEqual(`${mockData.directDepositIdWithCharacter} is not a valid number`);
+      expect(error.moreInfo).toEqual('');
+    });
+  });
+
+  test('returns a 400 when the supplied employeeId is not an integer', () => {
+    return directDepositService.update(mockData.employeeIdWithCharacter, mockData.tenantId, new DirectDeposit(mockData.putObject), mockData.directDepositId).catch((error) => {
+      expect(error).toBeInstanceOf(ErrorMessage);
+      expect(error.statusCode).toEqual(400);
+      expect(error.code).toEqual(30);
+      expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+      expect(error.developerMessage).toEqual(`${mockData.employeeIdWithCharacter} is not a valid number`);
+      expect(error.moreInfo).toEqual('');
+    });
+  });
+
+  test('returns a 404 when the requested resource does not exist', () => {
+    (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
+      if (query.name === 'CheckForDuplicateRemainderOfPay' || query.name === 'CheckThatResourceExists') {
+        return Promise.resolve(mockData.emptyResponseObject);
+      } else {
+        return Promise.resolve(mockData.notUpdatedResponseObject);
+      }
+    });
+    return directDepositService.update(mockData.employeeId, mockData.tenantId, new DirectDeposit(), mockData.directDepositId).catch((error) => {
+      expect(error).toBeInstanceOf(ErrorMessage);
+      expect(error.statusCode).toEqual(404);
+      expect(error.code).toEqual(50);
+      expect(error.message).toEqual('The requested resource does not exist.');
+      expect(error.developerMessage).toEqual(`Resource with id ${mockData.directDepositId} does not exist.`);
+      expect(error.moreInfo).toEqual('');
+    });
+  });
+
+  test('returns a 409 error when a record already exists with an amountType of Balance Remainder', () => {
+    (directDepositDao as any).executeQuery = jest.fn(() => {
+      return Promise.resolve(mockData.duplicateRemainderResponseObject);
+    });
+    return directDepositService.update(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.balanceRemainderPatchObject), mockData.directDepositId).catch((error: any) => {
+      expect(error).toBeInstanceOf(ErrorMessage);
+      expect(error.statusCode).toEqual(409);
+      expect(error.code).toEqual(40);
+      expect(error.message).toEqual('Conflict. The provided request object already exists.');
+      expect(error.developerMessage).toEqual('There are already records in the database with the same provided information.');
+      expect(error.moreInfo).toEqual('You can only have one direct deposit with an amountType of Balance Remainder');
+    });
+  });
+});

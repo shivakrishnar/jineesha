@@ -83,6 +83,13 @@ function errorMessages(): ErrorMessage[] {
       "message": "Conflict. The provided request object already exists.",
       "developerMessage": "There are already records in the database with the same provided information.",
       "moreInfo": ""
+    },
+    {
+      "statusCode": 404,
+      "code": 50,
+      "message": "The requested resource does not exist.",
+      "developerMessage": "",
+      "moreInfo": ""
     }
   ]`);
 }

@@ -74,6 +74,14 @@ functions:
             method: post
             authorizer: tokenVerifier
             cors: true
+  updateDirectDeposit:
+    handler: src/api/direct-deposits/handler.update
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits/{id}
+            method: patch
+            authorizer: tokenVerifier
+            cors: true
   tokenVerifier:
     handler: src/authentication/handler.tokenVerifier
 
