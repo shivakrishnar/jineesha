@@ -17,6 +17,13 @@ const directDepositsResourceUriSchema = {
   employeeId:   { required: true, type: String },
 };
 
+const directDepositsResourceUriSchemaPatch = {
+    tenantId: { required: true, type: String },
+    companyId: { required: true, type: String },
+    employeeId:  { required: true, type: String },
+    id: { required: true, type: String },
+};
+
 const bankAccountValidationSchema = {
   routingNumber: { required: true, type: String },
   accountNumber: { required: true, type: String },
@@ -27,6 +34,11 @@ const postValidationSchema = {
   bankAccount: { required: true, type: Object },
   amountType: { required: true, type: String },
   amount: { required: true, type: Number },
+};
+
+const patchValidationSchema = {
+  amountType: { required: false, type: String },
+  amount: { required: false, type: Number },
 };
 
 const bankAccountSchema = Yup.object().shape({
@@ -92,6 +104,62 @@ const directDepositPostSchema = Yup.object().shape({
     }),
 });
 
+const directDepositPatchSchema = Yup.object().shape({
+    amountType: Yup
+        .mixed()
+        .oneOf(['Flat', 'Percentage', 'Balance Remainder'], "amountType must be one of the following values: 'Flat', 'Percentage', 'Balance Remainder'")
+        .required(),
+    amount: Yup
+        .mixed()
+        .when('amountType', {
+            is: 'Percentage',
+            then: Yup
+                .number()
+                .required('amount is required when amountType is supplied.')
+                .max(100, 'amount must be less than 100% when amountType is Percentage.')
+                .test('amount-not-number', 'amount must be a number.', (value) => typeof value === 'number')
+                .test('amount-too-small', 'amount must be greater than 0.', (value) => {
+                    if (value && !Number.isNaN(parseFloat(value))) {
+                        return parseFloat(value) > 0;
+                    } else if (value === ' ') {
+                        return false;
+                    }
+                    return true;
+                }),
+            otherwise: Yup.number(),
+        })
+        .when('amountType', {
+            is: 'Flat',
+            then: Yup
+                .number()
+                .required()
+                .test('amount-not-number', 'amount must be a number.', (value) => typeof value === 'number')
+                .test('amount-too-small', 'amount must be greater than 0.', (value) => {
+                    if (value && !Number.isNaN(parseFloat(value))) {
+                        return parseFloat(value) > 0;
+                    } else if (value === ' ') {
+                        return false;
+                    }
+                    return true;
+                }),
+            otherwise: Yup.number(),
+        }),
+});
+
+// const directDepositPatchSchemaAmount = Yup.object().shape({
+//     amountType: Yup
+//         .mixed()
+//         .when('amount', {
+//             is: (amount) => amount !== undefined,
+//             then: Yup
+//                 .mixed()
+//                 .required(),
+//             otherwise: Yup.mixed(),
+//         }),
+//     amount: Yup
+//         .mixed()
+// });
+
 /**
  * Returns a listing of an employee's direct deposits.
  */
@@ -144,4 +212,33 @@ export const create = utilService.gatewayEventHandler(async ({ securityContext, 
     directDeposit.obfuscate();
   }
   return { statusCode: 201, headers: new Headers(), body: directDeposit };
+});
+
+/**
+ * Updates a direct deposit for an employee.
+ */
+export const update = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+  console.info('directDeposits.handler.patch');
+
+  const tenantId = securityContext.principal.tenantId;
+  const email =  securityContext.principal.email;
+
+  await securityContext.checkSecurityRoles(tenantId, email, 'EmployeeDirectDepositList', 'CanUpdate');
+
+  utilService.normalizeHeaders(event);
+  utilService.validateAndThrow(event.headers, headerSchema);
+  utilService.validateAndThrow(event.pathParameters, directDepositsResourceUriSchemaPatch);
+  await utilService.validateRequestBody(directDepositPatchSchema, requestBody);
+  // await utilService.validateRequestBody(directDepositPatchSchemaAmount, requestBody);
+  // Validate that the request body doesn't have any extra fields
+  utilService.checkAdditionalProperties(patchValidationSchema, requestBody, 'direct deposit');
+
+  const employeeId = event.pathParameters.employeeId;
+  const id = event.pathParameters.id;
+
+  const directDeposit = await directDepositService.update(employeeId, tenantId, requestBody, id);
+  if (securityContext.currentRoleLevel === ApplicationRoleLevel.Employee) {
+    directDeposit.obfuscate();
+  }
+  return { statusCode: 200, headers: new Headers(), body: directDeposit };
 });
