@@ -39,4 +39,8 @@ export class Query implements IQuery {
     const combinedValue = `${this._query} union ${queryToAppend.value}`;
     return new Query(newName, combinedValue);
   }
+
+  public appendFilter(condition: string, appendToExistingWhereClause: boolean = true): void {
+    this._query.concat(`${appendToExistingWhereClause ? ' ' : ' and '}${condition}`);
+  }
 }

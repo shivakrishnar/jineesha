@@ -234,9 +234,10 @@ export const update = utilService.gatewayEventHandler(async ({ securityContext, 
   utilService.checkAdditionalProperties(patchValidationSchema, requestBody, 'direct deposit');
 
   const employeeId = event.pathParameters.employeeId;
+  const accessToken = event.headers.authorization.replace(/Bearer /i, '');
   const id = event.pathParameters.id;
 
-  const directDeposit = await directDepositService.update(employeeId, tenantId, requestBody, id);
+  const directDeposit = await directDepositService.update(employeeId, tenantId, requestBody, id, accessToken, securityContext.payrollApiCredentials);
   if (securityContext.currentRoleLevel === ApplicationRoleLevel.Employee) {
     directDeposit.obfuscate();
   }

@@ -4,15 +4,21 @@ import { ConnectionPool, IResult } from 'mssql';
 import { Queries } from '../../queries/queries';
 import { DirectDeposit } from './directDeposit';
 
+import { IEvolutionKey } from '../../models/IEvolutionKey';
 import { ParameterizedQuery } from '../../queries/parameterizedQuery';
 import { DirectDeposits } from './directDeposits';
 
+import * as jwt from 'jsonwebtoken';
 import * as configService from '../../config.service';
 import * as dbConnections from '../../dbConnections';
 import * as errorService from '../../errors/error.service';
 import { ErrorMessage } from '../../errors/errorMessage';
 import { IQuery, Query } from '../../queries/query';
+import * as payrollService from '../../remote-services/payroll.service';
+import * as ssoService from '../../remote-services/sso.service';
 import * as utilService from '../../util.service';
+
+import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
 
 /**
  * Returns a listing of direct deposits for specific employee within a tenant
@@ -150,7 +156,7 @@ export async function create(employeeId: string, tenantId: string, requestBody: 
  * @param {string} id: The unique identifier of the direct deposit resource to update.
  * @returns {Promise<DiectDeposit>}: Promise of a direct deposit
  */
-export async function update(employeeId: string, tenantId: string, requestBody: DirectDeposit, id: string): Promise<DirectDeposit> {
+export async function update(employeeId: string, tenantId: string, requestBody: DirectDeposit, id: string, accessToken: string, payrollApiCredentials: IPayrollApiCredentials): Promise<DirectDeposit> {
   console.info('directDepositService.update');
 
   const {
@@ -181,31 +187,29 @@ export async function update(employeeId: string, tenantId: string, requestBody: 
         connectionString.databaseName,
     );
 
-    const exists: boolean = await checkIfDirectDepositExists(pool, id, employeeId);
-    if (!exists) {
-        const errorMessage = `Resource with id ${id} does not exist.`;
-        throw errorService.getErrorResponse(50).setDeveloperMessage(errorMessage);
-    }
-
     if (amountType === 'Balance Remainder') {
         const remainderOfPayQuery = await getDuplicateRemainderOfPayQuery(employeeId);
         await executeDuplicatesQuery(pool, remainderOfPayQuery);
     }
 
-    const updateQuery = new ParameterizedQuery('DirectDepositUpdate', Queries.directDepositUpdate);
-    // Truncate the amount field by removing excess decimal places. This will not round the value.
-    const truncatedAmount = (parseInt('' + (amount * 100), 10) / 100) || 0;
-    updateQuery.setParameter('@id', id);
-    updateQuery.setParameter('@amountType', amountType);
-    updateQuery.setParameter('@amount', truncatedAmount);
+    const directDeposits: DirectDeposit[] = await getEmployeeDirectDepositById(pool, id, employeeId);
+    if (directDeposits.length === 0) {
+        const errorMessage = `Resource with id ${id} does not exist.`;
+        throw errorService.getErrorResponse(50).setDeveloperMessage(errorMessage);
+    }
 
-    await directDepositDao.executeQuery(pool.transaction(), updateQuery);
+    const directDeposit = directDeposits[0];
 
-    const getQuery = new ParameterizedQuery('GetDirectDeposit', Queries.getDirectDeposit);
-    getQuery.setParameter('@directDepositId', id);
-    const resultSet = await getResultSet(pool, getQuery);
+    if (directDeposit.status === 'Approved') {
+        const evolutionKeys: IEvolutionKey = await getEvolutionKeys(pool, directDeposit.id);
+        if (!utilService.hasAllKeysDefined(evolutionKeys)) {
+            throw errorService.getErrorResponse(0);
+        }
+        await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, amount, amountType);
+    }
 
-    return new DirectDeposit(resultSet[0]);
+    return await updateDirectDeposit(pool, id, amount, amountType);
+
   } catch (error) {
       console.error(error);
       if (error instanceof ErrorMessage) {
@@ -217,6 +221,30 @@ export async function update(employeeId: string, tenantId: string, requestBody: 
           await pool.close();
       }
   }
+}
+
+/**
+ * Updates an existing direct deposit
+ * @param {ConnectionPool} pool:  The open connection to the database.
+ * @param {number} amount: The direct deposit amount
+ * @param {string} amountType: The type of amount for the direct deposit.
+ */
+async function updateDirectDeposit(pool: ConnectionPool, directDepositId: string, amount: number, amountType: string): Promise<DirectDeposit> {
+    const updateQuery = new ParameterizedQuery('DirectDepositUpdate', Queries.directDepositUpdate);
+
+    // Truncate the amount field by removing excess decimal places. This will not round the value.
+    const truncatedAmount = (parseInt('' + (amount * 100), 10) / 100) || 0;
+    updateQuery.setParameter('@id', directDepositId);
+    updateQuery.setParameter('@amountType', amountType);
+    updateQuery.setParameter('@amount', truncatedAmount);
+
+    await directDepositDao.executeQuery(pool.transaction(), updateQuery);
+
+    const getQuery = new ParameterizedQuery('GetDirectDeposit', Queries.getDirectDeposit);
+    getQuery.setParameter('@directDepositId', directDepositId);
+    const directDepositResultSet = await getResultSet(pool, getQuery);
+
+    return new DirectDeposit(directDepositResultSet[0]);
 }
 
 /**
@@ -247,16 +275,14 @@ async function getResultSet(pool: ConnectionPool, query: IQuery): Promise<Direct
  * @param {ConnectionPool} pool: The open connection to the database.
  * @param {string} directDepositId: The direct deposit identifier.
  * @param {string} employeeId: The employee's identifier.
- * @returns {Promise<boolean>}: A boolean promise.
+ * @returns {Promise<DirectDeposit[]>}: Promise of an array of Direct Deposits
  */
-async function checkIfDirectDepositExists(pool: ConnectionPool, directDepositId: string, employeeId: string): Promise<boolean> {
-    const resourceExistsQuery = new ParameterizedQuery('CheckThatResourceExists', Queries.checkThatResourceExists);
-    resourceExistsQuery.setParameter('@id', directDepositId);
-    resourceExistsQuery.setParameter('@employeeId', employeeId);
-    const result: IResult<any> = await directDepositDao.executeQuery(pool.transaction(), resourceExistsQuery);
-    const resultSet: any[] = result.recordset;
-
-    return !(resultSet.length === 0);
+function getEmployeeDirectDepositById(pool: ConnectionPool, directDepositId: string, employeeId: string): Promise<DirectDeposit[]> {
+    const directDepositQuery = new ParameterizedQuery('GetDirectDepositById', Queries.getDirectDeposit);
+    const employeeFilterCondition = `EmployeeID = ${employeeId}`;
+    directDepositQuery.appendFilter(employeeFilterCondition);
+    directDepositQuery.setParameter('@directDepositId', directDepositId);
+    return getResultSet(pool, directDepositQuery);
 }
 
 /**
@@ -302,4 +328,101 @@ async function getDuplicateRemainderOfPayQuery(employeeId: string): Promise<Para
     const remainderOfPayQuery = new ParameterizedQuery('CheckForDuplicateRemainderOfPay', Queries.checkForDuplicateRemainderOfPay);
     remainderOfPayQuery.setParameter('@employeeId', employeeId);
     return remainderOfPayQuery;
+}
+
+/**
+ *  Updates an existing direct deposit in Evolution
+ * @param {string} hrAccessToken: The access token for the HR user.
+ * @param {string} tenantId: The unqiue identifier for the tenant.
+ * @param {IEvolutionKey} evolutionKeys: The Evolution-equivalent identifiers for entities in HR
+ * @param {IPayrollApiCredentials} payrollApiCredentials: The credentials of the HR global admin.
+ * @param {number} amount: The amount tied to the direct deposit.
+ * @param {string} amountType: The type of amount.
+ */
+async function updateEvolutionDirectDeposit(hrAccessToken: string, tenantId: string, evolutionKeys: IEvolutionKey, payrollApiCredentials: IPayrollApiCredentials, amount: number, amountType: string): Promise<void> {
+    const decodedToken: any = jwt.decode(hrAccessToken);
+    const ssoToken = await utilService.getSSOToken(tenantId, decodedToken.applicationId);
+    const payrollApiAccessToken = await ssoService.getAccessToken(tenantId, ssoToken, payrollApiCredentials.evoApiUsername, payrollApiCredentials.evoApiPassword);
+    const tenantObject = await ssoService.getTenantById(tenantId, payrollApiAccessToken);
+    const tenantName = tenantObject.name;
+
+    let ed = await payrollService.getEvolutionEarningAndDeduction(tenantName, evolutionKeys, payrollApiAccessToken);
+    ed = applyDirectDepositBusinessRules(ed, amount, amountType);
+    await payrollService.updateEvolutionEarningAndDeduction(tenantName, evolutionKeys, payrollApiAccessToken, ed);
+
+}
+
+/**
+ * Retrieves the Evolution-equivalent of HR entities ids.
+ * @param {ConnectionPool} pool: The open connection to the database.
+ * @param {number} directDepositId: The direct deposit identifier.
+ */
+async function getEvolutionKeys(pool: ConnectionPool, directDepositId: number): Promise<IEvolutionKey | undefined> {
+    const getEvoDataQuery = new ParameterizedQuery('GetEvoData', Queries.getEvoData);
+    getEvoDataQuery.setParameter('@id', directDepositId);
+    const evoDataResultSet: IResult<any> = await directDepositDao.executeQuery(pool.transaction(), getEvoDataQuery);
+
+    if (evoDataResultSet.recordset.length === 1) {
+        return {
+            clientId: evoDataResultSet.recordset[0].clientId,
+            companyId: evoDataResultSet.recordset[0].companyId,
+            employeeId: evoDataResultSet.recordset[0].employeeId,
+            earningsAndDeductionsId: evoDataResultSet.recordset[0].earningsAndDeductionsId,
+        };
+    }
+
+    return undefined;
+}
+
+/**
+ * Applies the business rules on updates to an existing and approved direct deposit
+ * in Evolution Payroll.
+ * @param {any} ed: The earning and deduction associated with the direct deposit.
+ * @param {number} amount: The amount tied to the direct deposit.
+ * @param {string} amountType: The type of amount.
+ */
+function applyDirectDepositBusinessRules(ed: any, amount: number, amountType: string): any {
+    switch (amountType) {
+        // tslint:disable no-null-keyword
+        case 'Balance Remainder':
+              ed.deductWholeCheck = true;
+              ed.calculation.method = 'None';
+              ed.calculation.amount = null;
+              ed.calculation.rate = null;
+              break;
+
+        case 'Flat':
+            ed.deductWholeCheck = false;
+            ed.calculation.method = 'Fixed';
+            ed.calculation.amount = amount;
+            ed.calculation.rate = null;
+            ed.employeeTakeHomePay = null;
+            break;
+
+        case 'Percentage':
+            ed.deductWholeCheck = false;
+            ed.calculation.method = 'PercOfNet';
+            ed.calculation.amount = null;
+            ed.calculation.rate = amount;
+            break;
+
+        default:  // added per TS lint rules
+    }
+
+     // Default rules applied:
+     ed.deductionToZero = true;
+     ed.isEnabled = true;
+     ed.isIgnoredWhenAlone = false;
+     ed.applyToCurrentPayroll = false;
+     ed.monthNumber = 0;
+     ed.payrollsToDeduct = 'All';
+     ed.useSystemPensionLimit = false;
+     ed.applyStateTaxCredit = true;
+     ed.garnishment.minimumWageMultiplier = null;
+     ed.garnishment.maximumPercentage = null;
+     ed.target.action = 'None';
+
+     // tslint:enable no-null-keyword
+
+     return ed;
 }

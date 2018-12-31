@@ -14,7 +14,8 @@ select
                       when Checking = 1 then 'Checking'
                       when IsSavings = 1 then 'Savings'
                       when IsMoneyMarket = 1 then 'MoneyMarket'
-                  end
+                  end,
+    edId = EvoFK_EmployeeEarningsDeduction
 from 
     dbo.EmployeeDirectDeposit 
 where 
