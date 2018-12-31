@@ -1,6 +1,6 @@
 import { getErrorResponse } from './errors/error.service';
 /**
- * NB: This is an interim approach to determining the RDS instance and 
+ * NB: This is an interim approach to determining the RDS instance and
  * database tenant is associated with. Long term, a likely solution
  * will involve deducing the information from the API uri.
  */

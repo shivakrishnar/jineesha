@@ -1,6 +1,8 @@
 import * as validate from '@smallwins/validate';
 import * as AWS from 'aws-sdk';
+import * as nJwt from 'njwt';
 import * as util from 'util';
+import * as uniqueifier from 'uuid/v4';
 import { ObjectSchema } from 'yup';
 import * as configService from './config.service';
 import * as errorService from './errors/error.service';
@@ -261,4 +263,51 @@ export async function getSecret(id: string): Promise<string> {
 
   const data = await client.getSecretValue({ SecretId: id }).promise();
   return data.SecretString;
+}
+
+/**
+ * Generates the intial SSO token
+ * @param {string} tenantId: The unique identifier of the tenant.
+ * @param {string} applicationId: The unique identifier for the application for which the token is generated.
+ * @returns {Promise<any>}: returns a Promise of the SSO token
+ */
+export async function getSSOToken(tenantId: string, applicationId: string): Promise<any> {
+  const claims = {
+    iat: Math.trunc(Date.now() / 1000),
+    iss: JSON.parse(await getSecret(configService.getApiSecretId())).apiKey,
+    sub: applicationId,
+    tenantId,
+    jti: uniqueifier(),
+  };
+
+  return nJwt.create(claims, JSON.parse(await getSecret(configService.getApiSecretId())).apiSecret).compact();
+}
+
+/**
+ * Checks all values within a given object to determine if any is undefined.
+ * @param {any} object: The object to be checked
+ * @returns {boolean}: True if object has all keys defined, else false.
+ */
+export function hasAllKeysDefined(object: any): boolean {
+  console.info('utilService.hasAllKeysDefined');
+
+  if (object !== undefined) {
+    const vals = Object.values(object);
+    // tslint:disable prefer-for-of
+    for (let i = 0; i < vals.length; i++) {
+      if (!vals[i]) {
+        return false;
+      }
+
+      if (vals[i] instanceof Object) {
+        const status = hasAllKeysDefined(vals[i]);
+        if (!status) {
+          return false;
+        }
+      }
+    }
+    // tslint:enable prefer-for-of
+    return true;
+  }
+  return false;
 }

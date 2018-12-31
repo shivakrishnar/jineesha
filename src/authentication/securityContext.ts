@@ -12,6 +12,8 @@ import { Queries } from '../queries/queries';
 import * as utilService from '../util.service';
 import { ApplicationRoleLevel } from './ApplicationRoleLevelEnum';
 
+import { IPayrollApiCredentials } from '../models/IPayrollApiCredentials';
+
 /**
  * SecurityContext represents data pulled from the token when it is verified. AWS requires the
  * data to be a string when it is passed on to Lambda via an event, so we JSON stringify
@@ -23,17 +25,19 @@ export class SecurityContext {
   principal: IAccount;
   roleMemberships: IRoleMembership[];
   accessToken: string;
+  payrollApiCredentials: IPayrollApiCredentials;
   currentRoleLevel: ApplicationRoleLevel;
 
-  public constructor(principal: IAccount, roleMemberships: IRoleMembership[] = [], accessToken: string) {
+  public constructor(principal: IAccount, roleMemberships: IRoleMembership[] = [], accessToken: string, payrollApiCredentials: any) {
     this.principal = principal;
     this.roleMemberships = roleMemberships;
     this.accessToken = accessToken;
+    this.payrollApiCredentials = payrollApiCredentials;
   }
 
   public static fromJSON(json: string): SecurityContext {
     const data = JSON.parse(json);
-    return new SecurityContext(data.principal, data.roleMemberships, data.accessToken);
+    return new SecurityContext(data.principal, data.roleMemberships, data.accessToken, data.payrollApiCredentials);
   }
 
   /**

@@ -13,12 +13,13 @@ provider:
     subnetIds:
       - ${file(${opt:variables}):privateSubnetId1}
       - ${file(${opt:variables}):privateSubnetId2}
-    
+
   environment:  #environment variables
     awsRegion: ${file(${opt:variables}):awsRegion}
     secretsAwsEndPoint: ${file(${opt:variables}):secretsAwsEndPoint}
     apiSecretId: ${file(${opt:variables}):apiSecretId}
     rdsCredentialsId: ${file(${opt:variables}):rdsCredentialsId}
+    payrollApiCredentialsId: ${file(${opt:variables}):payrollApiCredentialsId}
     errorsTriggered: true
     pageLimitDefault: 30
     pageLimitMax: 100
@@ -27,8 +28,9 @@ provider:
     evoHrGroupPayroll: ${file(${opt:variables}):evoHrGroupPayroll}
     evoHrGroupCompany: ${file(${opt:variables}):evoHrGroupCompany}
     evoHrGroupEmployee: ${file(${opt:variables}):evoHrGroupEmployee}
+    apiDomain: ${file(${opt:variables}):apiDomain}
 
-  iamRoleStatements: 
+  iamRoleStatements:
     - Effect: Allow
       Action: # Gives permission to create the necessary ENIs for execution in VPC
         - ec2:CreateNetworkInterface
@@ -45,16 +47,16 @@ provider:
       Resource: "*"
     - Effect: Allow
       Action:
-        - acm:ListCertificates 
-        - apigateway:GET                   
-        - apigateway:DELETE                  
-        - apigateway:POST                    
+        - acm:ListCertificates
+        - apigateway:GET
+        - apigateway:DELETE
+        - apigateway:POST
         - apigateway:PATCH
-        - apigateway:PUT                    
-        - cloudfront:UpdateDistribution       
-        - route53:ListHostedZones              
-        - route53:GetHostedZone               
-        - route53:ListResourceRecordSets      
+        - apigateway:PUT
+        - cloudfront:UpdateDistribution
+        - route53:ListHostedZones
+        - route53:GetHostedZone
+        - route53:ListResourceRecordSets
       Resource: "*"
 
 functions:
@@ -99,7 +101,7 @@ resources:
         ResponseType: DEFAULT_4XX
         RestApiId:
           Ref: 'ApiGatewayRestApi'
-  
+
 plugins:
   - serverless-webpack
   - serverless-aws-documentation
@@ -111,9 +113,9 @@ package:
   excludeDevDependencies: true
 
 custom:
-  webpack: 
+  webpack:
     webpackConfig: ./webpack/${file(${opt:variables}):webpackConfigurationFile}
-    includeModules: true   
+    includeModules: true
     packager: 'npm'
   customDomain:
     domainName: direct-deposits.${file(${opt:variables}):domain}

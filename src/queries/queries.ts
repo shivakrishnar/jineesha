@@ -12,5 +12,6 @@ export const Queries = {
   directDepositUpdate: fs.readFileSync(path.join(__dirname, 'direct-deposits/updateDirectDeposit.sql')).toString(),
   checkForDuplicateBankAccounts: fs.readFileSync(path.join(__dirname, 'direct-deposits/checkForDuplicateBankAccounts.sql')).toString(),
   checkForDuplicateRemainderOfPay: fs.readFileSync(path.join(__dirname, 'direct-deposits/checkForDuplicateRemainderOfPay.sql')).toString(),
-  checkThatResourceExists: fs.readFileSync(path.join(__dirname, 'direct-deposits/checkThatResourceExists.sql')).toString(),
+  getEmployeeDirectDepositById: fs.readFileSync(path.join(__dirname, 'direct-deposits/getEmployeeDirectDepositById.sql')).toString(),
+  getEvoData: fs.readFileSync(path.join(__dirname, 'direct-deposits/getEvoData.sql')).toString(),
 };

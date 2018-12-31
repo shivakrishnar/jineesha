@@ -1,4 +1,6 @@
 import * as configService from '../../config.service';
+import * as payrollService from '../../remote-services/payroll.service';
+import * as ssoService from '../../remote-services/sso.service';
 import * as utilService from '../../util.service';
 import * as directDepositDao from './direct-deposit.dao';
 import * as directDepositService from './direct-deposit.service';
@@ -27,6 +29,22 @@ import * as mockData from './mock-data';
     "username": "user",
     "password": "password"
   }`;
+});
+
+(payrollService as any).getEvolutionEarningAndDeduction = jest.fn((params: any) => {
+  return {};
+});
+
+(payrollService as any).updateEvolutionEarningAndDeduction = jest.fn((params: any) => {
+  return {};
+});
+
+(ssoService as any).getAccessToken = jest.fn((params: any) => {
+  return {};
+});
+
+(ssoService as any).getTenantById = jest.fn((params: any) => {
+  return {};
 });
 
 (directDepositDao as any).createConnectionPool = jest.fn((params: any) => {
@@ -109,13 +127,13 @@ describe('directDepositService.update', () => {
     (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
       if (query.name === 'CheckForDuplicateRemainderOfPay' || query.name === 'DirectDepositUpdate') {
         return Promise.resolve(mockData.emptyResponseObject);
-      } else if (query.name === 'CheckThatResourceExists') {
+      } else if (query.name === 'GetDirectDepositById') {
         return Promise.resolve(mockData.putResponseObject);
       } else {
         return Promise.resolve(mockData.putResponseObject);
       }
     });
-    return directDepositService.update(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.putObject), mockData.directDepositId).then((directDeposit) => {
+    return directDepositService.update(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.putObject), mockData.directDepositId, mockData.accessToken, mockData.payrollApiCredentials).then((directDeposit) => {
       expect(directDeposit).toBeInstanceOf(DirectDeposit);
       expect(directDeposit.bankAccount).toMatchObject(new BankAccount());
       expect(directDeposit).toEqual(mockData.putExpectedObjects[0]);
@@ -123,7 +141,7 @@ describe('directDepositService.update', () => {
   });
 
   test('returns a 400 when the supplied id is not an integer', () => {
-    return directDepositService.update(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.putObject), mockData.directDepositIdWithCharacter).catch((error) => {
+    return directDepositService.update(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.putObject), mockData.directDepositIdWithCharacter, mockData.accessToken, mockData.payrollApiCredentials).catch((error) => {
       expect(error).toBeInstanceOf(ErrorMessage);
       expect(error.statusCode).toEqual(400);
       expect(error.code).toEqual(30);
@@ -134,7 +152,7 @@ describe('directDepositService.update', () => {
   });
 
   test('returns a 400 when the supplied employeeId is not an integer', () => {
-    return directDepositService.update(mockData.employeeIdWithCharacter, mockData.tenantId, new DirectDeposit(mockData.putObject), mockData.directDepositId).catch((error) => {
+    return directDepositService.update(mockData.employeeIdWithCharacter, mockData.tenantId, new DirectDeposit(mockData.putObject), mockData.directDepositId, mockData.accessToken, mockData.payrollApiCredentials).catch((error) => {
       expect(error).toBeInstanceOf(ErrorMessage);
       expect(error.statusCode).toEqual(400);
       expect(error.code).toEqual(30);
@@ -146,13 +164,13 @@ describe('directDepositService.update', () => {
 
   test('returns a 404 when the requested resource does not exist', () => {
     (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
-      if (query.name === 'CheckForDuplicateRemainderOfPay' || query.name === 'CheckThatResourceExists') {
+      if (query.name === 'CheckForDuplicateRemainderOfPay' || query.name === 'GetDirectDepositById') {
         return Promise.resolve(mockData.emptyResponseObject);
       } else {
         return Promise.resolve(mockData.notUpdatedResponseObject);
       }
     });
-    return directDepositService.update(mockData.employeeId, mockData.tenantId, new DirectDeposit(), mockData.directDepositId).catch((error) => {
+    return directDepositService.update(mockData.employeeId, mockData.tenantId, new DirectDeposit(), mockData.directDepositId, mockData.accessToken, mockData.payrollApiCredentials).catch((error) => {
       expect(error).toBeInstanceOf(ErrorMessage);
       expect(error.statusCode).toEqual(404);
       expect(error.code).toEqual(50);
@@ -166,7 +184,7 @@ describe('directDepositService.update', () => {
     (directDepositDao as any).executeQuery = jest.fn(() => {
       return Promise.resolve(mockData.duplicateRemainderResponseObject);
     });
-    return directDepositService.update(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.balanceRemainderPatchObject), mockData.directDepositId).catch((error: any) => {
+    return directDepositService.update(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.balanceRemainderPatchObject), mockData.directDepositId, mockData.accessToken, mockData.payrollApiCredentials).catch((error: any) => {
       expect(error).toBeInstanceOf(ErrorMessage);
       expect(error.statusCode).toEqual(409);
       expect(error.code).toEqual(40);

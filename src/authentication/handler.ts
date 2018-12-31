@@ -6,6 +6,7 @@ import * as  configService from '../config.service';
 import * as errorService from '../errors/error.service';
 import * as utilService from '../util.service';
 
+import { IPayrollApiCredentials } from '../models/IPayrollApiCredentials';
 import { SecurityContext } from './securityContext';
 
 /**
@@ -17,7 +18,7 @@ export async function tokenVerifier(event: APIGatewayEvent, context: Context, ca
   console.info('authentication.tokenVerifier');
 
   try {
-    const apiSecret = await utilService.getSecret(configService.getApiSecretId());
+    const apiSecret = JSON.parse(await utilService.getSecret(configService.getApiSecretId())).apiSecret;
     const policy = await buildPolicy(event, apiSecret);
     callback(undefined, policy);
   } catch (error) {
@@ -38,8 +39,9 @@ async function buildPolicy(event: any, secret: string): Promise<any> {
 
   const decodedToken: any = jwt.decode(accessToken);
 
-  const { account, scope} = decodedToken;
-  const securityContext = new SecurityContext(account, scope, accessToken);
+  const { account, scope } = decodedToken;
+  const payrollApiCredentials: IPayrollApiCredentials = JSON.parse(await utilService.getSecret(configService.getPayrollApiCredentials()));
+  const securityContext = new SecurityContext(account, scope, accessToken, payrollApiCredentials);
 
   const tmp = event.methodArn.split(':');
   const region = tmp[3];
