@@ -7,11 +7,13 @@ import { ObjectSchema } from 'yup';
 import * as configService from './config.service';
 import * as errorService from './errors/error.service';
 
-import { APIGatewayEvent, Context, ProxyCallback, ProxyResult } from 'aws-lambda';
+import { APIGatewayEvent, Context, ProxyCallback, ProxyResult, ScheduledEvent } from 'aws-lambda';
 import { DirectDeposit } from './api/direct-deposits/directDeposit';
 import { SecurityContext } from './authentication/securityContext';
 import { ErrorMessage } from './errors/errorMessage';
 import { Headers } from './models/headers';
+
+export type ApiInvocationEvent = APIGatewayEvent | ScheduledEvent;
 
 /**
  * Parse a JSON string into an object.
@@ -73,11 +75,18 @@ function isHttpResponse<T>(response: any): response is IHttpResponse<T> {
  */
 export function gatewayEventHandler<T>(
     delegate: (gatewayEventInput: IGatewayEventInput) => Promise<T | IHttpResponse<T>>,
-): (event: APIGatewayEvent, context: Context, callback: ProxyCallback) => void {
-    return (event: APIGatewayEvent, context: Context, callback: ProxyCallback): void => {
+): (event: ApiInvocationEvent, context: Context, callback: ProxyCallback) => void {
+    return (event: ApiInvocationEvent, context: Context, callback: ProxyCallback): void => {
         // Below we are intentionally invoking an IIFE because the code inside is async, but the Lambda
         // handler signature is a void function. The try/catch ensures that the callback is always invoked,
         // so we can safely discard the returned Promise<void>.
+
+        if (isLambdaWarmupInvocation(event)) {
+            console.log('warm up invocation');
+            return;
+        }
+
+        event = event as APIGatewayEvent;
 
         (async () => {
             try {
@@ -313,4 +322,13 @@ export function hasAllKeysDefined(object: any): boolean {
         return true;
     }
     return false;
+}
+
+/**
+ * Determines if an event invocation is purely for warm-up purposes
+ * @param { ApiInvocationEvent} event: The lambda invocation event
+ * @returns {boolean}: True, if for warm-up purposes; otherwise, false.
+ */
+export function isLambdaWarmupInvocation(event: ApiInvocationEvent): event is ScheduledEvent {
+    return (event as ScheduledEvent).source === 'serverless-plugin-warmup';
 }

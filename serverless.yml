@@ -58,6 +58,10 @@ provider:
         - route53:GetHostedZone
         - route53:ListResourceRecordSets
       Resource: "*"
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+      Resource: "*"
 
 functions:
   listDirectDeposits:
@@ -86,6 +90,7 @@ functions:
             cors: true
   tokenVerifier:
     handler: src/authentication/handler.tokenVerifier
+    warmup: false   # Implicitly invoked by calls to other lambdas
 
 resources:
   Outputs:
@@ -106,6 +111,7 @@ plugins:
   - serverless-webpack
   - serverless-aws-documentation
   - serverless-cloudformation-resource-counter
+  - serverless-plugin-warmup
   - serverless-domain-manager
 
 package:
@@ -113,6 +119,10 @@ package:
   excludeDevDependencies: true
 
 custom:
+  warmup:
+    schedule: 'cron(0/5 * * * ? *)'    # Run every 5 minutes
+    default:
+        - production
   webpack:
     webpackConfig: ./webpack/${file(${opt:variables}):webpackConfigurationFile}
     includeModules: true
