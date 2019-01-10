@@ -8,17 +8,17 @@ import { ErrorMessage } from './errorMessage';
  * @param {number} code
  */
 export function getErrorResponse(code: number): ErrorMessage {
-  return findErrorMessage(code);
+    return findErrorMessage(code);
 }
 
 export function notAuthenticated(): ErrorMessage {
-  return findErrorMessage(10);
+    return findErrorMessage(10);
 }
 
 export function notAuthorized(role: string): ErrorMessage {
-  const errorMessage = findErrorMessage(20);
-  errorMessage.setDeveloperMessage(`The principal does not have the required role (${role}).`);
-  return errorMessage;
+    const errorMessage = findErrorMessage(20);
+    errorMessage.setDeveloperMessage(`The principal does not have the required role (${role}).`);
+    return errorMessage;
 }
 
 /**
@@ -29,19 +29,19 @@ export function notAuthorized(role: string): ErrorMessage {
  * @param {number} code
  */
 function findErrorMessage(code: number): ErrorMessage {
-  let message = errorMessages().find((d) => {
-    return d.code === code;
-  });
+    let message = errorMessages().find((d) => {
+        return d.code === code;
+    });
 
-  if (message === undefined) {
-    message = findErrorMessage(0);
-  }
+    if (message === undefined) {
+        message = findErrorMessage(0);
+    }
 
-  return new ErrorMessage(message as ErrorMessage);
+    return new ErrorMessage(message as ErrorMessage);
 }
 
 function errorMessages(): ErrorMessage[] {
-  return JSON.parse(`[
+    return JSON.parse(`[
     {
       "statusCode": 500,
       "code": 0,

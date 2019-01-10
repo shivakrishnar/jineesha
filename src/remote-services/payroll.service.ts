@@ -8,34 +8,29 @@ const baseUrl = `${configService.getApiDomain()}/v3/api/bureaus`;
 export async function getEvolutionEarningAndDeduction(tenantName: string, evolutionKeys: IEvolutionKey, token: string): Promise<any> {
     console.info('payrollService.getEvolutionEarningAndDeduction');
 
-    const {
-        clientId,
-        companyId,
-        employeeId,
-        earningsAndDeductionsId
-    } = evolutionKeys;
+    const { clientId, companyId, employeeId, earningsAndDeductionsId } = evolutionKeys;
 
     const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}/eds/${earningsAndDeductionsId}`;
     try {
         return await request.get({
             url: apiUrl,
             headers: { Authorization: `Bearer ${token}` },
-            json: true
+            json: true,
         });
     } catch (e) {
         console.log(e);
     }
 }
 
-export async function updateEvolutionEarningAndDeduction(tenantName: string, evolutionKeys: IEvolutionKey, token: string, requestBody: any): Promise<any> {
+export async function updateEvolutionEarningAndDeduction(
+    tenantName: string,
+    evolutionKeys: IEvolutionKey,
+    token: string,
+    requestBody: any,
+): Promise<any> {
     console.info('payrollService.updateEvolutionEarningAndDeduction');
 
-    const {
-        clientId,
-        companyId,
-        employeeId,
-        earningsAndDeductionsId
-    } = evolutionKeys;
+    const { clientId, companyId, employeeId, earningsAndDeductionsId } = evolutionKeys;
 
     const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}/eds/${earningsAndDeductionsId}`;
     try {
@@ -43,7 +38,7 @@ export async function updateEvolutionEarningAndDeduction(tenantName: string, evo
             url: apiUrl,
             headers: { Authorization: `Bearer ${token}` },
             body: requestBody,
-            json: true
+            json: true,
         });
     } catch (e) {
         console.log(e);

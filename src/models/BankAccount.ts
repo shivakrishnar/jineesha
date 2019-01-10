@@ -8,12 +8,11 @@
  * @author Mojo Jojo
  */
 export class BankAccount {
+    routingNumber: string;
+    accountNumber: string;
+    designation: string;
 
-  routingNumber: string;
-  accountNumber: string;
-  designation: string;
-
-  public constructor(init?: Partial<BankAccount>) {
-    Object.assign(this, init);
-  }
+    public constructor(init?: Partial<BankAccount>) {
+        Object.assign(this, init);
+    }
 }
