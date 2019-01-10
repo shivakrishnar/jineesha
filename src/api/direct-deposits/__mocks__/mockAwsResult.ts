@@ -4,31 +4,31 @@
 
 export enum MockAwsResultPromiseResolution {
     RESOLVED,
-    REJECTED
+    REJECTED,
 }
-  
+
 export class MockAwsResult {
-  result: any;
-  state: MockAwsResultPromiseResolution;
+    result: any;
+    state: MockAwsResultPromiseResolution;
 
-  constructor(state: MockAwsResultPromiseResolution, result: any) {
-    this.result = result;
-    this.state = state;
-  }
-
-  promise(): Promise<any> {
-    switch (this.state) {
-      case MockAwsResultPromiseResolution.REJECTED:
-        return Promise.reject(this.result);
-
-      case MockAwsResultPromiseResolution.RESOLVED:
-        return Promise.resolve(this.result);
-
-      default:
-        return Promise.reject({
-          message: 'Unknown promise state',
-          state: this.state
-        });
+    constructor(state: MockAwsResultPromiseResolution, result: any) {
+        this.result = result;
+        this.state = state;
     }
-  }
+
+    promise(): Promise<any> {
+        switch (this.state) {
+            case MockAwsResultPromiseResolution.REJECTED:
+                return Promise.reject(this.result);
+
+            case MockAwsResultPromiseResolution.RESOLVED:
+                return Promise.resolve(this.result);
+
+            default:
+                return Promise.reject({
+                    message: 'Unknown promise state',
+                    state: this.state,
+                });
+        }
+    }
 }

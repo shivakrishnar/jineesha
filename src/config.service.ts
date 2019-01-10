@@ -1,4 +1,3 @@
-
 export const getAwsRegion = () => process.env.awsRegion;
 
 export const getApiDomain = () => process.env.apiDomain;

@@ -27,42 +27,41 @@ import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
  * @returns {Promise<DiectDeposits>}: Promise of an array of direct deposits
  */
 export async function list(employeeId: string, tenantId: string): Promise<DirectDeposits> {
-  console.info('directDepositService.list');
+    console.info('directDepositService.list');
 
-  // employeeId value must be integral
-  if (Number.isNaN(Number(employeeId))) {
-    const errorMessage = `${employeeId} is not a valid number`;
-    throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
-  }
+    // employeeId value must be integral
+    if (Number.isNaN(Number(employeeId))) {
+        const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
 
-  let pool: ConnectionPool;
+    let pool: ConnectionPool;
 
-  try {
-    const connectionString = dbConnections.findConnectionString(tenantId);
-    const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
+    try {
+        const connectionString = dbConnections.findConnectionString(tenantId);
+        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
 
-    pool = await directDepositDao.createConnectionPool(
-        rdsCredentials.username,
-        rdsCredentials.password,
-        connectionString.rdsEndpoint,
-        connectionString.databaseName,
-    );
+        pool = await directDepositDao.createConnectionPool(
+            rdsCredentials.username,
+            rdsCredentials.password,
+            connectionString.rdsEndpoint,
+            connectionString.databaseName,
+        );
 
-    const query = new ParameterizedQuery('DirectDepositListAll', Queries.directDepositList);
-    query.setParameter('@employeeId', employeeId);
+        const query = new ParameterizedQuery('DirectDepositListAll', Queries.directDepositList);
+        query.setParameter('@employeeId', employeeId);
 
-    const resultSet = await getResultSet(pool, query);
+        const resultSet = await getResultSet(pool, query);
 
-    return new DirectDeposits(resultSet);
-
-  } catch (error) {
-      console.error(error);
-      throw errorService.getErrorResponse(0);
-  } finally {
-      if (pool && pool.connected) {
-          await pool.close();
-      }
-  }
+        return new DirectDeposits(resultSet);
+    } catch (error) {
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    } finally {
+        if (pool && pool.connected) {
+            await pool.close();
+        }
+    }
 }
 
 /**
@@ -72,80 +71,76 @@ export async function list(employeeId: string, tenantId: string): Promise<Direct
  * @returns {Promise<DiectDeposit>}: Promise of a direct deposits
  */
 export async function create(employeeId: string, tenantId: string, requestBody: DirectDeposit): Promise<DirectDeposit> {
-  console.info('directDepositService.create');
+    console.info('directDepositService.create');
 
-  const {
-      amount,
-      amountType,
-      bankAccount: {
-          routingNumber,
-          accountNumber,
-          designation
-      }
-  } = requestBody;
+    const {
+        amount,
+        amountType,
+        bankAccount: { routingNumber, accountNumber, designation },
+    } = requestBody;
 
-  // employeeId value must be integral
-  if (Number.isNaN(Number(employeeId))) {
-    const errorMessage = `${employeeId} is not a valid number`;
-    throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
-  }
-
-  let pool: ConnectionPool;
-
-  try {
-    const connectionString = dbConnections.findConnectionString(tenantId);
-    const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-    pool = await directDepositDao.createConnectionPool(
-        rdsCredentials.username,
-        rdsCredentials.password,
-        connectionString.rdsEndpoint,
-        connectionString.databaseName,
-    );
-
-    const bankAccountQuery = await getDuplicateBankAccountQuery(routingNumber, accountNumber, designation);
-    let duplicatesQuery;
-    if (amountType === 'Balance Remainder') {
-        const remainderOfPayQuery = await getDuplicateRemainderOfPayQuery(employeeId);
-        duplicatesQuery = bankAccountQuery.union(remainderOfPayQuery);
-    }
-    await executeDuplicatesQuery(pool, duplicatesQuery || bankAccountQuery);
-
-    const createQuery = new ParameterizedQuery('DirectDepositCreate', Queries.directDepositCreate);
-    // Truncate the amount field by removing excess decimal places. This will not round the value.
-    const truncatedAmount = (parseInt('' + (amount * 100), 10) / 100) || 0;
-    createQuery.setParameter('@employeeId', employeeId);
-    createQuery.setParameter('@routingNumber', routingNumber);
-    createQuery.setParameter('@accountNumber', accountNumber);
-    createQuery.setParameter('@amountType', amountType);
-    createQuery.setParameter('@amount', truncatedAmount);
-    // TODO: MJ-1177: Determine the status based on the role of the user.
-    // Right now, only employees are using this endpoint so the status will always be Pending.
-    createQuery.setParameter('@status', 'Pending');
-    createQuery.setParameter('@designation', designation);
-
-    const createResult: IResult<any> = await directDepositDao.executeQuery(pool.transaction(), createQuery);
-    const createdId: number = createResult.recordset[0].ID;
-
-    let resultSet: DirectDeposit[] = [];
-    if (createdId) {
-        const getQuery = new ParameterizedQuery('GetDirectDeposit', Queries.getDirectDeposit);
-        getQuery.setParameter('@directDepositId', createdId);
-        resultSet = await getResultSet(pool, getQuery);
+    // employeeId value must be integral
+    if (Number.isNaN(Number(employeeId))) {
+        const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    return new DirectDeposit(resultSet[0]);
-  } catch (error) {
-      console.error(error);
-      if (error instanceof ErrorMessage) {
-          throw error;
-      }
-      throw errorService.getErrorResponse(0);
-  } finally {
-      if (pool && pool.connected) {
-          await pool.close();
-      }
-  }
+    let pool: ConnectionPool;
+
+    try {
+        const connectionString = dbConnections.findConnectionString(tenantId);
+        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
+
+        pool = await directDepositDao.createConnectionPool(
+            rdsCredentials.username,
+            rdsCredentials.password,
+            connectionString.rdsEndpoint,
+            connectionString.databaseName,
+        );
+
+        const bankAccountQuery = await getDuplicateBankAccountQuery(routingNumber, accountNumber, designation);
+        let duplicatesQuery;
+        if (amountType === 'Balance Remainder') {
+            const remainderOfPayQuery = await getDuplicateRemainderOfPayQuery(employeeId);
+            duplicatesQuery = bankAccountQuery.union(remainderOfPayQuery);
+        }
+        await executeDuplicatesQuery(pool, duplicatesQuery || bankAccountQuery);
+
+        const createQuery = new ParameterizedQuery('DirectDepositCreate', Queries.directDepositCreate);
+        // Truncate the amount field by removing excess decimal places. This will not round the value.
+        const truncatedAmount = parseInt('' + amount * 100, 10) / 100 || 0;
+        createQuery.setParameter('@employeeId', employeeId);
+        createQuery.setParameter('@routingNumber', routingNumber);
+        createQuery.setParameter('@accountNumber', accountNumber);
+        createQuery.setParameter('@amountType', amountType);
+        createQuery.setParameter('@amount', truncatedAmount);
+        // TODO: MJ-1177: Determine the status based on the role of the user.
+        // Right now, only employees are using this endpoint so the status will always be Pending.
+        createQuery.setParameter('@status', 'Pending');
+        createQuery.setParameter('@designation', designation);
+
+        const createResult: IResult<any> = await directDepositDao.executeQuery(pool.transaction(), createQuery);
+        const createdId: number = createResult.recordset[0].ID;
+
+        let resultSet: DirectDeposit[] = [];
+        if (createdId) {
+            const getQuery = new ParameterizedQuery('GetDirectDeposit', Queries.getDirectDeposit);
+            getQuery.setParameter('@directDepositId', createdId);
+            resultSet = await getResultSet(pool, getQuery);
+        }
+
+        return new DirectDeposit(resultSet[0]);
+    } catch (error) {
+        console.error(error);
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        throw errorService.getErrorResponse(0);
+    } finally {
+        if (pool && pool.connected) {
+            await pool.close();
+        }
+    }
 }
 
 /**
@@ -156,71 +151,74 @@ export async function create(employeeId: string, tenantId: string, requestBody: 
  * @param {string} id: The unique identifier of the direct deposit resource to update.
  * @returns {Promise<DiectDeposit>}: Promise of a direct deposit
  */
-export async function update(employeeId: string, tenantId: string, requestBody: DirectDeposit, id: string, accessToken: string, payrollApiCredentials: IPayrollApiCredentials): Promise<DirectDeposit> {
-  console.info('directDepositService.update');
+export async function update(
+    employeeId: string,
+    tenantId: string,
+    requestBody: DirectDeposit,
+    id: string,
+    accessToken: string,
+    payrollApiCredentials: IPayrollApiCredentials,
+): Promise<DirectDeposit> {
+    console.info('directDepositService.update');
 
-  const {
-      amount,
-      amountType,
-  } = requestBody;
+    const { amount, amountType } = requestBody;
 
-  // id and employeeId value must be integral
-  if (Number.isNaN(Number(id))) {
-    const errorMessage = `${id} is not a valid number`;
-    throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
-  }
-  if (Number.isNaN(Number(employeeId))) {
-    const errorMessage = `${employeeId} is not a valid number`;
-    throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
-  }
-
-  let pool: ConnectionPool;
-
-  try {
-    const connectionString = dbConnections.findConnectionString(tenantId);
-    const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-    pool = await directDepositDao.createConnectionPool(
-        rdsCredentials.username,
-        rdsCredentials.password,
-        connectionString.rdsEndpoint,
-        connectionString.databaseName,
-    );
-
-    if (amountType === 'Balance Remainder') {
-        const remainderOfPayQuery = await getDuplicateRemainderOfPayQuery(employeeId);
-        await executeDuplicatesQuery(pool, remainderOfPayQuery);
+    // id and employeeId value must be integral
+    if (Number.isNaN(Number(id))) {
+        const errorMessage = `${id} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+    if (Number.isNaN(Number(employeeId))) {
+        const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    const directDeposits: DirectDeposit[] = await getEmployeeDirectDepositById(pool, id, employeeId);
-    if (directDeposits.length === 0) {
-        const errorMessage = `Resource with id ${id} does not exist.`;
-        throw errorService.getErrorResponse(50).setDeveloperMessage(errorMessage);
-    }
+    let pool: ConnectionPool;
 
-    const directDeposit = directDeposits[0];
+    try {
+        const connectionString = dbConnections.findConnectionString(tenantId);
+        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
 
-    if (directDeposit.status === 'Approved') {
-        const evolutionKeys: IEvolutionKey = await getEvolutionKeys(pool, directDeposit.id);
-        if (!utilService.hasAllKeysDefined(evolutionKeys)) {
-            throw errorService.getErrorResponse(0);
+        pool = await directDepositDao.createConnectionPool(
+            rdsCredentials.username,
+            rdsCredentials.password,
+            connectionString.rdsEndpoint,
+            connectionString.databaseName,
+        );
+
+        if (amountType === 'Balance Remainder') {
+            const remainderOfPayQuery = await getDuplicateRemainderOfPayQuery(employeeId);
+            await executeDuplicatesQuery(pool, remainderOfPayQuery);
         }
-        await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, amount, amountType);
+
+        const directDeposits: DirectDeposit[] = await getEmployeeDirectDepositById(pool, id, employeeId);
+        if (directDeposits.length === 0) {
+            const errorMessage = `Resource with id ${id} does not exist.`;
+            throw errorService.getErrorResponse(50).setDeveloperMessage(errorMessage);
+        }
+
+        const directDeposit = directDeposits[0];
+
+        if (directDeposit.status === 'Approved') {
+            const evolutionKeys: IEvolutionKey = await getEvolutionKeys(pool, directDeposit.id);
+            if (!utilService.hasAllKeysDefined(evolutionKeys)) {
+                throw errorService.getErrorResponse(0);
+            }
+            await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, amount, amountType);
+        }
+
+        return await updateDirectDeposit(pool, id, amount, amountType);
+    } catch (error) {
+        console.error(error);
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        throw errorService.getErrorResponse(0);
+    } finally {
+        if (pool && pool.connected) {
+            await pool.close();
+        }
     }
-
-    return await updateDirectDeposit(pool, id, amount, amountType);
-
-  } catch (error) {
-      console.error(error);
-      if (error instanceof ErrorMessage) {
-          throw error;
-      }
-      throw errorService.getErrorResponse(0);
-  } finally {
-      if (pool && pool.connected) {
-          await pool.close();
-      }
-  }
 }
 
 /**
@@ -229,11 +227,16 @@ export async function update(employeeId: string, tenantId: string, requestBody: 
  * @param {number} amount: The direct deposit amount
  * @param {string} amountType: The type of amount for the direct deposit.
  */
-async function updateDirectDeposit(pool: ConnectionPool, directDepositId: string, amount: number, amountType: string): Promise<DirectDeposit> {
+async function updateDirectDeposit(
+    pool: ConnectionPool,
+    directDepositId: string,
+    amount: number,
+    amountType: string,
+): Promise<DirectDeposit> {
     const updateQuery = new ParameterizedQuery('DirectDepositUpdate', Queries.directDepositUpdate);
 
     // Truncate the amount field by removing excess decimal places. This will not round the value.
-    const truncatedAmount = (parseInt('' + (amount * 100), 10) / 100) || 0;
+    const truncatedAmount = parseInt('' + amount * 100, 10) / 100 || 0;
     updateQuery.setParameter('@id', directDepositId);
     updateQuery.setParameter('@amountType', amountType);
     updateQuery.setParameter('@amount', truncatedAmount);
@@ -310,7 +313,11 @@ async function executeDuplicatesQuery(pool: ConnectionPool, query: Query): Promi
     }
 }
 
-async function getDuplicateBankAccountQuery(routingNumber: string, accountNumber: string, designation: string): Promise<ParameterizedQuery> {
+async function getDuplicateBankAccountQuery(
+    routingNumber: string,
+    accountNumber: string,
+    designation: string,
+): Promise<ParameterizedQuery> {
     const bankAccountsQuery = new ParameterizedQuery('CheckForDuplicateBankAccounts', Queries.checkForDuplicateBankAccounts);
     bankAccountsQuery.setParameter('@routingNumber', routingNumber);
     bankAccountsQuery.setParameter('@accountNumber', accountNumber);
@@ -339,17 +346,28 @@ async function getDuplicateRemainderOfPayQuery(employeeId: string): Promise<Para
  * @param {number} amount: The amount tied to the direct deposit.
  * @param {string} amountType: The type of amount.
  */
-async function updateEvolutionDirectDeposit(hrAccessToken: string, tenantId: string, evolutionKeys: IEvolutionKey, payrollApiCredentials: IPayrollApiCredentials, amount: number, amountType: string): Promise<void> {
+async function updateEvolutionDirectDeposit(
+    hrAccessToken: string,
+    tenantId: string,
+    evolutionKeys: IEvolutionKey,
+    payrollApiCredentials: IPayrollApiCredentials,
+    amount: number,
+    amountType: string,
+): Promise<void> {
     const decodedToken: any = jwt.decode(hrAccessToken);
     const ssoToken = await utilService.getSSOToken(tenantId, decodedToken.applicationId);
-    const payrollApiAccessToken = await ssoService.getAccessToken(tenantId, ssoToken, payrollApiCredentials.evoApiUsername, payrollApiCredentials.evoApiPassword);
+    const payrollApiAccessToken = await ssoService.getAccessToken(
+        tenantId,
+        ssoToken,
+        payrollApiCredentials.evoApiUsername,
+        payrollApiCredentials.evoApiPassword,
+    );
     const tenantObject = await ssoService.getTenantById(tenantId, payrollApiAccessToken);
     const tenantName = tenantObject.name;
 
     let ed = await payrollService.getEvolutionEarningAndDeduction(tenantName, evolutionKeys, payrollApiAccessToken);
     ed = applyDirectDepositBusinessRules(ed, amount, amountType);
     await payrollService.updateEvolutionEarningAndDeduction(tenantName, evolutionKeys, payrollApiAccessToken, ed);
-
 }
 
 /**
@@ -385,11 +403,11 @@ function applyDirectDepositBusinessRules(ed: any, amount: number, amountType: st
     switch (amountType) {
         // tslint:disable no-null-keyword
         case 'Balance Remainder':
-              ed.deductWholeCheck = true;
-              ed.calculation.method = 'None';
-              ed.calculation.amount = null;
-              ed.calculation.rate = null;
-              break;
+            ed.deductWholeCheck = true;
+            ed.calculation.method = 'None';
+            ed.calculation.amount = null;
+            ed.calculation.rate = null;
+            break;
 
         case 'Flat':
             ed.deductWholeCheck = false;
@@ -406,23 +424,23 @@ function applyDirectDepositBusinessRules(ed: any, amount: number, amountType: st
             ed.calculation.rate = amount;
             break;
 
-        default:  // added per TS lint rules
+        default: // added per TS lint rules
     }
 
-     // Default rules applied:
-     ed.deductionToZero = true;
-     ed.isEnabled = true;
-     ed.isIgnoredWhenAlone = false;
-     ed.applyToCurrentPayroll = false;
-     ed.monthNumber = 0;
-     ed.payrollsToDeduct = 'All';
-     ed.useSystemPensionLimit = false;
-     ed.applyStateTaxCredit = true;
-     ed.garnishment.minimumWageMultiplier = null;
-     ed.garnishment.maximumPercentage = null;
-     ed.target.action = 'None';
+    // Default rules applied:
+    ed.deductionToZero = true;
+    ed.isEnabled = true;
+    ed.isIgnoredWhenAlone = false;
+    ed.applyToCurrentPayroll = false;
+    ed.monthNumber = 0;
+    ed.payrollsToDeduct = 'All';
+    ed.useSystemPensionLimit = false;
+    ed.applyStateTaxCredit = true;
+    ed.garnishment.minimumWageMultiplier = null;
+    ed.garnishment.maximumPercentage = null;
+    ed.target.action = 'None';
 
-     // tslint:enable no-null-keyword
+    // tslint:enable no-null-keyword
 
-     return ed;
+    return ed;
 }

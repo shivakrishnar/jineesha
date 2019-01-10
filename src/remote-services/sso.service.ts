@@ -13,13 +13,12 @@ export async function getAccessToken(tenantId: string, token: string, username: 
             body: {
                 grant_type: 'password',
                 username,
-                password
+                password,
             },
             headers: { Authorization: `Bearer ${token}` },
-            json: true
+            json: true,
         });
         return result.access_token;
-
     } catch (e) {
         console.log(e);
     }
@@ -32,7 +31,7 @@ export async function getTenantById(tenantId: string, token: string): Promise<an
         return await request.get({
             url: apiUrl,
             headers: { Authorization: `Bearer ${token}` },
-            json: true
+            json: true,
         });
     } catch (e) {
         console.log(e);
