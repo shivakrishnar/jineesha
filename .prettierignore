@@ -1,0 +1,10 @@
+# Build directory
+dist/
+
+# NPM files
+package.json
+package-lock.json
+node_modules
+
+#Serverless
+.serverless
