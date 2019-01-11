@@ -90,6 +90,13 @@ function errorMessages(): ErrorMessage[] {
       "message": "The requested resource does not exist.",
       "developerMessage": "",
       "moreInfo": ""
+    },
+    {
+      "statusCode": 400,
+      "code": 60,
+      "message": "Invalid url parameter value",
+      "developerMessage": "",
+      "moreInfo": ""
     }
   ]`);
 }

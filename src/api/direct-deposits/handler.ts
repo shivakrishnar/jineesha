@@ -170,6 +170,7 @@ export const list = utilService.gatewayEventHandler(async ({ securityContext, ev
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, directDepositsResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
 
     const employeeId = event.pathParameters.employeeId;
 
@@ -195,6 +196,7 @@ export const create = utilService.gatewayEventHandler(async ({ securityContext, 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, directDepositsResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
     await utilService.validateRequestBody(directDepositPostSchema, requestBody);
     await utilService.validateRequestBody(bankAccountSchema, requestBody.bankAccount);
     // Validate that the request body doesn't have any extra fields
@@ -224,6 +226,7 @@ export const update = utilService.gatewayEventHandler(async ({ securityContext, 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, directDepositsResourceUriSchemaPatch);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
     await utilService.validateRequestBody(directDepositPatchSchema, requestBody);
     // await utilService.validateRequestBody(directDepositPatchSchemaAmount, requestBody);
     // Validate that the request body doesn't have any extra fields
