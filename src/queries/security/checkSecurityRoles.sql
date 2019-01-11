@@ -47,6 +47,7 @@ AccessibleResource as
 select distinct
     -- SSO information
         hrUser.ID
+    ,	hrEmp.EmployeeID
     ,   hrUser.FirstName
     ,   hrUser.LastName
     ,   IsSsoGlobalAdmin = hrUser.IsGA
@@ -72,6 +73,7 @@ select distinct
  
 from
     dbo.HRnextUser hrUser
+    inner join dbo.HRnextUserEmployee hrEmp on hrUser.ID = hrEmp.HRnextUserID
     left join SecurityRole sr on hrUser.ID = sr.UserID
     left join dbo.SecPermissionRole spr  on sr.SecurityRoleID = spr.RoleID
     left join dbo.SecPermission sp on spr.PermissionID = sp.ID

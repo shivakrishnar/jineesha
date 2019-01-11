@@ -58,11 +58,12 @@ export class SecurityContext {
     /**
      * Checks to see if the user has the appropriate security roles for the endpoint
      * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+     * @param {string} employeeId: The user's employee identifier
      * @param {string} email: The email of the user
      * @param {string} resource: The type of resource requested. Typically, this is equivalent to the name of the screen in ADHR 2.0
      * @param {string} action: The type of action requested (CanRead, CanCreate, CanDelete, CanUpdate)
      */
-    public async checkSecurityRoles(tenantId: string, email: string, resource: string, action: string): Promise<void> {
+    public async checkSecurityRoles(tenantId: string, employeeId: string, email: string, resource: string, action: string): Promise<void> {
         console.info('securityContext.checkSecurityRoles');
 
         let pool: ConnectionPool;
@@ -83,7 +84,7 @@ export class SecurityContext {
 
             const result: IResult<any> = await directDepositDao.executeQuery(pool.transaction(), query);
             const recordSet: any[] = result.recordset;
-            if (recordSet.length === 0) {
+            if (recordSet.length === 0 || recordSet[0].EmployeeID !== employeeId) {
                 throw errorService.getErrorResponse(11);
             }
 

@@ -163,16 +163,15 @@ export const list = utilService.gatewayEventHandler(async ({ securityContext, ev
     console.info('directDeposits.handler.list');
 
     const tenantId = securityContext.principal.tenantId;
+    const employeeId = event.pathParameters.employeeId;
     const email = securityContext.principal.email;
 
-    await securityContext.checkSecurityRoles(tenantId, email, 'EmployeeDirectDepositList', 'CanRead');
+    await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeDirectDepositList', 'CanRead');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, directDepositsResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
-
-    const employeeId = event.pathParameters.employeeId;
 
     const directDeposits = await directDepositService.list(employeeId, tenantId);
     if (securityContext.currentRoleLevel === ApplicationRoleLevel.Employee) {
@@ -189,9 +188,10 @@ export const create = utilService.gatewayEventHandler(async ({ securityContext, 
     console.info('directDeposits.handler.post');
 
     const tenantId = securityContext.principal.tenantId;
+    const employeeId = event.pathParameters.employeeId;
     const email = securityContext.principal.email;
 
-    await securityContext.checkSecurityRoles(tenantId, email, 'EmployeeDirectDepositList', 'CanCreate');
+    await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeDirectDepositList', 'CanCreate');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
@@ -202,8 +202,6 @@ export const create = utilService.gatewayEventHandler(async ({ securityContext, 
     // Validate that the request body doesn't have any extra fields
     utilService.checkAdditionalProperties(postValidationSchema, requestBody, 'direct deposit');
     utilService.checkAdditionalProperties(bankAccountValidationSchema, requestBody.bankAccount, 'bank account');
-
-    const employeeId = event.pathParameters.employeeId;
 
     const directDeposit = await directDepositService.create(employeeId, tenantId, requestBody);
     if (securityContext.currentRoleLevel === ApplicationRoleLevel.Employee) {
@@ -219,9 +217,10 @@ export const update = utilService.gatewayEventHandler(async ({ securityContext, 
     console.info('directDeposits.handler.patch');
 
     const tenantId = securityContext.principal.tenantId;
+    const employeeId = event.pathParameters.employeeId;
     const email = securityContext.principal.email;
 
-    await securityContext.checkSecurityRoles(tenantId, email, 'EmployeeDirectDepositList', 'CanUpdate');
+    await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeDirectDepositList', 'CanUpdate');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
@@ -232,7 +231,6 @@ export const update = utilService.gatewayEventHandler(async ({ securityContext, 
     // Validate that the request body doesn't have any extra fields
     utilService.checkAdditionalProperties(patchValidationSchema, requestBody, 'direct deposit');
 
-    const employeeId = event.pathParameters.employeeId;
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
     const id = event.pathParameters.id;
 
