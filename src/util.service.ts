@@ -196,6 +196,31 @@ export function validateAndThrow(params: { [name: string]: string }, schema: { [
 }
 
 /**
+ * Verifies a given set of integral url pathParameters are within bounds as defined here
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+ * @param pathParameters: The url path parameters
+ * @throws {ErrorMessage}: Throws a 401 error message if any parameter is out of bounds.
+ */
+export function checkBoundedIntegralValues(pathParameters: { [i: string]: string }): void {
+    const excludedParameters: string[] = ['tenantId'];
+
+    for (const parameter of Object.keys(pathParameters)) {
+        if (excludedParameters.includes(parameter)) {
+            continue;
+        }
+
+        const pathParameterValue = pathParameters[`${parameter}`];
+
+        if (!Number.isSafeInteger(Number.parseInt(pathParameterValue, 10))) {
+            throw errorService
+                .getErrorResponse(60)
+                .setDeveloperMessage(`${parameter} value: ${pathParameterValue} is out of bounds`)
+                .setMoreInfo('Value must be integral and cannot exceed 2^53 - 1');
+        }
+    }
+}
+
+/**
  * Validate an object against a schema, and throw the appropriate exception if it fails.
  * @param schema Yup schema to validate the request body against.
  * @param requestBody Request body to validate.
