@@ -23,6 +23,7 @@ provider:
     errorsTriggered: true
     pageLimitDefault: 30
     pageLimitMax: 100
+    stage: ${file(${opt:variables}):stage}
     evoHrUserTypeSuperAdmin: ${file(${opt:variables}):evoHrUserTypeSuperAdmin}
     evoHrUserTypeSBAdmin: ${file(${opt:variables}):evoHrUserTypeSBAdmin}
     evoHrGroupPayroll: ${file(${opt:variables}):evoHrGroupPayroll}
@@ -61,6 +62,10 @@ provider:
     - Effect: Allow
       Action:
         - lambda:InvokeFunction
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - rds:DescribeDBInstances
       Resource: "*"
 
 functions:

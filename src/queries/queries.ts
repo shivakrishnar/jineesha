@@ -16,4 +16,7 @@ export const Queries = {
         .toString(),
     getEmployeeDirectDepositById: fs.readFileSync(path.join(__dirname, 'direct-deposits/getEmployeeDirectDepositById.sql')).toString(),
     getEvoData: fs.readFileSync(path.join(__dirname, 'direct-deposits/getEvoData.sql')).toString(),
+
+    // Miscellaneous
+    databaseList: fs.readFileSync(path.join(__dirname, 'miscellaneous/database.sql')).toString(),
 };

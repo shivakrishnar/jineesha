@@ -10,7 +10,6 @@ import { DirectDeposits } from './directDeposits';
 
 import * as jwt from 'jsonwebtoken';
 import * as configService from '../../config.service';
-import * as dbConnections from '../../dbConnections';
 import * as errorService from '../../errors/error.service';
 import { ErrorMessage } from '../../errors/errorMessage';
 import { IQuery, Query } from '../../queries/query';
@@ -18,6 +17,7 @@ import * as payrollService from '../../remote-services/payroll.service';
 import * as ssoService from '../../remote-services/sso.service';
 import * as utilService from '../../util.service';
 
+import { ConnectionString, findConnectionString } from '../../dbConnections';
 import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
 
 /**
@@ -38,7 +38,7 @@ export async function list(employeeId: string, tenantId: string): Promise<Direct
     let pool: ConnectionPool;
 
     try {
-        const connectionString = dbConnections.findConnectionString(tenantId);
+        const connectionString: ConnectionString = await findConnectionString(tenantId);
         const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
 
         pool = await directDepositDao.createConnectionPool(
@@ -88,7 +88,7 @@ export async function create(employeeId: string, tenantId: string, requestBody: 
     let pool: ConnectionPool;
 
     try {
-        const connectionString = dbConnections.findConnectionString(tenantId);
+        const connectionString: ConnectionString = await findConnectionString(tenantId);
         const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
 
         pool = await directDepositDao.createConnectionPool(
@@ -176,7 +176,7 @@ export async function update(
     let pool: ConnectionPool;
 
     try {
-        const connectionString = dbConnections.findConnectionString(tenantId);
+        const connectionString: ConnectionString = await findConnectionString(tenantId);
         const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
 
         pool = await directDepositDao.createConnectionPool(

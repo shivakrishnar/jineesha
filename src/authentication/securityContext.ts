@@ -4,7 +4,6 @@ import { IRoleMembership } from './roleMembership';
 
 import { ConnectionPool, IResult } from 'mssql';
 import * as configService from '../config.service';
-import * as dbConnections from '../dbConnections';
 import * as errorService from '../errors/error.service';
 import { ErrorMessage } from '../errors/errorMessage';
 import { ParameterizedQuery } from '../queries/parameterizedQuery';
@@ -12,6 +11,7 @@ import { Queries } from '../queries/queries';
 import * as utilService from '../util.service';
 import { ApplicationRoleLevel } from './ApplicationRoleLevelEnum';
 
+import { ConnectionString, findConnectionString } from '../dbConnections';
 import { IPayrollApiCredentials } from '../models/IPayrollApiCredentials';
 
 /**
@@ -69,7 +69,7 @@ export class SecurityContext {
         let pool: ConnectionPool;
 
         try {
-            const connectionString = dbConnections.findConnectionString(tenantId);
+            const connectionString: ConnectionString = await findConnectionString(tenantId);
             const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
 
             pool = await directDepositDao.createConnectionPool(

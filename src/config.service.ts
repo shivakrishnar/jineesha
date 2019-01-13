@@ -23,3 +23,5 @@ export const getSecretsAwsEndpoint = () => process.env.getSecretsAwsEndpoint;
 export const getRdsCredentials = () => process.env.rdsCredentialsId;
 
 export const getPayrollApiCredentials = () => process.env.payrollApiCredentialsId;
+
+export const getStage = () => process.env.stage;
