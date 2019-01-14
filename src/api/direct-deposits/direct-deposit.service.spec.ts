@@ -1,4 +1,5 @@
 import * as configService from '../../config.service';
+import * as dbConnections from '../../dbConnections';
 import * as payrollService from '../../remote-services/payroll.service';
 import * as ssoService from '../../remote-services/sso.service';
 import * as utilService from '../../util.service';
@@ -50,6 +51,10 @@ import * as mockData from './mock-data';
 (directDepositDao as any).createConnectionPool = jest.fn((params: any) => {
     const pool = new ConnectionPool('dummyConnectionString');
     return Promise.resolve(pool);
+});
+
+(dbConnections as any).findConnectionString = jest.fn((params: any) => {
+    return Promise.resolve('');
 });
 
 describe('directDepositService.list', () => {
