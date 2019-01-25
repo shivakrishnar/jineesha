@@ -250,3 +250,59 @@ describe('directDepositService.update', () => {
             });
     });
 });
+
+describe('directDepositService.delete', () => {
+    test('returns a 400 when the supplied id is not an integer', () => {
+        return directDepositService
+            .remove(
+                mockData.employeeId,
+                mockData.tenantId,
+                mockData.directDepositIdWithCharacter,
+                mockData.accessToken,
+                mockData.payrollApiCredentials,
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.directDepositIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('returns a 400 when the supplied employeeId is not an integer', () => {
+        return directDepositService
+            .remove(
+                mockData.employeeIdWithCharacter,
+                mockData.tenantId,
+                mockData.directDepositId,
+                mockData.accessToken,
+                mockData.payrollApiCredentials,
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.employeeIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('returns a 404 when the requested resource does not exist', () => {
+        (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
+            return Promise.resolve(mockData.emptyResponseObject);
+        });
+        return directDepositService
+            .remove(mockData.employeeId, mockData.tenantId, mockData.directDepositId, mockData.accessToken, mockData.payrollApiCredentials)
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toEqual(`Resource with id ${mockData.directDepositId} does not exist.`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+});
