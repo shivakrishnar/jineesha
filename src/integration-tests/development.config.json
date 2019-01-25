@@ -1,0 +1,17 @@
+{
+    "apiDomain": "https://api.dev.evolution-software.com/api",
+    "tokenUrl": "https://api.staging.evolution-software.com",
+    "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
+    "companyId": 10,
+    "employeeId": 23313,
+    "user": {
+        "username": "employee@sharklasers.com",
+        "password": "Demo123!"
+    },
+    "secretsManager": {
+        "region": "us-east-1",
+        "endpoint": "https://secretsmanager.us-east-1.amazonaws.com",
+        "apiSecretId": "EvolutionApiSecret"
+    },
+    "applicationId": "23e69dde-2260-4def-9032-08360435e210"
+}

@@ -1,36 +1,31 @@
 {
-  "$schema": "http://json-schema.org/draft-06/schema#",
-  "title": "Direct Deposit",
-  "$id": "DirectDeposit",
-  "type": "object",
-  "properties": {
-    "id": {
-      "description": "Unique identifier of the direct deposit record. Send 0 when creating a new direct deposit.",
-      "type": "integer"
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Direct Deposit",
+    "$id": "DirectDeposit",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "Unique identifier of the direct deposit record. Send 0 when creating a new direct deposit.",
+            "type": "integer"
+        },
+        "amount": {
+            "description": "The amount of money that should be allocated to this direct deposit.",
+            "type": ["number", "null"]
+        },
+        "amountType": {
+            "description": "The unit of measurement for the amount. It can be either a flat amount or a percentage amount.",
+            "type": "string",
+            "enum": ["Flat", "Percentage", "BalanceRemainder"]
+        },
+        "status": {
+            "description": "The status of the direct deposit.",
+            "type": "string"
+        },
+        "bankAccount": {
+            "description": "The bank account associated with this direct deposit record.",
+            "type": "object",
+            "$ref": "BankAccount"
+        }
     },
-    "amount": {
-      "description": "The amount of money that should be allocated to this direct deposit.",
-      "type": "integer"
-    },
-    "amountType": {
-      "description": "The unit of measurement for the amount. It can be either a flat amount or a percentage amount.",
-      "type": "integer"
-    },
-    "status": {
-      "description": "The status of the direct deposit.",
-      "type": "string"
-    },
-    "bankAccount": {
-      "description": "The bank account associated with this direct deposit record.",
-      "type": "object",
-      "$ref": "BankAccount.json"
-    }
-  },
-  "required": [
-    "id",
-    "bankAccount",
-    "amount",
-    "amountType",
-    "status"
-  ]
+    "required": ["id", "bankAccount", "amount", "amountType", "status"]
 }

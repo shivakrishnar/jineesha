@@ -1,0 +1,34 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": " ErrorMessage Schema",
+    "$id": "ErrorMessage",
+    "type": "object",
+    "properties": {
+        "statusCode": {
+            "description": "The HTTP status code of the request.",
+            "type": "number"
+        },
+        "code": {
+            "description": "Unique internal code that represents the type of error.",
+            "type": "number"
+        },
+        "message": {
+            "description": "A human readable message that indicates what the issue was. The intent of this field is that it could be displayed to an end-user.",
+            "type": "string"
+        },
+        "developerMessage": {
+            "description": "A more technical message that indicates what issue occured.",
+            "type": "string"
+        },
+        "moreInfo": {
+            "description": "Will contain any additional information which could be useful in diagnosing the issue.",
+            "type": "string"
+        },
+        "requestId": {
+            "description": "Unique identifier of the request.",
+            "type": "string"
+        }
+    },
+    "additionalProperties": false,
+    "required": ["statusCode", "code", "message"]
+}
