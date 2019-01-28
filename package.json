@@ -10,7 +10,9 @@
     "test": "node_modules/.bin/jest",
     "lint": "node_modules/.bin/tslint -p tsconfig.json **/*.ts",
     "prettier": "prettier --write \"**/*.{js,ts,tsx,json,md}\"",
-    "tslint:check": "tslint-config-prettier-check ./tslint.json"
+    "tslint:check": "tslint-config-prettier-check ./tslint.json",
+    "test:base": "jest -c jest.integration.test.config.json",
+    "test:local": "INTEGRATION_TEST_CONFIG_FILENAME=development.config.json npm run test:base"
   },
   "husky": {
     "hooks": {

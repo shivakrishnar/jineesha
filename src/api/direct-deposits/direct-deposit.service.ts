@@ -149,7 +149,7 @@ export async function create(employeeId: string, tenantId: string, requestBody: 
  * @param {string} tenantId: The unique identifier for the tenant the employee belongs to.
  * @param {DirectDeposit} requestBody: The request object containing the data to update.
  * @param {string} id: The unique identifier of the direct deposit resource to update.
- * @returns {Promise<DiectDeposit>}: Promise of a direct deposit
+ * @returns {Promise<DirectDeposit>}: Promise of a direct deposit
  */
 export async function update(
     employeeId: string,
@@ -161,6 +161,7 @@ export async function update(
 ): Promise<DirectDeposit> {
     console.info('directDepositService.update');
 
+    const method = 'patch';
     const { amount, amountType } = requestBody;
 
     // id and employeeId value must be integral
@@ -204,10 +205,83 @@ export async function update(
             if (!utilService.hasAllKeysDefined(evolutionKeys)) {
                 throw errorService.getErrorResponse(0);
             }
-            await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, amount, amountType);
+            await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, amount, amountType, method);
         }
 
         return await updateDirectDeposit(pool, id, amount, amountType);
+    } catch (error) {
+        console.error(error);
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        throw errorService.getErrorResponse(0);
+    } finally {
+        if (pool && pool.connected) {
+            await pool.close();
+        }
+    }
+}
+
+/**
+ * Deletes a direct deposit for a specific employee within a tenant
+ * @param {string} employeeId: The unique identifier for the employee
+ * @param {string} tenantId: The unique identifier for the tenant the employee belongs to.
+ * @param {string} id: The unique identifier of the direct deposit resource to update.
+ * @param {string} accessToken: The access token for the user.
+ * @param {IPayrollApiCredentials} payrollApiCredentials: The credentials of the HR global admin.
+ */
+export async function remove(
+    employeeId: string,
+    tenantId: string,
+    id: string,
+    accessToken: string,
+    payrollApiCredentials: IPayrollApiCredentials,
+): Promise<void> {
+    console.info('directDepositService.delete');
+
+    const method = 'delete';
+
+    // id and employeeId value must be integral
+    if (Number.isNaN(Number(id))) {
+        const errorMessage = `${id} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+    if (Number.isNaN(Number(employeeId))) {
+        const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    let pool: ConnectionPool;
+
+    try {
+        const connectionString: ConnectionString = await findConnectionString(tenantId);
+        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
+
+        pool = await directDepositDao.createConnectionPool(
+            rdsCredentials.username,
+            rdsCredentials.password,
+            connectionString.rdsEndpoint,
+            connectionString.databaseName,
+        );
+
+        const directDeposits: DirectDeposit[] = await getEmployeeActiveDirectDepositById(pool, id, employeeId);
+        if (directDeposits.length === 0) {
+            const errorMessage = `Resource with id ${id} does not exist.`;
+            throw errorService.getErrorResponse(50).setDeveloperMessage(errorMessage);
+        }
+
+        const directDeposit = directDeposits[0];
+
+        if (directDeposit.status === 'Pending') {
+            await deleteDirectDeposit(pool, id);
+        } else if (directDeposit.status === 'Approved') {
+            await endDateDirectDeposit(pool, id);
+            const evolutionKeys: IEvolutionKey = await getEvolutionKeys(pool, directDeposit.id);
+            if (!utilService.hasAllKeysDefined(evolutionKeys)) {
+                throw errorService.getErrorResponse(0);
+            }
+            await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, 0, '', method);
+        }
     } catch (error) {
         console.error(error);
         if (error instanceof ErrorMessage) {
@@ -251,6 +325,30 @@ async function updateDirectDeposit(
 }
 
 /**
+ * Deletes an existing direct deposit.
+ * @param {ConnectionPool} pool: The open connection to the database.
+ * @param {string} directDepositId: The unique identifier of the direct deposit
+ */
+async function deleteDirectDeposit(pool: ConnectionPool, directDepositId: string): Promise<void> {
+    const deleteQuery = new ParameterizedQuery('DirectDepositDelete', Queries.directDepositDelete);
+    deleteQuery.setParameter('@directDepositId', directDepositId);
+
+    await directDepositDao.executeQuery(pool.transaction(), deleteQuery);
+}
+
+/**
+ * Updates the end date of an existing direct deposit
+ * @param {ConnectionPool} pool:  The open connection to the database.
+ * @param {string} directDepositId: The unique identifier of the direct deposit
+ */
+async function endDateDirectDeposit(pool: ConnectionPool, directDepositId: string): Promise<void> {
+    const endDateQuery = new ParameterizedQuery('DirectDepositDelete', Queries.updateDirectDepositEndDate);
+    endDateQuery.setParameter('@directDepositId', directDepositId);
+
+    await directDepositDao.executeQuery(pool.transaction(), endDateQuery);
+}
+
+/**
  * Executes the specified query and returns the result as a DirectDeposit
  * @param {ConnectionPool} pool: The open connection to the database.
  * @param {IQuery} query: The query to run against the database.
@@ -284,6 +382,27 @@ function getEmployeeDirectDepositById(pool: ConnectionPool, directDepositId: str
     const directDepositQuery = new ParameterizedQuery('GetDirectDepositById', Queries.getDirectDeposit);
     const employeeFilterCondition = `EmployeeID = ${employeeId}`;
     directDepositQuery.appendFilter(employeeFilterCondition);
+    directDepositQuery.setParameter('@directDepositId', directDepositId);
+    return getResultSet(pool, directDepositQuery);
+}
+
+/**
+ * Checks if a specified direct deposit exists and does not have an end date
+ * @param {ConnectionPool} pool: The open connection to the database.
+ * @param {string} directDepositId: The direct deposit identifier.
+ * @param {string} employeeId: The employee's identifier.
+ * @returns {Promise<DirectDeposit[]>}: Promise of an array of Direct Deposits
+ */
+async function getEmployeeActiveDirectDepositById(
+    pool: ConnectionPool,
+    directDepositId: string,
+    employeeId: string,
+): Promise<DirectDeposit[]> {
+    const directDepositQuery = new ParameterizedQuery('GetActiveDirectDepositById', Queries.getDirectDeposit);
+    const employeeFilterCondition = `EmployeeID = ${employeeId}`;
+    const endDateFilterCondition = 'EndDate is NULL';
+    directDepositQuery.appendFilter(employeeFilterCondition);
+    directDepositQuery.appendFilter(endDateFilterCondition);
     directDepositQuery.setParameter('@directDepositId', directDepositId);
     return getResultSet(pool, directDepositQuery);
 }
@@ -345,6 +464,7 @@ async function getDuplicateRemainderOfPayQuery(employeeId: string): Promise<Para
  * @param {IPayrollApiCredentials} payrollApiCredentials: The credentials of the HR global admin.
  * @param {number} amount: The amount tied to the direct deposit.
  * @param {string} amountType: The type of amount.
+ * @param {string} method: The method of the desired call.
  */
 async function updateEvolutionDirectDeposit(
     hrAccessToken: string,
@@ -353,6 +473,7 @@ async function updateEvolutionDirectDeposit(
     payrollApiCredentials: IPayrollApiCredentials,
     amount: number,
     amountType: string,
+    method: string,
 ): Promise<void> {
     const decodedToken: any = jwt.decode(hrAccessToken);
     const ssoToken = await utilService.getSSOToken(tenantId, decodedToken.applicationId);
@@ -366,7 +487,11 @@ async function updateEvolutionDirectDeposit(
     const tenantName = tenantObject.name;
 
     let ed = await payrollService.getEvolutionEarningAndDeduction(tenantName, evolutionKeys, payrollApiAccessToken);
-    ed = applyDirectDepositBusinessRules(ed, amount, amountType);
+    if (method === 'patch') {
+        ed = applyDirectDepositBusinessRules(ed, amount, amountType);
+    } else if (method === 'delete') {
+        ed.effectiveEndDate = new Date().toISOString();
+    }
     await payrollService.updateEvolutionEarningAndDeduction(tenantName, evolutionKeys, payrollApiAccessToken, ed);
 }
 

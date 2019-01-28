@@ -38,6 +38,6 @@ export class Query implements IQuery {
     }
 
     public appendFilter(condition: string, appendToExistingWhereClause: boolean = true): void {
-        this._query.concat(`${appendToExistingWhereClause ? ' ' : ' and '}${condition}`);
+        this._query = this._query.concat(`${appendToExistingWhereClause ? ' and ' : ' '}${condition}`);
     }
 }

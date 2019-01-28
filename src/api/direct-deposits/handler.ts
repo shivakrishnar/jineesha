@@ -142,20 +142,6 @@ const directDepositPatchSchema = Yup.object().shape({
         }),
 });
 
-// const directDepositPatchSchemaAmount = Yup.object().shape({
-//     amountType: Yup
-//         .mixed()
-//         .when('amount', {
-//             is: (amount) => amount !== undefined,
-//             then: Yup
-//                 .mixed()
-//                 .required(),
-//             otherwise: Yup.mixed(),
-//         }),
-//     amount: Yup
-//         .mixed()
-// });
-
 /**
  * Returns a listing of an employee's direct deposits.
  */
@@ -246,4 +232,29 @@ export const update = utilService.gatewayEventHandler(async ({ securityContext, 
         directDeposit.obfuscate();
     }
     return { statusCode: 200, headers: new Headers(), body: directDeposit };
+});
+
+/**
+ * Deletes a direct deposit for an employee.
+ */
+export const remove = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('directDeposits.handler.delete');
+
+    const tenantId = securityContext.principal.tenantId;
+    const employeeId = event.pathParameters.employeeId;
+    const email = securityContext.principal.email;
+
+    await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeDirectDepositList', 'CanDelete');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, directDepositsResourceUriSchemaPatch);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
+    const directDepositId = event.pathParameters.id;
+
+    await directDepositService.remove(employeeId, tenantId, directDepositId, accessToken, securityContext.payrollApiCredentials);
+
+    return { statusCode: 204, headers: new Headers() };
 });

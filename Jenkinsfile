@@ -167,8 +167,10 @@ void runWithAwsCredentials(String awsCredentialsId, String command) {
 Map deploy(String environment) {
     dir(projectName) {
         String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
-        runWithAwsCredentials(awsCredentialsId, "node_modules/.bin/serverless create_domain --variables ${environment}.serverless.variables.json")
-        runWithAwsCredentials(awsCredentialsId, "node_modules/.bin/serverless deploy --variables ${environment}.serverless.variables.json")
+        nvm(nodeVersion) {
+            runWithAwsCredentials(awsCredentialsId, "node_modules/.bin/serverless create_domain --variables ${environment}.serverless.variables.json")
+            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=2048 node_modules/.bin/serverless deploy --variables ${environment}.serverless.variables.json")
+        }
     }
 
 }

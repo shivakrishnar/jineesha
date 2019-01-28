@@ -1,15 +1,8 @@
-{  
-    "testRegex": "(/int-specs/.*|\\.(spec))\\.ts$",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx"
-    ],
-    "roots": ["<rootDir>/tests/"],
+{
     "transform": {
-      "^.+\\.js$": "babel-jest"
+        "^.+\\.tsx?$": "ts-jest"
     },
-    "globals": {
-      "NODE_ENV": "test"
-    },
-    "verbose": true
+    "testRegex": "(/int-spec/.*|\\.(int-test|int-spec))\\.(ts|tsx)$",
+    "moduleFileExtensions": ["ts", "js"],
+    "roots": ["<rootDir>/src/integration-tests/"]
 }
