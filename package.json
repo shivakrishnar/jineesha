@@ -1,6 +1,6 @@
 {
   "name": "asure.hr.services",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Builds RESTful services for Asure HR",
   "engine": {
     "node": ">=8.10.0"
