@@ -25,3 +25,11 @@ export const getRdsCredentials = () => process.env.rdsCredentialsId;
 export const getPayrollApiCredentials = () => process.env.payrollApiCredentialsId;
 
 export const getStage = () => process.env.stage;
+
+export const getFromEmailAddress = () => process.env.fromEmail;
+
+export const getSesSmtpCredentials = () => process.env.sesSmtpCredentialsId;
+
+export const getSesSmtpServerHost = () => process.env.sesSmtpServerHost;
+
+export const getSesSmtpServerPort = () => process.env.sesSmtpServerPort;

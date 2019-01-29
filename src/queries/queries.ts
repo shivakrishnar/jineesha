@@ -21,4 +21,10 @@ export const Queries = {
 
     // Miscellaneous
     databaseList: fs.readFileSync(path.join(__dirname, 'miscellaneous/database.sql')).toString(),
+
+    // Alerts
+    alertEventList: fs.readFileSync(path.join(__dirname, 'alerts/listAlertEventsByCompanyId.sql')).toString(),
+    listAlertRecipients: fs.readFileSync(path.join(__dirname, 'alerts/listDirectDepositEventRecipientEmailAddresses.sql')).toString(),
+    smtpCredentials: fs.readFileSync(path.join(__dirname, 'alerts/getSmtpCredentials.sql')).toString(),
+    directDepositMetadata: fs.readFileSync(path.join(__dirname, 'alerts/directDepositMetadata.sql')).toString(),
 };

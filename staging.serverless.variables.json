@@ -5,6 +5,9 @@
     "privateSubnetId2": "subnet-0926f569bd54e580b",
     "apiSecretId": "EvolutionApiSecret",
     "rdsCredentialsId": "RdsCredentials",
+    "sesSmtpCredentialsId": "SesSmtpCredentials",
+    "sesSmtpServerHost": "email-smtp.us-east-1.amazonaws.com",
+    "sesSmtpServerPort": "587",
     "payrollApiCredentialsId": "PayrollApiCredentials",
     "secretsAwsEndPoint": "https://secretsmanager.us-east-1.amazonaws.com",
     "webpackConfigurationFile": "pre-production.config.js",
@@ -15,5 +18,6 @@
     "evoHrGroupEmployee": "0ddee358-37c6-49b1-b587-53d38bd82424",
     "stage": "staging",
     "domain": "staging.evolution-software.com",
-    "apiDomain": "https://api.staging.evolution-software.com"
+    "apiDomain": "https://api.staging.evolution-software.com",
+    "fromEmail": "email_test+staging@asuresoftware.com"
 }
