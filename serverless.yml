@@ -19,6 +19,9 @@ provider:
     secretsAwsEndPoint: ${file(${opt:variables}):secretsAwsEndPoint}
     apiSecretId: ${file(${opt:variables}):apiSecretId}
     rdsCredentialsId: ${file(${opt:variables}):rdsCredentialsId}
+    sesSmtpCredentialsId: ${file(${opt:variables}):sesSmtpCredentialsId}
+    sesSmtpServerHost: ${file(${opt:variables}):sesSmtpServerHost}
+    sesSmtpServerPort: ${file(${opt:variables}):sesSmtpServerPort}
     payrollApiCredentialsId: ${file(${opt:variables}):payrollApiCredentialsId}
     errorsTriggered: true
     pageLimitDefault: 30
@@ -30,6 +33,7 @@ provider:
     evoHrGroupCompany: ${file(${opt:variables}):evoHrGroupCompany}
     evoHrGroupEmployee: ${file(${opt:variables}):evoHrGroupEmployee}
     apiDomain: ${file(${opt:variables}):apiDomain}
+    fromEmail: ${file(${opt:variables}):fromEmail}
 
   iamRoleStatements:
     - Effect: Allow
@@ -67,6 +71,11 @@ provider:
       Action:
         - rds:DescribeDBInstances
       Resource: "*"
+    - Effect: Allow
+      Action: # Gives permission to SES in a specific region
+        - ses:SendEmail
+        - ses:SendRawEmail
+      Resource: "arn:aws:ses:us-east-1:*:*"
 
 functions:
   listDirectDeposits:
@@ -105,6 +114,10 @@ functions:
     handler: src/authentication/handler.tokenVerifier
     warmup: false   # Implicitly invoked by calls to other lambdas
 
+  eventNotifier:
+    handler: src/notification/handler.send
+    warmup: false   # We do not care about a few seconds delay
+
 resources:
   Outputs:
     TokenVerifierArn:
@@ -121,10 +134,10 @@ resources:
           Ref: 'ApiGatewayRestApi'
 
 plugins:
+  - serverless-plugin-warmup
   - serverless-webpack
   - serverless-aws-documentation
   - serverless-cloudformation-resource-counter
-  - serverless-plugin-warmup
   - serverless-domain-manager
 
 package:

@@ -13,6 +13,8 @@ import { SecurityContext } from './authentication/securityContext';
 import { ErrorMessage } from './errors/errorMessage';
 import { Headers } from './models/headers';
 
+import { INotificationEvent } from './notification/events';
+
 export type ApiInvocationEvent = APIGatewayEvent | ScheduledEvent;
 
 /**
@@ -356,4 +358,45 @@ export function hasAllKeysDefined(object: any): boolean {
  */
 export function isLambdaWarmupInvocation(event: ApiInvocationEvent): event is ScheduledEvent {
     return (event as ScheduledEvent).source === 'serverless-plugin-warmup';
+}
+
+/**
+ *  Asynchronously invokes an on-demand lambda for sending an email message
+ *  to a list of intended recipients.
+ * @param {INotificationEvent} payload: The message to be sent
+ * @returns {Promise<void>}
+ */
+export async function sendEventNotification(payload: INotificationEvent): Promise<void> {
+    console.info('utilService.sendEventNotification');
+    AWS.config.update({
+        region: configService.getAwsRegion(),
+    });
+
+    const lambda = new AWS.Lambda();
+    const params = {
+        FunctionName: `asure-hr-services-${configService.getStage()}-eventNotifier`,
+        InvocationType: 'Event',
+        Payload: JSON.stringify(payload),
+    };
+
+    try {
+        await lambda.invoke(params).promise();
+    } catch (error) {
+        const errorMessage = `Something went wrong invoking notification lambda: ${JSON.stringify(error)}`;
+        console.log(errorMessage);
+    }
+}
+
+/**
+ * Formats a given date to the desired locale.
+ * @param {string} date: A string representation of an existing date
+ * @param {string} locale: The locale to format the date to.
+ * @return {string}: A string representation of the formatted date; empty string if
+ * provided date was null or undefined.
+ */
+export function formatDateToLocale(date: string, locale: string = 'en-US'): string {
+    if (!date) {
+        return '';
+    }
+    return new Date(date).toLocaleDateString(locale, { timeZone: 'UTC' });
 }

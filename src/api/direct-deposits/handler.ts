@@ -7,6 +7,8 @@ import * as directDepositService from './direct-deposit.service';
 import { ApplicationRoleLevel } from '../../authentication/ApplicationRoleLevelEnum';
 import { IGatewayEventInput } from '../../util.service';
 
+import { DirectDepositAction, IDirectDepositEvent, NotificationEventType } from '../../notification/events';
+
 const headerSchema = {
     authorization: { required: true, type: String },
 };
@@ -177,6 +179,8 @@ export const create = utilService.gatewayEventHandler(async ({ securityContext, 
     const employeeId = event.pathParameters.employeeId;
     const email = securityContext.principal.email;
 
+    const pathParameters = event.pathParameters;
+
     await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeDirectDepositList', 'CanCreate');
 
     utilService.normalizeHeaders(event);
@@ -193,6 +197,15 @@ export const create = utilService.gatewayEventHandler(async ({ securityContext, 
     if (securityContext.currentRoleLevel === ApplicationRoleLevel.Employee) {
         directDeposit.obfuscate();
     }
+
+    utilService.sendEventNotification({
+        urlParameters: event.pathParameters,
+        invokerEmail: email,
+        type: NotificationEventType.DirectDepositEvent,
+        actions: [DirectDepositAction.Submitted, DirectDepositAction.ApprovalRequest],
+        directDepositId: directDeposit.id,
+    } as IDirectDepositEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
+
     return { statusCode: 201, headers: new Headers(), body: directDeposit };
 });
 
