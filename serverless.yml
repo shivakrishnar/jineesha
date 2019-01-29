@@ -128,7 +128,7 @@ plugins:
   - serverless-domain-manager
 
 package:
-  individually: true
+  individually: false
   excludeDevDependencies: true
 
 custom:
