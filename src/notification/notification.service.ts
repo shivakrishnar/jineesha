@@ -50,6 +50,7 @@ interface IDirectDepositMetadataKeys extends MetadataKeys {
     directDepositAccountType: string;
     directDepositStatus: string;
     directDepositNameOnAccount: string;
+    pageLink: string;
 }
 
 /**
@@ -424,6 +425,8 @@ async function getDirectDepositMetadata(tenantId: string, directDepositId: numbe
             connectionString.databaseName,
         );
 
+        const directDepositPageLinkUrlSuffix: string = 'Secure/Employee/EmployeeDirectDepositList.aspx?menu=ESS';
+
         const query = new ParameterizedQuery('directDepositMetadata', Queries.directDepositMetadata);
         query.setParameter('@directDepositId', directDepositId);
         const result: IResult<any> = await notificationDao.executeQuery(pool.transaction(), query);
@@ -450,6 +453,7 @@ async function getDirectDepositMetadata(tenantId: string, directDepositId: numbe
                 directDepositAccountType: entry.DirectDepositAccountType,
                 directDepositStatus: entry.DirectDepositStatus,
                 directDepositNameOnAccount: entry.DirectDepositNameOnAccount,
+                pageLink: `${(entry.MatchingURLs as string).split(';')[0]}/${directDepositPageLinkUrlSuffix}`,
             };
         });
 
@@ -474,10 +478,6 @@ function applyMetadata(metadataKeys: MetadataKeys, template: string): string {
     Object.keys(metadataKeys).forEach((key) => {
         template = template.replace(new RegExp(`\\[${key.toUpperCase()}\\]`, 'g'), metadataKeys[key]);
     });
-
-    // MJ-1631: Implement an algorithm to determine the baseUrl the user was browsing on.
-    // Note: for now we hide the [PAGELINK]
-    template = template.replace(new RegExp(`\\[PAGELINK\\]`, 'g'), '');
 
     return template;
 }

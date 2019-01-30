@@ -3,6 +3,9 @@
 ---  Retrieves metadata for Direct Deposits
 ----------------------------------------------------------
 
+;with DirectDepositMetadata 
+as 
+(
 select
 	FirstName = ee.FirstName,
 	LastName =  ee.LastName,
@@ -36,3 +39,13 @@ from
 	inner join dbo.Company cp on ee.CompanyID = cp.ID
 where
 	dd.ID = @directDepositId
+)
+select *
+from 
+	DirectDepositMetadata
+	cross apply (
+		select top 1   -- intentional safeguard against multiple accounts 
+			MatchingURLs
+		from 
+			dbo.HRnextAccount 
+		) baseUrls
