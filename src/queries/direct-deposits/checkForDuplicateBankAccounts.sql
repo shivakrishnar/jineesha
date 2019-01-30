@@ -6,4 +6,5 @@ from
 where
     RoutingNumber = '@routingNumber' and
     Account = '@accountNumber' and
-    @designationColumnName = 1
+    @designationColumnName = 1 and
+    EmployeeID = @employeeId
