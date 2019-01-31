@@ -98,7 +98,7 @@ export async function create(employeeId: string, tenantId: string, requestBody: 
             connectionString.databaseName,
         );
 
-        const bankAccountQuery = await getDuplicateBankAccountQuery(routingNumber, accountNumber, designation);
+        const bankAccountQuery = await getDuplicateBankAccountQuery(routingNumber, accountNumber, designation, employeeId);
         let duplicatesQuery;
         if (amountType === 'Balance Remainder') {
             const remainderOfPayQuery = await getDuplicateRemainderOfPayQuery(employeeId);
@@ -436,10 +436,12 @@ async function getDuplicateBankAccountQuery(
     routingNumber: string,
     accountNumber: string,
     designation: string,
+    employeeId: string,
 ): Promise<ParameterizedQuery> {
     const bankAccountsQuery = new ParameterizedQuery('CheckForDuplicateBankAccounts', Queries.checkForDuplicateBankAccounts);
     bankAccountsQuery.setParameter('@routingNumber', routingNumber);
     bankAccountsQuery.setParameter('@accountNumber', accountNumber);
+    bankAccountsQuery.setParameter('@employeeId', employeeId);
     if (designation === 'Checking') {
         bankAccountsQuery.setParameter('@designationColumnName', 'Checking');
     } else if (designation === 'Savings') {
