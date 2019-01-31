@@ -49,6 +49,8 @@ export async function list(employeeId: string, tenantId: string): Promise<Direct
         );
 
         const query = new ParameterizedQuery('DirectDepositListAll', Queries.directDepositList);
+        const endDateFilterCondition = `EndDate is null`;
+        query.appendFilter(endDateFilterCondition);
         query.setParameter('@employeeId', employeeId);
 
         const resultSet = await getResultSet(pool, query);
