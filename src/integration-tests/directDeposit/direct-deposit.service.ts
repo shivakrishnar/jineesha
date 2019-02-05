@@ -5,14 +5,16 @@ import * as utils from '../utils';
 
 const configs = utils.getConfig();
 
-export function setup(domain: string, accessToken: string, callback: any): void {
-    createDirectDeposit(getDirectDepositsUri(domain), getValidDirectDepositObject(), accessToken)
-        .then((directDeposit) => {
-            callback(undefined, directDeposit);
-        })
-        .catch((error) => {
-            callback(error);
-        });
+export async function setup(domain: string, accessToken: string): Promise<DirectDeposit> {
+    const directDepositsUri: string = getDirectDepositsUri(domain);
+    /**
+     * Note: Use of clearAll() within the setup function requires that integration
+     * test suites be run sequentially for valid results. Otherwise, there exists the risk
+     * of direct deposits setup for a particular test suite being deleted by another test suite's
+     * execution
+     */
+    await clearAll(directDepositsUri, accessToken);
+    return await createDirectDeposit(directDepositsUri, getValidDirectDepositObject(), accessToken);
 }
 
 export function createDirectDeposit(url: string, directDeposit: DirectDeposit, accessToken: string): Promise<DirectDeposit> {
@@ -78,4 +80,19 @@ export function getDirectDepositUri(domain: string, directDepositId: number): st
     return `${domain}/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
         configs.employeeId
     }/direct-deposits/${directDepositId}`;
+}
+
+export async function clearAll(directDepositsUri: string, accessToken: string): Promise<void> {
+    try {
+        const apiResponse = await request.get(directDepositsUri).set('Authorization', `Bearer ${accessToken}`);
+
+        if (apiResponse && apiResponse.body) {
+            const directDeposits = apiResponse.body;
+            for (const directDeposit of directDeposits.results) {
+                await deleteDirectDeposit(`${directDepositsUri}/${directDeposit.id}`, accessToken);
+            }
+        }
+    } catch (error) {
+        console.error(`Unable to clear direct deposits. Reason: ${error}`);
+    }
 }

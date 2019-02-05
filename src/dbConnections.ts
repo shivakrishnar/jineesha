@@ -6,6 +6,7 @@ import * as utilService from './util.service';
 import { DBInstance } from 'aws-sdk/clients/rds';
 import { ConnectionPool, IResult } from 'mssql';
 import { getErrorResponse } from './errors/error.service';
+import { ErrorMessage } from './errors/errorMessage';
 import { Queries } from './queries/queries';
 import { Query } from './queries/query';
 
@@ -36,14 +37,14 @@ export async function findConnectionString(tenantId: string): Promise<Connection
          * NB: This is temporary until pre-production RDS instances switch to using
          * the tenant GUID  as database names.
          */
-        if (configService.getStage() === 'development') {
+        if (configService.getStage() === 'development' && tenantId === 'c807d7f9-b391-4525-ac0e-31dbc0cf202b') {
             return {
                 rdsEndpoint: 'hrnext.cvm5cdcqwljp.us-east-1.rds.amazonaws.com',
                 databaseName: 'adhr-1',
             };
         }
 
-        if (configService.getStage() === 'staging') {
+        if (configService.getStage() === 'staging' && tenantId === 'c807d7f9-b391-4525-ac0e-31dbc0cf202b') {
             return {
                 rdsEndpoint: 'hrnext.cf6z2vngxgsk.us-east-1.rds.amazonaws.com',
                 databaseName: 'adhr-1',
@@ -61,8 +62,13 @@ export async function findConnectionString(tenantId: string): Promise<Connection
             }
         }
 
-        throw new Error(`tenantId: ${tenantId} not found`);
+        const errorMessage: ErrorMessage = getErrorResponse(50);
+        errorMessage.setDeveloperMessage(`tenantId: ${tenantId} not found`);
+        throw errorMessage;
     } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
         console.error(`Error determining RDS connection parameters: ${JSON.stringify(error)}`);
         throw getErrorResponse(0);
     }

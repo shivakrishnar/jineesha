@@ -1,6 +1,6 @@
 {
     "transform": {
-        "^.+\\.tsx?$": "ts-jest"
+        ".(ts)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
     "testRegex": "(/int-spec/.*|\\.(int-test|int-spec))\\.(ts|tsx)$",
     "moduleFileExtensions": ["ts", "js"],

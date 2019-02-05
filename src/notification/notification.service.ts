@@ -1,4 +1,3 @@
-import * as AWS from 'aws-sdk';
 import { ConnectionPool, IResult } from 'mssql';
 import * as nodemailer from 'nodemailer';
 
@@ -289,38 +288,6 @@ async function sendEmail(tenantId: string, emailMessage: EmailMessage): Promise<
     };
 
     return await sendSmtpHtmlEmail(emailMessage, smtpCredentials);
-}
-
-/**
- * Sends an HTML-based email via SES using the AWS SDK
- * @param {EmailMessage} emailMessage: The message to be sent
- */
-function sendSesHtmlEmail(message: EmailMessage): any {
-    console.info('notification.service.sendSesHtmlEmail');
-    const params = {
-        Destination: {
-            ToAddresses: message.recipients,
-        },
-        Message: {
-            Body: {
-                Html: {
-                    Charset: 'UTF-8',
-                    Data: message.populateTemplate(),
-                },
-            },
-            Subject: {
-                Data: message.subject,
-            },
-        },
-        Source: message.from,
-    };
-
-    AWS.config.update({
-        region: configService.getAwsRegion(),
-    });
-
-    const ses = new AWS.SES();
-    return ses.sendEmail(params).promise();
 }
 
 /**

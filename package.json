@@ -11,7 +11,7 @@
     "lint": "node_modules/.bin/tslint -p tsconfig.json **/*.ts",
     "prettier": "prettier --write \"**/*.{js,ts,tsx,json,md}\"",
     "tslint:check": "tslint-config-prettier-check ./tslint.json",
-    "test:base": "jest -c jest.integration.test.config.json",
+    "test:base": "jest -c jest.integration.test.config.json -i",
     "test:local": "INTEGRATION_TEST_CONFIG_FILENAME=development.config.json npm run test:base"
   },
   "husky": {
@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.17",
-    "@types/jest": "^21.1.8",
+    "@types/jest": "^21.1.10",
     "@types/jsonwebtoken": "^7.2.0",
     "@types/mssql": "^4.0.9",
     "@types/node": "^7.0.10",
@@ -88,7 +88,7 @@
   },
   "jest": {
     "transform": {
-      "^.+\\.tsx?$": "ts-jest"
+      ".(ts)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "moduleFileExtensions": [

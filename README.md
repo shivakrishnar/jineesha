@@ -41,4 +41,8 @@ _To execute the integration tests and see code coverage, run: `jest -c jest.inte
 
 1. Deploy [asure.dynamite](https://bitbucket.org/iSystemsTeam/asure.dynamite/src/master/) into your personal AWS account
 2. Update `development.serverless.variables.json` with the relevant variables from the prior deployment output.
-3. Follow the steps in [How to Deploy to AWS](#How-to-Deploy-to-AWS)
+3. Deploy [isystems.nightshade](https://bitbucket.org/iSystemsTeam/isystems.nightshade/src/v3/) and [isystems.goldilocks](https://bitbucket.org/iSystemsTeam/isystems.goldilocks/src/master/)
+4. Follow the steps in [How to Deploy to AWS](#How-to-Deploy-to-AWS)
+5. Update the following properties within `development.config.json` in the integration-tests folder with your custom domain names from the prior deployment:
+    - `apiDomain`
+    - `tokenUrl`
