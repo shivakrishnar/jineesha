@@ -2,10 +2,10 @@
     "apiDomain": "https://api.staging.evolution-software.com/api",
     "tokenUrl": "https://api.staging.evolution-software.com",
     "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
-    "companyId": 10,
-    "employeeId": 23313,
+    "companyId": 600351,
+    "employeeId": 23312,
     "user": {
-        "username": "employee@sharklasers.com",
+        "username": "direct-deposit-tester-staging@sharklasers.com",
         "password": "Demo123!"
     },
     "secretsManager": {

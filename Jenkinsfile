@@ -78,9 +78,11 @@ stage("Build")
 
         stage("deploy - development") {
             deployStage("development")
+            runIntegrationTests("development")
         }
         stage("deploy - staging") {
             deployStage("staging")
+            runIntegrationTests("staging")
         }
 
         if (isMasterBranch) {
@@ -105,6 +107,7 @@ stage("Build")
                     }
                     deploymentNotification("${projectName}: successfully deployed version: ${nextVersion} to production!", teamEmail, true)
                 }
+                runIntegrationTests("production") 
             }
         }
     }
@@ -173,6 +176,25 @@ Map deploy(String environment) {
         }
     }
 
+}
+
+void runIntegrationTests(String environment) {
+    node("linux") {
+        dir(projectName) {
+            String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
+            try 
+            {
+                runWithAwsCredentials(awsCredentialsId, "INTEGRATION_TEST_CONFIG_FILENAME=${environment}.config.json npm run test:base")
+            }
+            catch (Exception e) {
+                cleanUpWorkspace()
+                notifyTeam(e)
+                //Notify build breaking culprit and team of regressions on critical branches
+                bitbucketStatusNotify(buildState: "FAILED")
+                throw e
+            }
+        }
+    }
 }
 
 

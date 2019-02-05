@@ -1,6 +1,5 @@
 import * as request from 'request-promise-native';
 import * as configService from '../config.service';
-import * as utilService from '../util.service';
 
 const baseUrl = `${configService.getApiDomain()}`;
 

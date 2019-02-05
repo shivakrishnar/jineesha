@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
-    "title": "Direct Deposit",
+    "title": "Direct Deposit Schema",
     "$id": "DirectDeposit",
     "type": "object",
     "properties": {
