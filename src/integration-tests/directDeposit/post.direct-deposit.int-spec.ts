@@ -168,19 +168,16 @@ describe('post direct deposits', () => {
         try {
             const directDepositsUri = directDepositService.getDirectDepositsUri(baseUri);
             await directDepositService.createDirectDeposit(directDepositsUri, additionalDirectDeposit, accessToken);
-
-            request(baseUri)
-                .post(testUri)
+            const apiResponse = await request(directDepositsUri)
+                .post('')
                 .set('Authorization', `Bearer ${accessToken}`)
                 .set('Content-Type', 'application/json')
                 .send(additionalDirectDeposit)
                 .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-                .expect(409)
-                .end((error, response) => {
-                    utils.testResponse(error, response, done, () => {
-                        return utils.assertJson([errorMessageSchema], 'ErrorMessage', response.body);
-                    });
-                });
+                .expect(409);
+
+            utils.assertJson([errorMessageSchema], 'ErrorMessage', apiResponse.body);
+            done();
         } catch (error) {
             done.fail(error);
         }
