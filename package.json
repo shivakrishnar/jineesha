@@ -12,7 +12,8 @@
     "prettier": "prettier --write \"**/*.{js,ts,tsx,json,md}\"",
     "tslint:check": "tslint-config-prettier-check ./tslint.json",
     "test:base": "node_modules/.bin/jest -c jest.integration.test.config.json -i --verbose",
-    "test:local": "INTEGRATION_TEST_CONFIG_FILENAME=development.config.json npm run test:base"
+    "test:local": "INTEGRATION_TEST_CONFIG_FILENAME=development.config.json npm run test:base",
+    "version": "auto-changelog --template changelog-template.hbs -u -p && git add CHANGELOG.md"
   },
   "husky": {
     "hooks": {
@@ -24,6 +25,13 @@
       "prettier --write",
       "git add"
     ]
+  },
+  "auto-changelog": {
+    "issueUrl": "https://evolutionpayroll.atlassian.net/browse/{id}",
+    "issuePattern": "[A-Z]+-\\d+",
+    "replaceText": {
+      "([A-Z]+-\\d+)": "[`$1`](https://evolutionpayroll.atlassian.net/browse/$1)"
+    }
   },
   "dependencies": {
     "@smallwins/validate": "^4.3.0",
@@ -59,6 +67,7 @@
     "@types/request-promise-native": "^1.0.15",
     "@types/uuid": "^2.0.29",
     "ajv": "^5.1.6",
+    "auto-changelog": "^1.11.0",
     "aws-sdk-mock": "^1.6.1",
     "copy-webpack-plugin": "^4.5.2",
     "husky": "^1.1.3",
