@@ -1,3 +1,4 @@
+import * as randomstring from 'randomstring';
 import * as request from 'superagent';
 
 import { DirectDeposit } from '../../api/direct-deposits/directDeposit';
@@ -61,11 +62,15 @@ export function deleteDirectDeposit(url: string, accessToken: string): Promise<{
 }
 
 export function getValidDirectDepositObject(): DirectDeposit {
+    const accountNumber = `${randomstring.generate({
+        length: 15,
+        charset: 'alphanumeric',
+    })}`;
     return new DirectDeposit({
         amount: 450.5,
         bankAccount: {
             routingNumber: '000000000',
-            accountNumber: 'IntegrationTest',
+            accountNumber,
             designation: 'Checking',
         },
         amountType: 'Flat',
