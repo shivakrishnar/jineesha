@@ -168,18 +168,13 @@ describe('post direct deposits', () => {
         try {
             const directDepositsUri = directDepositService.getDirectDepositsUri(baseUri);
             await directDepositService.createDirectDeposit(directDepositsUri, additionalDirectDeposit, accessToken);
-            const apiResponse = await request(directDepositsUri)
-                .post('')
-                .set('Authorization', `Bearer ${accessToken}`)
-                .set('Content-Type', 'application/json')
-                .send(additionalDirectDeposit)
-                .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-                .expect(409);
-
-            utils.assertJson([errorMessageSchema], 'ErrorMessage', apiResponse.body);
+            // second call to create the same direct deposit should fail
+            await directDepositService.createDirectDeposit(directDepositsUri, additionalDirectDeposit, accessToken);
+            done.fail('Failure. Expected a conflict on creation of a duplicate direct deposit');
+        } catch (apiError) {
+            expect(apiError.code).toBe(40);
+            expect(apiError.statusCode).toBe(409);
             done();
-        } catch (error) {
-            done.fail(error);
         }
     });
 

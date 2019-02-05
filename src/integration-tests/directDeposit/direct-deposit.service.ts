@@ -27,7 +27,7 @@ export function createDirectDeposit(url: string, directDeposit: DirectDeposit, a
             .set('Content-Type', 'application/json')
             .end((error, response) => {
                 if (error) {
-                    reject(error);
+                    reject(response.body);
                 } else {
                     resolve(response.body);
                 }
