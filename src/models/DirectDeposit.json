@@ -15,7 +15,7 @@
         "amountType": {
             "description": "The unit of measurement for the amount. It can be either a flat amount or a percentage amount.",
             "type": "string",
-            "enum": ["Flat", "Percentage", "BalanceRemainder"]
+            "enum": ["Flat", "Percentage", "Balance Remainder"]
         },
         "status": {
             "description": "The status of the direct deposit.",
