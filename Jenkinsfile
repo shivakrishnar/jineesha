@@ -50,16 +50,15 @@ stage("Build")
 
                     sh "git checkout -b temp-${env.BRANCH_NAME}"
 
-                    // Bump the build version
-                    currentVersion = getVersion()
-                    sh "npm --no-git-tag-version version ${semanticVersion}"
-                    nextVersion = getVersion()
-
                     nvm(nodeVersion) {
                         sh "npm install"
                         sh "npm test"
                     }
 
+                    // Bump the build version
+                    currentVersion = getVersion()
+                    sh "npm --no-git-tag-version version ${semanticVersion}"
+                    nextVersion = getVersion()
                 }
             }
             catch (Exception e) {
