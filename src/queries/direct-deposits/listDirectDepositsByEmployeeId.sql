@@ -3,7 +3,11 @@ select
     amount = Amount,
     routingNumber = RoutingNumber,
     accountNumber = Account,
-    amountType = iif(AmountCode = '%', 'Percentage', AmountCode),
+    amountType = case
+                    when AmountCode = '%' then 'Percentage'
+                    when AmountCode = 'Flat' then 'Flat'
+                    else 'Balance Remainder'
+                end,
     status = case 
                 when ApprovalStatus is null then 'No Status'
                 when ApprovalStatus = -1 then 'Rejected'
