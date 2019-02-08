@@ -118,6 +118,10 @@ functions:
     handler: src/notification/handler.send
     warmup: false   # We do not care about a few seconds delay
 
+  auditLogger:
+    handler: src/audit/handler.log
+    warmup: false   # We do not care about a few seconds delay
+
 resources:
   Outputs:
     TokenVerifierArn:

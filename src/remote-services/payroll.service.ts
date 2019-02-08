@@ -13,7 +13,7 @@ export async function getEvolutionEarningAndDeduction(tenantName: string, evolut
     const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}/eds/${earningsAndDeductionsId}`;
     try {
         return await request.get({
-            url: apiUrl,
+            url: encodeURI(apiUrl),
             headers: { Authorization: `Bearer ${token}` },
             json: true,
         });
@@ -35,7 +35,7 @@ export async function updateEvolutionEarningAndDeduction(
     const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}/eds/${earningsAndDeductionsId}`;
     try {
         return await request.put({
-            url: apiUrl,
+            url: encodeURI(apiUrl),
             headers: { Authorization: `Bearer ${token}` },
             body: requestBody,
             json: true,

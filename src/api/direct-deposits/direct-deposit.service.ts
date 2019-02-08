@@ -1,6 +1,7 @@
 import * as directDepositDao from './direct-deposit.dao';
 
 import { ConnectionPool, IResult } from 'mssql';
+import { AuditActionType, AuditAreaOfChange, IAudit } from '../../audit/audit';
 import { Queries } from '../../queries/queries';
 import { DirectDeposit } from './directDeposit';
 
@@ -72,7 +73,13 @@ export async function list(employeeId: string, tenantId: string): Promise<Direct
  * @param {string} tenantId: The unique identifier for the tenant the employee belongs to.
  * @returns {Promise<DiectDeposit>}: Promise of a direct deposits
  */
-export async function create(employeeId: string, tenantId: string, requestBody: DirectDeposit): Promise<DirectDeposit> {
+export async function create(
+    employeeId: string,
+    companyId: string,
+    tenantId: string,
+    requestBody: DirectDeposit,
+    userEmail: string,
+): Promise<DirectDeposit> {
     console.info('directDepositService.create');
 
     const {
@@ -84,6 +91,11 @@ export async function create(employeeId: string, tenantId: string, requestBody: 
     // employeeId value must be integral
     if (Number.isNaN(Number(employeeId))) {
         const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
@@ -122,7 +134,7 @@ export async function create(employeeId: string, tenantId: string, requestBody: 
         createQuery.setParameter('@designation', designation);
 
         const createResult: IResult<any> = await directDepositDao.executeQuery(pool.transaction(), createQuery);
-        const createdId: number = createResult.recordset[0].ID;
+        const createdId: number = createResult.recordsets[1][0].ID;
 
         let resultSet: DirectDeposit[] = [];
         if (createdId) {
@@ -130,6 +142,16 @@ export async function create(employeeId: string, tenantId: string, requestBody: 
             getQuery.setParameter('@directDepositId', createdId);
             resultSet = await getResultSet(pool, getQuery);
         }
+
+        utilService.logToAuditTrail({
+            userEmail,
+            newFields: createResult.recordset[0],
+            type: AuditActionType.Insert,
+            companyId,
+            areaOfChange: AuditAreaOfChange.EmployeeDirectDeposit,
+            tenantId,
+            employeeId,
+        } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
 
         return new DirectDeposit(resultSet[0]);
     } catch (error) {
@@ -160,6 +182,8 @@ export async function update(
     id: string,
     accessToken: string,
     payrollApiCredentials: IPayrollApiCredentials,
+    userEmail: string,
+    companyId: string,
 ): Promise<DirectDeposit> {
     console.info('directDepositService.update');
 
@@ -173,6 +197,11 @@ export async function update(
     }
     if (Number.isNaN(Number(employeeId))) {
         const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
@@ -208,9 +237,20 @@ export async function update(
                 throw errorService.getErrorResponse(0);
             }
             await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, amount, amountType, method);
+
+            utilService.logToAuditTrail({
+                isEvoCall: true,
+                evoCompanyId: evolutionKeys.companyId,
+                userEmail,
+                type: AuditActionType.Update,
+                companyId,
+                areaOfChange: AuditAreaOfChange.EmployeeDirectDeposit,
+                tenantId,
+                employeeId,
+            } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
         }
 
-        return await updateDirectDeposit(pool, id, amount, amountType);
+        return await updateDirectDeposit(pool, id, amount, amountType, userEmail, companyId, tenantId, employeeId);
     } catch (error) {
         console.error(error);
         if (error instanceof ErrorMessage) {
@@ -238,18 +278,24 @@ export async function remove(
     id: string,
     accessToken: string,
     payrollApiCredentials: IPayrollApiCredentials,
+    userEmail: string,
+    companyId: string,
 ): Promise<void> {
     console.info('directDepositService.delete');
 
     const method = 'delete';
 
-    // id and employeeId value must be integral
+    // id, employeeId, and companyId value must be integral
     if (Number.isNaN(Number(id))) {
         const errorMessage = `${id} is not a valid number`;
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
     if (Number.isNaN(Number(employeeId))) {
         const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
@@ -275,14 +321,25 @@ export async function remove(
         const directDeposit = directDeposits[0];
 
         if (directDeposit.status === 'Pending') {
-            await deleteDirectDeposit(pool, id);
+            await deleteDirectDeposit(pool, id, userEmail, companyId, tenantId, employeeId);
         } else if (directDeposit.status === 'Approved') {
-            await endDateDirectDeposit(pool, id);
+            await endDateDirectDeposit(pool, id, userEmail, companyId, tenantId, employeeId);
             const evolutionKeys: IEvolutionKey = await getEvolutionKeys(pool, directDeposit.id);
             if (!utilService.hasAllKeysDefined(evolutionKeys)) {
                 throw errorService.getErrorResponse(0);
             }
             await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, 0, '', method);
+
+            utilService.logToAuditTrail({
+                isEvoCall: true,
+                evoCompanyId: evolutionKeys.companyId,
+                userEmail,
+                type: AuditActionType.Update,
+                companyId,
+                areaOfChange: AuditAreaOfChange.EmployeeDirectDeposit,
+                tenantId,
+                employeeId,
+            } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
         }
     } catch (error) {
         console.error(error);
@@ -308,6 +365,10 @@ async function updateDirectDeposit(
     directDepositId: string,
     amount: number,
     amountType: string,
+    userEmail: string,
+    companyId: string,
+    tenantId: string,
+    employeeId: string,
 ): Promise<DirectDeposit> {
     const updateQuery = new ParameterizedQuery('DirectDepositUpdate', Queries.directDepositUpdate);
 
@@ -317,11 +378,24 @@ async function updateDirectDeposit(
     updateQuery.setParameter('@amountType', amountType);
     updateQuery.setParameter('@amount', truncatedAmount);
 
-    await directDepositDao.executeQuery(pool.transaction(), updateQuery);
+    const result = await directDepositDao.executeQuery(pool.transaction(), updateQuery);
+    const oldFields = result.recordsets[0][0];
+    const newFields = result.recordsets[1][0];
 
     const getQuery = new ParameterizedQuery('GetDirectDeposit', Queries.getDirectDeposit);
     getQuery.setParameter('@directDepositId', directDepositId);
     const directDepositResultSet = await getResultSet(pool, getQuery);
+
+    utilService.logToAuditTrail({
+        userEmail,
+        oldFields,
+        newFields,
+        type: AuditActionType.Update,
+        companyId,
+        areaOfChange: AuditAreaOfChange.EmployeeDirectDeposit,
+        tenantId,
+        employeeId,
+    } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
 
     return new DirectDeposit(directDepositResultSet[0]);
 }
@@ -331,11 +405,28 @@ async function updateDirectDeposit(
  * @param {ConnectionPool} pool: The open connection to the database.
  * @param {string} directDepositId: The unique identifier of the direct deposit
  */
-async function deleteDirectDeposit(pool: ConnectionPool, directDepositId: string): Promise<void> {
+async function deleteDirectDeposit(
+    pool: ConnectionPool,
+    directDepositId: string,
+    userEmail: string,
+    companyId: string,
+    tenantId: string,
+    employeeId: string,
+): Promise<void> {
     const deleteQuery = new ParameterizedQuery('DirectDepositDelete', Queries.directDepositDelete);
     deleteQuery.setParameter('@directDepositId', directDepositId);
 
-    await directDepositDao.executeQuery(pool.transaction(), deleteQuery);
+    const result = await directDepositDao.executeQuery(pool.transaction(), deleteQuery);
+
+    utilService.logToAuditTrail({
+        userEmail,
+        oldFields: result.recordset[0],
+        type: AuditActionType.Delete,
+        companyId,
+        areaOfChange: AuditAreaOfChange.EmployeeDirectDeposit,
+        tenantId,
+        employeeId,
+    } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
 }
 
 /**
@@ -343,11 +434,31 @@ async function deleteDirectDeposit(pool: ConnectionPool, directDepositId: string
  * @param {ConnectionPool} pool:  The open connection to the database.
  * @param {string} directDepositId: The unique identifier of the direct deposit
  */
-async function endDateDirectDeposit(pool: ConnectionPool, directDepositId: string): Promise<void> {
+async function endDateDirectDeposit(
+    pool: ConnectionPool,
+    directDepositId: string,
+    userEmail: string,
+    companyId: string,
+    tenantId: string,
+    employeeId: string,
+): Promise<void> {
     const endDateQuery = new ParameterizedQuery('DirectDepositDelete', Queries.updateDirectDepositEndDate);
     endDateQuery.setParameter('@directDepositId', directDepositId);
 
-    await directDepositDao.executeQuery(pool.transaction(), endDateQuery);
+    const result = await directDepositDao.executeQuery(pool.transaction(), endDateQuery);
+    const oldFields = result.recordsets[0][0];
+    const newFields = result.recordsets[1][0];
+
+    utilService.logToAuditTrail({
+        userEmail,
+        oldFields,
+        newFields,
+        type: AuditActionType.Update,
+        companyId,
+        areaOfChange: AuditAreaOfChange.EmployeeDirectDeposit,
+        tenantId,
+        employeeId,
+    } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
 }
 
 /**
@@ -488,7 +599,7 @@ async function updateEvolutionDirectDeposit(
         payrollApiCredentials.evoApiPassword,
     );
     const tenantObject = await ssoService.getTenantById(tenantId, payrollApiAccessToken);
-    const tenantName = tenantObject.name;
+    const tenantName = tenantObject.subdomain;
 
     let ed = await payrollService.getEvolutionEarningAndDeduction(tenantName, evolutionKeys, payrollApiAccessToken);
     if (method === 'patch') {

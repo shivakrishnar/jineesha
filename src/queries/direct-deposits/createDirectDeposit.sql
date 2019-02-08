@@ -14,6 +14,26 @@ insert into dbo.EmployeeDirectDeposit (
     IsSavings,
     IsMoneyMarket
 )
+output
+    inserted.EmployeeID,
+    inserted.RoutingNumber,
+    inserted.Account,
+    inserted.StartDate,
+    inserted.AmountCode,
+    inserted.Amount,
+    inserted.ApprovalStatus,
+    case
+        when (inserted.Checking = 'true') then 1
+        else 0
+    end as Checking,
+    case
+        when (inserted.IsSavings = 'true') then 1
+        else 0
+    end as IsSavings,
+    case
+        when (inserted.IsMoneyMarket = 'true') then 1
+        else 0
+    end as IsMoneyMarket
 values (
     @employeeId, 
     '@routingNumber',

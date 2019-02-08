@@ -388,6 +388,31 @@ export async function sendEventNotification(payload: INotificationEvent): Promis
 }
 
 /**
+ *  Asynchronously invokes an on-demand lambda for logging to the audit trail.
+ * @returns {Promise<void>}
+ */
+export async function logToAuditTrail(payload: any): Promise<void> {
+    console.info('utilService.logToAuditTrail');
+    AWS.config.update({
+        region: configService.getAwsRegion(),
+    });
+
+    const lambda = new AWS.Lambda();
+    const params = {
+        FunctionName: `asure-hr-services-${configService.getStage()}-auditLogger`,
+        InvocationType: 'Event',
+        Payload: JSON.stringify(payload),
+    };
+
+    try {
+        await lambda.invoke(params).promise();
+    } catch (error) {
+        const errorMessage = `Something went wrong invoking audit lambda: ${JSON.stringify(error)}`;
+        console.log(errorMessage);
+    }
+}
+
+/**
  * Formats a given date to the desired locale.
  * @param {string} date: A string representation of an existing date
  * @param {string} locale: The locale to format the date to.

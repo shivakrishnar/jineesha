@@ -32,6 +32,10 @@ import * as mockData from './mock-data';
   }`;
 });
 
+(utilService as any).logToAuditTrail = jest.fn((params: any) => {
+    return {};
+});
+
 (payrollService as any).getEvolutionEarningAndDeduction = jest.fn((params: any) => {
     return {};
 });
@@ -80,13 +84,13 @@ describe('directDepositService.create', () => {
             if (query.name === 'CheckForDuplicateBankAccounts') {
                 return Promise.resolve(mockData.emptyResponseObject);
             } else if (query.name === 'DirectDepositCreate') {
-                return Promise.resolve(mockData.scopeIdentityResponseObject);
+                return Promise.resolve(mockData.outputResponseObject);
             } else {
                 return Promise.resolve(mockData.postResponseObject);
             }
         });
         return directDepositService
-            .create(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.postObject))
+            .create(mockData.employeeId, mockData.companyId, mockData.tenantId, new DirectDeposit(mockData.postObject), mockData.userEmail)
             .then((directDeposit) => {
                 expect(directDeposit).toBeInstanceOf(DirectDeposit);
                 expect(directDeposit.bankAccount).toMatchObject(new BankAccount());
@@ -99,7 +103,7 @@ describe('directDepositService.create', () => {
             return Promise.resolve(mockData.duplicateBankAccountResponseObject);
         });
         return directDepositService
-            .create(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.postObject))
+            .create(mockData.employeeId, mockData.companyId, mockData.tenantId, new DirectDeposit(mockData.postObject), mockData.userEmail)
             .catch((error: any) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(409);
@@ -121,7 +125,13 @@ describe('directDepositService.create', () => {
             }
         });
         return directDepositService
-            .create(mockData.employeeId, mockData.tenantId, new DirectDeposit(mockData.balanceRemainderPostObject))
+            .create(
+                mockData.employeeId,
+                mockData.companyId,
+                mockData.tenantId,
+                new DirectDeposit(mockData.balanceRemainderPostObject),
+                mockData.userEmail,
+            )
             .catch((error: any) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(409);
@@ -136,8 +146,10 @@ describe('directDepositService.create', () => {
 describe('directDepositService.update', () => {
     test('updates and returns a direct deposit', () => {
         (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
-            if (query.name === 'CheckForDuplicateRemainderOfPay' || query.name === 'DirectDepositUpdate') {
+            if (query.name === 'CheckForDuplicateRemainderOfPay') {
                 return Promise.resolve(mockData.emptyResponseObject);
+            } else if (query.name === 'DirectDepositUpdate') {
+                return Promise.resolve(mockData.putAuditResponseObject);
             } else if (query.name === 'GetDirectDepositById') {
                 return Promise.resolve(mockData.putResponseObject);
             } else {
@@ -152,6 +164,8 @@ describe('directDepositService.update', () => {
                 mockData.directDepositId,
                 mockData.accessToken,
                 mockData.payrollApiCredentials,
+                mockData.userEmail,
+                mockData.companyId,
             )
             .then((directDeposit) => {
                 expect(directDeposit).toBeInstanceOf(DirectDeposit);
@@ -169,6 +183,8 @@ describe('directDepositService.update', () => {
                 mockData.directDepositIdWithCharacter,
                 mockData.accessToken,
                 mockData.payrollApiCredentials,
+                mockData.userEmail,
+                mockData.companyId,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -189,6 +205,8 @@ describe('directDepositService.update', () => {
                 mockData.directDepositId,
                 mockData.accessToken,
                 mockData.payrollApiCredentials,
+                mockData.userEmail,
+                mockData.companyId,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -216,6 +234,8 @@ describe('directDepositService.update', () => {
                 mockData.directDepositId,
                 mockData.accessToken,
                 mockData.payrollApiCredentials,
+                mockData.userEmail,
+                mockData.companyId,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -239,6 +259,8 @@ describe('directDepositService.update', () => {
                 mockData.directDepositId,
                 mockData.accessToken,
                 mockData.payrollApiCredentials,
+                '',
+                mockData.companyId,
             )
             .catch((error: any) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -260,6 +282,8 @@ describe('directDepositService.delete', () => {
                 mockData.directDepositIdWithCharacter,
                 mockData.accessToken,
                 mockData.payrollApiCredentials,
+                mockData.userEmail,
+                mockData.companyId,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -279,6 +303,8 @@ describe('directDepositService.delete', () => {
                 mockData.directDepositId,
                 mockData.accessToken,
                 mockData.payrollApiCredentials,
+                mockData.userEmail,
+                mockData.companyId,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -295,7 +321,15 @@ describe('directDepositService.delete', () => {
             return Promise.resolve(mockData.emptyResponseObject);
         });
         return directDepositService
-            .remove(mockData.employeeId, mockData.tenantId, mockData.directDepositId, mockData.accessToken, mockData.payrollApiCredentials)
+            .remove(
+                mockData.employeeId,
+                mockData.tenantId,
+                mockData.directDepositId,
+                mockData.accessToken,
+                mockData.payrollApiCredentials,
+                mockData.userEmail,
+                mockData.companyId,
+            )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
