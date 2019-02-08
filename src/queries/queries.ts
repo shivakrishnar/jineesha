@@ -27,4 +27,9 @@ export const Queries = {
     listAlertRecipients: fs.readFileSync(path.join(__dirname, 'alerts/listDirectDepositEventRecipientEmailAddresses.sql')).toString(),
     smtpCredentials: fs.readFileSync(path.join(__dirname, 'alerts/getSmtpCredentials.sql')).toString(),
     directDepositMetadata: fs.readFileSync(path.join(__dirname, 'alerts/directDepositMetadata.sql')).toString(),
+
+    // Audit
+    createAuditEntry: fs.readFileSync(path.join(__dirname, 'audit/createAuditEntry.sql')).toString(),
+    createAuditDetailEntry: fs.readFileSync(path.join(__dirname, 'audit/createAuditDetailEntry.sql')).toString(),
+    getEmployeeDisplayNameById: fs.readFileSync(path.join(__dirname, 'audit/getEmployeeDisplayNameById.sql')).toString(),
 };

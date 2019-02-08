@@ -180,7 +180,7 @@ export const list = utilService.gatewayEventHandler(async ({ securityContext, ev
 export const create = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('directDeposits.handler.post');
 
-    const { tenantId, employeeId } = event.pathParameters;
+    const { tenantId, employeeId, companyId } = event.pathParameters;
     const email = securityContext.principal.email;
 
     await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeDirectDepositList', 'CanCreate');
@@ -195,7 +195,7 @@ export const create = utilService.gatewayEventHandler(async ({ securityContext, 
     utilService.checkAdditionalProperties(postValidationSchema, requestBody, 'direct deposit');
     utilService.checkAdditionalProperties(bankAccountValidationSchema, requestBody.bankAccount, 'bank account');
 
-    const directDeposit = await directDepositService.create(employeeId, tenantId, requestBody);
+    const directDeposit = await directDepositService.create(employeeId, companyId, tenantId, requestBody, email);
     if (securityContext.currentRoleLevel === ApplicationRoleLevel.Employee) {
         directDeposit.obfuscate();
     }
@@ -217,7 +217,7 @@ export const create = utilService.gatewayEventHandler(async ({ securityContext, 
 export const update = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('directDeposits.handler.patch');
 
-    const { tenantId, employeeId } = event.pathParameters;
+    const { tenantId, employeeId, companyId } = event.pathParameters;
     const email = securityContext.principal.email;
 
     await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeDirectDepositList', 'CanUpdate');
@@ -241,6 +241,8 @@ export const update = utilService.gatewayEventHandler(async ({ securityContext, 
         id,
         accessToken,
         securityContext.payrollApiCredentials,
+        email,
+        companyId,
     );
     if (securityContext.currentRoleLevel === ApplicationRoleLevel.Employee) {
         directDeposit.obfuscate();
@@ -254,7 +256,7 @@ export const update = utilService.gatewayEventHandler(async ({ securityContext, 
 export const remove = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('directDeposits.handler.delete');
 
-    const { tenantId, employeeId } = event.pathParameters;
+    const { tenantId, employeeId, companyId } = event.pathParameters;
     const email = securityContext.principal.email;
 
     await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeDirectDepositList', 'CanDelete');
@@ -267,7 +269,15 @@ export const remove = utilService.gatewayEventHandler(async ({ securityContext, 
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
     const directDepositId = event.pathParameters.id;
 
-    await directDepositService.remove(employeeId, tenantId, directDepositId, accessToken, securityContext.payrollApiCredentials);
+    await directDepositService.remove(
+        employeeId,
+        tenantId,
+        directDepositId,
+        accessToken,
+        securityContext.payrollApiCredentials,
+        email,
+        companyId,
+    );
 
     return { statusCode: 204, headers: new Headers() };
 });

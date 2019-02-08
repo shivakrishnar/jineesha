@@ -1,6 +1,7 @@
 export const tenantId: string = 'c807d7f9-b391-4525-ac0e-31dbc0cf202b';
 export const employeeId: string = '113';
 export const employeeIdWithCharacter: string = '113a';
+export const userEmail: string = 'employee@sharklasers.com';
 export const directDepositId: string = '12';
 export const directDepositIdWithCharacter: string = '12a';
 export const companyId: string = '600013';
@@ -178,6 +179,30 @@ export const notUpdatedResponseObject = {
     output: {},
     rowsAffected: [1],
 };
+export const putAuditResponseObject = {
+    recordsets: [
+        [
+            {
+                oldAmount: 123,
+                oldAmountType: 'Flat',
+            },
+        ],
+        [
+            {
+                newAmount: 125,
+                newAmountType: 'Flat',
+            },
+        ],
+    ],
+    recordset: [
+        {
+            oldAmount: 123,
+            oldAmountType: 'Flat',
+        },
+    ],
+    output: {},
+    rowsAffected: [1, 1],
+};
 export const putResponseObject = {
     recordsets: [
         [
@@ -297,14 +322,44 @@ export const duplicateRemainderResponseObject = {
     output: {},
     rowsAffected: [1],
 };
-export const scopeIdentityResponseObject = {
+export const outputResponseObject = {
+    recordsets: [
+        [
+            {
+                EmployeeID: '24336',
+                RoutingNumber: '000000000',
+                Account: '123123123',
+                StartDate: '2019-01-31T00:00:00.000Z',
+                AmountCode: 'Flat',
+                Amount: 123,
+                ApprovalStatus: 0,
+                Checking: true,
+                IsSavings: false,
+                IsMoneyMarket: false,
+            },
+        ],
+        [
+            {
+                ID: 20073,
+            },
+        ],
+    ],
     recordset: [
         {
-            ID: 37,
+            EmployeeID: '24336',
+            RoutingNumber: '000000000',
+            Account: '123123123',
+            StartDate: '2019-01-31T00:00:00.000Z',
+            AmountCode: 'Flat',
+            Amount: 123,
+            ApprovalStatus: 0,
+            Checking: true,
+            IsSavings: false,
+            IsMoneyMarket: false,
         },
     ],
     output: {},
-    rowsAffected: [1],
+    rowsAffected: [1, 1, 1, 1, 1],
 };
 export const emptyResponseObject = {
     recordsets: [[]],
