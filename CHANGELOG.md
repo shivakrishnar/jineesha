@@ -1,5 +1,11 @@
 #####  asure.hr.services
 
+#### [1.1.4](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.1.4..1.1.3)
+
+> 11 February 2019
+
+- [`MJ-1718`](https://evolutionpayroll.atlassian.net/browse/MJ-1718): Change stored database value for balance remainder to match old pattern [`#34`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/34)
+
 #### [1.1.3](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.1.3..1.1.2)
 
 > 8 February 2019
