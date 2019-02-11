@@ -42,7 +42,7 @@ values (
     case
         when (@_amountType = 'Percentage') then '%'
         when (@_amountType = 'Flat') then 'Flat'
-        else 'Balance Remainder'
+        else 'Balance'
     end,
     case
         when (@_amountType = 'Balance Remainder') then null
