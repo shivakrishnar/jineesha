@@ -18,7 +18,7 @@ export const getEvoHrGroupCompany = () => process.env.evoHrGroupCompany;
 
 export const getApiSecretId = () => process.env.apiSecretId;
 
-export const getSecretsAwsEndpoint = () => process.env.getSecretsAwsEndpoint;
+export const getSecretsAwsEndpoint = () => process.env.secretsAwsEndpoint;
 
 export const getRdsCredentials = () => process.env.rdsCredentialsId;
 
