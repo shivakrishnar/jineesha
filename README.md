@@ -13,6 +13,8 @@ architecture uses AWS Lambda, API Gateway with a SQL Server-based RDS backend.
 
 #### How to Deploy to AWS
 
+_Deployment order is important!: deploy services in `services/internal-api` first_
+
 1. Clone this repository
 2. Install the correct dependencies: `npm install`
 3. Update the `domain` value in the `development.serverless.variables.json` file with `evolution-software.com`
@@ -24,7 +26,8 @@ architecture uses AWS Lambda, API Gateway with a SQL Server-based RDS backend.
 
 1. Clone this repository
 2. Install the correct dependencies: `npm install`
-3. Run unit tests: `npm run test`
+3. Install the requisite node depedencies in `services/api` and `services/internal-api' sub-directories with the previous command
+4. Run unit tests: `npm run test`
 
 _To execute the unit tests and see code coverage, run: `jest --coverage`_
 
@@ -32,8 +35,9 @@ _To execute the unit tests and see code coverage, run: `jest --coverage`_
 
 1. Clone this repository
 2. Install the correct dependencies: `npm install`
-3. Change the `apiDomain` value in the `development.config.json` file to your deployed service URL.
-4. Run the integration tests: `npm run test:local`
+3. Install the requisite node depedencies in `services/api` and `services/internal-api' sub-directories with the previous command
+4. Change the `apiDomain` value in the `development.config.json` file to your deployed service URL.
+5. Run the integration tests: `npm run test:local`
 
 _To execute the integration tests and see code coverage, run: `jest -c jest.integration.test.config.json`_
 
