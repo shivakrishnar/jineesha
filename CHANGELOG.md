@@ -1,5 +1,12 @@
 #####  asure.hr.services
 
+#### [1.1.5](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.1.5..1.1.4)
+
+> 19 February 2019
+
+- [`MJ-1709`](https://evolutionpayroll.atlassian.net/browse/MJ-1709): refactor asure.hr.services to generate APIs under a common domain name [`#36`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/36)
+- [`MJ-1729`](https://evolutionpayroll.atlassian.net/browse/MJ-1729): fix config service to retrieve AWS Secrets Manager endpoint [`#35`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/35)
+
 #### [1.1.4](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.1.4..1.1.3)
 
 > 11 February 2019
