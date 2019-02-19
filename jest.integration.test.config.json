@@ -1,8 +1,8 @@
 {
     "transform": {
-        ".(ts)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+        ".(ts)": "ts-jest"
     },
     "testRegex": "(/int-spec/.*|\\.(int-test|int-spec))\\.(ts|tsx)$",
     "moduleFileExtensions": ["ts", "js"],
-    "roots": ["<rootDir>/src/integration-tests/"]
+    "roots": ["<rootDir>/integration-tests/"]
 }

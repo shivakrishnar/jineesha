@@ -52,6 +52,7 @@ stage("Build")
 
                     nvm(nodeVersion) {
                         sh "npm install"
+                        installServiceApiDependencies()
                         sh "npm test"
                     }
 
@@ -161,20 +162,41 @@ void runWithAwsCredentials(String awsCredentialsId, String command) {
             }
 }
 
-/***
- * Deploy using the specified AWS credentials (the credentials will determine where the deployment goes)
- * awsCredentialsId: The Jenkins Credentials Plugin identifier.
- * Returns a map containing terraform outputs
- ***/
-Map deploy(String environment) {
+void deploy(String environment) {
     dir(projectName) {
+        sh "ls -lah"
         String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
-        nvm(nodeVersion) {
+        deployInternalServices(awsCredentialsId, environment)
+        deployService('services/api/direct-deposits', awsCredentialsId, environment)      
+    }
+}
+
+void deployInternalServices(String awsCredentialsId, String environment) {
+    dir('services/internal-api') {
+         nvm(nodeVersion) {
+            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=2048 node_modules/.bin/serverless deploy --variables ${environment}.serverless.variables.json")
+        }
+    }
+}
+
+
+void deployService(String directory, String awsCredentialsId, String environment) {
+    dir(directory) {
+         nvm(nodeVersion) {
             runWithAwsCredentials(awsCredentialsId, "node_modules/.bin/serverless create_domain --variables ${environment}.serverless.variables.json")
             runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=2048 node_modules/.bin/serverless deploy --variables ${environment}.serverless.variables.json")
         }
     }
+}
 
+void installServiceApiDependencies() {
+    dir('services/internal-api') {
+        sh 'npm install'
+    }
+
+    dir('services/api/direct-deposits') {
+        sh 'npm install'
+    }
 }
 
 void runIntegrationTests(String environment) {
@@ -204,7 +226,7 @@ void deployStage(String environment) {
 
     node("linux") {
         try {
-            deploymentOutput = deploy(environment)
+            deploy(environment)
         }
         catch (Exception e) {
             cleanUpWorkspace()
