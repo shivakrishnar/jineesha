@@ -3,16 +3,16 @@ import { IAccount } from './account';
 import { IRoleMembership } from './roleMembership';
 
 import { ConnectionPool, IResult } from 'mssql';
-import * as configService from '../../api/direct-deposits/config.service';
-import * as utilService from '../../api/direct-deposits/util.service';
-import * as errorService from '../../api/errors/error.service';
-import { ErrorMessage } from '../../api/errors/errorMessage';
+import * as configService from '../../config.service';
+import * as errorService from '../../errors/error.service';
+import { ErrorMessage } from '../../errors/errorMessage';
 import { ParameterizedQuery } from '../../queries/parameterizedQuery';
 import { Queries } from '../../queries/queries';
+import * as utilService from '../../util.service';
 import { ApplicationRoleLevel } from './ApplicationRoleLevelEnum';
 
 import { IPayrollApiCredentials } from '../../api/models/IPayrollApiCredentials';
-import { ConnectionString, findConnectionString } from '../dbConnections';
+import { ConnectionString, findConnectionString } from '../../dbConnections';
 
 /**
  * SecurityContext represents data pulled from the token when it is verified. AWS requires the

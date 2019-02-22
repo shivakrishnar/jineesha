@@ -4,16 +4,15 @@ import * as nJwt from 'njwt';
 import * as util from 'util';
 import * as uniqueifier from 'uuid/v4';
 import { ObjectSchema } from 'yup';
-import * as errorService from '../errors/error.service';
 import * as configService from './config.service';
+import * as errorService from './errors/error.service';
 
 import { APIGatewayEvent, Context, ProxyCallback, ProxyResult, ScheduledEvent } from 'aws-lambda';
-import { SecurityContext } from '../../internal-api/authentication/securityContext';
-import { ErrorMessage } from '../errors/errorMessage';
-import { Headers } from '../models/headers';
-import { DirectDeposit } from './src/directDeposit';
+import { Headers } from './api/models/headers';
+import { ErrorMessage } from './errors/errorMessage';
+import { SecurityContext } from './internal-api/authentication/securityContext';
 
-import { INotificationEvent } from '../../internal-api/notification/events';
+import { INotificationEvent } from './internal-api/notification/events';
 
 export type ApiInvocationEvent = APIGatewayEvent | ScheduledEvent;
 
@@ -227,7 +226,7 @@ export function checkBoundedIntegralValues(pathParameters: { [i: string]: string
  * @param schema Yup schema to validate the request body against.
  * @param requestBody Request body to validate.
  */
-export async function validateRequestBody(schema: ObjectSchema<{}>, requestBody: DirectDeposit): Promise<void> {
+export async function validateRequestBody(schema: ObjectSchema<{}>, requestBody: any): Promise<void> {
     await schema.validate(requestBody, { abortEarly: false }).catch((error) => {
         console.error(error.errors[0]);
         throw errorService.getErrorResponse(30).setDeveloperMessage(error.errors[0]);

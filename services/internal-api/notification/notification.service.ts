@@ -1,11 +1,11 @@
 import { ConnectionPool, IResult } from 'mssql';
 import * as nodemailer from 'nodemailer';
 
-import * as configService from '../../api/direct-deposits/config.service';
-import * as utilService from '../../api/direct-deposits/util.service';
+import * as configService from '../../config.service';
 import * as notificationDao from '../../services.dao';
+import * as utilService from '../../util.service';
 
-import { ConnectionString, findConnectionString } from '../../api/direct-deposits/dbConnections';
+import { ConnectionString, findConnectionString } from '../../dbConnections';
 import { ParameterizedQuery } from '../../queries/parameterizedQuery';
 import { Queries } from '../../queries/queries';
 import { EmailMessage } from './emailMessage';

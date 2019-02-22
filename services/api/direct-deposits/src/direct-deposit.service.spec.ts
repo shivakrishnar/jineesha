@@ -1,13 +1,13 @@
+import * as configService from '../../../config.service';
+import * as dbConnections from '../../../dbConnections';
+import * as payrollService from '../../../remote-services/payroll.service';
+import * as ssoService from '../../../remote-services/sso.service';
 import * as directDepositDao from '../../../services.dao';
-import * as configService from '../config.service';
-import * as dbConnections from '../dbConnections';
-import * as payrollService from '../remote-services/payroll.service';
-import * as ssoService from '../remote-services/sso.service';
-import * as utilService from '../util.service';
+import * as utilService from '../../../util.service';
 import * as directDepositService from './direct-deposit.service';
 
 import { ConnectionPool } from 'mssql';
-import { ErrorMessage } from '../../errors/errorMessage';
+import { ErrorMessage } from '../../../errors/errorMessage';
 import { BankAccount } from '../../models/BankAccount';
 import { DirectDeposit } from './directDeposit';
 import { DirectDeposits } from './directDeposits';

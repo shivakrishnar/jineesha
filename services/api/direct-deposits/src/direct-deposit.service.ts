@@ -10,16 +10,16 @@ import { IEvolutionKey } from '../../models/IEvolutionKey';
 import { DirectDeposits } from './directDeposits';
 
 import * as jwt from 'jsonwebtoken';
+import * as configService from '../../../config.service';
+import * as errorService from '../../../errors/error.service';
+import { ErrorMessage } from '../../../errors/errorMessage';
 import { IQuery, Query } from '../../../queries/query';
-import * as errorService from '../../errors/error.service';
-import { ErrorMessage } from '../../errors/errorMessage';
-import * as configService from '../config.service';
-import * as payrollService from '../remote-services/payroll.service';
-import * as ssoService from '../remote-services/sso.service';
-import * as utilService from '../util.service';
+import * as payrollService from '../../../remote-services/payroll.service';
+import * as ssoService from '../../../remote-services/sso.service';
+import * as utilService from '../../../util.service';
 
+import { ConnectionString, findConnectionString } from '../../../dbConnections';
 import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
-import { ConnectionString, findConnectionString } from '../dbConnections';
 
 /**
  * Returns a listing of direct deposits for specific employee within a tenant
