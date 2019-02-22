@@ -1,7 +1,7 @@
 import * as request from 'request-promise-native';
 import * as configService from '../config.service';
 
-import { IEvolutionKey } from '../../models/IEvolutionKey';
+import { IEvolutionKey } from '../api/models/IEvolutionKey';
 
 const baseUrl = `${configService.getApiDomain()}/v3/api/bureaus`;
 

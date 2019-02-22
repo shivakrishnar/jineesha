@@ -1,11 +1,11 @@
 import * as brnv from 'bank-routing-number-validator';
 import * as Yup from 'yup';
+import * as utilService from '../../../util.service';
 import { Headers } from '../../models/headers';
-import * as utilService from '../util.service';
 import * as directDepositService from './direct-deposit.service';
 
 import { ApplicationRoleLevel } from '../../../internal-api/authentication/ApplicationRoleLevelEnum';
-import { IGatewayEventInput } from '../util.service';
+import { IGatewayEventInput } from '../../../util.service';
 
 import { DirectDepositAction, IDirectDepositEvent, NotificationEventType } from '../../../internal-api/notification/events';
 import { DirectDeposits } from './directDeposits';

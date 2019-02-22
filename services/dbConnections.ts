@@ -1,14 +1,14 @@
 import * as AWS from 'aws-sdk';
-import * as utilService from '../api/direct-deposits/util.service';
-import * as directDepositDao from '../services.dao';
 import * as configService from './config.service';
+import * as servicesDao from './services.dao';
+import * as utilService from './util.service';
 
 import { DBInstance } from 'aws-sdk/clients/rds';
 import { ConnectionPool, IResult } from 'mssql';
-import { getErrorResponse } from '../api/errors/error.service';
-import { ErrorMessage } from '../api/errors/errorMessage';
-import { Queries } from '../queries/queries';
-import { Query } from '../queries/query';
+import { getErrorResponse } from './errors/error.service';
+import { ErrorMessage } from './errors/errorMessage';
+import { Queries } from './queries/queries';
+import { Query } from './queries/query';
 
 export type ConnectionString = {
     rdsEndpoint: string;
@@ -92,10 +92,10 @@ async function listAvailableDatabases(rdsInstanceEndpoint: string): Promise<stri
     try {
         const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
 
-        pool = await directDepositDao.createConnectionPool(rdsCredentials.username, rdsCredentials.password, rdsInstanceEndpoint);
+        pool = await servicesDao.createConnectionPool(rdsCredentials.username, rdsCredentials.password, rdsInstanceEndpoint);
 
         const query = new Query('DatabaseList', Queries.databaseList);
-        const results: IResult<{}> = await directDepositDao.executeQuery(pool.transaction(), query);
+        const results: IResult<{}> = await servicesDao.executeQuery(pool.transaction(), query);
         const recordSet = results.recordset;
         databaseList = Object.keys(recordSet)
             .map((key) => recordSet[key].name)

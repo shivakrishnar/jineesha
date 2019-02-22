@@ -1,10 +1,10 @@
 import { ConnectionPool, IResult } from 'mssql';
-import * as configService from '../../api/direct-deposits/config.service';
-import { ConnectionString, findConnectionString } from '../../api/direct-deposits/dbConnections';
-import * as utilService from '../../api/direct-deposits/util.service';
+import * as configService from '../../config.service';
+import { ConnectionString, findConnectionString } from '../../dbConnections';
 import { ParameterizedQuery } from '../../queries/parameterizedQuery';
 import { Queries } from '../../queries/queries';
 import * as auditDao from '../../services.dao';
+import * as utilService from '../../util.service';
 import { IAudit } from './audit';
 
 /**

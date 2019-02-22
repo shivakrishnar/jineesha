@@ -2,9 +2,9 @@ import * as AuthPolicy from 'aws-auth-policy';
 import { APIGatewayEvent, Context } from 'aws-lambda';
 import * as jwt from 'jsonwebtoken';
 
-import * as utilService from '../../api/direct-deposits/util.service';
-import * as errorService from '../../api/errors/error.service';
-import * as configService from '../config.service';
+import * as configService from '../../config.service';
+import * as errorService from '../../errors/error.service';
+import * as utilService from '../../util.service';
 
 import { IPayrollApiCredentials } from '../../api/models/IPayrollApiCredentials';
 import { SecurityContext } from './securityContext';
