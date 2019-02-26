@@ -28,7 +28,8 @@
         "speakeasy": "^2.0.0",
         "uid-generator": "^1.0.0",
         "uuid": "^3.0.1",
-        "yup": "^0.26.6"
+        "yup": "^0.26.6",
+        "superagent": "^3.5.2"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.17",
@@ -56,7 +57,6 @@
         "serverless-plugin-warmup": "^4.2.0-rc.1",
         "serverless-stack-output": "^0.2.3",
         "serverless-webpack": "^5.2.0",
-        "superagent": "~3.5.2",
         "supertest": "~3.0.0",
         "ts-jest": "^21.2.4",
         "ts-loader": "^4.5.0",

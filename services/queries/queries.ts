@@ -26,6 +26,7 @@ export const Queries = {
 
     // Miscellaneous
     databaseList: fs.readFileSync(path.join(basePath, 'miscellaneous/database.sql')).toString(),
+    tenantInfo: fs.readFileSync(path.join(basePath, 'miscellaneous/tenantInfo.sql')).toString(),
 
     // Alerts
     alertEventList: fs.readFileSync(path.join(basePath, 'alerts/listAlertEventsByCompanyId.sql')).toString(),
