@@ -77,6 +77,8 @@ export async function create(
     employeeId: string,
     companyId: string,
     tenantId: string,
+    accessToken: string,
+    payrollApiCredentials: IPayrollApiCredentials,
     requestBody: DirectDeposit,
     userEmail: string,
 ): Promise<DirectDeposit> {
@@ -152,6 +154,9 @@ export async function create(
             tenantId,
             employeeId,
         } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
+
+        const payrollApiToken: string = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
+        await utilService.clearCache(pool, payrollApiToken);
 
         return new DirectDeposit(resultSet[0]);
     } catch (error) {
@@ -230,6 +235,7 @@ export async function update(
         }
 
         const directDeposit = directDeposits[0];
+        let payrollApiToken: string;
 
         if (directDeposit.status === 'Approved') {
             const evolutionKeys: IEvolutionKey = await getEvolutionKeys(pool, directDeposit.id);
@@ -237,6 +243,7 @@ export async function update(
                 throw errorService.getErrorResponse(0);
             }
             await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, amount, amountType, method);
+            payrollApiToken = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
 
             utilService.logToAuditTrail({
                 isEvoCall: true,
@@ -249,6 +256,8 @@ export async function update(
                 employeeId,
             } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
         }
+
+        await utilService.clearCache(pool, payrollApiToken);
 
         return await updateDirectDeposit(pool, id, amount, amountType, userEmail, companyId, tenantId, employeeId);
     } catch (error) {
@@ -341,6 +350,9 @@ export async function remove(
                 employeeId,
             } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
         }
+
+        const payrollApiToken: string = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
+        await utilService.clearCache(pool, payrollApiToken);
     } catch (error) {
         console.error(error);
         if (error instanceof ErrorMessage) {
@@ -683,4 +695,17 @@ function applyDirectDepositBusinessRules(ed: any, amount: number, amountType: st
     // tslint:enable no-null-keyword
 
     return ed;
+}
+
+/**
+ *  Swaps an HR access token for a Payroll API access token.
+ * @param {string} hrAccessToken: The access token for the HR user.
+ * @param {string} tenantId: The unqiue identifier for the tenant.
+ * @param {IPayrollApiCredentials} payrollApiCredentials: The credentials of the user to access the Payroll API
+ * @return {string}: A Promise of the access token to access the Payroll API with.
+ */
+async function getPayrollApiToken(hrAccessToken: string, tenantId: string, payrollApiCredentials: IPayrollApiCredentials): Promise<string> {
+    const decodedToken: any = jwt.decode(hrAccessToken);
+    const ssoToken = await utilService.getSSOToken(tenantId, decodedToken.applicationId);
+    return await ssoService.getAccessToken(tenantId, ssoToken, payrollApiCredentials.evoApiUsername, payrollApiCredentials.evoApiPassword);
 }

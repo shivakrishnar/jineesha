@@ -1,6 +1,8 @@
 import * as validate from '@smallwins/validate';
 import * as AWS from 'aws-sdk';
+import { ConnectionPool, IResult } from 'mssql';
 import * as nJwt from 'njwt';
+import * as request from 'superagent';
 import * as util from 'util';
 import * as uniqueifier from 'uuid/v4';
 import { ObjectSchema } from 'yup';
@@ -13,6 +15,10 @@ import { ErrorMessage } from './errors/errorMessage';
 import { SecurityContext } from './internal-api/authentication/securityContext';
 
 import { INotificationEvent } from './internal-api/notification/events';
+
+import { Queries } from './queries/queries';
+import { Query } from './queries/query';
+import * as servicesDao from './services.dao';
 
 export type ApiInvocationEvent = APIGatewayEvent | ScheduledEvent;
 
@@ -434,4 +440,48 @@ export function formatDateToLocale(date: string, locale: string = 'en-US'): stri
         return '';
     }
     return new Date(date).toLocaleDateString(locale, { timeZone: 'UTC' });
+}
+
+type TenantDetails = {
+    accountName: string;
+    applicationUrl: string;
+    contact: {
+        firstName: string;
+        lastName: string;
+        emailAddress: string;
+    };
+};
+
+/**
+ * Clears the L2 cache of the application for a specified tenant
+ * Note: Although this is designed to clear the cache for a specific tenant
+ *       since a single instance of Elastic Beanstalk is shared by all tenants,
+ *       this in effect clears the cache for all.
+ * @param {ConnectionPool} pool: The database connection for the tenant
+ * @param {string} accessToken: The authorizing access token
+ */
+export async function clearCache(pool: ConnectionPool, accessToken: string): Promise<void> {
+    console.info('audit.service.clearCache');
+
+    const tenantInfo = new Query('TenantInfo', Queries.tenantInfo);
+    const result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), tenantInfo);
+
+    const tenant: TenantDetails[] = (result.recordset || []).map((entry) => {
+        return {
+            accountName: entry.AccountName,
+            applicationUrl: `${(entry.TenantUrls as string).split(';')[0]}`,
+            contact: {
+                firstName: entry.ContactFirstName,
+                lastName: entry.ContactLastName,
+                emailAddress: entry.PrimaryContactEmail,
+            },
+        };
+    });
+
+    if (tenant.length > 0) {
+        await request
+            .post(`https://${tenant[0].applicationUrl}/Classes/Service/hrnextDataService.asmx/ClearCache`)
+            .send(JSON.stringify({ accessToken }))
+            .set('Content-Type', 'application/json');
+    }
 }

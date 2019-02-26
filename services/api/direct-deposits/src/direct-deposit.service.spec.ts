@@ -36,6 +36,10 @@ import * as mockData from './mock-data';
     return {};
 });
 
+(utilService as any).getSSOToken = jest.fn((params: any) => {
+    return 'token';
+});
+
 (payrollService as any).getEvolutionEarningAndDeduction = jest.fn((params: any) => {
     return {};
 });
@@ -90,7 +94,15 @@ describe('directDepositService.create', () => {
             }
         });
         return directDepositService
-            .create(mockData.employeeId, mockData.companyId, mockData.tenantId, new DirectDeposit(mockData.postObject), mockData.userEmail)
+            .create(
+                mockData.employeeId,
+                mockData.companyId,
+                mockData.tenantId,
+                mockData.accessToken,
+                mockData.payrollApiCredentials,
+                new DirectDeposit(mockData.postObject),
+                mockData.userEmail,
+            )
             .then((directDeposit) => {
                 expect(directDeposit).toBeInstanceOf(DirectDeposit);
                 expect(directDeposit.bankAccount).toMatchObject(new BankAccount());
@@ -103,7 +115,15 @@ describe('directDepositService.create', () => {
             return Promise.resolve(mockData.duplicateBankAccountResponseObject);
         });
         return directDepositService
-            .create(mockData.employeeId, mockData.companyId, mockData.tenantId, new DirectDeposit(mockData.postObject), mockData.userEmail)
+            .create(
+                mockData.employeeId,
+                mockData.companyId,
+                mockData.tenantId,
+                mockData.accessToken,
+                mockData.payrollApiCredentials,
+                new DirectDeposit(mockData.postObject),
+                mockData.userEmail,
+            )
             .catch((error: any) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(409);
@@ -129,6 +149,8 @@ describe('directDepositService.create', () => {
                 mockData.employeeId,
                 mockData.companyId,
                 mockData.tenantId,
+                mockData.accessToken,
+                mockData.payrollApiCredentials,
                 new DirectDeposit(mockData.balanceRemainderPostObject),
                 mockData.userEmail,
             )

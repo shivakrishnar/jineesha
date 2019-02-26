@@ -195,7 +195,17 @@ export const create = utilService.gatewayEventHandler(async ({ securityContext, 
     utilService.checkAdditionalProperties(postValidationSchema, requestBody, 'direct deposit');
     utilService.checkAdditionalProperties(bankAccountValidationSchema, requestBody.bankAccount, 'bank account');
 
-    const directDeposit = await directDepositService.create(employeeId, companyId, tenantId, requestBody, email);
+    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
+
+    const directDeposit = await directDepositService.create(
+        employeeId,
+        companyId,
+        tenantId,
+        accessToken,
+        securityContext.payrollApiCredentials,
+        requestBody,
+        email,
+    );
     if (securityContext.currentRoleLevel === ApplicationRoleLevel.Employee) {
         directDeposit.obfuscate();
     }
