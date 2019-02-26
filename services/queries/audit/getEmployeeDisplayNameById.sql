@@ -1,6 +1,7 @@
 select
     CurrentDisplayName,
-    EmployeeCode
+    EmployeeCode,
+    EmailAddress
 from
     dbo.Employee
 where

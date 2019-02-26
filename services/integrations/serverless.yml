@@ -89,6 +89,24 @@ functions:
             authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors: true
 
+  createBulkSignRequest:
+    handler: esignature/src/handler.createBulkSignatureRequest
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/esignatures/requests
+            method: post
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors: true
+  
+  createSignRequest:
+    handler: esignature/src/handler.createSignatureRequest
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/esignatures/requests
+            method: post
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors: true
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
@@ -98,6 +116,15 @@ resources:
           gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
           gatewayresponse.header.Access-Control-Allow-Headers: "'Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers'"
         ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+    GatewayResponseDefault5XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers'"
+        ResponseType: DEFAULT_5XX
         RestApiId:
           Ref: 'ApiGatewayRestApi'
 
