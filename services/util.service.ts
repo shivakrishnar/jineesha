@@ -240,6 +240,17 @@ export async function validateRequestBody(schema: ObjectSchema<{}>, requestBody:
 }
 
 /**
+ * Validate a collection of objects against a schema, and throws the appropriate exception if it fails.
+ * @param schema Yup schema to validate the request body against.
+ * @param collection Collection of objects to validate.
+ */
+export async function validateCollection(schema: ObjectSchema<{}>, collection: any[]): Promise<void> {
+    for (const item of collection) {
+        await validateRequestBody(schema, item);
+    }
+}
+
+/**
  * Helper function for try/catch with logging and re-throwing. Attempts to invoke the provided delegate,
  * and return the result as a resolved promise. If an exception is thrown by the delegate, the provided
  * error delegate is invoked, and the returned error is logged and then returned as a rejected promise.

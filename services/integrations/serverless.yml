@@ -23,6 +23,8 @@ provider:
     sesSmtpServerHost: ${file(${opt:variables}):sesSmtpServerHost}
     sesSmtpServerPort: ${file(${opt:variables}):sesSmtpServerPort}
     payrollApiCredentialsId: ${file(${opt:variables}):payrollApiCredentialsId}
+    eSignatureApiCredentialsId: ${file(${opt:variables}):eSignatureApiCredentialsId}
+    eSignatureApiDevModeOn: ${file(${opt:variables}):eSignatureApiDevModeOn}
     errorsTriggered: true
     pageLimitDefault: 30
     pageLimitMax: 100
@@ -77,6 +79,16 @@ provider:
         - ses:SendRawEmail
       Resource: "arn:aws:ses:us-east-1:*:*"
 
+functions:
+  createTemplate:
+    handler: esignature/src/handler.createTemplate
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/esignatures/templates
+            method: post
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors: true
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
@@ -95,6 +107,7 @@ plugins:
   - serverless-aws-documentation
   - serverless-cloudformation-resource-counter
   - serverless-domain-manager
+  - serverless-apigw-binary
 
 package:
   individually: false
@@ -114,3 +127,11 @@ custom:
     domainName: hr-services.${file(${opt:variables}):domain}
     certificateName: '*.${file(${opt:variables}):domain}'
     createRoute53Record: false
+  apigwBinary:
+    types:
+      - 'application/pdf'
+      - 'image/*'
+      - 'text/plain'
+      - 'text/html'
+      - 'application/octet-stream'
+      - 'application/xhtml+xml'

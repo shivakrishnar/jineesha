@@ -168,6 +168,7 @@ void deploy(String environment) {
         String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
         deployInternalServices(awsCredentialsId, environment)
         deployService('services/api/direct-deposits', awsCredentialsId, environment)      
+        deployService('services/integrations', awsCredentialsId, environment)      
     }
 }
 
@@ -191,6 +192,10 @@ void deployService(String directory, String awsCredentialsId, String environment
 
 void installServiceApiDependencies() {
     dir('services/internal-api') {
+        sh 'npm install'
+    }
+
+    dir('services/integrations') {
         sh 'npm install'
     }
 
