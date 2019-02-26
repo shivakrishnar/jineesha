@@ -1,5 +1,17 @@
 #####  asure.hr.services
 
+#### [1.2.0](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.2.0..1.1.5)
+
+> 26 February 2019
+
+- [`MJ-1635`](https://evolutionpayroll.atlassian.net/browse/MJ-1635): Add staging and production serverless variables [`#43`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/43)
+- [`MJ-1635`](https://evolutionpayroll.atlassian.net/browse/MJ-1635): implement e-signature request POST endpoints [`#42`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/42)
+- [`MJ-1476`](https://evolutionpayroll.atlassian.net/browse/MJ-1476): Create embedded template draft endpoint [`#40`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/40)
+- [`MJ-1753`](https://evolutionpayroll.atlassian.net/browse/MJ-1753): fix broken tests and run unit tests on pre-commit hook [`#41`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/41)
+- [`MJ-1753`](https://evolutionpayroll.atlassian.net/browse/MJ-1753): clear application L2 cache on database entity creation/update/deletion calls [`#38`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/38)
+- [`MJ-1635`](https://evolutionpayroll.atlassian.net/browse/MJ-1635): move util, error & config services to /services [`#39`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/39)
+- [`MJ-1476`](https://evolutionpayroll.atlassian.net/browse/MJ-1476): Add project structure for esignature work [`#37`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/37)
+
 #### [1.1.5](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.1.5..1.1.4)
 
 > 19 February 2019
