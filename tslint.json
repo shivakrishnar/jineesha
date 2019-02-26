@@ -33,6 +33,7 @@
         "eofline": false,
         "linebreak-style": false,
         "max-line-length": false,
+        "max-classes-per-file": [true, 5],
         "no-default-export": false,
         "no-mergeable-namespace": false,
         "no-require-imports": true,
