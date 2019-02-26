@@ -36,6 +36,10 @@ import * as mockData from './mock-data';
     return {};
 });
 
+(utilService as any).clearCache = jest.fn((pool: any, accessToken: string) => {
+    return;
+});
+
 (utilService as any).getSSOToken = jest.fn((params: any) => {
     return 'token';
 });
