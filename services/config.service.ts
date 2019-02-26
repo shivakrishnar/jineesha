@@ -33,3 +33,9 @@ export const getSesSmtpCredentials = () => process.env.sesSmtpCredentialsId;
 export const getSesSmtpServerHost = () => process.env.sesSmtpServerHost;
 
 export const getSesSmtpServerPort = () => process.env.sesSmtpServerPort;
+
+export const getEsignatureApiCredentials = () => process.env.eSignatureApiCredentialsId;
+
+export const eSignatureApiDevModeOn = () => {
+    return process.env.eSignatureApiDevModeOn === 'true';
+};

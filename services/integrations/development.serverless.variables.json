@@ -9,6 +9,8 @@
     "sesSmtpServerHost": "email-smtp.us-east-1.amazonaws.com",
     "sesSmtpServerPort": "587",
     "payrollApiCredentialsId": "PayrollApiCredentials",
+    "eSignatureApiCredentialsId": "eSignatureApiCredentials",
+    "eSignatureApiDevModeOn": "true",
     "secretsAwsEndPoint": "https://secretsmanager.us-east-1.amazonaws.com",
     "webpackConfigurationFile": "pre-production.config.js",
     "evoHrUserTypeSuperAdmin": "ad4a9359-d118-41cb-963c-dd4937ba71e0",
@@ -19,5 +21,7 @@
     "stage": "development",
     "domain": "dev.evolution-software.com",
     "apiDomain": "https://api.staging.evolution-software.com",
-    "fromEmail": "email_test+dev@asuresoftware.com"
+    "fromEmail": "email_test+dev@asuresoftware.com",
+    "helloSignDevelopmentAppId": "60993c2a7f523b7d0035c0f81b1f8f48",
+    "helloSignSecretId": "HelloSignClientId"
 }
