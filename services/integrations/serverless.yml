@@ -87,7 +87,8 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/templates
             method: post
             authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
-            cors: true
+            cors:
+              origin: '*'
 
   createBulkSignRequest:
     handler: esignature/src/handler.createBulkSignatureRequest
@@ -96,7 +97,8 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/requests
             method: post
             authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
-            cors: true
+            cors:
+              origin: '*'
   
   createSignRequest:
     handler: esignature/src/handler.createSignatureRequest
@@ -105,7 +107,10 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/esignatures/requests
             method: post
             authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
-            cors: true
+            cors:
+              origin: '*'
+
+                
 
 resources:
   Resources:

@@ -85,7 +85,9 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits
             method: get
             authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
-            cors: true
+            cors:
+              origin: '*'
+
   createDirectDeposit:
     handler: src/handler.create
     events:
@@ -93,7 +95,9 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits
             method: post
             authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
-            cors: true
+            cors:
+              origin: '*'
+
   updateDirectDeposit:
     handler: src/handler.update
     events:
@@ -101,7 +105,9 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits/{id}
             method: patch
             authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
-            cors: true
+            cors:
+              origin: '*'
+  
   deleteDirectDeposit:
     handler: src/handler.remove
     events:
@@ -109,7 +115,8 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits/{id}
             method: delete
             authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
-            cors: true
+            cors:
+              origin: '*'
 
 resources:
   Resources:
