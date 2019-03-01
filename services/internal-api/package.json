@@ -27,7 +27,7 @@
     "@types/nodemailer": "^4.6.5",
     "copy-webpack-plugin": "^4.6.0",
     "jest": "^24.1.0",
-    "serverless": "^1.32.0",
+    "serverless": "1.38.0",
     "serverless-aws-documentation": "^1.1.0",
     "serverless-cloudformation-resource-counter": "^0.2.0",
     "serverless-stack-output": "0.2.0",

@@ -96,7 +96,6 @@ export const createTemplate = utilService.gatewayEventHandler(async ({ securityC
     return await esignatureService.createTemplate(tenantId, companyId, accessToken, requestBody);
 });
 
-
 export const createBulkSignatureRequest = utilService.gatewayEventHandler(
     async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
         console.info('esignature.handler.createBulkSignatureRequest');
