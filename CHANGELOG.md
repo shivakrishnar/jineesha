@@ -1,5 +1,11 @@
 #####  asure.hr.services
 
+#### [1.2.1](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.2.1..1.2.0)
+
+> 1 March 2019
+
+- [`MJ-1816`](https://evolutionpayroll.atlassian.net/browse/MJ-1816): update serverless to v1.38 and allow all origins for CORS requests [`#45`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/45)
+
 #### [1.2.0](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.2.0..1.1.5)
 
 > 26 February 2019
