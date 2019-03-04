@@ -17,6 +17,8 @@ const createEmbeddedTemplateValidationSchema = {
     file: { required: true, type: String },
     fileName: { required: true, type: String },
     signerRoles: { required: true, type: Array },
+    ccRoles: { required: false, type: Array },
+    customFields: { required: false, type: Array },
 };
 
 const createEmbeddedTemplateSchema = Yup.object().shape({
@@ -24,11 +26,15 @@ const createEmbeddedTemplateSchema = Yup.object().shape({
     fileName: Yup.string().required(),
     signerRoles: Yup.array()
         .min(1, 'You must provide at least one signer role.')
-        .of(Yup.object())
         .required(),
+    ccRoles: Yup.array(),
+    customFields: Yup.array().of(Yup.object()),
 });
-const signerRoleSchema = Yup.object().shape({
+const customFieldsSchema = Yup.object().shape({
     name: Yup.string().required(),
+    type: Yup.string()
+        .oneOf(['text', 'checkbox'], "The type field must be one of the following values: ['text', 'checkbox']")
+        .required(),
 });
 
 //   Bulk Signature Request schemas
@@ -85,11 +91,15 @@ export const createTemplate = utilService.gatewayEventHandler(async ({ securityC
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, createEmbeddedTemplateResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
     utilService.validateAndThrow(requestBody, createEmbeddedTemplateValidationSchema);
     utilService.checkAdditionalProperties(createEmbeddedTemplateValidationSchema, requestBody, 'Create Embedded Template');
-    utilService.validateRequestBody(createEmbeddedTemplateSchema, requestBody);
-    utilService.validateCollection(signerRoleSchema, requestBody.signerRoles);
-    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    await utilService.validateRequestBody(createEmbeddedTemplateSchema, requestBody);
+    if (requestBody.customFields) {
+        await utilService.validateCollection(customFieldsSchema, requestBody.customFields);
+    }
 
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
@@ -135,3 +145,24 @@ export const createSignatureRequest = utilService.gatewayEventHandler(
         return await esignatureService.createSignatureRequest(tenantId, companyId, employeeId, requestBody, accessToken);
     },
 );
+
+/**
+ * Lists all templates under a given company
+ */
+export const listTemplates = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listTemplates');
+
+    const { tenantId, companyId } = event.pathParameters;
+
+    // TODO: We will implement security/authorization in MJ-1815.
+    // await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeCompanyDocumentList', 'CanRead');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, createEmbeddedTemplateResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
+
+    return await esignatureService.listTemplates(tenantId, companyId, accessToken);
+});
