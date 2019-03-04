@@ -14,27 +14,50 @@ import { ErrorMessage } from '../../../errors/errorMessage';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { EsignatureAppInfo } from '../../../remote-services/integrations.service';
-import { Signatory } from './signatory';
-import { BulkSignatureRequest, SignatureRequest } from './signatureRequest';
-import { Signature, SignatureRequestResponse, SignatureRequestResponseStatus, SignatureStatus } from './signatureRequestResponse';
-import { TemplateRequest } from './templateRequest';
-import { TemplateResponse } from './templateResponse';
+import { Signatory } from './signature-requests/signatory';
+import { BulkSignatureRequest, SignatureRequest } from './signature-requests/signatureRequest';
+import {
+    Signature,
+    SignatureRequestResponse,
+    SignatureRequestResponseStatus,
+    SignatureStatus,
+} from './signature-requests/signatureRequestResponse';
+import { TemplateDraftResponse } from './template-draft/templateDraftResponse';
+import { ICustomField, Role, TemplateRequest } from './template-draft/templateRequest';
+import { Template, TemplateListResponse } from './template-list/templateListResponse';
 
 /**
- * Creates an embedded template through the HelloSign API and returns an edit url.
- * @param {string} employeeId: The unique identifier for the employee
- * @param {string} tenantId: The unique identifier for the tenant the employee belongs to.
- * @returns {Promise<DiectDeposits>}: Promise of an array of direct deposits
+ * Creates a template under the specified company.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} company: The unique identifier for the company the user belongs to.
+ * @param {string} token: The token authorizing the request.
+ * @param {TemplateRequest} payload: The template request.
+ * @returns {Promise<TemplateResponse>}: Promise of the created template
  */
-export async function createTemplate(tenantId: string, companyId: string, token: string, payload: TemplateRequest): Promise<any> {
+export async function createTemplate(
+    tenantId: string,
+    companyId: string,
+    token: string,
+    payload: TemplateRequest,
+): Promise<TemplateDraftResponse> {
     console.info('esignatureService.createTemplate');
 
-    const { file, fileName, signerRoles } = payload;
+    const { file, fileName, signerRoles, ccRoles, customFields } = payload;
     const tmpFileName = `${fileName}-${uuidV4()}`;
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
         const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+    // Validate that the signer roles are strings
+    if (!signerRoles.every((role) => typeof role === 'string')) {
+        const errorMessage = 'signerRoles must only contain strings';
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+    // Validate that the cc roles are strings
+    if (ccRoles && !ccRoles.every((role) => typeof role === 'string')) {
+        const errorMessage = 'ccRoles must only contain strings';
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
@@ -57,7 +80,6 @@ export async function createTemplate(tenantId: string, companyId: string, token:
 
         const options = {
             test_mode: configService.eSignatureApiDevModeOn ? 1 : 0,
-            // clientId: helloSignCompanyAppId,
             files: [`/tmp/${tmpFileName}`],
             signer_roles: signerRoles,
             metadata: {
@@ -67,9 +89,16 @@ export async function createTemplate(tenantId: string, companyId: string, token:
             },
         };
 
+        if (ccRoles) {
+            options['cc_roles'] = ccRoles;
+        }
+        if (customFields) {
+            options['merge_fields'] = customFields;
+        }
+
         const { template } = await client.template.createEmbeddedDraft(options);
 
-        return new TemplateResponse({
+        return new TemplateDraftResponse({
             clientId: appDetails.id,
             template: {
                 id: template.template_id,
@@ -247,5 +276,54 @@ export async function createSignatureRequest(
         if (pool && pool.connected) {
             await pool.close();
         }
+    }
+}
+
+/**
+ * Lists all templates under a specified company.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} company: The unique identifier for the company the user belongs to.
+ * @param {string} token: The token authorizing the request.
+ * @returns {Promise<TemplateListResponse>}: Promise of an array of templates
+ */
+export async function listTemplates(tenantId: string, companyId: string, token: string): Promise<TemplateListResponse> {
+    console.info('esignatureService.listTemplates');
+
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    try {
+        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId, token);
+        const client = await hellosign({
+            key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
+            client_id: appDetails.id,
+        });
+
+        const response = await client.template.list();
+
+        const results = response.templates
+            .filter((template) => template.metadata && template.metadata.companyAppId === appDetails.id)
+            .map(({ template_id: id, title, message, can_edit: editable, is_locked: isLocked, signer_roles, cc_roles, custom_fields }) => {
+                return new Template({
+                    id,
+                    title,
+                    message,
+                    editable,
+                    isLocked,
+                    signerRoles: signer_roles.map(({ name }) => new Role({ name })),
+                    ccRoles: cc_roles.map(({ name }) => new Role({ name })),
+                    customFields: custom_fields.map(({ name, type }) => {
+                        return { name, type } as ICustomField;
+                    }),
+                });
+            });
+
+        return new TemplateListResponse({ results });
+    } catch (error) {
+        console.error(error);
+        throw errorService.getErrorResponse(0);
     }
 }

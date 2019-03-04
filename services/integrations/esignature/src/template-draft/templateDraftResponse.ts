@@ -1,8 +1,8 @@
 /**
- * @class TemplateResponse
- * @description A class representing a Template Response
+ * @class TemplateDraftResponse
+ * @description A class representing a Template Draft Response
  */
-export class TemplateResponse {
+export class TemplateDraftResponse {
     /**
      * @property {string} clientId
      * The unique identifier for the HelloSign application
@@ -10,17 +10,17 @@ export class TemplateResponse {
     clientId: string;
 
     /**
-     * @property {Template} template
+     * @property {TemplateDraft} template
      * The default response from the HelloSign transaction
      */
-    template: Template;
+    template: TemplateDraft;
 
-    public constructor(init?: Partial<TemplateResponse>) {
+    public constructor(init?: Partial<TemplateDraftResponse>) {
         Object.assign(this, init);
     }
 }
 
-export type Template = {
+export type TemplateDraft = {
     id: string;
     editUrl: string;
     expiration: string;
