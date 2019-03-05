@@ -1,3 +1,4 @@
+import * as UUID from '@smallwins/validate/uuid';
 import * as Yup from 'yup';
 import * as utilService from '../../../util.service';
 import * as esignatureService from './esignature.service';
@@ -6,6 +7,13 @@ import { IGatewayEventInput } from '../../../util.service';
 
 const headerSchema = {
     authorization: { required: true, type: String },
+};
+
+const createSignUrlUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+    employeeId: { required: true, type: String },
+    signatureId: { required: true, type: String },
 };
 
 const createEmbeddedTemplateResourceUriSchema = {
@@ -165,4 +173,21 @@ export const listTemplates = utilService.gatewayEventHandler(async ({ securityCo
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
     return await esignatureService.listTemplates(tenantId, companyId, accessToken);
+});
+
+/**
+ * Generates a sign url for a specific employee
+ */
+export const createSignUrl = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.createSignUrl');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, createSignUrlUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId, companyId, employeeId, signatureId } = event.pathParameters;
+    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
+
+    return await esignatureService.createSignUrl(tenantId, companyId, employeeId, signatureId, accessToken);
 });

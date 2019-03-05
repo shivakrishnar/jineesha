@@ -13,3 +13,8 @@ export class Signatory {
         Object.assign(this, init);
     }
 }
+
+export type SignUrl = {
+    url: string;
+    expiration: number;
+};
