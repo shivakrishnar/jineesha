@@ -14,7 +14,7 @@ import { ErrorMessage } from '../../../errors/errorMessage';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { EsignatureAppInfo } from '../../../remote-services/integrations.service';
-import { Signatory } from './signature-requests/signatory';
+import { Signatory, SignUrl } from './signature-requests/signatory';
 import { BulkSignatureRequest, SignatureRequest } from './signature-requests/signatureRequest';
 import {
     Signature,
@@ -324,6 +324,49 @@ export async function listTemplates(tenantId: string, companyId: string, token: 
         return new TemplateListResponse({ results });
     } catch (error) {
         console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Creates a sign url for a specified employee
+ * @param {string} tenantId: The unique identifier for  a tenant
+ * @param {string} companyId: The unique identifier for a company within a tenant
+ * @param {string} employeeId: The unique identifer for the employee
+ * @param {string} signatureId: The unique identifer for signature requested of the employee
+ * @param {string} token: The token authorizing the request
+ * @returns {string}: A Promise of a sign url
+ */
+export async function createSignUrl(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    signatureId: string,
+    token: string,
+): Promise<SignUrl> {
+    console.info('esignatureService.createSignUrl');
+
+    try {
+        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId, token);
+        const eSigner = hellosign({
+            key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
+            client_id: appDetails.id,
+        });
+
+        const response = await eSigner.embedded.getSignUrl(signatureId);
+        const { sign_url, expires_at } = response.embedded;
+        return {
+            url: sign_url,
+            expiration: expires_at,
+        };
+    } catch (error) {
+        if (error.message) {
+            if (error.message.includes('Signature not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+
+        console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
     }
 }
