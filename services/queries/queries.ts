@@ -38,4 +38,7 @@ export const Queries = {
     createAuditEntry: fs.readFileSync(path.join(basePath, 'audit/createAuditEntry.sql')).toString(),
     createAuditDetailEntry: fs.readFileSync(path.join(basePath, 'audit/createAuditDetailEntry.sql')).toString(),
     getEmployeeDisplayNameById: fs.readFileSync(path.join(basePath, 'audit/getEmployeeDisplayNameById.sql')).toString(),
+
+    // E-Signatures
+    getDocumentsByCompanyId: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentsByCompanyId.sql')).toString(),
 };

@@ -24,6 +24,7 @@ import {
 } from './signature-requests/signatureRequestResponse';
 import { TemplateDraftResponse } from './template-draft/templateDraftResponse';
 import { ICustomField, Role, TemplateRequest } from './template-draft/templateRequest';
+import { TemplateDocumentListResponse } from './template-list/templateDocumentListResponse';
 import { Template, TemplateListResponse } from './template-list/templateListResponse';
 
 /**
@@ -284,9 +285,15 @@ export async function createSignatureRequest(
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} company: The unique identifier for the company the user belongs to.
  * @param {string} token: The token authorizing the request.
+ * @param {any} queryParams: The query parameters that were specified by the user.
  * @returns {Promise<TemplateListResponse>}: Promise of an array of templates
  */
-export async function listTemplates(tenantId: string, companyId: string, token: string): Promise<TemplateListResponse> {
+export async function listTemplates(
+    tenantId: string,
+    companyId: string,
+    token: string,
+    queryParams: any,
+): Promise<TemplateListResponse | TemplateDocumentListResponse> {
     console.info('esignatureService.listTemplates');
 
     // companyId value must be integral
@@ -295,6 +302,7 @@ export async function listTemplates(tenantId: string, companyId: string, token: 
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
+    let pool: ConnectionPool;
     try {
         const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId, token);
         const client = await hellosign({
@@ -306,25 +314,69 @@ export async function listTemplates(tenantId: string, companyId: string, token: 
 
         const results = response.templates
             .filter((template) => template.metadata && template.metadata.companyAppId === appDetails.id)
-            .map(({ template_id: id, title, message, can_edit: editable, is_locked: isLocked, signer_roles, cc_roles, custom_fields }) => {
-                return new Template({
-                    id,
+            .map(
+                ({
+                    template_id: id,
                     title,
                     message,
-                    editable,
-                    isLocked,
-                    signerRoles: signer_roles.map(({ name }) => new Role({ name })),
-                    ccRoles: cc_roles.map(({ name }) => new Role({ name })),
-                    customFields: custom_fields.map(({ name, type }) => {
-                        return { name, type } as ICustomField;
-                    }),
-                });
+                    can_edit: editable,
+                    is_locked: isLocked,
+                    signer_roles,
+                    cc_roles,
+                    custom_fields,
+                    documents,
+                }) => {
+                    const uuidRegex = /-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
+                    // If there is a uuid appended to the file name, remove it.
+                    const fileName = documents[0].name.replace(uuidRegex, '');
+                    return new Template({
+                        id,
+                        title,
+                        message,
+                        editable,
+                        isLocked,
+                        signerRoles: signer_roles.map(({ name }) => new Role({ name })),
+                        ccRoles: cc_roles.map(({ name }) => new Role({ name })),
+                        customFields: custom_fields.map(({ name, type }) => {
+                            return { name, type } as ICustomField;
+                        }),
+                        name: fileName,
+                    });
+                },
+            );
+
+        if (queryParams && queryParams.consolidated === 'true') {
+            const connectionString: ConnectionString = await findConnectionString(tenantId);
+            const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
+
+            pool = await servicesDao.createConnectionPool(
+                rdsCredentials.username,
+                rdsCredentials.password,
+                connectionString.rdsEndpoint,
+                connectionString.databaseName,
+            );
+
+            const query = new ParameterizedQuery('GetDocumentsByCompanyId', Queries.getDocumentsByCompanyId);
+            query.setParameter('@companyId', companyId);
+
+            const result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), query);
+            const documentRecord = (result.recordset || []).map((entry) => {
+                return {
+                    id: entry.ID,
+                    name: entry.Filename,
+                };
             });
 
+            return new TemplateDocumentListResponse({ templates: results, hrDocuments: documentRecord });
+        }
         return new TemplateListResponse({ results });
     } catch (error) {
         console.error(error);
         throw errorService.getErrorResponse(0);
+    } finally {
+        if (pool && pool.connected) {
+            await pool.close();
+        }
     }
 }
 

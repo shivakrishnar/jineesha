@@ -69,6 +69,12 @@ export class Template {
      */
     customFields?: ICustomField[];
 
+    /**
+     * @property {string} name
+     * The name of the file associated with the template
+     */
+    name: string;
+
     public constructor(init?: Partial<Template>) {
         Object.assign(this, init);
     }

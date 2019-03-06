@@ -172,7 +172,7 @@ export const listTemplates = utilService.gatewayEventHandler(async ({ securityCo
 
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
-    return await esignatureService.listTemplates(tenantId, companyId, accessToken);
+    return await esignatureService.listTemplates(tenantId, companyId, accessToken, event.queryStringParameters);
 });
 
 /**
