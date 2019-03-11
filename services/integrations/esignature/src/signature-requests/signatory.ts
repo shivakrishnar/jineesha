@@ -17,4 +17,5 @@ export class Signatory {
 export type SignUrl = {
     url: string;
     expiration: number;
+    clientId: string;
 };

@@ -410,6 +410,7 @@ export async function createSignUrl(
         return {
             url: sign_url,
             expiration: expires_at,
+            clientId: appDetails.id,
         };
     } catch (error) {
         if (error.message) {

@@ -114,7 +114,7 @@ functions:
     handler: esignature/src/handler.createSignUrl
     events:
         - http:
-            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/esignatures/{signatureId}/signUrl
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/esignatures/{signatureId}/sign-url
             method: get
             authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:

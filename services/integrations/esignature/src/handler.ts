@@ -184,7 +184,6 @@ export const createSignUrl = utilService.gatewayEventHandler(async ({ securityCo
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, createSignUrlUriSchema);
-    utilService.checkBoundedIntegralValues(event.pathParameters);
 
     const { tenantId, companyId, employeeId, signatureId } = event.pathParameters;
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
