@@ -17,7 +17,7 @@ const createSignUrlUriSchema = {
 };
 
 const createEmbeddedTemplateResourceUriSchema = {
-    tenantId: { required: true, type: String },
+    tenantId: { required: true, type: UUID },
     companyId: { required: true, type: String },
 };
 
@@ -184,10 +184,26 @@ export const createSignUrl = utilService.gatewayEventHandler(async ({ securityCo
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, createSignUrlUriSchema);
-    utilService.checkBoundedIntegralValues(event.pathParameters);
 
     const { tenantId, companyId, employeeId, signatureId } = event.pathParameters;
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
     return await esignatureService.createSignUrl(tenantId, companyId, employeeId, signatureId, accessToken);
+});
+
+/**
+ *  List documents uploaded for E-Signing
+ */
+export const listDocuments = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listDocuments');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, createEmbeddedTemplateResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId, companyId } = event.pathParameters;
+    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
+
+    return await esignatureService.listDocuments(tenantId, companyId, accessToken, event.queryStringParameters);
 });

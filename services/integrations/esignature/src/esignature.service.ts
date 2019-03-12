@@ -14,6 +14,7 @@ import { ErrorMessage } from '../../../errors/errorMessage';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { EsignatureAppInfo } from '../../../remote-services/integrations.service';
+import { DocumentMetadata, DocumentMetadataListResponse } from './documents/document';
 import { Signatory, SignUrl } from './signature-requests/signatory';
 import { BulkSignatureRequest, SignatureRequest } from './signature-requests/signatureRequest';
 import {
@@ -187,6 +188,10 @@ export async function createBulkSignatureRequest(
         if (error.message) {
             if (error.message.includes('Template not found')) {
                 throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+
+            if (error.message.includes('Email Address')) {
+                throw errorService.getErrorResponse(30).setDeveloperMessage('Provided email is invalid');
             }
 
             if (error.message.includes('No recipients specified')) {
@@ -410,6 +415,7 @@ export async function createSignUrl(
         return {
             url: sign_url,
             expiration: expires_at,
+            clientId: appDetails.id,
         };
     } catch (error) {
         if (error.message) {
@@ -420,5 +426,169 @@ export async function createSignUrl(
 
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Lists all documents for E-Signature under a specified company.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {string} token: The token authorizing the request.
+ * @param {{[i: string]: string}} queryParams: The query parameters that were specified by the user.
+ * @returns {DocumentMetadataListResponse}: A Promise of a collection documents' metadata
+ */
+export async function listDocuments(
+    tenantId: string,
+    companyId: string,
+    token: string,
+    queryParams: { [i: string]: string },
+): Promise<DocumentMetadataListResponse> {
+    console.info('esignatureService.listDocuments');
+
+    const validQueryStringParameters: string[] = ['category', 'categoryId', 'docType'];
+
+    // Currently, the presence of query string parameters with the api call is enforced
+    //  to ensure that the functionality is restricted to retrieving onboarding-related
+    //  documents. Long term, this would no longer be necessary
+    if (!queryParams) {
+        const error: ErrorMessage = errorService.getErrorResponse(30);
+        error
+            .setDeveloperMessage('Query parameters expected')
+            .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(',')}. See documentation for usage.`);
+        throw error;
+    }
+
+    // Check for unsupported or missing query string parameters
+    if (
+        !Object.keys(queryParams).every((param) => validQueryStringParameters.includes(param)) ||
+        !validQueryStringParameters.slice(0, 2).every((requiredParam) => Object.keys(queryParams).includes(requiredParam))
+    ) {
+        const error: ErrorMessage = errorService.getErrorResponse(30);
+        error
+            .setDeveloperMessage('Unsupported or missing query parameters')
+            .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(',')}. See documentation for usage.`);
+        throw error;
+    }
+
+    /**
+     * Note: At this time, this endpoint is only supports retrieving documents associated with onboarding
+     *       and thus the category is restricted to that.
+     */
+    if (queryParams['category'] !== 'onboarding') {
+        const error: ErrorMessage = errorService.getErrorResponse(30);
+        error
+            .setDeveloperMessage(`Unsupported value: ${queryParams['category']}`)
+            .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(', ')}. See documentation for usage.`);
+        throw error;
+    }
+
+    // categoryId must be integral and positive
+    if (Number.isNaN(Number(queryParams['categoryId'])) || Number(queryParams['categoryId']) < 0) {
+        const errorMessage = `Value of categoryId: ${queryParams['categoryId']} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    if (
+        queryParams['docType'] &&
+        queryParams['docType'].toLowerCase() !== 'hellosign' &&
+        queryParams['docType'].toLowerCase() !== 'original'
+    ) {
+        const error: ErrorMessage = errorService.getErrorResponse(30);
+        error
+            .setDeveloperMessage(`Unsupported value: ${queryParams['docType']}`)
+            .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(',')}. See documentation for usage.`);
+        throw error;
+    }
+
+    const filterByHelloSignDocuments: boolean = queryParams.docType && queryParams.docType.toLowerCase() === 'hellosign' ? true : false;
+    const filterByOriginalDocuments: boolean = queryParams.docType && queryParams.docType.toLowerCase() === 'original' ? true : false;
+    const taskListId = Number(queryParams.categoryId);
+
+    let pool: ConnectionPool;
+    try {
+        const connectionString: ConnectionString = await findConnectionString(tenantId);
+        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
+
+        pool = await servicesDao.createConnectionPool(
+            rdsCredentials.username,
+            rdsCredentials.password,
+            connectionString.rdsEndpoint,
+            connectionString.databaseName,
+        );
+
+        // Check that the company id is valid.
+        let query = new ParameterizedQuery('GetCompanyInfo', Queries.companyInfo);
+        query.setParameter('@companyId', companyId);
+        let result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), query);
+        if (result.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The company id: ${companyId} not found`);
+        }
+
+        query = new ParameterizedQuery('GetTaskListDocuments', Queries.getTaskListDocuments);
+        query.setParameter('@companyId', companyId);
+        query.setParameter('@taskListId', taskListId);
+
+        result = await servicesDao.executeQuery(pool.transaction(), query);
+        let documents: DocumentMetadata[] = (result.recordset || []).map((entry) => {
+            return {
+                id: entry.ID,
+                filename: entry.Filename,
+                title: entry.Title,
+                description: entry.Description,
+            };
+        });
+
+        if (filterByOriginalDocuments) {
+            const originalDocs = documents.filter((doc) => doc.filename.includes('.'));
+            return originalDocs.length === 0 ? undefined : new DocumentMetadataListResponse({ results: originalDocs });
+        }
+
+        if (filterByHelloSignDocuments) {
+            documents = documents.filter((doc) => !doc.filename.includes('.'));
+        }
+
+        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId, token);
+        const eSigner = hellosign({
+            key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
+            client_id: appDetails.id,
+        });
+
+        const unfoundDocuments: DocumentMetadata[] = [];
+
+        // Extract template file information for document metadata
+        for (const doc of documents) {
+            if (!doc.filename.includes('.')) {
+                const uuidRegex = /-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
+
+                try {
+                    const apiResponse = await eSigner.template.get(doc.filename);
+
+                    // Truncate UUID off filename
+                    doc.filename = apiResponse.template.documents[0].name.replace(uuidRegex, '');
+                    doc.title = apiResponse.template.title;
+                } catch (error) {
+                    console.error(`issue accessing template id: ${doc.filename}`);
+                    unfoundDocuments.push(doc);
+                }
+            }
+        }
+
+        // Renove any unfound documents from eventual response
+        if (unfoundDocuments.length > 0) {
+            documents = documents.filter((doc) => !unfoundDocuments.includes(doc));
+        }
+
+        return documents.length === 0 ? undefined : new DocumentMetadataListResponse({ results: documents });
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    } finally {
+        if (pool && pool.connected) {
+            await pool.close();
+        }
     }
 }

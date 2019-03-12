@@ -27,6 +27,7 @@ export const Queries = {
     // Miscellaneous
     databaseList: fs.readFileSync(path.join(basePath, 'miscellaneous/database.sql')).toString(),
     tenantInfo: fs.readFileSync(path.join(basePath, 'miscellaneous/tenantInfo.sql')).toString(),
+    companyInfo: fs.readFileSync(path.join(basePath, 'miscellaneous/companyInfo.sql')).toString(),
 
     // Alerts
     alertEventList: fs.readFileSync(path.join(basePath, 'alerts/listAlertEventsByCompanyId.sql')).toString(),
@@ -41,4 +42,5 @@ export const Queries = {
 
     // E-Signatures
     getDocumentsByCompanyId: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentsByCompanyId.sql')).toString(),
+    getTaskListDocuments: fs.readFileSync(path.join(basePath, 'esignatures/getTaskListDocuments.sql')).toString(),
 };
