@@ -332,12 +332,13 @@ export async function remove(
         if (directDeposit.status === 'Pending') {
             await deleteDirectDeposit(pool, id, userEmail, companyId, tenantId, employeeId);
         } else if (directDeposit.status === 'Approved') {
-            await endDateDirectDeposit(pool, id, userEmail, companyId, tenantId, employeeId);
+            // update Evolution with end-dated direct deposit before updating the HR equivalent
             const evolutionKeys: IEvolutionKey = await getEvolutionKeys(pool, directDeposit.id);
             if (!utilService.hasAllKeysDefined(evolutionKeys)) {
                 throw errorService.getErrorResponse(0);
             }
             await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, 0, '', method);
+            await endDateDirectDeposit(pool, id, userEmail, companyId, tenantId, employeeId);
 
             utilService.logToAuditTrail({
                 isEvoCall: true,
