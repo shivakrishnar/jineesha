@@ -345,7 +345,7 @@ export async function listTemplates(
                         customFields: custom_fields.map(({ name, type }) => {
                             return { name, type } as ICustomField;
                         }),
-                        name: fileName,
+                        filename: fileName,
                     });
                 },
             );
@@ -368,7 +368,7 @@ export async function listTemplates(
             const documentRecord = (result.recordset || []).map((entry) => {
                 return {
                     id: entry.ID,
-                    name: entry.Filename,
+                    filename: entry.Filename,
                 };
             });
 
