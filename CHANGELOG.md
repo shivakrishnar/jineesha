@@ -1,5 +1,15 @@
 #####  asure.hr.services
 
+#### [1.3.0](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.3.0..1.2.1)
+
+> 14 March 2019
+
+- [`MJ-1878`](https://evolutionpayroll.atlassian.net/browse/MJ-1878): re-order direct deposit deletion logic to end date in Evolution first before HR [`#50`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/50)
+- [`MJ-1820`](https://evolutionpayroll.atlassian.net/browse/MJ-1820): create document metadata list endpoint [`#49`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/49)
+- [`MJ-1818`](https://evolutionpayroll.atlassian.net/browse/MJ-1818): Add endpoint to retrieve a consolidated list of HelloSign and ADHR documents [`#47`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/47)
+- [`MJ-1466`](https://evolutionpayroll.atlassian.net/browse/MJ-1466): create employee sign url endpoint [`#46`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/46)
+- [`MJ-1707`](https://evolutionpayroll.atlassian.net/browse/MJ-1707): Implement template list endpoint [`#44`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/44)
+
 #### [1.2.1](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.2.1..1.2.0)
 
 > 1 March 2019
