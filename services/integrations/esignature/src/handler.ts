@@ -16,7 +16,7 @@ const createSignUrlUriSchema = {
     signatureId: { required: true, type: String },
 };
 
-const createEmbeddedTemplateResourceUriSchema = {
+const companyResourceUriSchema = {
     tenantId: { required: true, type: UUID },
     companyId: { required: true, type: String },
 };
@@ -85,6 +85,21 @@ const signatureRequestSchema = Yup.object().shape({
     role: Yup.string().required(),
 });
 
+// Onboarding Signature Request schemas
+const onboardingSignatureRequestValidationSchema = {
+    onboardingKey: { required: true, type: String },
+    taskListId: { required: true, type: Number },
+    emailAddress: { required: true, type: String },
+    name: { required: true, type: String },
+};
+
+const onboardingSignatureRequestSchema = Yup.object().shape({
+    onboardingKey: Yup.string().required(),
+    taskListId: Yup.number().required(),
+    emailAddress: Yup.string().required(),
+    name: Yup.string().required(),
+});
+
 /**
  * Creates a new template of a document to be e-signed
  */
@@ -98,7 +113,7 @@ export const createTemplate = utilService.gatewayEventHandler(async ({ securityC
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
-    utilService.validateAndThrow(event.pathParameters, createEmbeddedTemplateResourceUriSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
     utilService.validateAndThrow(requestBody, createEmbeddedTemplateValidationSchema);
@@ -167,7 +182,7 @@ export const listTemplates = utilService.gatewayEventHandler(async ({ securityCo
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
-    utilService.validateAndThrow(event.pathParameters, createEmbeddedTemplateResourceUriSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
@@ -199,11 +214,32 @@ export const listDocuments = utilService.gatewayEventHandler(async ({ securityCo
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
-    utilService.validateAndThrow(event.pathParameters, createEmbeddedTemplateResourceUriSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
     const { tenantId, companyId } = event.pathParameters;
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
     return await esignatureService.listDocuments(tenantId, companyId, accessToken, event.queryStringParameters);
+});
+
+/**
+ * Performs the necessary steps for onboarding
+ */
+export const onboarding = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.onboarding');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    utilService.validateAndThrow(requestBody, onboardingSignatureRequestValidationSchema);
+    utilService.checkAdditionalProperties(onboardingSignatureRequestValidationSchema, requestBody, 'Onboarding Signature Request');
+    await utilService.validateRequestBody(onboardingSignatureRequestSchema, requestBody);
+
+    const { tenantId, companyId } = event.pathParameters;
+    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
+
+    return await esignatureService.onboarding(tenantId, companyId, accessToken, requestBody);
 });

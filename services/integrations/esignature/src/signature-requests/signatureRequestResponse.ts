@@ -19,6 +19,7 @@ export enum SignatureRequestResponseStatus {
     Declined = 'Declined',
     Complete = 'Complete',
     Pending = 'Pending',
+    Unknown = 'Unknown',
 }
 
 export enum SignatureStatus {

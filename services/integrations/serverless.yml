@@ -139,6 +139,17 @@ functions:
             authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
+
+  onboarding:
+    handler: esignature/src/handler.onboarding
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/esignatures/requests/onboarding
+            method: post
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

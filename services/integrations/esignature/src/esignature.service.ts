@@ -15,8 +15,10 @@ import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { EsignatureAppInfo } from '../../../remote-services/integrations.service';
 import { DocumentMetadata, DocumentMetadataListResponse } from './documents/document';
+import { Onboarding } from './signature-requests/onboarding';
 import { Signatory, SignUrl } from './signature-requests/signatory';
 import { BulkSignatureRequest, SignatureRequest } from './signature-requests/signatureRequest';
+import { SignatureRequestListResponse } from './signature-requests/signatureRequestListResponse';
 import {
     Signature,
     SignatureRequestResponse,
@@ -134,6 +136,7 @@ export async function createBulkSignatureRequest(
     companyId: string,
     request: BulkSignatureRequest,
     accessToken: string,
+    metadata: any = {},
 ): Promise<SignatureRequestResponse> {
     console.info('esignature.handler.createBulkSignatureRequest');
 
@@ -147,6 +150,7 @@ export async function createBulkSignatureRequest(
         const options: { [i: string]: any } = {
             test_mode: configService.eSignatureApiDevModeOn ? 1 : 0,
             template_id: request.templateId,
+            metadata,
             signers: request.signatories.map((signer: Signatory) => {
                 return {
                     email_address: signer.emailAddress,
@@ -590,5 +594,122 @@ export async function listDocuments(
         if (pool && pool.connected) {
             await pool.close();
         }
+    }
+}
+
+/**
+ * Creates signature requests for each template under a specified onboarding task list
+ * @param {string} tenantId: The unique identifier for  a tenant
+ * @param {string} companyId: The unique identifier for a company within a tenant
+ * @param {string} token: The token authorizing the request
+ * @param {Onboarding} requestBody: The onboarding request
+ * @returns {SignatureRequestListResponse}: A promise of a list of signature requests
+ */
+export async function onboarding(
+    tenantId: string,
+    companyId: string,
+    token: string,
+    requestBody: Onboarding,
+): Promise<SignatureRequestListResponse> {
+    console.info('esignatureService.onboarding');
+
+    const { onboardingKey, taskListId, emailAddress, name } = requestBody;
+
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    try {
+        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId, token);
+        const eSigner = hellosign({
+            key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
+            client_id: appDetails.id,
+        });
+
+        const { signature_requests: existingSignatureRequests } = await eSigner.signatureRequest.list({
+            query: `metadata:${onboardingKey}`,
+        });
+
+        if (existingSignatureRequests.length > 0) {
+            console.log(`Signature requests were already created for onboarding key: ${onboardingKey}`);
+            const results = existingSignatureRequests.map((request) => {
+                return new SignatureRequestResponse({
+                    id: request.signature_request_id,
+                    title: request.title,
+                    status: request.is_complete ? SignatureRequestResponseStatus.Complete : SignatureRequestResponseStatus.Pending,
+                    signatures: request.signatures.map((signature) => {
+                        let signatureStatus;
+                        switch (signature.status_code) {
+                            case 'signed':
+                                signatureStatus = SignatureRequestResponseStatus.Complete;
+                                break;
+                            case 'awaiting_signature':
+                                signatureStatus = SignatureRequestResponseStatus.Pending;
+                                break;
+                            case 'declined':
+                                signatureStatus = SignatureRequestResponseStatus.Declined;
+                                break;
+                            default:
+                                signatureStatus = SignatureRequestResponseStatus.Unknown;
+                                break;
+                        }
+                        return {
+                            id: signature.signature_id,
+                            status: signatureStatus,
+                            signer: new Signatory({
+                                emailAddress: signature.signer_email_address,
+                                name: signature.signer_name,
+                                role: signature.signer_role,
+                            }),
+                        };
+                    }),
+                });
+            });
+            return new SignatureRequestListResponse({ results });
+        }
+
+        const getDocumentsQueryParams = {
+            category: 'onboarding',
+            categoryId: taskListId.toString(),
+            docType: 'hellosign',
+        };
+
+        const taskListTemplates = await listDocuments(tenantId, companyId, token, getDocumentsQueryParams);
+
+        if (!taskListTemplates) {
+            return undefined;
+        }
+
+        const signatureRequestMetadata = { onboardingKey };
+        const signatureRequests: SignatureRequestResponse[] = [];
+
+        for (const template of taskListTemplates.results) {
+            const signatureRequest: BulkSignatureRequest = {
+                templateId: template.id,
+                signatories: [
+                    {
+                        emailAddress,
+                        name,
+                        role: 'OnboardingSignatory',
+                    },
+                ],
+            };
+
+            const created = await createBulkSignatureRequest(tenantId, companyId, signatureRequest, signatureRequestMetadata);
+            signatureRequests.push(created);
+        }
+
+        return new SignatureRequestListResponse({ results: signatureRequests });
+    } catch (error) {
+        if (error.message) {
+            if (error.message.includes('Signature not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+
+        console.error(`Failed on onboarding. Reason: ${JSON.stringify(error)}`);
+        throw errorService.getErrorResponse(0);
     }
 }
