@@ -79,7 +79,11 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
         const options = {
             test_mode: configService.eSignatureApiDevModeOn ? 1 : 0,
             files: [`/tmp/${tmpFileName}`],
-            signer_roles: signerRoles,
+            signer_roles: signerRoles.map((role) => {
+                return {
+                    name: role,
+                };
+            }),
             metadata: {
                 companyAppId: appDetails.id,
                 tenantId,
