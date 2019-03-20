@@ -146,7 +146,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/requests/onboarding
             method: post
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 

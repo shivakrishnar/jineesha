@@ -1,5 +1,6 @@
 import * as UUID from '@smallwins/validate/uuid';
 import * as Yup from 'yup';
+import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
 import * as esignatureService from './esignature.service';
 
@@ -124,9 +125,7 @@ export const createTemplate = utilService.gatewayEventHandler(async ({ securityC
         await utilService.validateCollection(customFieldsSchema, requestBody.customFields);
     }
 
-    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
-
-    return await esignatureService.createTemplate(tenantId, companyId, accessToken, requestBody);
+    return await esignatureService.createTemplate(tenantId, companyId, requestBody);
 });
 
 export const createBulkSignatureRequest = utilService.gatewayEventHandler(
@@ -163,9 +162,8 @@ export const createSignatureRequest = utilService.gatewayEventHandler(
         await utilService.validateRequestBody(signatureRequestSchema, requestBody);
 
         const { tenantId, companyId, employeeId } = event.pathParameters;
-        const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
-        return await esignatureService.createSignatureRequest(tenantId, companyId, employeeId, requestBody, accessToken);
+        return await esignatureService.createSignatureRequest(tenantId, companyId, employeeId, requestBody);
     },
 );
 
@@ -185,9 +183,7 @@ export const listTemplates = utilService.gatewayEventHandler(async ({ securityCo
     utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
-    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
-
-    return await esignatureService.listTemplates(tenantId, companyId, accessToken, event.queryStringParameters);
+    return await esignatureService.listTemplates(tenantId, companyId, event.queryStringParameters);
 });
 
 /**
@@ -201,9 +197,8 @@ export const createSignUrl = utilService.gatewayEventHandler(async ({ securityCo
     utilService.validateAndThrow(event.pathParameters, createSignUrlUriSchema);
 
     const { tenantId, companyId, employeeId, signatureId } = event.pathParameters;
-    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
-    return await esignatureService.createSignUrl(tenantId, companyId, employeeId, signatureId, accessToken);
+    return await esignatureService.createSignUrl(tenantId, companyId, employeeId, signatureId);
 });
 
 /**
@@ -218,9 +213,8 @@ export const listDocuments = utilService.gatewayEventHandler(async ({ securityCo
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
     const { tenantId, companyId } = event.pathParameters;
-    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
-    return await esignatureService.listDocuments(tenantId, companyId, accessToken, event.queryStringParameters);
+    return await esignatureService.listDocuments(tenantId, companyId, event.queryStringParameters);
 });
 
 /**
@@ -229,8 +223,15 @@ export const listDocuments = utilService.gatewayEventHandler(async ({ securityCo
 export const onboarding = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('esignature.handler.onboarding');
 
-    utilService.normalizeHeaders(event);
-    utilService.validateAndThrow(event.headers, headerSchema);
+    const {
+        headers: { origin = '' },
+        requestContext: { stage },
+    } = event;
+    if (stage === 'production' && !new RegExp(/.*\.evolutionadvancedhr.com$/g).test(origin)) {
+        console.log(`Not authorized on origin: ${origin}`);
+        throw errorService.getErrorResponse(11);
+    }
+
     utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
@@ -239,7 +240,6 @@ export const onboarding = utilService.gatewayEventHandler(async ({ securityConte
     await utilService.validateRequestBody(onboardingSignatureRequestSchema, requestBody);
 
     const { tenantId, companyId } = event.pathParameters;
-    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
-    return await esignatureService.onboarding(tenantId, companyId, accessToken, requestBody);
+    return await esignatureService.onboarding(tenantId, companyId, requestBody);
 });

@@ -99,7 +99,7 @@ export function gatewayEventHandler<T>(
             try {
                 const requestContext: any = event.requestContext;
                 const json = requestContext.authorizer ? requestContext.authorizer.principalId : undefined;
-                const securityContext = SecurityContext.fromJSON(json);
+                const securityContext = json ? SecurityContext.fromJSON(json) : undefined;
 
                 let requestBody: any;
                 if (event.body) {
