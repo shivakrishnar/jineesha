@@ -192,8 +192,16 @@ export const listTemplates = utilService.gatewayEventHandler(async ({ securityCo
 export const createSignUrl = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
     console.info('esignature.handler.createSignUrl');
 
+    const {
+        headers: { origin = '' },
+        requestContext: { stage },
+    } = event;
+    if (stage === 'production' && !new RegExp(/.*\.evolutionadvancedhr.com$/g).test(origin)) {
+        console.log(`Not authorized on origin: ${origin}`);
+        throw errorService.getErrorResponse(11);
+    }
+
     utilService.normalizeHeaders(event);
-    utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, createSignUrlUriSchema);
 
     const { tenantId, companyId, employeeId, signatureId } = event.pathParameters;
