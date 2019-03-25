@@ -70,10 +70,10 @@ export class Template {
     customFields?: ICustomField[];
 
     /**
-     * @property {string} name
+     * @property {string} filename
      * The name of the file associated with the template
      */
-    name: string;
+    filename: string;
 
     public constructor(init?: Partial<Template>) {
         Object.assign(this, init);

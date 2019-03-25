@@ -21,7 +21,5 @@
     "stage": "development",
     "domain": "dev.evolution-software.com",
     "apiDomain": "https://api.staging.evolution-software.com",
-    "fromEmail": "email_test+dev@asuresoftware.com",
-    "helloSignDevelopmentAppId": "60993c2a7f523b7d0035c0f81b1f8f48",
-    "helloSignSecretId": "HelloSignClientId"
+    "fromEmail": "email_test+dev@asuresoftware.com"
 }

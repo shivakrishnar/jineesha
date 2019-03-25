@@ -15,8 +15,10 @@ import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { EsignatureAppInfo } from '../../../remote-services/integrations.service';
 import { DocumentMetadata, DocumentMetadataListResponse } from './documents/document';
+import { Onboarding } from './signature-requests/onboarding';
 import { Signatory, SignUrl } from './signature-requests/signatory';
 import { BulkSignatureRequest, SignatureRequest } from './signature-requests/signatureRequest';
+import { SignatureRequestListResponse } from './signature-requests/signatureRequestListResponse';
 import {
     Signature,
     SignatureRequestResponse,
@@ -32,16 +34,10 @@ import { Template, TemplateListResponse } from './template-list/templateListResp
  * Creates a template under the specified company.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} company: The unique identifier for the company the user belongs to.
- * @param {string} token: The token authorizing the request.
  * @param {TemplateRequest} payload: The template request.
  * @returns {Promise<TemplateResponse>}: Promise of the created template
  */
-export async function createTemplate(
-    tenantId: string,
-    companyId: string,
-    token: string,
-    payload: TemplateRequest,
-): Promise<TemplateDraftResponse> {
+export async function createTemplate(tenantId: string, companyId: string, payload: TemplateRequest): Promise<TemplateDraftResponse> {
     console.info('esignatureService.createTemplate');
 
     const { file, fileName, signerRoles, ccRoles, customFields } = payload;
@@ -74,7 +70,7 @@ export async function createTemplate(
     });
 
     try {
-        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId, token);
+        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId);
         const client = await hellosign({
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
             client_id: appDetails.id,
@@ -83,7 +79,11 @@ export async function createTemplate(
         const options = {
             test_mode: configService.eSignatureApiDevModeOn ? 1 : 0,
             files: [`/tmp/${tmpFileName}`],
-            signer_roles: signerRoles,
+            signer_roles: signerRoles.map((role) => {
+                return {
+                    name: role,
+                };
+            }),
             metadata: {
                 companyAppId: appDetails.id,
                 tenantId,
@@ -126,19 +126,18 @@ export async function createTemplate(
  * @param {string} tenantId: The unique identifier for  a tenant
  * @param {string} companyId: The unique identifier for a company within a tenant
  * @param {BulkSignatureRequest} request: An e-signature request for employee(s) within the company
- * @param {string} accessToken: The token authorizing the request
  * @returns {SignatureRequestResponse}: Promise of a completed e-signature request.
  */
 export async function createBulkSignatureRequest(
     tenantId: string,
     companyId: string,
     request: BulkSignatureRequest,
-    accessToken: string,
+    metadata: any = {},
 ): Promise<SignatureRequestResponse> {
     console.info('esignature.handler.createBulkSignatureRequest');
 
     try {
-        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId, accessToken);
+        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId);
         const eSigner = hellosign({
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
             client_id: appDetails.id,
@@ -147,6 +146,7 @@ export async function createBulkSignatureRequest(
         const options: { [i: string]: any } = {
             test_mode: configService.eSignatureApiDevModeOn ? 1 : 0,
             template_id: request.templateId,
+            metadata,
             signers: request.signatories.map((signer: Signatory) => {
                 return {
                     email_address: signer.emailAddress,
@@ -212,7 +212,6 @@ export async function createBulkSignatureRequest(
  * @param {string} companyId: The unique identifier for a company within a tenant
  * @param {string} employeeId: The unique identifer for the employee
  * @param {SignatureRequest} request: An e-signature request for a specific employee
- * @param {string} accessToken: The token authorizing the request
  * @returns {SignatureRequestResponse}: Promise of a completed e-signature request.
  */
 export async function createSignatureRequest(
@@ -220,7 +219,6 @@ export async function createSignatureRequest(
     companyId: string,
     employeeId: string,
     request: SignatureRequest,
-    accessToken: string,
 ): Promise<SignatureRequestResponse> {
     console.info('esignature.handler.createSignatureRequest');
 
@@ -270,7 +268,7 @@ export async function createSignatureRequest(
             bulkSignRequest.message = request.message;
         }
 
-        return await createBulkSignatureRequest(tenantId, companyId, bulkSignRequest, accessToken);
+        return await createBulkSignatureRequest(tenantId, companyId, bulkSignRequest);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -289,14 +287,12 @@ export async function createSignatureRequest(
  * Lists all templates under a specified company.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} company: The unique identifier for the company the user belongs to.
- * @param {string} token: The token authorizing the request.
  * @param {any} queryParams: The query parameters that were specified by the user.
  * @returns {Promise<TemplateListResponse>}: Promise of an array of templates
  */
 export async function listTemplates(
     tenantId: string,
     companyId: string,
-    token: string,
     queryParams: any,
 ): Promise<TemplateListResponse | TemplateDocumentListResponse> {
     console.info('esignatureService.listTemplates');
@@ -309,7 +305,7 @@ export async function listTemplates(
 
     let pool: ConnectionPool;
     try {
-        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId, token);
+        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId);
         const client = await hellosign({
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
             client_id: appDetails.id,
@@ -345,7 +341,7 @@ export async function listTemplates(
                         customFields: custom_fields.map(({ name, type }) => {
                             return { name, type } as ICustomField;
                         }),
-                        name: fileName,
+                        filename: fileName,
                     });
                 },
             );
@@ -368,7 +364,7 @@ export async function listTemplates(
             const documentRecord = (result.recordset || []).map((entry) => {
                 return {
                     id: entry.ID,
-                    name: entry.Filename,
+                    filename: entry.Filename,
                 };
             });
 
@@ -391,20 +387,13 @@ export async function listTemplates(
  * @param {string} companyId: The unique identifier for a company within a tenant
  * @param {string} employeeId: The unique identifer for the employee
  * @param {string} signatureId: The unique identifer for signature requested of the employee
- * @param {string} token: The token authorizing the request
  * @returns {string}: A Promise of a sign url
  */
-export async function createSignUrl(
-    tenantId: string,
-    companyId: string,
-    employeeId: string,
-    signatureId: string,
-    token: string,
-): Promise<SignUrl> {
+export async function createSignUrl(tenantId: string, companyId: string, employeeId: string, signatureId: string): Promise<SignUrl> {
     console.info('esignatureService.createSignUrl');
 
     try {
-        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId, token);
+        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId);
         const eSigner = hellosign({
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
             client_id: appDetails.id,
@@ -433,14 +422,12 @@ export async function createSignUrl(
  * Lists all documents for E-Signature under a specified company.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for the company the user belongs to.
- * @param {string} token: The token authorizing the request.
  * @param {{[i: string]: string}} queryParams: The query parameters that were specified by the user.
  * @returns {DocumentMetadataListResponse}: A Promise of a collection documents' metadata
  */
 export async function listDocuments(
     tenantId: string,
     companyId: string,
-    token: string,
     queryParams: { [i: string]: string },
 ): Promise<DocumentMetadataListResponse> {
     console.info('esignatureService.listDocuments');
@@ -547,7 +534,7 @@ export async function listDocuments(
             documents = documents.filter((doc) => !doc.filename.includes('.'));
         }
 
-        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId, token);
+        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId);
         const eSigner = hellosign({
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
             client_id: appDetails.id,
@@ -590,5 +577,116 @@ export async function listDocuments(
         if (pool && pool.connected) {
             await pool.close();
         }
+    }
+}
+
+/**
+ * Creates signature requests for each template under a specified onboarding task list
+ * @param {string} tenantId: The unique identifier for  a tenant
+ * @param {string} companyId: The unique identifier for a company within a tenant
+ * @param {Onboarding} requestBody: The onboarding request
+ * @returns {SignatureRequestListResponse}: A promise of a list of signature requests
+ */
+export async function onboarding(tenantId: string, companyId: string, requestBody: Onboarding): Promise<SignatureRequestListResponse> {
+    console.info('esignatureService.onboarding');
+
+    const { onboardingKey, taskListId, emailAddress, name } = requestBody;
+
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    try {
+        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId);
+        const eSigner = hellosign({
+            key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
+            client_id: appDetails.id,
+        });
+
+        const { signature_requests: existingSignatureRequests } = await eSigner.signatureRequest.list({
+            query: `metadata:${onboardingKey}`,
+        });
+
+        if (existingSignatureRequests.length > 0) {
+            console.log(`Signature requests were already created for onboarding key: ${onboardingKey}`);
+            const results = existingSignatureRequests.map((request) => {
+                return new SignatureRequestResponse({
+                    id: request.signature_request_id,
+                    title: request.title,
+                    status: request.is_complete ? SignatureRequestResponseStatus.Complete : SignatureRequestResponseStatus.Pending,
+                    signatures: request.signatures.map((signature) => {
+                        let signatureStatus;
+                        switch (signature.status_code) {
+                            case 'signed':
+                                signatureStatus = SignatureRequestResponseStatus.Complete;
+                                break;
+                            case 'awaiting_signature':
+                                signatureStatus = SignatureRequestResponseStatus.Pending;
+                                break;
+                            case 'declined':
+                                signatureStatus = SignatureRequestResponseStatus.Declined;
+                                break;
+                            default:
+                                signatureStatus = SignatureRequestResponseStatus.Unknown;
+                                break;
+                        }
+                        return {
+                            id: signature.signature_id,
+                            status: signatureStatus,
+                            signer: new Signatory({
+                                emailAddress: signature.signer_email_address,
+                                name: signature.signer_name,
+                                role: signature.signer_role,
+                            }),
+                        };
+                    }),
+                });
+            });
+            return new SignatureRequestListResponse({ results });
+        }
+
+        const getDocumentsQueryParams = {
+            category: 'onboarding',
+            categoryId: taskListId.toString(),
+            docType: 'hellosign',
+        };
+
+        const taskListTemplates = await listDocuments(tenantId, companyId, getDocumentsQueryParams);
+
+        if (!taskListTemplates) {
+            return undefined;
+        }
+
+        const signatureRequestMetadata = { onboardingKey };
+        const signatureRequests: SignatureRequestResponse[] = [];
+
+        for (const template of taskListTemplates.results) {
+            const signatureRequest: BulkSignatureRequest = {
+                templateId: template.id,
+                signatories: [
+                    {
+                        emailAddress,
+                        name,
+                        role: 'OnboardingSignatory',
+                    },
+                ],
+            };
+
+            const created = await createBulkSignatureRequest(tenantId, companyId, signatureRequest, signatureRequestMetadata);
+            signatureRequests.push(created);
+        }
+
+        return new SignatureRequestListResponse({ results: signatureRequests });
+    } catch (error) {
+        if (error.message) {
+            if (error.message.includes('Signature not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+
+        console.error(`Failed on onboarding. Reason: ${JSON.stringify(error)}`);
+        throw errorService.getErrorResponse(0);
     }
 }
