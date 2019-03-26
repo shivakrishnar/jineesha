@@ -4,6 +4,7 @@ import * as uuidV4 from 'uuid/v4';
 
 import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
+import * as hellosignService from '../../../remote-services/hellosign.service';
 import * as integrationsService from '../../../remote-services/integrations.service';
 import * as servicesDao from '../../../services.dao';
 import * as utilService from '../../../util.service';
@@ -13,7 +14,7 @@ import { ConnectionString, findConnectionString } from '../../../dbConnections';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
-import { EsignatureAppInfo } from '../../../remote-services/integrations.service';
+import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
 import { DocumentMetadata, DocumentMetadataListResponse } from './documents/document';
 import { Onboarding } from './signature-requests/onboarding';
 import { Signatory, SignUrl } from './signature-requests/signatory';
@@ -70,10 +71,16 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
     });
 
     try {
-        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId);
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+        const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            tenantId,
+            companyInfo.clientId,
+            companyId,
+        );
+        const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
         const client = await hellosign({
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
-            client_id: appDetails.id,
+            client_id: appClientId,
         });
 
         const options = {
@@ -85,7 +92,7 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
                 };
             }),
             metadata: {
-                companyAppId: appDetails.id,
+                companyAppId: appClientId,
                 tenantId,
                 companyId,
             },
@@ -101,7 +108,7 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
         const { template } = await client.template.createEmbeddedDraft(options);
 
         return new TemplateDraftResponse({
-            clientId: appDetails.id,
+            clientId: appClientId,
             template: {
                 id: template.template_id,
                 editUrl: template.edit_url,
@@ -137,10 +144,15 @@ export async function createBulkSignatureRequest(
     console.info('esignature.handler.createBulkSignatureRequest');
 
     try {
-        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId);
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+        const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            tenantId,
+            companyInfo.clientId,
+            companyId,
+        );
         const eSigner = hellosign({
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
-            client_id: appDetails.id,
+            client_id: appDetails.integrationDetails.eSignatureAppClientId,
         });
 
         const options: { [i: string]: any } = {
@@ -305,16 +317,22 @@ export async function listTemplates(
 
     let pool: ConnectionPool;
     try {
-        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId);
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+        const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            tenantId,
+            companyInfo.clientId,
+            companyId,
+        );
+        const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
         const client = await hellosign({
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
-            client_id: appDetails.id,
+            client_id: appClientId,
         });
 
         const response = await client.template.list();
 
         const results = response.templates
-            .filter((template) => template.metadata && template.metadata.companyAppId === appDetails.id)
+            .filter((template) => template.metadata && template.metadata.companyAppId === appClientId)
             .map(
                 ({
                     template_id: id,
@@ -393,10 +411,16 @@ export async function createSignUrl(tenantId: string, companyId: string, employe
     console.info('esignatureService.createSignUrl');
 
     try {
-        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId);
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+        const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            tenantId,
+            companyInfo.clientId,
+            companyId,
+        );
+        const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
         const eSigner = hellosign({
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
-            client_id: appDetails.id,
+            client_id: appClientId,
         });
 
         const response = await eSigner.embedded.getSignUrl(signatureId);
@@ -404,7 +428,7 @@ export async function createSignUrl(tenantId: string, companyId: string, employe
         return {
             url: sign_url,
             expiration: expires_at,
-            clientId: appDetails.id,
+            clientId: appClientId,
         };
     } catch (error) {
         if (error.message) {
@@ -534,10 +558,15 @@ export async function listDocuments(
             documents = documents.filter((doc) => !doc.filename.includes('.'));
         }
 
-        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId);
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+        const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            tenantId,
+            companyInfo.clientId,
+            companyId,
+        );
         const eSigner = hellosign({
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
-            client_id: appDetails.id,
+            client_id: appDetails.integrationDetails.eSignatureAppClientId,
         });
 
         const unfoundDocuments: DocumentMetadata[] = [];
@@ -599,10 +628,16 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
     }
 
     try {
-        const appDetails: EsignatureAppInfo = await integrationsService.getEsignatureAppByCompany(tenantId, companyId);
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+        const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            tenantId,
+            companyInfo.clientId,
+            companyId,
+        );
+        const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
         const eSigner = hellosign({
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
-            client_id: appDetails.id,
+            client_id: appClientId,
         });
 
         const { signature_requests: existingSignatureRequests } = await eSigner.signatureRequest.list({
@@ -688,5 +723,145 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
 
         console.error(`Failed on onboarding. Reason: ${JSON.stringify(error)}`);
         throw errorService.getErrorResponse(0);
+    }
+}
+
+type Configuration = {
+    op: Operation;
+};
+
+enum Operation {
+    Add = 'add',
+    Remove = 'remove',
+}
+
+/**
+ * Enables or disables E-signature functionality for a specified company within a tenant
+ * @param {string} tenantId: The unique identifier for the tenant.
+ * @param {string} companyId: The unique identifier for the company.
+ * @param {string} token: The token authorizing the request.
+ * @param {Configuration} config: The configuration to apply.
+ */
+export async function configure(tenantId: string, companyId: string, token: string, config: Configuration): Promise<any> {
+    console.info('esignatureService.configure');
+
+    const { clientId, name, domain } = await getCompanyDetails(tenantId, companyId);
+
+    // Get configuration
+    const integrationConfiguration: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+        tenantId,
+        clientId,
+        companyId,
+    );
+
+    try {
+        switch (config.op) {
+            case Operation.Add:
+                console.log('Adding a configuration');
+                if (integrationConfiguration) {
+                    integrationConfiguration.integrationDetails.enabled = true;
+                    await integrationsService.updateIntegrationConfigurationById(tenantId, clientId, companyId, integrationConfiguration);
+                } else {
+                    const {
+                        api_app: { client_id: eSignatureClientId },
+                    } = await hellosignService.createApplicationForCompany(companyId, domain);
+                    try {
+                        await integrationsService.createIntegrationConfiguration(
+                            tenantId,
+                            clientId,
+                            companyId,
+                            name,
+                            domain,
+                            eSignatureClientId,
+                        );
+                    } catch (e) {
+                        await hellosignService.deleteApplicationById(eSignatureClientId);
+
+                        console.error(JSON.stringify(e));
+                        throw new Error(JSON.stringify(e));
+                    }
+                }
+                break;
+
+            case Operation.Remove:
+                console.log('Removing a configuration');
+                if (!integrationConfiguration) {
+                    throw errorService.getErrorResponse(50).setDeveloperMessage('No existing e-signature configuration found');
+                }
+
+                integrationConfiguration.integrationDetails.enabled = false;
+                await integrationsService.updateIntegrationConfigurationById(tenantId, clientId, companyId, integrationConfiguration);
+
+                break;
+
+            default:
+        }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Retrieves the Evolution client id associated with a company
+ * @param {string} tenantId: The unique identifier for the tenant.
+ * @param {string} companyId: The unique identifier for the company.
+ * @param {string} token: The token authorizing the request.
+ * @return {Promise<string>} A Promise of the client id the company belongs to
+ */
+
+type CompanyDetail = {
+    clientId: string;
+    name: string;
+    domain: string;
+};
+async function getCompanyDetails(tenantId: string, companyId: string): Promise<CompanyDetail> {
+    console.info('esignatureService.getCompanyInfo');
+
+    let pool: ConnectionPool;
+    try {
+        const connectionString: ConnectionString = await findConnectionString(tenantId);
+        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
+
+        pool = await servicesDao.createConnectionPool(
+            rdsCredentials.username,
+            rdsCredentials.password,
+            connectionString.rdsEndpoint,
+            connectionString.databaseName,
+        );
+
+        // Check that the company id is valid.
+        const query = new ParameterizedQuery('GetCompanyInfo', Queries.companyInfo);
+        query.setParameter('@companyId', companyId);
+        const result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), query);
+        if (result.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The company id: ${companyId} not found`);
+        }
+
+        const companyInfo: CompanyDetail[] = (result.recordset || []).map((entry) => {
+            return {
+                name: entry.CompanyName,
+                clientId: entry.ClientID,
+                // urls may be semi-colon delimited eg. adhr-test-1.dev.evolution-software.com;localhost:9000
+                // Use the first entry.
+                domain: (entry.MatchingUrls as string).split(';')[0],
+            };
+        });
+
+        return companyInfo[0];
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(`Unable to retrieve company info. Reason: ${JSON.stringify(error)}`);
+        throw errorService.getErrorResponse(0);
+    } finally {
+        if (pool && pool.connected) {
+            await pool.close();
+        }
     }
 }

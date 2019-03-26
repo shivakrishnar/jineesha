@@ -21,5 +21,7 @@
     "stage": "production",
     "domain": "evolutionadvancedhr.com",
     "apiDomain": "https://evoapi.evolutionadvancedhr.com",
-    "fromEmail": "AdvancedHR@evolutionadvancedhr.com"
+    "fromEmail": "AdvancedHR@evolutionadvancedhr.com",
+    "integrationId": "8077ac79-faac-47cb-a240-a15cd5791915",
+    "goldilocksApplicationId": "8f8a2b63-985b-4c59-9a9b-e25572068601"
 }
