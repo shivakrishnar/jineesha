@@ -1,14 +1,121 @@
-export type EsignatureAppInfo = {
+import * as request from 'request-promise-native';
+import { IPayrollApiCredentials } from '../api/models/IPayrollApiCredentials';
+import * as configService from '../config.service';
+import * as utilService from '../util.service';
+import * as ssoService from './sso.service';
+
+export type EsignatureAppConfiguration = {
     id: string;
+    integrationId: string;
+    tenantId: string;
+    clientId: number;
+    companyId: number;
+    companyName: string;
+    integrationDetails: {
+        domainName: string;
+        eSignatureAppClientId: string;
+        enabled: boolean;
+    };
+    createAt: string;
+    createdBy: {
+        id: string;
+        username: string;
+    };
 };
 
-export async function getEsignatureAppByCompany(tenantId: string, companyId: string): Promise<EsignatureAppInfo> {
+const baseUrl = `${configService.getApiDomain()}/integrations`;
+
+export async function getIntegrationConfigurationByCompany(
+    tenantId: string,
+    clientId: string,
+    companyId: string,
+): Promise<EsignatureAppConfiguration> {
     console.info('integrationsService.getEsignatureAppByCompany');
 
-    // TODO: Add API call to integrations to retrieve app id in MJ-1794. For now, just hardcode information.
-    console.log(`tenantId: ${tenantId}`, `companyId ${companyId}`);
+    const token = await createAccessToken(tenantId);
 
-    return {
-        id: '60993c2a7f523b7d0035c0f81b1f8f48',
-    };
+    const apiUrl = `${baseUrl}/tenants/${tenantId}/integrations/${configService.getIntegrationId()}/integration-configurations`;
+    try {
+        const configurations = await request.get({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            json: true,
+        });
+        return configurations.filter((config) => config.clientId === Number(clientId) && config.companyId === Number(companyId))[0];
+    } catch (e) {
+        console.log(e);
+        throw new Error('Unable to get e-signature app client id');
+    }
+}
+
+export async function createIntegrationConfiguration(
+    tenantId: string,
+    clientId: string,
+    companyId: string,
+    companyName: string,
+    domainName: string,
+    eSignatureAppClientId: string,
+): Promise<EsignatureAppConfiguration> {
+    console.info('integrationsService.createIntegrationConfiguration');
+
+    const token = await createAccessToken(tenantId);
+
+    const apiUrl = `${baseUrl}/tenants/${tenantId}/clients/${clientId}/companies/${companyId}/integrations/${configService.getIntegrationId()}/integration-configurations`;
+    try {
+        return await request.post({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            json: true,
+            body: {
+                integrationId: configService.getIntegrationId(),
+                tenantId,
+                clientId: Number(clientId),
+                companyId: Number(companyId),
+                companyName,
+                integrationDetails: {
+                    domainName,
+                    eSignatureAppClientId,
+                    enabled: true,
+                },
+            },
+        });
+    } catch (e) {
+        console.log(e);
+        throw new Error('Unable to create e-signature configuration');
+    }
+}
+
+export async function updateIntegrationConfigurationById(
+    tenantId: string,
+    clientId: string,
+    companyId: string,
+    body: EsignatureAppConfiguration,
+): Promise<EsignatureAppConfiguration> {
+    console.info('integrationsService.updateIntegrationConfigurationById');
+
+    const token = await createAccessToken(tenantId);
+
+    const apiUrl = `${baseUrl}/tenants/${tenantId}/clients/${clientId}/companies/${companyId}/integrations/${configService.getIntegrationId()}/integration-configurations/${
+        body.id
+    }`;
+    try {
+        return await request.put({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            json: true,
+            body,
+        });
+    } catch (e) {
+        console.log(e);
+        throw new Error('Unable to update e-signature configuration');
+    }
+}
+
+async function createAccessToken(tenantId: string): Promise<string> {
+    const { evoApiUsername, evoApiPassword }: IPayrollApiCredentials = JSON.parse(
+        await utilService.getSecret(configService.getPayrollApiCredentials()),
+    );
+    const ssoToken = await utilService.getSSOToken(tenantId);
+    const hrAccessToken = await ssoService.getAccessToken(tenantId, ssoToken, evoApiUsername, evoApiPassword);
+    return (await ssoService.exchangeToken(tenantId, hrAccessToken, configService.getGoldilocksApplicationId())).access_token;
 }

@@ -36,6 +36,8 @@ provider:
     evoHrGroupEmployee: ${file(${opt:variables}):evoHrGroupEmployee}
     apiDomain: ${file(${opt:variables}):apiDomain}
     fromEmail: ${file(${opt:variables}):fromEmail}
+    integrationId: ${file(${opt:variables}):integrationId}
+    goldilocksApplicationId: ${file(${opt:variables}):goldilocksApplicationId}
 
   iamRoleStatements:
     - Effect: Allow
@@ -147,6 +149,16 @@ functions:
             method: post
             cors:
               origin: '*'
+
+  configure:
+    handler: esignature/src/handler.configure
+    events:
+      - http:
+          path: /tenants/{tenantId}/companies/{companyId}/esignatures
+          method: patch
+          authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+          cors:
+            origin: '*'
 
 resources:
   Resources:

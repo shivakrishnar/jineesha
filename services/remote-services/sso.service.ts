@@ -36,3 +36,22 @@ export async function getTenantById(tenantId: string, token: string): Promise<an
         console.log(e);
     }
 }
+
+export async function exchangeToken(tenantId: string, hrToken: string, targetApplicationId: string): Promise<any> {
+    console.info('ssoService.exchangeToken');
+
+    const apiUrl = `${baseUrl}/identity/tenants/${tenantId}/oauth/token`;
+    try {
+        return await request.post({
+            url: apiUrl,
+            headers: { Authorization: `Bearer ${hrToken}` },
+            json: true,
+            body: {
+                grant_type: 'token_exchange',
+                audience: `${targetApplicationId}`,
+            },
+        });
+    } catch (e) {
+        console.log(e);
+    }
+}

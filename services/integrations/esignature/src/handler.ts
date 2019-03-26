@@ -101,6 +101,17 @@ const onboardingSignatureRequestSchema = Yup.object().shape({
     name: Yup.string().required(),
 });
 
+//  Configuration schemas:
+const configurationValidationSchema = {
+    op: { required: true, type: String },
+};
+
+const configurationSchema = Yup.object().shape({
+    op: Yup.string()
+        .matches(/^(add|remove)$/, { excludeEmptyString: false })
+        .required(),
+});
+
 /**
  * Creates a new template of a document to be e-signed
  */
@@ -117,6 +128,7 @@ export const createTemplate = utilService.gatewayEventHandler(async ({ securityC
     utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
+    await utilService.requirePayload(requestBody);
     utilService.validateAndThrow(requestBody, createEmbeddedTemplateValidationSchema);
     utilService.checkAdditionalProperties(createEmbeddedTemplateValidationSchema, requestBody, 'Create Embedded Template');
 
@@ -136,6 +148,7 @@ export const createBulkSignatureRequest = utilService.gatewayEventHandler(
         utilService.validateAndThrow(event.headers, headerSchema);
         utilService.checkBoundedIntegralValues(event.pathParameters);
 
+        await utilService.requirePayload(requestBody);
         utilService.validateAndThrow(requestBody, bulkSignatureRequestValidationSchema);
         utilService.checkAdditionalProperties(bulkSignatureRequestValidationSchema, requestBody, 'Signature Request');
 
@@ -157,6 +170,7 @@ export const createSignatureRequest = utilService.gatewayEventHandler(
         utilService.validateAndThrow(event.headers, headerSchema);
         utilService.checkBoundedIntegralValues(event.pathParameters);
 
+        await utilService.requirePayload(requestBody);
         utilService.validateAndThrow(requestBody, signatureRequestValidationSchema);
         utilService.checkAdditionalProperties(signatureRequestValidationSchema, requestBody, 'Signature Request');
         await utilService.validateRequestBody(signatureRequestSchema, requestBody);
@@ -243,6 +257,7 @@ export const onboarding = utilService.gatewayEventHandler(async ({ securityConte
     utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
+    await utilService.requirePayload(requestBody);
     utilService.validateAndThrow(requestBody, onboardingSignatureRequestValidationSchema);
     utilService.checkAdditionalProperties(onboardingSignatureRequestValidationSchema, requestBody, 'Onboarding Signature Request');
     await utilService.validateRequestBody(onboardingSignatureRequestSchema, requestBody);
@@ -250,4 +265,27 @@ export const onboarding = utilService.gatewayEventHandler(async ({ securityConte
     const { tenantId, companyId } = event.pathParameters;
 
     return await esignatureService.onboarding(tenantId, companyId, requestBody);
+});
+
+/**
+ *  Adds/Remove e-signature functionality for a specified company within a tenant
+ */
+export const configure = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.configure');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+
+    // payload validation & checks:
+    await utilService.requirePayload(requestBody);
+    utilService.validateAndThrow(requestBody, configurationValidationSchema);
+    utilService.checkAdditionalProperties(configurationValidationSchema, requestBody, 'E-Signature Configuration');
+    await utilService.validateRequestBody(configurationSchema, requestBody);
+
+    const { tenantId, companyId } = event.pathParameters;
+    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
+
+    return await esignatureService.configure(tenantId, companyId, accessToken, requestBody);
 });

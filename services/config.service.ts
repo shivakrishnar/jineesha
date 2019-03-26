@@ -39,3 +39,7 @@ export const getEsignatureApiCredentials = () => process.env.eSignatureApiCreden
 export const eSignatureApiDevModeOn = () => {
     return process.env.eSignatureApiDevModeOn === 'true';
 };
+
+export const getIntegrationId = () => process.env.integrationId;
+
+export const getGoldilocksApplicationId = () => process.env.goldilocksApplicationId;

@@ -228,6 +228,21 @@ export function checkBoundedIntegralValues(pathParameters: { [i: string]: string
 }
 
 /**
+ * Ensure a payload is sent with a request
+ * @param requestBody Request body to validate.
+ */
+export async function requirePayload(payload: any): Promise<void> {
+    console.info('utilService.requirePayload');
+
+    if (!payload) {
+        throw errorService
+            .getErrorResponse(30)
+            .setDeveloperMessage('Request body expected')
+            .setMoreInfo(`See documentation for usage.`);
+    }
+}
+
+/**
  * Validate an object against a schema, and throw the appropriate exception if it fails.
  * @param schema Yup schema to validate the request body against.
  * @param requestBody Request body to validate.
@@ -337,11 +352,11 @@ export async function getSecret(id: string): Promise<string> {
  * @param {string} applicationId: The unique identifier for the application for which the token is generated.
  * @returns {Promise<any>}: returns a Promise of the SSO token
  */
-export async function getSSOToken(tenantId: string, applicationId: string): Promise<any> {
+export async function getSSOToken(tenantId: string, applicationId?: string): Promise<any> {
     const claims = {
         iat: Math.trunc(Date.now() / 1000),
         iss: JSON.parse(await getSecret(configService.getApiSecretId())).apiKey,
-        sub: applicationId,
+        sub: applicationId || JSON.parse(await getSecret(configService.getApiSecretId())).applicationId,
         tenantId,
         jti: uniqueifier(),
     };
