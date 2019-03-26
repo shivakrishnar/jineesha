@@ -1,5 +1,11 @@
 #####  asure.hr.services
 
+#### [1.4.1](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.4.1..1.4.0)
+
+> 26 March 2019
+
+- [`MJ-1794`](https://evolutionpayroll.atlassian.net/browse/MJ-1794): Update production config with integrationId and goldilocks app id [`#54`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/54)
+
 #### [1.4.0](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.4.0..1.3.0)
 
 > 26 March 2019
