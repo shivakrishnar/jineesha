@@ -1,5 +1,12 @@
 #####  asure.hr.services
 
+#### [1.4.0](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.4.0..1.3.0)
+
+> 26 March 2019
+
+- [`MJ-1794`](https://evolutionpayroll.atlassian.net/browse/MJ-1794): implement endpoint for adding/remove a tenant's e-signature configuration [`#53`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/53)
+- [`MJ-1883`](https://evolutionpayroll.atlassian.net/browse/MJ-1883): Add onboarding endpoint [`#52`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/52)
+
 #### [1.3.0](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.3.0..1.2.1)
 
 > 14 March 2019
