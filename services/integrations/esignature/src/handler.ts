@@ -117,6 +117,7 @@ export const createTemplate = utilService.gatewayEventHandler(async ({ securityC
     utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
+    await utilService.requirePayload(requestBody);
     utilService.validateAndThrow(requestBody, createEmbeddedTemplateValidationSchema);
     utilService.checkAdditionalProperties(createEmbeddedTemplateValidationSchema, requestBody, 'Create Embedded Template');
 
@@ -136,6 +137,7 @@ export const createBulkSignatureRequest = utilService.gatewayEventHandler(
         utilService.validateAndThrow(event.headers, headerSchema);
         utilService.checkBoundedIntegralValues(event.pathParameters);
 
+        await utilService.requirePayload(requestBody);
         utilService.validateAndThrow(requestBody, bulkSignatureRequestValidationSchema);
         utilService.checkAdditionalProperties(bulkSignatureRequestValidationSchema, requestBody, 'Signature Request');
 
@@ -157,6 +159,7 @@ export const createSignatureRequest = utilService.gatewayEventHandler(
         utilService.validateAndThrow(event.headers, headerSchema);
         utilService.checkBoundedIntegralValues(event.pathParameters);
 
+        await utilService.requirePayload(requestBody);
         utilService.validateAndThrow(requestBody, signatureRequestValidationSchema);
         utilService.checkAdditionalProperties(signatureRequestValidationSchema, requestBody, 'Signature Request');
         await utilService.validateRequestBody(signatureRequestSchema, requestBody);
@@ -243,6 +246,7 @@ export const onboarding = utilService.gatewayEventHandler(async ({ securityConte
     utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
+    await utilService.requirePayload(requestBody);
     utilService.validateAndThrow(requestBody, onboardingSignatureRequestValidationSchema);
     utilService.checkAdditionalProperties(onboardingSignatureRequestValidationSchema, requestBody, 'Onboarding Signature Request');
     await utilService.validateRequestBody(onboardingSignatureRequestSchema, requestBody);

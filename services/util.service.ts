@@ -228,6 +228,21 @@ export function checkBoundedIntegralValues(pathParameters: { [i: string]: string
 }
 
 /**
+ * Ensure a payload is sent with a request
+ * @param requestBody Request body to validate.
+ */
+export async function requirePayload(payload: any): Promise<void> {
+    console.info('utilService.requirePayload');
+
+    if (!payload) {
+        throw errorService
+            .getErrorResponse(30)
+            .setDeveloperMessage('Request body expected')
+            .setMoreInfo(`See documentation for usage.`);
+    }
+}
+
+/**
  * Validate an object against a schema, and throw the appropriate exception if it fails.
  * @param schema Yup schema to validate the request body against.
  * @param requestBody Request body to validate.
