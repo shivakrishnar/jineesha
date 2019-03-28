@@ -1,5 +1,11 @@
 #####  asure.hr.services
 
+#### [1.4.2](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.4.2..1.4.1)
+
+> 28 March 2019
+
+- [`MJ-1932`](https://evolutionpayroll.atlassian.net/browse/MJ-1932): Prevent js errors when trying to join on undefined recipientEmployeeIds and recipientUserIds [`#55`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/55)
+
 #### [1.4.1](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.4.1..1.4.0)
 
 > 26 March 2019
