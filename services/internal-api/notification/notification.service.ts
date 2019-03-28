@@ -162,8 +162,10 @@ async function getAlertByCategoryAndAction(
 
         const result: IResult<any> = await notificationDao.executeQuery(pool.transaction(), query);
         const alerts: Alert[] = (result.recordset || []).map((entry) => {
-            let recipientEmployeesIds: number[] | undefined;
-            let recipientUsersIds: number[] | undefined;
+            // Setting a default value of -1 allows us to run the listAlertRecipients
+            // query without an undefined value for the following variables
+            let recipientEmployeesIds = [-1];
+            let recipientUsersIds = [-1];
 
             // convert to array of numbers
             if (entry.recipientEmployeesIds) {
