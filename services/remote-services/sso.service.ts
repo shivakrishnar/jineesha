@@ -55,3 +55,56 @@ export async function exchangeToken(tenantId: string, hrToken: string, targetApp
         console.log(e);
     }
 }
+
+export async function getRoleMemberships(tenantId: string, accountId: string, token: string): Promise<any[]> {
+    console.info('ssoService.getRoleMemberships');
+
+    const apiUrl = `${baseUrl}/identity/tenants`;
+
+    // NOTE: we assume there are fewer than 100 roles, so we can get them all in one request
+    const response = await request.get({
+        url: `${apiUrl}/${tenantId}/accounts/${accountId}/role-memberships?limit=100`,
+        headers: { Authorization: `Bearer ${token}` },
+        json: true,
+    });
+
+    // endpoint returns undefined if no roles
+    const roles = response ? response.results : [];
+    return roles.filter((r: any) => r.enabled === true);
+}
+
+export async function createSsoAccount(tenantId: string, accountDetails: { [i: string]: string }, token: string): Promise<any> {
+    console.info('ssoService.createSsoAccount');
+
+    const apiUrl = `${baseUrl}/identity/tenants`;
+
+    const response = await request.post({
+        url: `${apiUrl}/${tenantId}/accounts`,
+        headers: { Authorization: `Bearer ${token}` },
+        json: true,
+        body: {
+            tenantId,
+            ...accountDetails,
+        },
+    });
+
+    return response;
+}
+
+export async function addRoleToAccount(tenantId: string, accountId: string, roleId: string, token: string): Promise<any> {
+    console.info('ssoService.addRoleToAccount');
+
+    const apiUrl = `${baseUrl}/identity/tenants`;
+
+    const response = await request.post({
+        url: `${apiUrl}/${tenantId}/accounts/${accountId}/role-memberships`,
+        headers: { Authorization: `Bearer ${token}` },
+        json: true,
+        body: {
+            roleId,
+            accountId,
+        },
+    });
+
+    return response;
+}

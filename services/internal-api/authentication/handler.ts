@@ -4,6 +4,7 @@ import * as jwt from 'jsonwebtoken';
 
 import * as configService from '../../config.service';
 import * as errorService from '../../errors/error.service';
+import * as ssoService from '../../remote-services/sso.service';
 import * as utilService from '../../util.service';
 
 import { IPayrollApiCredentials } from '../../api/models/IPayrollApiCredentials';
@@ -17,9 +18,20 @@ import { SecurityContext } from './securityContext';
 export async function tokenVerifier(event: APIGatewayEvent, context: Context, callback: any): Promise<void> {
     console.info('authentication.tokenVerifier');
 
+    const apiSecret = JSON.parse(await utilService.getSecret(configService.getApiSecretId())).apiSecret;
+    await verify(event, context, callback, apiSecret);
+}
+
+export async function ssoTokenVerifier(event: APIGatewayEvent, context: Context, callback: any): Promise<void> {
+    console.info('authentication.SsoTokenVerifier');
+    const apiSecret = JSON.parse(await utilService.getSecret(configService.getSsoCredentialsId())).apiSecret;
+    await verify(event, context, callback, apiSecret);
+}
+
+async function verify(event: APIGatewayEvent, context: Context, callback: any, apiSecret: string): Promise<void> {
+    console.info('authentication.verify');
+
     try {
-        const apiSecret = JSON.parse(await utilService.getSecret(configService.getApiSecretId())).apiSecret;
-        console.log(`api secret: ${JSON.stringify(apiSecret)}`);
         const policy = await buildPolicy(event, apiSecret);
         callback(undefined, policy);
     } catch (error) {
@@ -40,9 +52,10 @@ async function buildPolicy(event: any, secret: string): Promise<any> {
 
     const decodedToken: any = jwt.decode(accessToken);
 
-    const { account, scope } = decodedToken;
+    const { account } = decodedToken;
     const payrollApiCredentials: IPayrollApiCredentials = JSON.parse(await utilService.getSecret(configService.getPayrollApiCredentials()));
-    const securityContext = new SecurityContext(account, scope, accessToken, payrollApiCredentials);
+    const roleMemberships = await ssoService.getRoleMemberships(account.tenantId, account.id, accessToken);
+    const securityContext = new SecurityContext(account, roleMemberships, accessToken, payrollApiCredentials);
 
     const tmp = event.methodArn.split(':');
     const region = tmp[3];
