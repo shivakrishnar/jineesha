@@ -23,6 +23,9 @@ provider:
     sesSmtpServerHost: ${file(${opt:variables}):sesSmtpServerHost}
     sesSmtpServerPort: ${file(${opt:variables}):sesSmtpServerPort}
     payrollApiCredentialsId: ${file(${opt:variables}):payrollApiCredentialsId}
+    ssoCredentialsId: ${file(${opt:variables}):ssoCredentialsId}
+    asureAdminRoleId: ${file(${opt:variables}):asureAdminRoleId}
+    evoHrGlobalAdmin: ${file(${opt:variables}):evoHrGlobalAdmin}
     stage: ${file(${opt:variables}):stage}
     apiDomain: ${file(${opt:variables}):apiDomain}
     fromEmail: ${file(${opt:variables}):fromEmail}
@@ -72,6 +75,9 @@ provider:
 functions:
   tokenVerifier:
     handler: authentication/handler.tokenVerifier
+  
+  ssoTokenVerifier:
+    handler: authentication/handler.ssoTokenVerifier
 
   eventNotifier:
     handler: notification/handler.send
@@ -87,6 +93,8 @@ resources:
       Value: { "Fn::GetAtt": ["EventNotifierLambdaFunction", "Arn" ] }
     AuditLoggerArn:
       Value: { "Fn::GetAtt": ["AuditLoggerLambdaFunction", "Arn" ] }
+    SsoTokenVerifierArn:
+      Value: { "Fn::GetAtt": ["SsoTokenVerifierLambdaFunction", "Arn" ] }
 
 plugins:
   - serverless-stack-output

@@ -55,6 +55,10 @@ export class SecurityContext {
         }
     }
 
+    public requireAsureAdmin(): void {
+        this.requireRole(configService.getAsureAdminRoleId(), 'asure-admin');
+    }
+
     /**
      * Checks to see if the user has the appropriate security roles for the endpoint
      * @param {string} tenantId: The unique identifier for the tenant the user belongs to.

@@ -167,7 +167,8 @@ void deploy(String environment) {
         sh "ls -lah"
         String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
         deployInternalServices(awsCredentialsId, environment)
-        deployService('services/api/direct-deposits', awsCredentialsId, environment)      
+        deployService('services/api/direct-deposits', awsCredentialsId, environment)  
+        deployService('services/api/tenants', awsCredentialsId, environment)      
         deployService('services/integrations', awsCredentialsId, environment)      
     }
 }
@@ -200,6 +201,10 @@ void installServiceApiDependencies() {
     }
 
     dir('services/api/direct-deposits') {
+        sh 'npm install'
+    }
+
+    dir('services/api/tenants') {
         sh 'npm install'
     }
 }

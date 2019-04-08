@@ -34,6 +34,7 @@ provider:
     evoHrGroupPayroll: ${file(${opt:variables}):evoHrGroupPayroll}
     evoHrGroupCompany: ${file(${opt:variables}):evoHrGroupCompany}
     evoHrGroupEmployee: ${file(${opt:variables}):evoHrGroupEmployee}
+    evoHrGlobalAdmin: ${file(${opt:variables}):evoHrGlobalAdmin}
     apiDomain: ${file(${opt:variables}):apiDomain}
     fromEmail: ${file(${opt:variables}):fromEmail}
     integrationId: ${file(${opt:variables}):integrationId}

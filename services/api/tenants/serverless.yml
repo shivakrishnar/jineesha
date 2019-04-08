@@ -1,4 +1,4 @@
-service: asure-direct-deposits
+service: asure-tenants
 
 provider:
   stage: ${file(${opt:variables}):stage}
@@ -7,34 +7,17 @@ provider:
   timeout: 30  # AWS API Gateway timeout limit (30s)
   versionFunctions: false
   memorySize: 128
-  vpc:
-    securityGroupIds:
-      - ${file(${opt:variables}):lambdaExecutionSecurityGroup}
-    subnetIds:
-      - ${file(${opt:variables}):privateSubnetId1}
-      - ${file(${opt:variables}):privateSubnetId2}
-
   environment:  #environment variables
     awsRegion: ${file(${opt:variables}):awsRegion}
     secretsAwsEndPoint: ${file(${opt:variables}):secretsAwsEndPoint}
     apiSecretId: ${file(${opt:variables}):apiSecretId}
     rdsCredentialsId: ${file(${opt:variables}):rdsCredentialsId}
-    sesSmtpCredentialsId: ${file(${opt:variables}):sesSmtpCredentialsId}
-    sesSmtpServerHost: ${file(${opt:variables}):sesSmtpServerHost}
-    sesSmtpServerPort: ${file(${opt:variables}):sesSmtpServerPort}
     payrollApiCredentialsId: ${file(${opt:variables}):payrollApiCredentialsId}
-    errorsTriggered: true
-    pageLimitDefault: 30
-    pageLimitMax: 100
-    stage: ${file(${opt:variables}):stage}
-    evoHrUserTypeSuperAdmin: ${file(${opt:variables}):evoHrUserTypeSuperAdmin}
-    evoHrUserTypeSBAdmin: ${file(${opt:variables}):evoHrUserTypeSBAdmin}
-    evoHrGroupPayroll: ${file(${opt:variables}):evoHrGroupPayroll}
-    evoHrGroupCompany: ${file(${opt:variables}):evoHrGroupCompany}
-    evoHrGroupEmployee: ${file(${opt:variables}):evoHrGroupEmployee}
+    ssoCredentialsId: ${file(${opt:variables}):ssoCredentialsId}
+    asureAdminRoleId: ${file(${opt:variables}):asureAdminRoleId}
     evoHrGlobalAdmin: ${file(${opt:variables}):evoHrGlobalAdmin}
+    stage: ${file(${opt:variables}):stage}
     apiDomain: ${file(${opt:variables}):apiDomain}
-    fromEmail: ${file(${opt:variables}):fromEmail}
 
   iamRoleStatements:
     - Effect: Allow
@@ -72,50 +55,15 @@ provider:
       Action:
         - rds:DescribeDBInstances
       Resource: "*"
-    - Effect: Allow
-      Action: # Gives permission to SES in a specific region
-        - ses:SendEmail
-        - ses:SendRawEmail
-      Resource: "arn:aws:ses:us-east-1:*:*"
 
 functions:
-  listDirectDeposits:
-    handler: src/handler.list
+  addAdminAccount:
+    handler: src/handler.addAdmin
     events:
         - http:
-            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits
-            method: get
-            authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
-            cors:
-              origin: '*'
-
-  createDirectDeposit:
-    handler: src/handler.create
-    events:
-        - http:
-            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits
+            path: /tenants/{tenantId}/admins
             method: post
-            authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
-            cors:
-              origin: '*'
-
-  updateDirectDeposit:
-    handler: src/handler.update
-    events:
-        - http:
-            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits/{id}
-            method: patch
-            authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
-            cors:
-              origin: '*'
-  
-  deleteDirectDeposit:
-    handler: src/handler.remove
-    events:
-        - http:
-            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits/{id}
-            method: delete
-            authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
+            authorizer: ${file(../../internal-api/serverless-output.json):SsoTokenVerifierArn}
             cors:
               origin: '*'
 
@@ -152,7 +100,7 @@ custom:
     includeModules: true
     packager: 'npm'
   customDomain:
-    basePath: direct-deposits
+    basePath: 'internal'
     domainName: hr-services.${file(${opt:variables}):domain}
     certificateName: '*.${file(${opt:variables}):domain}'
     createRoute53Record: false

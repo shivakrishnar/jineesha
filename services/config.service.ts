@@ -16,6 +16,8 @@ export const getEvoHrGroupPayroll = () => process.env.evoHrGroupPayroll;
 
 export const getEvoHrGroupCompany = () => process.env.evoHrGroupCompany;
 
+export const getEvoHrGlobalAdmin = () => process.env.evoHrGlobalAdmin;
+
 export const getApiSecretId = () => process.env.apiSecretId;
 
 export const getSecretsAwsEndpoint = () => process.env.secretsAwsEndPoint;
@@ -43,3 +45,7 @@ export const eSignatureApiDevModeOn = () => {
 export const getIntegrationId = () => process.env.integrationId;
 
 export const getGoldilocksApplicationId = () => process.env.goldilocksApplicationId;
+
+export const getAsureAdminRoleId = () => process.env.asureAdminRoleId;
+
+export const getSsoCredentialsId = () => process.env.ssoCredentialsId;
