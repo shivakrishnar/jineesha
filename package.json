@@ -40,7 +40,7 @@
     "devDependencies": {
         "@types/aws-lambda": "^8.10.19",
         "@types/jest": "^24.0.0",
-        "@types/mssql": "^4.0.12",
+        "@types/mssql": "4.0.12",
         "@types/node": "^11.9.0",
         "@types/randomstring": "^1.1.6",
         "@types/request-promise-native": "^1.0.15",
@@ -75,9 +75,10 @@
         "@smallwins/validate": "^4.3.0",
         "aws-sdk": "^2.307.0",
         "jsonwebtoken": "^8.4.0",
-        "mssql": "^4.3.1",
+        "mssql": "4.3.1",
         "njwt": "^0.4.0",
         "request-promise-native": "^1.0.5",
+        "strip-bom": "^3.0.0",
         "tslint": "^5.13.0",
         "uuid": "^3.3.2"
     }

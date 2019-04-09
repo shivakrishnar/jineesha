@@ -81,7 +81,7 @@ export async function findConnectionString(tenantId: string): Promise<Connection
  * @param {string} rdsInstanceEndpoint: The RDS instance endpoint
  * @returns {Promise<string[]>}: Promise of an array of database names
  */
-async function listAvailableDatabases(rdsInstanceEndpoint: string): Promise<string[]> {
+export async function listAvailableDatabases(rdsInstanceEndpoint: string): Promise<string[]> {
     console.info('dbConnections.listAvailableDatabases');
 
     const restrictedDatabases = ['master', 'model', 'tempdb', 'msdb', 'rdsadmin'];

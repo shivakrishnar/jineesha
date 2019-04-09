@@ -4,9 +4,9 @@ provider:
   stage: ${file(${opt:variables}):stage}
   name: aws
   runtime: nodejs8.10
-  timeout: 30  # AWS API Gateway timeout limit (30s)
+  timeout: 900   # AWS API Gateway timeout limit (30s)
   versionFunctions: false
-  memorySize: 128
+  memorySize: 1024
   environment:  #environment variables
     awsRegion: ${file(${opt:variables}):awsRegion}
     secretsAwsEndPoint: ${file(${opt:variables}):secretsAwsEndPoint}
@@ -18,6 +18,9 @@ provider:
     evoHrGlobalAdmin: ${file(${opt:variables}):evoHrGlobalAdmin}
     stage: ${file(${opt:variables}):stage}
     apiDomain: ${file(${opt:variables}):apiDomain}
+    domain: ${file(${opt:variables}):domain}
+    hrDatabaseCreatorStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}
+    teamNotificationTopicArn: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:mojojojo-status-notification
 
   iamRoleStatements:
     - Effect: Allow
@@ -27,6 +30,7 @@ provider:
         - ec2:DeleteNetworkInterface
         - ec2:DetachNetworkInterface
       Resource: "arn:aws:ec2:us-east-1:*:*"
+
     - Effect: Allow
       Action:
         - secretsmanager:*
@@ -34,6 +38,7 @@ provider:
         - kms:ListAliases
         - kms:ListKeys
       Resource: "*"
+
     - Effect: Allow
       Action:
         - acm:ListCertificates
@@ -47,14 +52,34 @@ provider:
         - route53:GetHostedZone
         - route53:ListResourceRecordSets
       Resource: "*"
+
     - Effect: Allow
       Action:
         - lambda:InvokeFunction
       Resource: "*"
+
     - Effect: Allow
       Action:
         - rds:DescribeDBInstances
       Resource: "*"
+
+    - Effect: Allow
+      Action: states:StartExecution
+      Resource:
+        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}"
+
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+        - s3:GetObjectAcl
+        - s3:GetBucket
+        - s3:ListBucket
+      Resource: "arn:aws:s3:::*"
+
+    - Effect: Allow
+      Action:
+        - sns:Publish
+      Resource: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:mojojojo-status-notification
 
 functions:
   addAdminAccount:
@@ -66,6 +91,96 @@ functions:
             authorizer: ${file(../../internal-api/serverless-output.json):SsoTokenVerifierArn}
             cors:
               origin: '*'
+
+  addRdsDatabase:
+    handler: src/handler.addTenantDb
+    events:
+        - http:
+            path: /tenants
+            method: post
+            authorizer: ${file(../../internal-api/serverless-output.json):SsoTokenVerifierArn} # ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
+  checkTenant:
+    handler: src/handler.checkTenantExistence
+    vpc:
+      securityGroupIds:
+        - ${file(${opt:variables}):lambdaExecutionSecurityGroup}
+      subnetIds:
+        - ${file(${opt:variables}):privateSubnetId1}
+        - ${file(${opt:variables}):privateSubnetId2}
+
+  determinant:
+    handler: src/handler.dbPlacement
+    vpc:
+      securityGroupIds:
+        - ${file(${opt:variables}):lambdaExecutionSecurityGroup}
+      subnetIds:
+        - ${file(${opt:variables}):privateSubnetId1}
+        - ${file(${opt:variables}):privateSubnetId2}
+
+  dbCreator:
+    handler: src/handler.createRdsTenantDb
+    vpc:
+      securityGroupIds:
+        - ${file(${opt:variables}):lambdaExecutionSecurityGroup}
+      subnetIds:
+        - ${file(${opt:variables}):privateSubnetId1}
+        - ${file(${opt:variables}):privateSubnetId2}
+
+  errorHandler:
+    handler: src/handler.errorHandler
+
+
+
+stepFunctions:
+  stateMachines:
+     HrDatabaseCreator:
+      name: HrDatabaseCreator-${self:provider.stage}
+  
+      definition:
+        Comment: "State machine for creating a new tenant database within RDS"
+        StartAt: TenantChecker
+        States:
+
+          TenantChecker:
+            Type: Task
+            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-checkTenant
+            ResultPath: $.tenantCheck
+            Next: DbPlacementDeterminant
+            Catch:
+              - ErrorEquals:
+                  - States.ALL
+                Next: ErrorHandler
+                ResultPath: $.error
+
+          DbPlacementDeterminant:
+            Type: Task
+            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-determinant
+            ResultPath: $.placement
+            Next: TenantDbCreator
+            Catch:
+              - ErrorEquals:
+                  - States.ALL
+                Next: ErrorHandler
+                ResultPath: $.error
+
+          TenantDbCreator:
+            Type: Task
+            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-dbCreator
+            ResultPath: $.creator
+            End: true
+            Catch:
+              - ErrorEquals:
+                  - States.ALL
+                Next: ErrorHandler
+                ResultPath: $.error
+
+          ErrorHandler:
+            Type: Task
+            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-errorHandler
+            End: true
 
 resources:
   Resources:
@@ -85,6 +200,8 @@ plugins:
   - serverless-aws-documentation
   - serverless-cloudformation-resource-counter
   - serverless-domain-manager
+  - serverless-pseudo-parameters
+  - serverless-step-functions
 
 package:
   individually: false

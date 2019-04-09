@@ -1,4 +1,4 @@
-import { ConnectionPool, IResult, ISOLATION_LEVEL, Transaction } from 'mssql';
+import { ConnectionPool, IResult, ISOLATION_LEVEL, Request, Transaction } from 'mssql';
 import { IQuery } from './queries/query';
 
 /**
@@ -71,4 +71,19 @@ export function executeQuery(transaction: Transaction, query: IQuery): Promise<I
             }
         });
     });
+}
+
+/**
+ * Executes SQL batch statements on a given database connection
+ * @param {ConnectionPool} pool: The connection to the database
+ * @param {string} batchStatment: The batch statement to be executed
+ */
+export async function executeBatch(pool: ConnectionPool, batchStatement: string): Promise<void> {
+    console.info('services.dao.executeQuery');
+
+    const request = new Request(pool);
+    const statements: string[] = batchStatement.split(/\bGO\b/g).filter((statement) => statement !== '');
+    for (const statement of statements) {
+        await request.batch(statement);
+    }
 }

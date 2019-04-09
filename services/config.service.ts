@@ -2,6 +2,8 @@ export const getAwsRegion = () => process.env.awsRegion;
 
 export const getApiDomain = () => process.env.apiDomain;
 
+export const getDomain = () => process.env.domain;
+
 export const getPageLimitDefault = () => Number(process.env.pageLimitDefault);
 
 export const getPageLimitMax = () => Number(process.env.pageLimitMax);
@@ -49,3 +51,7 @@ export const getGoldilocksApplicationId = () => process.env.goldilocksApplicatio
 export const getAsureAdminRoleId = () => process.env.asureAdminRoleId;
 
 export const getSsoCredentialsId = () => process.env.ssoCredentialsId;
+
+export const getHrDatabaseCreatorStateMachineArn = () => process.env.hrDatabaseCreatorStateMachineArn;
+
+export const getTeamNotificationTopicArn = () => process.env.teamNotificationTopicArn;
