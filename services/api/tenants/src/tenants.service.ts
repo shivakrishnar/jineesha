@@ -196,8 +196,8 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
             .replace(/(NEW_HR_TENANT_ID)/g, dbInfo.id)
             .replace(/(NEW_HR_TENANT_NAME)/g, dbInfo.name)
             .replace(/(NEW_HR_TENANT_SUBDOMAIN)/g, dbInfo.subdomain)
-            .replace(/(DOMAIN)/g, configService.getDomain())
-            .replace(/(API_DOMAIN)/g, configService.getApiDomain());
+            .replace(/(API_DOMAIN)/g, configService.getApiDomain())
+            .replace(/(DOMAIN)/g, configService.getDomain());
 
         console.info('executing auth-setup.sql...');
         await tenantsDao.executeBatch(pool, stripBom(postDeploymentScript));
