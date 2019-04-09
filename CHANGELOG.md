@@ -1,5 +1,12 @@
 #####  asure.hr.services
 
+#### [1.5.0](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.5.0..1.4.2)
+
+> 9 April 2019
+
+- [`MJ-1987`](https://evolutionpayroll.atlassian.net/browse/MJ-1987): implement series of services to create a tenant database in RDS [`#57`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/57)
+- [`MJ-1981`](https://evolutionpayroll.atlassian.net/browse/MJ-1981): implement endpoint to add global SSO admin account to a specified tenant [`#56`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/56)
+
 #### [1.4.2](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.4.2..1.4.1)
 
 > 28 March 2019
