@@ -8,6 +8,8 @@ architecture uses AWS Lambda, API Gateway with a SQL Server-based RDS backend.
 -   [Serverless](https://serverless.com/)
 -   [Node 8.0 + ](https://nodejs.org/en/)
 -   [Jest](https://jestjs.io/)
+-   [Dotnet Core](https://dotnet.microsoft.com/download)
+-   [Docker](https://www.docker.com/)
 -   IAM permissions to allow for the creation of the pertinent AWS resources needed for this project.
 -   An existing custom [VPC](https://aws.amazon.com/vpc/) within which these services are to be deployed.
 

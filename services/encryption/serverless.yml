@@ -1,0 +1,33 @@
+
+service: asure-encryption
+
+
+provider:
+  stage: ${file(${opt:variables}):stage}
+  name: aws
+  runtime: dotnetcore2.1
+  timeout: 60
+  versionFunctions: false
+  memorySize: 256
+  
+  environment:  #environment variables
+    awsRegion: ${file(${opt:variables}):awsRegion}
+  
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - secretsmanager:*
+        - kms:DescribeKey
+        - kms:ListAliases
+        - kms:ListKeys
+      Resource: "*"
+
+package:
+  individually: true
+
+functions:
+  decrypt:
+    handler: Asure.HR.Encryption::Encryption.Handler::Decrypt
+
+    package:
+      artifact: asure.encryption.zip
