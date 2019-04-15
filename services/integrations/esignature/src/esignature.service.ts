@@ -19,6 +19,7 @@ import { DocumentMetadata, DocumentMetadataListResponse } from './documents/docu
 import { Onboarding } from './signature-requests/onboarding';
 import { Signatory, SignUrl } from './signature-requests/signatory';
 import { BulkSignatureRequest, SignatureRequest } from './signature-requests/signatureRequest';
+import { SignatureRequestConsolidatedResponse } from './signature-requests/signatureRequestConsolidatedResponse';
 import { SignatureRequestListResponse } from './signature-requests/signatureRequestListResponse';
 import {
     Signature,
@@ -595,6 +596,176 @@ export async function listDocuments(
         }
 
         return documents.length === 0 ? undefined : new DocumentMetadataListResponse({ results: documents });
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    } finally {
+        if (pool && pool.connected) {
+            await pool.close();
+        }
+    }
+}
+
+/**
+ * Lists all signature requests for E-Signature under a specified company.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {{[i: string]: string}} queryParams: The query parameters that were specified by the user.
+ * @returns {SignatureRequestListResponse | SignatureRequestConsolidatedResponse}: A promise of a collection of signature requests'/legacy documents' metadata.
+ */
+export async function listCompanySignatureRequests(
+    tenantId: string,
+    companyId: string,
+    queryParams: { [i: string]: string },
+): Promise<SignatureRequestListResponse | SignatureRequestConsolidatedResponse> {
+    console.info('esignatureService.listCompanySignatureRequests');
+
+    const validQueryStringParameters: string[] = ['status', 'consolidated'];
+    const validStatusValues: string[] = ['signed', 'pending'];
+
+    if (queryParams) {
+        // Check for unsupported query params
+        if (!Object.keys(queryParams).every((param) => validQueryStringParameters.includes(param))) {
+            const error: ErrorMessage = errorService.getErrorResponse(30);
+            error
+                .setDeveloperMessage('Unsupported query parameter(s) supplied')
+                .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(',')}. See documentation for usage.`);
+            throw error;
+        }
+
+        if (queryParams.status && !validStatusValues.includes(queryParams.status)) {
+            const error: ErrorMessage = errorService.getErrorResponse(30);
+            error
+                .setDeveloperMessage(`Unsupported value: ${queryParams.status}`)
+                .setMoreInfo(`Available values for status: ${validStatusValues.join(', ')}. See documentation for usage.`);
+            throw error;
+        }
+
+        if (queryParams.consolidated && queryParams.consolidated !== 'true') {
+            const error: ErrorMessage = errorService.getErrorResponse(30);
+            error
+                .setDeveloperMessage(`Unsupported value: ${queryParams.consolidated}`)
+                .setMoreInfo(`Available values for status: true. See documentation for usage.`);
+            throw error;
+        }
+    }
+
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    let pool: ConnectionPool;
+    try {
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+
+        const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            tenantId,
+            companyInfo.clientId,
+            companyId,
+        );
+        const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
+        const client = await hellosign({
+            key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
+            client_id: appClientId,
+        });
+
+        const response = await client.signatureRequest.list({
+            query: `metadata:${companyId}`,
+        });
+
+        let signatureRequests = response.signature_requests;
+        if (queryParams && queryParams.status) {
+            switch (queryParams.status) {
+                case 'signed':
+                    signatureRequests = response.signature_requests.filter((request) => request.is_complete);
+                    break;
+                case 'pending':
+                    signatureRequests = response.signature_requests.filter((request) => !request.is_complete);
+                    break;
+                default:
+            }
+        }
+
+        const signatures: SignatureRequestResponse[] = signatureRequests.map((request) => {
+            return {
+                id: request.signature_request_id,
+                title: request.title,
+                status: request.is_complete ? SignatureRequestResponseStatus.Complete : SignatureRequestResponseStatus.Pending,
+                signatures: request.signatures.map((signature) => {
+                    let signatureStatus;
+                    switch (signature.status_code) {
+                        case 'signed':
+                            signatureStatus = SignatureRequestResponseStatus.Complete;
+                            break;
+                        case 'awaiting_signature':
+                            signatureStatus = SignatureRequestResponseStatus.Pending;
+                            break;
+                        case 'declined':
+                            signatureStatus = SignatureRequestResponseStatus.Declined;
+                            break;
+                        default:
+                            signatureStatus = SignatureRequestResponseStatus.Unknown;
+                            break;
+                    }
+                    return {
+                        id: signature.signature_id,
+                        status: signatureStatus,
+                        signer: new Signatory({
+                            emailAddress: signature.signer_email_address,
+                            name: signature.signer_name,
+                            role: signature.signer_role,
+                        }),
+                    } as Signature;
+                }),
+            } as SignatureRequestResponse;
+        });
+
+        if (queryParams && queryParams.consolidated === 'true') {
+            const connectionString: ConnectionString = await findConnectionString(tenantId);
+            const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
+
+            pool = await servicesDao.createConnectionPool(
+                rdsCredentials.username,
+                rdsCredentials.password,
+                connectionString.rdsEndpoint,
+                connectionString.databaseName,
+            );
+
+            const query = new ParameterizedQuery('GetDocumentsByCompanyId', Queries.getDocumentsByCompanyId);
+            query.setParameter('@companyId', companyId);
+
+            const result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), query);
+            const documentRecord = (result.recordset || []).map(
+                ({
+                    ID: id,
+                    Filename: filename,
+                    Title: title,
+                    ESignDate: eSignDate,
+                    EmailAddress: emailAddress,
+                    EmployeeCode: employeeCode,
+                }) => {
+                    return {
+                        id,
+                        filename,
+                        title,
+                        eSignDate,
+                        emailAddress,
+                        employeeCode,
+                    };
+                },
+            );
+
+            return signatures.length === 0 && documentRecord.length === 0
+                ? undefined
+                : new SignatureRequestConsolidatedResponse({ requests: signatures, hrDocuments: documentRecord });
+        }
+        return signatures.length === 0 ? undefined : new SignatureRequestListResponse({ results: signatures });
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
