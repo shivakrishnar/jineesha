@@ -53,7 +53,7 @@ async function buildPolicy(event: any, secret: string): Promise<any> {
     const decodedToken: any = jwt.decode(accessToken);
 
     const { account } = decodedToken;
-    const payrollApiCredentials: IPayrollApiCredentials = JSON.parse(await utilService.getSecret(configService.getPayrollApiCredentials()));
+    const payrollApiCredentials: IPayrollApiCredentials = await utilService.getPayrollApiCredentials(account.tenantId);
     const roleMemberships = await ssoService.getRoleMemberships(account.tenantId, account.id, accessToken);
     const securityContext = new SecurityContext(account, roleMemberships, accessToken, payrollApiCredentials);
 

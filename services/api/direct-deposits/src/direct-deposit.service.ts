@@ -240,7 +240,7 @@ export async function update(
         if (directDeposit.status === 'Approved') {
             const evolutionKeys: IEvolutionKey = await getEvolutionKeys(pool, directDeposit.id);
             if (!utilService.hasAllKeysDefined(evolutionKeys)) {
-                throw errorService.getErrorResponse(0);
+                throw errorService.getErrorResponse(0).setMoreInfo('Associated direct deposit missing in Evolution');
             }
             await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, amount, amountType, method);
             payrollApiToken = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
