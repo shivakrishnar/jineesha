@@ -142,6 +142,16 @@ functions:
             cors:
               origin: '*'
 
+  listCompanySignatureRequests:
+    handler: esignature/src/handler.listCompanySignatureRequests
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/esignatures/requests
+            method: get
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
   onboarding:
     handler: esignature/src/handler.onboarding
     events:

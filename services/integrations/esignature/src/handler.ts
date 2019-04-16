@@ -156,9 +156,8 @@ export const createBulkSignatureRequest = utilService.gatewayEventHandler(
         await utilService.validateCollection(signatorySchema, requestBody.signatories);
 
         const { tenantId, companyId } = event.pathParameters;
-        const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
-        return await esignatureService.createBulkSignatureRequest(tenantId, companyId, requestBody, accessToken);
+        return await esignatureService.createBulkSignatureRequest(tenantId, companyId, requestBody);
     },
 );
 
@@ -237,6 +236,22 @@ export const listDocuments = utilService.gatewayEventHandler(async ({ securityCo
     const { tenantId, companyId } = event.pathParameters;
 
     return await esignatureService.listDocuments(tenantId, companyId, event.queryStringParameters);
+});
+
+/**
+ *  List all signature requests under a specific company
+ */
+export const listCompanySignatureRequests = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listCompanySignatureRequests');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId, companyId } = event.pathParameters;
+
+    return await esignatureService.listCompanySignatureRequests(tenantId, companyId, event.queryStringParameters);
 });
 
 /**
