@@ -51,6 +51,7 @@
         "lint-staged": "^8.0.4",
         "prettier": "1.15.0",
         "randomstring": "^1.1.5",
+        "serverless": "1.38.0",
         "superagent": "~3.5.2",
         "supertest": "~3.0.0",
         "ts-jest": "^23.10.5",

@@ -11,9 +11,11 @@ import * as errorService from './errors/error.service';
 
 import { APIGatewayEvent, Context, ProxyCallback, ProxyResult, ScheduledEvent } from 'aws-lambda';
 import { Headers } from './api/models/headers';
+import { ConnectionString, findConnectionString } from './dbConnections';
 import { ErrorMessage } from './errors/errorMessage';
 import { SecurityContext } from './internal-api/authentication/securityContext';
 
+import { IPayrollApiCredentials } from './api/models/IPayrollApiCredentials';
 import { INotificationEvent } from './internal-api/notification/events';
 
 import { Queries } from './queries/queries';
@@ -509,5 +511,68 @@ export async function clearCache(pool: ConnectionPool, accessToken: string): Pro
             .post(`https://${tenant[0].applicationUrl}/Classes/Service/hrnextDataService.asmx/ClearCache`)
             .send(JSON.stringify({ accessToken }))
             .set('Content-Type', 'application/json');
+    }
+}
+
+/**
+ * Retrieves the credentials of a given tenant's Evolution API service account
+ * @param {string} tenantId: The unique identifier for the tenant
+ * @returns {Promise<IPayrollApiCredentials>}: A Promise of the service account credentials
+ */
+export async function getPayrollApiCredentials(tenantId: string): Promise<IPayrollApiCredentials> {
+    console.info('utilService.getPayrollApiCredentials');
+
+    let pool: ConnectionPool;
+
+    try {
+        const connectionString: ConnectionString = await findConnectionString(tenantId);
+        const rdsCredentials = JSON.parse(await getSecret(configService.getRdsCredentials()));
+
+        pool = await servicesDao.createConnectionPool(
+            rdsCredentials.username,
+            rdsCredentials.password,
+            connectionString.rdsEndpoint,
+            connectionString.databaseName,
+        );
+
+        const query = new Query('PayrollApiServiceAccount', Queries.apiServiceAccount);
+        const result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), query);
+        const dbCredentials: IPayrollApiCredentials[] = result.recordset.map((entry) => {
+            return {
+                evoApiUsername: entry.APIUsername,
+                evoApiPassword: entry.APIPassword,
+            };
+        });
+
+        if (dbCredentials.length === 0) {
+            throw Error('missing Evolution API service account credentials');
+        }
+
+        // decrypt the service account password
+        AWS.config.update({
+            region: configService.getAwsRegion(),
+        });
+
+        const lambda = new AWS.Lambda();
+        const params = {
+            FunctionName: `asure-encryption-${configService.getStage()}-decrypt`,
+            InvocationType: 'RequestResponse',
+            Payload: JSON.stringify({
+                cipherText: dbCredentials[0].evoApiPassword,
+            }),
+        };
+
+        const decryptServiceResponse = await lambda.invoke(params).promise();
+        const response = JSON.parse(decryptServiceResponse.Payload.toString());
+        dbCredentials[0].evoApiPassword = response.body;
+
+        return dbCredentials[0];
+    } catch (error) {
+        console.error(error);
+        throw error;
+    } finally {
+        if (pool && pool.connected) {
+            await pool.close();
+        }
     }
 }
