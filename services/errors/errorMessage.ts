@@ -83,4 +83,9 @@ export class ErrorMessage {
         this.developerMessage = this.developerMessage.replace('{$}', field);
         return this;
     }
+
+    static [Symbol.hasInstance](object: any): boolean {
+        const validKeys: string[] = ['statusCode', 'code', 'message', 'developerMessage', 'moreInfo', 'requestId'];
+        return Object.keys(object).every((key) => validKeys.includes(key));
+    }
 }

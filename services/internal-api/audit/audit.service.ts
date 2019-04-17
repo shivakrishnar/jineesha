@@ -1,10 +1,9 @@
-import { ConnectionPool, IResult } from 'mssql';
-import * as configService from '../../config.service';
-import { ConnectionString, findConnectionString } from '../../dbConnections';
 import { ParameterizedQuery } from '../../queries/parameterizedQuery';
 import { Queries } from '../../queries/queries';
-import * as auditDao from '../../services.dao';
+
 import * as utilService from '../../util.service';
+import { InvocationType } from '../../util.service';
+import { DatabaseEvent, QueryType } from '../database/events';
 import { IAudit } from './audit';
 
 /**
@@ -17,34 +16,18 @@ export async function logAudit(audit: IAudit): Promise<boolean> {
 
     const { isEvoCall, userEmail, tenantId, employeeId } = audit;
 
-    let pool: ConnectionPool;
-
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-        pool = await auditDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
         const transactionName = await getTransactionName(isEvoCall, audit);
-        const auditId = await createAuditEntry(pool, transactionName, userEmail);
+        const auditId = await createAuditEntry(tenantId, transactionName, userEmail);
 
         if (auditId && !isEvoCall) {
-            const employeeDisplayName = await getEmployeeDisplayName(pool, employeeId);
-            await createAuditDetailEntries(pool, auditId, audit, employeeDisplayName);
+            const employeeDisplayName = await getEmployeeDisplayName(tenantId, employeeId);
+            await createAuditDetailEntries(tenantId, auditId, audit, employeeDisplayName);
         }
         return true;
     } catch (error) {
         console.error(`error creating audit: ${error}`);
         return false;
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 
@@ -71,12 +54,18 @@ async function getTransactionName(isEvoCall: boolean, audit: IAudit): Promise<st
  * @param {string} userEmail: The email address of the current user.
  * @return {number}: The unique identifier of the audit entry.
  */
-async function createAuditEntry(pool: ConnectionPool, transactionName: string, userEmail: string): Promise<number> {
+async function createAuditEntry(tenantId: string, transactionName: string, userEmail: string): Promise<number> {
     const createAuditQuery = new ParameterizedQuery('CreateAuditEntry', Queries.createAuditEntry);
     createAuditQuery.setParameter('@transactionName', transactionName);
     createAuditQuery.setParameter('@userEmail', userEmail);
 
-    const auditResult: IResult<any> = await auditDao.executeQuery(pool.transaction(), createAuditQuery);
+    const payload = {
+        tenantId,
+        queryName: createAuditQuery.name,
+        query: createAuditQuery.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    const auditResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
     return auditResult.recordset[0].auditId;
 }
 
@@ -86,11 +75,17 @@ async function createAuditEntry(pool: ConnectionPool, transactionName: string, u
  * @param {string} employeeId: The unique identifier of the current employee.
  * @return {string}: The employee's display name in the correct format.
  */
-async function getEmployeeDisplayName(pool: ConnectionPool, employeeId: string): Promise<string> {
+async function getEmployeeDisplayName(tenantId: string, employeeId: string): Promise<string> {
     const query = new ParameterizedQuery('GetEmployeeDisplayNameById', Queries.getEmployeeDisplayNameById);
     query.setParameter('@employeeId', employeeId);
 
-    const result: IResult<any> = await auditDao.executeQuery(pool.transaction(), query);
+    const payload = {
+        tenantId,
+        queryName: query.name,
+        query: query.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
     const record = result.recordset[0];
     return `${record.CurrentDisplayName} (${record.EmployeeCode})`;
 }
@@ -102,7 +97,7 @@ async function getEmployeeDisplayName(pool: ConnectionPool, employeeId: string):
  * @param {IAudit} audit: The audit information to log.
  * @param {string} employeeDisplayName: The employee's display name.
  */
-async function createAuditDetailEntries(pool: ConnectionPool, auditId: number, audit: IAudit, employeeDisplayName: string): Promise<void> {
+async function createAuditDetailEntries(tenantId: string, auditId: number, audit: IAudit, employeeDisplayName: string): Promise<void> {
     const { oldFields, newFields, type, companyId, areaOfChange } = audit;
 
     const fieldKeys = Object.keys(oldFields || newFields);
@@ -123,5 +118,12 @@ async function createAuditDetailEntries(pool: ConnectionPool, auditId: number, a
         fieldQuery.setParameter('@areaOfChange', areaOfChange);
         auditDetailQuery.appendFilter(fieldQuery.value, false);
     }
-    await auditDao.executeQuery(pool.transaction(), auditDetailQuery);
+
+    const payload = {
+        tenantId,
+        queryName: auditDetailQuery.name,
+        query: auditDetailQuery.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    await utilService.invokeInternalService('queryExecutor', payload, InvocationType.Event);
 }

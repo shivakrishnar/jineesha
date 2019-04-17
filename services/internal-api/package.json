@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "aws-auth-policy": "^0.1.0",
-    "aws-sdk": "^2.307.0",
+    "aws-sdk": "^2.437.0",
     "io-ts": "^1.8.1",
     "io-ts-types": "^0.4.2",
     "jsonwebtoken": "^8.4.0",

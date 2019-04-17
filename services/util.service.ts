@@ -1,6 +1,5 @@
 import * as validate from '@smallwins/validate';
 import * as AWS from 'aws-sdk';
-import { ConnectionPool, IResult } from 'mssql';
 import * as nJwt from 'njwt';
 import * as request from 'superagent';
 import * as util from 'util';
@@ -11,16 +10,14 @@ import * as errorService from './errors/error.service';
 
 import { APIGatewayEvent, Context, ProxyCallback, ProxyResult, ScheduledEvent } from 'aws-lambda';
 import { Headers } from './api/models/headers';
-import { ConnectionString, findConnectionString } from './dbConnections';
+import { IPayrollApiCredentials } from './api/models/IPayrollApiCredentials';
 import { ErrorMessage } from './errors/errorMessage';
 import { SecurityContext } from './internal-api/authentication/securityContext';
-
-import { IPayrollApiCredentials } from './api/models/IPayrollApiCredentials';
+import { DatabaseEvent, QueryType } from './internal-api/database/events';
 import { INotificationEvent } from './internal-api/notification/events';
 
 import { Queries } from './queries/queries';
 import { Query } from './queries/query';
-import * as servicesDao from './services.dao';
 
 export type ApiInvocationEvent = APIGatewayEvent | ScheduledEvent;
 
@@ -456,6 +453,54 @@ export async function logToAuditTrail(payload: any): Promise<void> {
     }
 }
 
+export enum InvocationType {
+    RequestResponse = 'RequestResponse',
+    Event = 'Event',
+}
+
+/**
+ *  Invokes another lambda asynchronously or synchronously with a given payload
+ * @param {string} serviceName: The name of the lambda to invoke
+ * @param {any} payload: The request event to the passed to the lambda
+ * @param {invocationType} invocationType: How to invoke lambda - synchronously(RequestResponse) | asynchronously(Event)
+ * @returns {Promise<unknown>}: A Promise of the invocation result
+ */
+export async function invokeInternalService(serviceName: string, payload: any, invocationType: InvocationType): Promise<unknown> {
+    console.info('utilService.invokeInternalService');
+
+    AWS.config.update({
+        region: configService.getAwsRegion(),
+    });
+
+    const lambda = new AWS.Lambda();
+    const params = {
+        FunctionName: `hr-services-internal-${configService.getStage()}-${serviceName}`,
+        InvocationType: invocationType,
+        Payload: JSON.stringify(payload),
+    };
+
+    if (invocationType === InvocationType.RequestResponse) {
+        const response = await lambda.invoke(params).promise();
+        const responsePayload = JSON.parse(response.Payload.toString());
+
+        if (responsePayload.body) {
+            const result = JSON.parse(responsePayload.body);
+            if (result instanceof ErrorMessage) {
+                throw result;
+            }
+            return result;
+        }
+
+        // Internal Error
+        if (responsePayload.errorMessage) {
+            const errorMessage = JSON.parse(responsePayload.errorMessage);
+            console.error(`invocation failed. Reason: ${JSON.stringify(errorMessage)}`);
+            throw errorService.getErrorResponse(0);
+        }
+    }
+    await lambda.invoke(params).promise();
+}
+
 /**
  * Formats a given date to the desired locale.
  * @param {string} date: A string representation of an existing date
@@ -485,14 +530,20 @@ type TenantDetails = {
  * Note: Although this is designed to clear the cache for a specific tenant
  *       since a single instance of Elastic Beanstalk is shared by all tenants,
  *       this in effect clears the cache for all.
- * @param {ConnectionPool} pool: The database connection for the tenant
+ * @param {string} tenantId: The unique identifier for the tenant
  * @param {string} accessToken: The authorizing access token
  */
-export async function clearCache(pool: ConnectionPool, accessToken: string): Promise<void> {
+export async function clearCache(tenantId: string, accessToken: string): Promise<void> {
     console.info('audit.service.clearCache');
 
     const tenantInfo = new Query('TenantInfo', Queries.tenantInfo);
-    const result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), tenantInfo);
+    const payload = {
+        tenantId,
+        queryName: tenantInfo.name,
+        query: tenantInfo.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    const result: any = await invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
     const tenant: TenantDetails[] = (result.recordset || []).map((entry) => {
         return {
@@ -522,21 +573,16 @@ export async function clearCache(pool: ConnectionPool, accessToken: string): Pro
 export async function getPayrollApiCredentials(tenantId: string): Promise<IPayrollApiCredentials> {
     console.info('utilService.getPayrollApiCredentials');
 
-    let pool: ConnectionPool;
-
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await getSecret(configService.getRdsCredentials()));
-
-        pool = await servicesDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
         const query = new Query('PayrollApiServiceAccount', Queries.apiServiceAccount);
-        const result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), query);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
         const dbCredentials: IPayrollApiCredentials[] = result.recordset.map((entry) => {
             return {
                 evoApiUsername: entry.APIUsername,
@@ -570,9 +616,5 @@ export async function getPayrollApiCredentials(tenantId: string): Promise<IPayro
     } catch (error) {
         console.error(error);
         throw error;
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }

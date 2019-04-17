@@ -7,12 +7,6 @@ provider:
   timeout: 30  # AWS API Gateway timeout limit (30s)
   versionFunctions: false
   memorySize: 128
-  vpc:
-    securityGroupIds:
-      - ${file(${opt:variables}):lambdaExecutionSecurityGroup}
-    subnetIds:
-      - ${file(${opt:variables}):privateSubnetId1}
-      - ${file(${opt:variables}):privateSubnetId2}
 
   environment:  #environment variables
     awsRegion: ${file(${opt:variables}):awsRegion}
@@ -147,6 +141,8 @@ custom:
     schedule: 'cron(0/5 * * * ? *)'    # Run every 5 minutes
     default:
         - production
+        - development
+        - staging
   webpack:
     webpackConfig: ./webpack/${file(${opt:variables}):webpackConfigurationFile}
     includeModules: true
