@@ -1,13 +1,11 @@
-import { ConnectionPool, IResult } from 'mssql';
 import * as nodemailer from 'nodemailer';
-
 import * as configService from '../../config.service';
-import * as notificationDao from '../../services.dao';
 import * as utilService from '../../util.service';
 
-import { ConnectionString, findConnectionString } from '../../dbConnections';
 import { ParameterizedQuery } from '../../queries/parameterizedQuery';
 import { Queries } from '../../queries/queries';
+import { InvocationType } from '../../util.service';
+import { DatabaseEvent, QueryType } from '../database/events';
 import { EmailMessage } from './emailMessage';
 import { AlertCategory, DirectDepositAction, IDirectDepositEvent, INotificationEvent, NotificationEventType } from './events';
 
@@ -142,25 +140,21 @@ async function getAlertByCategoryAndAction(
     action: AlertAction,
 ): Promise<Alert | undefined> {
     console.info('notification.service.getAlertByCategoryAndAction');
-    let pool: ConnectionPool;
 
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-        pool = await notificationDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
         const query = new ParameterizedQuery('listAlerts', Queries.alertEventList);
         query.setParameter('@companyId', companyId);
         query.setParameter('@action', `'${action}'`);
         query.setParameter('@alertCategoryType', `'${alertCategory}'`);
 
-        const result: IResult<any> = await notificationDao.executeQuery(pool.transaction(), query);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
         const alerts: Alert[] = (result.recordset || []).map((entry) => {
             // Setting a default value of -1 allows us to run the listAlertRecipients
             // query without an undefined value for the following variables
@@ -198,10 +192,6 @@ async function getAlertByCategoryAndAction(
         return alerts ? alerts[0] : undefined;
     } catch (error) {
         console.error(error);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 
@@ -214,19 +204,8 @@ async function getAlertByCategoryAndAction(
  */
 async function getAlertRecipients(tenantId: string, directDepositId: number, alert: Alert): Promise<string[]> {
     console.info('notification.service.getAlertRecipients');
-    let pool: ConnectionPool;
 
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-        pool = await notificationDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
         const query = new ParameterizedQuery('listAlertRecipients', Queries.listAlertRecipients);
         query.setParameter('@includeDirectDepositOwnerEmail', Number(alert.includeEmployee));
         query.setParameter('@includeFirstMgr', Number(alert.includeSupervisor1));
@@ -236,17 +215,19 @@ async function getAlertRecipients(tenantId: string, directDepositId: number, ale
         query.setParameter('@recipientUserIds', alert.recipientUsersIds.join(','));
         query.setParameter('@directDepositId', directDepositId);
 
-        const result: IResult<any> = await notificationDao.executeQuery(pool.transaction(), query);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
         return (result.recordset || []).map((entry) => {
             return entry.EmailAddress;
         });
     } catch (error) {
         console.error(error);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 
@@ -327,21 +308,16 @@ async function sendSmtpHtmlEmail(message: EmailMessage, smtpCredentials: SmtpCre
  */
 async function getSmtpCredentials(tenantId: string): Promise<SmtpCredentials | undefined> {
     console.info('notification.service.getSmtpCredentials');
-    let pool: ConnectionPool;
 
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-        pool = await notificationDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
         const query = new ParameterizedQuery('smtpCredentials', Queries.smtpCredentials);
-        const result: IResult<any> = await notificationDao.executeQuery(pool.transaction(), query);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
         const smtpCredentials: SmtpCredentials[] = (result.recordset || []).map((entry) => {
             /**
              * Note: The use of the username as the password here is intentional.
@@ -365,10 +341,6 @@ async function getSmtpCredentials(tenantId: string): Promise<SmtpCredentials | u
         return smtpCredentials ? smtpCredentials[0] : undefined;
     } catch (error) {
         console.error(error);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 
@@ -381,24 +353,21 @@ async function getSmtpCredentials(tenantId: string): Promise<SmtpCredentials | u
  */
 async function getDirectDepositMetadata(tenantId: string, directDepositId: number): Promise<IDirectDepositMetadataKeys | undefined> {
     console.info('notification.service.getDirectDepositMetadata');
-    let pool: ConnectionPool;
 
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-        pool = await notificationDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
         const directDepositPageLinkUrlSuffix: string = 'Secure/Employee/EmployeeDirectDepositList.aspx?menu=ESS';
 
         const query = new ParameterizedQuery('directDepositMetadata', Queries.directDepositMetadata);
         query.setParameter('@directDepositId', directDepositId);
-        const result: IResult<any> = await notificationDao.executeQuery(pool.transaction(), query);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
         const keys: IDirectDepositMetadataKeys[] = (result.recordset || []).map((entry) => {
             return {
                 firstName: entry.FirstName,
@@ -429,10 +398,6 @@ async function getDirectDepositMetadata(tenantId: string, directDepositId: numbe
         return keys ? keys[0] : undefined;
     } catch (error) {
         console.error(error);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 

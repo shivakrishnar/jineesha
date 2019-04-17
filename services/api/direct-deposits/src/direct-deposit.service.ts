@@ -1,6 +1,3 @@
-import * as directDepositDao from '../../../services.dao';
-
-import { ConnectionPool, IResult } from 'mssql';
 import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
 import { Queries } from '../../../queries/queries';
 import { DirectDeposit } from './directDeposit';
@@ -10,7 +7,6 @@ import { IEvolutionKey } from '../../models/IEvolutionKey';
 import { DirectDeposits } from './directDeposits';
 
 import * as jwt from 'jsonwebtoken';
-import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { IQuery, Query } from '../../../queries/query';
@@ -18,7 +14,8 @@ import * as payrollService from '../../../remote-services/payroll.service';
 import * as ssoService from '../../../remote-services/sso.service';
 import * as utilService from '../../../util.service';
 
-import { ConnectionString, findConnectionString } from '../../../dbConnections';
+import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
+import { InvocationType } from '../../../util.service';
 import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
 
 /**
@@ -36,34 +33,18 @@ export async function list(employeeId: string, tenantId: string): Promise<Direct
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    let pool: ConnectionPool;
-
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-        pool = await directDepositDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
         const query = new ParameterizedQuery('DirectDepositListAll', Queries.directDepositList);
         const endDateFilterCondition = `EndDate is null`;
         query.appendFilter(endDateFilterCondition);
         query.setParameter('@employeeId', employeeId);
 
-        const resultSet = await getResultSet(pool, query);
+        const resultSet = await getResultSet(tenantId, query);
 
         return new DirectDeposits(resultSet);
     } catch (error) {
         console.error(error);
         throw errorService.getErrorResponse(0);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 
@@ -101,26 +82,14 @@ export async function create(
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    let pool: ConnectionPool;
-
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-        pool = await directDepositDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
         const bankAccountQuery = await getDuplicateBankAccountQuery(routingNumber, accountNumber, designation, employeeId);
         let duplicatesQuery;
         if (amountType === 'Balance Remainder') {
             const remainderOfPayQuery = await getDuplicateRemainderOfPayQuery(employeeId);
             duplicatesQuery = bankAccountQuery.union(remainderOfPayQuery);
         }
-        await executeDuplicatesQuery(pool, duplicatesQuery || bankAccountQuery);
+        await executeDuplicatesQuery(tenantId, duplicatesQuery || bankAccountQuery);
 
         const createQuery = new ParameterizedQuery('DirectDepositCreate', Queries.directDepositCreate);
         // Truncate the amount field by removing excess decimal places. This will not round the value.
@@ -135,14 +104,20 @@ export async function create(
         createQuery.setParameter('@status', 'Pending');
         createQuery.setParameter('@designation', designation);
 
-        const createResult: IResult<any> = await directDepositDao.executeQuery(pool.transaction(), createQuery);
+        const payload = {
+            tenantId,
+            queryName: createQuery.name,
+            query: createQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const createResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
         const createdId: number = createResult.recordsets[1][0].ID;
 
         let resultSet: DirectDeposit[] = [];
         if (createdId) {
             const getQuery = new ParameterizedQuery('GetDirectDeposit', Queries.getDirectDeposit);
             getQuery.setParameter('@directDepositId', createdId);
-            resultSet = await getResultSet(pool, getQuery);
+            resultSet = await getResultSet(tenantId, getQuery);
         }
 
         utilService.logToAuditTrail({
@@ -156,7 +131,7 @@ export async function create(
         } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
 
         const payrollApiToken: string = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
-        await utilService.clearCache(pool, payrollApiToken);
+        await utilService.clearCache(tenantId, payrollApiToken);
 
         return new DirectDeposit(resultSet[0]);
     } catch (error) {
@@ -165,10 +140,6 @@ export async function create(
             throw error;
         }
         throw errorService.getErrorResponse(0);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 
@@ -210,25 +181,13 @@ export async function update(
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    let pool: ConnectionPool;
-
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-        pool = await directDepositDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
         if (amountType === 'Balance Remainder') {
             const remainderOfPayQuery = await getDuplicateRemainderOfPayQuery(employeeId);
-            await executeDuplicatesQuery(pool, remainderOfPayQuery);
+            await executeDuplicatesQuery(tenantId, remainderOfPayQuery);
         }
 
-        const directDeposits: DirectDeposit[] = await getEmployeeDirectDepositById(pool, id, employeeId);
+        const directDeposits: DirectDeposit[] = await getEmployeeDirectDepositById(tenantId, id, employeeId);
         if (directDeposits.length === 0) {
             const errorMessage = `Resource with id ${id} does not exist.`;
             throw errorService.getErrorResponse(50).setDeveloperMessage(errorMessage);
@@ -238,7 +197,7 @@ export async function update(
         let payrollApiToken: string;
 
         if (directDeposit.status === 'Approved') {
-            const evolutionKeys: IEvolutionKey = await getEvolutionKeys(pool, directDeposit.id);
+            const evolutionKeys: IEvolutionKey = await getEvolutionKeys(tenantId, directDeposit.id);
             if (!utilService.hasAllKeysDefined(evolutionKeys)) {
                 throw errorService.getErrorResponse(0).setMoreInfo('Associated direct deposit missing in Evolution');
             }
@@ -257,19 +216,15 @@ export async function update(
             } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
         }
 
-        await utilService.clearCache(pool, payrollApiToken);
+        await utilService.clearCache(tenantId, payrollApiToken);
 
-        return await updateDirectDeposit(pool, id, amount, amountType, userEmail, companyId, tenantId, employeeId);
+        return await updateDirectDeposit(id, amount, amountType, userEmail, companyId, tenantId, employeeId);
     } catch (error) {
         console.error(error);
         if (error instanceof ErrorMessage) {
             throw error;
         }
         throw errorService.getErrorResponse(0);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 
@@ -308,20 +263,8 @@ export async function remove(
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    let pool: ConnectionPool;
-
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-        pool = await directDepositDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
-        const directDeposits: DirectDeposit[] = await getEmployeeActiveDirectDepositById(pool, id, employeeId);
+        const directDeposits: DirectDeposit[] = await getEmployeeActiveDirectDepositById(tenantId, id, employeeId);
         if (directDeposits.length === 0) {
             const errorMessage = `Resource with id ${id} does not exist.`;
             throw errorService.getErrorResponse(50).setDeveloperMessage(errorMessage);
@@ -330,15 +273,15 @@ export async function remove(
         const directDeposit = directDeposits[0];
 
         if (directDeposit.status === 'Pending') {
-            await deleteDirectDeposit(pool, id, userEmail, companyId, tenantId, employeeId);
+            await deleteDirectDeposit(id, userEmail, companyId, tenantId, employeeId);
         } else if (directDeposit.status === 'Approved') {
             // update Evolution with end-dated direct deposit before updating the HR equivalent
-            const evolutionKeys: IEvolutionKey = await getEvolutionKeys(pool, directDeposit.id);
+            const evolutionKeys: IEvolutionKey = await getEvolutionKeys(tenantId, directDeposit.id);
             if (!utilService.hasAllKeysDefined(evolutionKeys)) {
                 throw errorService.getErrorResponse(0);
             }
             await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, 0, '', method);
-            await endDateDirectDeposit(pool, id, userEmail, companyId, tenantId, employeeId);
+            await endDateDirectDeposit(id, userEmail, companyId, tenantId, employeeId);
 
             utilService.logToAuditTrail({
                 isEvoCall: true,
@@ -353,28 +296,22 @@ export async function remove(
         }
 
         const payrollApiToken: string = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
-        await utilService.clearCache(pool, payrollApiToken);
+        await utilService.clearCache(tenantId, payrollApiToken);
     } catch (error) {
         console.error(error);
         if (error instanceof ErrorMessage) {
             throw error;
         }
         throw errorService.getErrorResponse(0);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 
 /**
  * Updates an existing direct deposit
- * @param {ConnectionPool} pool:  The open connection to the database.
  * @param {number} amount: The direct deposit amount
  * @param {string} amountType: The type of amount for the direct deposit.
  */
 async function updateDirectDeposit(
-    pool: ConnectionPool,
     directDepositId: string,
     amount: number,
     amountType: string,
@@ -390,14 +327,20 @@ async function updateDirectDeposit(
     updateQuery.setParameter('@id', directDepositId);
     updateQuery.setParameter('@amountType', amountType);
     updateQuery.setParameter('@amount', truncatedAmount);
+    const payload = {
+        tenantId,
+        queryName: updateQuery.name,
+        query: updateQuery.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
-    const result = await directDepositDao.executeQuery(pool.transaction(), updateQuery);
     const oldFields = result.recordsets[0][0];
     const newFields = result.recordsets[1][0];
 
     const getQuery = new ParameterizedQuery('GetDirectDeposit', Queries.getDirectDeposit);
     getQuery.setParameter('@directDepositId', directDepositId);
-    const directDepositResultSet = await getResultSet(pool, getQuery);
+    const directDepositResultSet = await getResultSet(tenantId, getQuery);
 
     utilService.logToAuditTrail({
         userEmail,
@@ -415,11 +358,9 @@ async function updateDirectDeposit(
 
 /**
  * Deletes an existing direct deposit.
- * @param {ConnectionPool} pool: The open connection to the database.
  * @param {string} directDepositId: The unique identifier of the direct deposit
  */
 async function deleteDirectDeposit(
-    pool: ConnectionPool,
     directDepositId: string,
     userEmail: string,
     companyId: string,
@@ -428,8 +369,13 @@ async function deleteDirectDeposit(
 ): Promise<void> {
     const deleteQuery = new ParameterizedQuery('DirectDepositDelete', Queries.directDepositDelete);
     deleteQuery.setParameter('@directDepositId', directDepositId);
-
-    const result = await directDepositDao.executeQuery(pool.transaction(), deleteQuery);
+    const payload = {
+        tenantId,
+        queryName: deleteQuery.name,
+        query: deleteQuery.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
     utilService.logToAuditTrail({
         userEmail,
@@ -444,11 +390,9 @@ async function deleteDirectDeposit(
 
 /**
  * Updates the end date of an existing direct deposit
- * @param {ConnectionPool} pool:  The open connection to the database.
  * @param {string} directDepositId: The unique identifier of the direct deposit
  */
 async function endDateDirectDeposit(
-    pool: ConnectionPool,
     directDepositId: string,
     userEmail: string,
     companyId: string,
@@ -457,8 +401,14 @@ async function endDateDirectDeposit(
 ): Promise<void> {
     const endDateQuery = new ParameterizedQuery('DirectDepositDelete', Queries.updateDirectDepositEndDate);
     endDateQuery.setParameter('@directDepositId', directDepositId);
+    const payload = {
+        tenantId,
+        queryName: endDateQuery.name,
+        query: endDateQuery.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
-    const result = await directDepositDao.executeQuery(pool.transaction(), endDateQuery);
     const oldFields = result.recordsets[0][0];
     const newFields = result.recordsets[1][0];
 
@@ -480,8 +430,14 @@ async function endDateDirectDeposit(
  * @param {IQuery} query: The query to run against the database.
  * @returns {Promise<DiectDeposit[]>}: Promise of an array of direct deposits
  */
-async function getResultSet(pool: ConnectionPool, query: IQuery): Promise<DirectDeposit[]> {
-    const result: IResult<any> = await directDepositDao.executeQuery(pool.transaction(), query);
+async function getResultSet(tenantId: string, query: IQuery): Promise<DirectDeposit[]> {
+    const payload = {
+        tenantId,
+        queryName: query.name,
+        query: query.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
     return (result.recordset || []).map((entry) => {
         return new DirectDeposit({
             id: Number(entry.id),
@@ -499,52 +455,50 @@ async function getResultSet(pool: ConnectionPool, query: IQuery): Promise<Direct
 
 /**
  * Checks if a specified direct deposit exists
- * @param {ConnectionPool} pool: The open connection to the database.
+ * @param {string} tenantId: The unique identifier of the tenant.
  * @param {string} directDepositId: The direct deposit identifier.
  * @param {string} employeeId: The employee's identifier.
  * @returns {Promise<DirectDeposit[]>}: Promise of an array of Direct Deposits
  */
-function getEmployeeDirectDepositById(pool: ConnectionPool, directDepositId: string, employeeId: string): Promise<DirectDeposit[]> {
+function getEmployeeDirectDepositById(tenantId: string, directDepositId: string, employeeId: string): Promise<DirectDeposit[]> {
     const directDepositQuery = new ParameterizedQuery('GetDirectDepositById', Queries.getDirectDeposit);
     const employeeFilterCondition = `EmployeeID = ${employeeId}`;
     directDepositQuery.appendFilter(employeeFilterCondition);
     directDepositQuery.setParameter('@directDepositId', directDepositId);
-    return getResultSet(pool, directDepositQuery);
+    return getResultSet(tenantId, directDepositQuery);
 }
 
 /**
  * Checks if a specified direct deposit exists and does not have an end date
- * @param {ConnectionPool} pool: The open connection to the database.
+ * @param {string} tenantId: The unique identifier of the tenant.
  * @param {string} directDepositId: The direct deposit identifier.
  * @param {string} employeeId: The employee's identifier.
  * @returns {Promise<DirectDeposit[]>}: Promise of an array of Direct Deposits
  */
-async function getEmployeeActiveDirectDepositById(
-    pool: ConnectionPool,
-    directDepositId: string,
-    employeeId: string,
-): Promise<DirectDeposit[]> {
+async function getEmployeeActiveDirectDepositById(tenantId: string, directDepositId: string, employeeId: string): Promise<DirectDeposit[]> {
     const directDepositQuery = new ParameterizedQuery('GetActiveDirectDepositById', Queries.getDirectDeposit);
     const employeeFilterCondition = `EmployeeID = ${employeeId}`;
     const endDateFilterCondition = 'EndDate is NULL';
     directDepositQuery.appendFilter(employeeFilterCondition);
     directDepositQuery.appendFilter(endDateFilterCondition);
     directDepositQuery.setParameter('@directDepositId', directDepositId);
-    return getResultSet(pool, directDepositQuery);
+    return getResultSet(tenantId, directDepositQuery);
 }
 
 /**
  * Executes queries that check for duplicate bank accounts and
  * duplicate remainder of pay direct deposits in the database.
- * @param {ConnectionPool} pool: The open connection to the database.
- * @param {string} routingNumber: The routing number of the bank account.
- * @param {string} accountNumber: The account number of the bank account.
- * @param {string} designation: The bank account type.
- * @param {string} amountType: The direct deposit type.
- * @param {string} employeeId: The unique identifier of the employee.
+ * @param {string} tenantId: The unique identifier of the tenant.
+ * @param {Query} query: The duplicates query to be run.
  */
-async function executeDuplicatesQuery(pool: ConnectionPool, query: Query): Promise<void> {
-    const duplicatesResult: IResult<any> = await directDepositDao.executeQuery(pool.transaction(), query);
+async function executeDuplicatesQuery(tenantId: string, query: Query): Promise<void> {
+    const payload = {
+        tenantId,
+        queryName: query.name,
+        query: query.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    const duplicatesResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
     const duplicates: any[] = duplicatesResult.recordset;
 
     if (duplicates.length > 0) {
@@ -625,13 +579,19 @@ async function updateEvolutionDirectDeposit(
 
 /**
  * Retrieves the Evolution-equivalent of HR entities ids.
- * @param {ConnectionPool} pool: The open connection to the database.
+ * @param {string} tenantId: The unique identifier of the tenant.
  * @param {number} directDepositId: The direct deposit identifier.
  */
-async function getEvolutionKeys(pool: ConnectionPool, directDepositId: number): Promise<IEvolutionKey | undefined> {
+async function getEvolutionKeys(tenantId: string, directDepositId: number): Promise<IEvolutionKey | undefined> {
     const getEvoDataQuery = new ParameterizedQuery('GetEvoData', Queries.getEvoData);
     getEvoDataQuery.setParameter('@id', directDepositId);
-    const evoDataResultSet: IResult<any> = await directDepositDao.executeQuery(pool.transaction(), getEvoDataQuery);
+    const payload = {
+        tenantId,
+        queryName: getEvoDataQuery.name,
+        query: getEvoDataQuery.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    const evoDataResultSet: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
     if (evoDataResultSet.recordset.length === 1) {
         return {

@@ -6,15 +6,14 @@ import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import * as hellosignService from '../../../remote-services/hellosign.service';
 import * as integrationsService from '../../../remote-services/integrations.service';
-import * as servicesDao from '../../../services.dao';
 import * as utilService from '../../../util.service';
 
-import { ConnectionPool, IResult } from 'mssql';
-import { ConnectionString, findConnectionString } from '../../../dbConnections';
 import { ErrorMessage } from '../../../errors/errorMessage';
+import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
+import { InvocationType } from '../../../util.service';
 import { DocumentMetadata, DocumentMetadataListResponse } from './documents/document';
 import { Onboarding } from './signature-requests/onboarding';
 import { Signatory, SignUrl } from './signature-requests/signatory';
@@ -235,22 +234,17 @@ export async function createSignatureRequest(
 ): Promise<SignatureRequestResponse> {
     console.info('esignature.handler.createSignatureRequest');
 
-    let pool: ConnectionPool;
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-        pool = await servicesDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
         const query = new ParameterizedQuery('GetEmployeeDisplayNameById', Queries.getEmployeeDisplayNameById);
         query.setParameter('@employeeId', employeeId);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
-        const result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), query);
         const employeeRecord = (result.recordset || []).map((entry) => {
             return {
                 emailAddress: entry.EmailAddress,
@@ -289,10 +283,6 @@ export async function createSignatureRequest(
 
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 
@@ -316,7 +306,6 @@ export async function listTemplates(
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    let pool: ConnectionPool;
     try {
         const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
         const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
@@ -366,20 +355,16 @@ export async function listTemplates(
             );
 
         if (queryParams && queryParams.consolidated === 'true') {
-            const connectionString: ConnectionString = await findConnectionString(tenantId);
-            const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-            pool = await servicesDao.createConnectionPool(
-                rdsCredentials.username,
-                rdsCredentials.password,
-                connectionString.rdsEndpoint,
-                connectionString.databaseName,
-            );
-
             const query = new ParameterizedQuery('GetDocumentsByCompanyId', Queries.getDocumentsByCompanyId);
             query.setParameter('@companyId', companyId);
+            const payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
-            const result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), query);
             const documentRecord = (result.recordset || []).map((entry) => {
                 return {
                     id: entry.ID,
@@ -393,10 +378,6 @@ export async function listTemplates(
     } catch (error) {
         console.error(error);
         throw errorService.getErrorResponse(0);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 
@@ -516,31 +497,20 @@ export async function listDocuments(
     const filterByOriginalDocuments: boolean = queryParams.docType && queryParams.docType.toLowerCase() === 'original' ? true : false;
     const taskListId = Number(queryParams.categoryId);
 
-    let pool: ConnectionPool;
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
 
-        pool = await servicesDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
-        // Check that the company id is valid.
-        let query = new ParameterizedQuery('GetCompanyInfo', Queries.companyInfo);
-        query.setParameter('@companyId', companyId);
-        let result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), query);
-        if (result.recordset.length === 0) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`The company id: ${companyId} not found`);
-        }
-
-        query = new ParameterizedQuery('GetTaskListDocuments', Queries.getTaskListDocuments);
+        const query = new ParameterizedQuery('GetTaskListDocuments', Queries.getTaskListDocuments);
         query.setParameter('@companyId', companyId);
         query.setParameter('@taskListId', taskListId);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
-        result = await servicesDao.executeQuery(pool.transaction(), query);
         let documents: DocumentMetadata[] = (result.recordset || []).map((entry) => {
             return {
                 id: entry.ID,
@@ -559,7 +529,6 @@ export async function listDocuments(
             documents = documents.filter((doc) => !doc.filename.includes('.'));
         }
 
-        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
         const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
             tenantId,
             companyInfo.clientId,
@@ -603,10 +572,6 @@ export async function listDocuments(
 
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 
@@ -660,7 +625,6 @@ export async function listCompanySignatureRequests(
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    let pool: ConnectionPool;
     try {
         const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
 
@@ -727,20 +691,16 @@ export async function listCompanySignatureRequests(
         });
 
         if (queryParams && queryParams.consolidated === 'true') {
-            const connectionString: ConnectionString = await findConnectionString(tenantId);
-            const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-            pool = await servicesDao.createConnectionPool(
-                rdsCredentials.username,
-                rdsCredentials.password,
-                connectionString.rdsEndpoint,
-                connectionString.databaseName,
-            );
-
             const query = new ParameterizedQuery('GetDocumentsByCompanyId', Queries.getDocumentsByCompanyId);
             query.setParameter('@companyId', companyId);
+            const payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
-            const result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), query);
             const documentRecord = (result.recordset || []).map(
                 ({
                     ID: id,
@@ -773,10 +733,6 @@ export async function listCompanySignatureRequests(
 
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }
 
@@ -993,27 +949,22 @@ type CompanyDetail = {
 async function getCompanyDetails(tenantId: string, companyId: string): Promise<CompanyDetail> {
     console.info('esignatureService.getCompanyInfo');
 
-    let pool: ConnectionPool;
     try {
-        const connectionString: ConnectionString = await findConnectionString(tenantId);
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-        pool = await servicesDao.createConnectionPool(
-            rdsCredentials.username,
-            rdsCredentials.password,
-            connectionString.rdsEndpoint,
-            connectionString.databaseName,
-        );
-
         // Check that the company id is valid.
         const query = new ParameterizedQuery('GetCompanyInfo', Queries.companyInfo);
         query.setParameter('@companyId', companyId);
-        const result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), query);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
         if (result.recordset.length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage(`The company id: ${companyId} not found`);
         }
 
-        const companyInfo: CompanyDetail[] = (result.recordset || []).map((entry) => {
+        const companyInfo: CompanyDetail[] = result.recordset.map((entry) => {
             return {
                 name: entry.CompanyName,
                 clientId: entry.ClientID,
@@ -1028,11 +979,7 @@ async function getCompanyDetails(tenantId: string, companyId: string): Promise<C
         if (error instanceof ErrorMessage) {
             throw error;
         }
-        console.error(`Unable to retrieve company info. Reason: ${JSON.stringify(error)}`);
+        console.error(`Unable to retrieve company info. Reason: ${error}`);
         throw errorService.getErrorResponse(0);
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
     }
 }

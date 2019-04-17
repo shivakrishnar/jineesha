@@ -209,6 +209,8 @@ custom:
     schedule: 'cron(0/5 * * * ? *)'    # Run every 5 minutes
     default:
         - production
+        - development
+        - staging
   webpack:
     webpackConfig: ./webpack/${file(${opt:variables}):webpackConfigurationFile}
     includeModules: true

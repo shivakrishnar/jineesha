@@ -4,14 +4,14 @@ import * as stripBom from 'strip-bom';
 import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import * as ssoService from '../../../remote-services/sso.service';
-import * as tenantsDao from '../../../services.dao';
 
 import * as utilService from '../../../util.service';
 
 import { DBInstance } from 'aws-sdk/clients/rds';
 import { ConnectionPool } from 'mssql';
-import { findConnectionString, listAvailableDatabases } from '../../../dbConnections';
+
 import { ErrorMessage } from '../../../errors/errorMessage';
+import * as databaseService from '../../../internal-api/database/database.service';
 import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
 
 /**
@@ -84,7 +84,7 @@ export async function addRdsDatabase(dbInfo: TenantDatabase): Promise<void> {
 export async function exists(tenantId: string): Promise<boolean> {
     console.info('tenants.service.exists');
     try {
-        await findConnectionString(tenantId);
+        await databaseService.findConnectionString(tenantId);
         return true; // tenant already exists
     } catch (error) {
         return false;
@@ -111,10 +111,10 @@ export async function rdsDatabasePlacement(): Promise<string> {
         });
 
         let chosenInstance: string = rdsInstances[0];
-        let chosenInstanceDbCount = (await listAvailableDatabases(chosenInstance)).length;
+        let chosenInstanceDbCount = (await databaseService.listAvailableDatabases(chosenInstance)).length;
 
         for (const instance of rdsInstances) {
-            const dbCount = (await listAvailableDatabases(instance)).length;
+            const dbCount = (await databaseService.listAvailableDatabases(instance)).length;
             if (dbCount < chosenInstanceDbCount) {
                 chosenInstanceDbCount = dbCount;
                 chosenInstance = instance;
@@ -170,8 +170,8 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
         const createDbScript = data.Body.toString().replace(/(HR_TENANT_ID)/g, dbInfo.id);
 
         const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-        pool = await tenantsDao.createConnectionPool(rdsCredentials.username, rdsCredentials.password, rdsEndpoint);
-        await tenantsDao.executeBatch(pool, createDbScript);
+        pool = await databaseService.createConnectionPool(rdsCredentials.username, rdsCredentials.password, rdsEndpoint);
+        await databaseService.executeBatch(pool, createDbScript);
 
         // Close existing connection since it's connected to the master db
         if (pool && pool.connected) {
@@ -179,7 +179,7 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
         }
 
         // Connect to newly created database
-        pool = await tenantsDao.createConnectionPool(rdsCredentials.username, rdsCredentials.password, rdsEndpoint, dbInfo.id);
+        pool = await databaseService.createConnectionPool(rdsCredentials.username, rdsCredentials.password, rdsEndpoint, dbInfo.id);
 
         // Create database tables &  stored procedures
         await applyScriptsInS3Folder('dbo', pool);
@@ -200,7 +200,7 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
             .replace(/(DOMAIN)/g, configService.getDomain());
 
         console.info('executing auth-setup.sql...');
-        await tenantsDao.executeBatch(pool, stripBom(postDeploymentScript));
+        await databaseService.executeBatch(pool, stripBom(postDeploymentScript));
 
         // Send notification of successful creation:
         const success = buildMessageAttachment(dbInfo, rdsEndpoint, 'RDS Database Creation', 'good');
@@ -251,7 +251,7 @@ async function applyDatabaseSchemaScript(s3FilePath: string, pool: ConnectionPoo
         .promise();
 
     const script = data.Body.toString();
-    await tenantsDao.executeBatch(pool, stripBom(script));
+    await databaseService.executeBatch(pool, stripBom(script));
 }
 
 /**

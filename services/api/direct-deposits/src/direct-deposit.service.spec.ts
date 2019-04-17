@@ -1,8 +1,7 @@
 import * as configService from '../../../config.service';
-import * as dbConnections from '../../../dbConnections';
+import * as databaseService from '../../../internal-api/database/database.service';
 import * as payrollService from '../../../remote-services/payroll.service';
 import * as ssoService from '../../../remote-services/sso.service';
-import * as directDepositDao from '../../../services.dao';
 import * as utilService from '../../../util.service';
 import * as directDepositService from './direct-deposit.service';
 
@@ -44,6 +43,10 @@ import * as mockData from './mock-data';
     return 'token';
 });
 
+(utilService as any).invokeInternalService = jest.fn((params: any) => {
+    return {};
+});
+
 (payrollService as any).getEvolutionEarningAndDeduction = jest.fn((params: any) => {
     return {};
 });
@@ -60,17 +63,17 @@ import * as mockData from './mock-data';
     return {};
 });
 
-(directDepositDao as any).createConnectionPool = jest.fn((params: any) => {
+(databaseService as any).createConnectionPool = jest.fn((params: any) => {
     const pool = new ConnectionPool('dummyConnectionString');
     return Promise.resolve(pool);
 });
 
-(dbConnections as any).findConnectionString = jest.fn((params: any) => {
+(databaseService as any).findConnectionString = jest.fn((params: any) => {
     return Promise.resolve('');
 });
 
 describe('directDepositService.list', () => {
-    (directDepositDao as any).executeQuery = jest.fn((params: any) => {
+    (utilService as any).invokeInternalService = jest.fn((params: any) => {
         return Promise.resolve(mockData.listResponseObject);
     });
 
@@ -88,10 +91,10 @@ describe('directDepositService.list', () => {
 
 describe('directDepositService.create', () => {
     test('creates and returns a direct deposit', () => {
-        (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
-            if (query.name === 'CheckForDuplicateBankAccounts') {
+        (utilService as any).invokeInternalService = jest.fn((serviceName, payload) => {
+            if (payload.queryName === 'CheckForDuplicateBankAccounts') {
                 return Promise.resolve(mockData.emptyResponseObject);
-            } else if (query.name === 'DirectDepositCreate') {
+            } else if (payload.queryName === 'DirectDepositCreate') {
                 return Promise.resolve(mockData.outputResponseObject);
             } else {
                 return Promise.resolve(mockData.postResponseObject);
@@ -115,7 +118,7 @@ describe('directDepositService.create', () => {
     });
 
     test('returns a 409 error when a record already exists with the same routing or account number', () => {
-        (directDepositDao as any).executeQuery = jest.fn((params: any) => {
+        (utilService as any).invokeInternalService = jest.fn((params: any) => {
             return Promise.resolve(mockData.duplicateBankAccountResponseObject);
         });
         return directDepositService
@@ -141,8 +144,8 @@ describe('directDepositService.create', () => {
     });
 
     test('returns a 409 error when a record already exists with an amountType of Balance Remainder', () => {
-        (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
-            if (query.name === 'CheckForDuplicateBankAccounts-union-CheckForDuplicateRemainderOfPay') {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'CheckForDuplicateBankAccounts-union-CheckForDuplicateRemainderOfPay') {
                 return Promise.resolve(mockData.duplicateRemainderResponseObject);
             } else {
                 return Promise.resolve(mockData.postResponseObject);
@@ -171,12 +174,12 @@ describe('directDepositService.create', () => {
 
 describe('directDepositService.update', () => {
     test('updates and returns a direct deposit', () => {
-        (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
-            if (query.name === 'CheckForDuplicateRemainderOfPay') {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'CheckForDuplicateRemainderOfPay') {
                 return Promise.resolve(mockData.emptyResponseObject);
-            } else if (query.name === 'DirectDepositUpdate') {
+            } else if (payload.queryName === 'DirectDepositUpdate') {
                 return Promise.resolve(mockData.putAuditResponseObject);
-            } else if (query.name === 'GetDirectDepositById') {
+            } else if (payload.queryName === 'GetDirectDepositById') {
                 return Promise.resolve(mockData.putResponseObject);
             } else {
                 return Promise.resolve(mockData.putResponseObject);
@@ -245,8 +248,8 @@ describe('directDepositService.update', () => {
     });
 
     test('returns a 404 when the requested resource does not exist', () => {
-        (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
-            if (query.name === 'CheckForDuplicateRemainderOfPay' || query.name === 'GetDirectDepositById') {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'CheckForDuplicateRemainderOfPay' || payload.queryName === 'GetDirectDepositById') {
                 return Promise.resolve(mockData.emptyResponseObject);
             } else {
                 return Promise.resolve(mockData.notUpdatedResponseObject);
@@ -274,7 +277,7 @@ describe('directDepositService.update', () => {
     });
 
     test('returns a 409 error when a record already exists with an amountType of Balance Remainder', () => {
-        (directDepositDao as any).executeQuery = jest.fn(() => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.duplicateRemainderResponseObject);
         });
         return directDepositService
@@ -343,7 +346,7 @@ describe('directDepositService.delete', () => {
     });
 
     test('returns a 404 when the requested resource does not exist', () => {
-        (directDepositDao as any).executeQuery = jest.fn((transaction, query) => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, query) => {
             return Promise.resolve(mockData.emptyResponseObject);
         });
         return directDepositService

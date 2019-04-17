@@ -1,18 +1,16 @@
-import * as servicesDao from '../../services.dao';
 import { IAccount } from './account';
 import { IRoleMembership } from './roleMembership';
 
-import { ConnectionPool, IResult } from 'mssql';
+import { IPayrollApiCredentials } from '../../api/models/IPayrollApiCredentials';
 import * as configService from '../../config.service';
 import * as errorService from '../../errors/error.service';
 import { ErrorMessage } from '../../errors/errorMessage';
 import { ParameterizedQuery } from '../../queries/parameterizedQuery';
 import { Queries } from '../../queries/queries';
 import * as utilService from '../../util.service';
+import { InvocationType } from '../../util.service';
+import { DatabaseEvent, QueryType } from '../database/events';
 import { ApplicationRoleLevel } from './ApplicationRoleLevelEnum';
-
-import { IPayrollApiCredentials } from '../../api/models/IPayrollApiCredentials';
-import { ConnectionString, findConnectionString } from '../../dbConnections';
 
 /**
  * SecurityContext represents data pulled from the token when it is verified. AWS requires the
@@ -70,23 +68,18 @@ export class SecurityContext {
     public async checkSecurityRoles(tenantId: string, employeeId: string, email: string, resource: string, action: string): Promise<void> {
         console.info('securityContext.checkSecurityRoles');
 
-        let pool: ConnectionPool;
-
         try {
-            const connectionString: ConnectionString = await findConnectionString(tenantId);
-            const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-            pool = await servicesDao.createConnectionPool(
-                rdsCredentials.username,
-                rdsCredentials.password,
-                connectionString.rdsEndpoint,
-                connectionString.databaseName,
-            );
-
             const query = new ParameterizedQuery('CheckSecurityRoles', Queries.checkSecurityRoles);
             query.setParameter('@userEmail', email);
 
-            const result: IResult<any> = await servicesDao.executeQuery(pool.transaction(), query);
+            const payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
             const recordSet: any[] = result.recordset;
             if (recordSet.length === 0 || recordSet[0].EmployeeID !== employeeId) {
                 throw errorService.getErrorResponse(11);
@@ -112,10 +105,6 @@ export class SecurityContext {
                 throw error;
             }
             throw errorService.getErrorResponse(0);
-        } finally {
-            if (pool && pool.connected) {
-                await pool.close();
-            }
         }
     }
 }
