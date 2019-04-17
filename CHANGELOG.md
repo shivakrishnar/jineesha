@@ -1,5 +1,13 @@
 #####  asure.hr.services
 
+#### [1.6.0](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.0..1.5.0)
+
+> 17 April 2019
+
+- [`MJ-2077`](https://evolutionpayroll.atlassian.net/browse/MJ-2077): refactor services to use a dedicated VPC-based database service [`#60`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/60)
+- [`MJ-1931`](https://evolutionpayroll.atlassian.net/browse/MJ-1931): implement a dedicated service to decrypt a tenant’s Evolution API service account credentials [`#58`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/58)
+- [`MJ-1459`](https://evolutionpayroll.atlassian.net/browse/MJ-1459): Add list signature request by company endpoint [`#59`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/59)
+
 #### [1.5.0](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.5.0..1.4.2)
 
 > 9 April 2019
