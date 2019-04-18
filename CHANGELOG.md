@@ -1,5 +1,11 @@
 #####  asure.hr.services
 
+#### [1.6.1](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.1..1.6.0)
+
+> 18 April 2019
+
+- [`MJ-2112`](https://evolutionpayroll.atlassian.net/browse/MJ-2112): Deploy query executor under HR VPC [`#61`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/61)
+
 #### [1.6.0](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.0..1.5.0)
 
 > 17 April 2019
