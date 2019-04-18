@@ -82,11 +82,11 @@ functions:
     handler: database/handler.execute
     memorySize: 1024
     vpc:
-    securityGroupIds:
-      - ${file(${opt:variables}):lambdaExecutionSecurityGroup}
-    subnetIds:
-      - ${file(${opt:variables}):privateSubnetId1}
-      - ${file(${opt:variables}):privateSubnetId2}
+      securityGroupIds:
+        - ${file(${opt:variables}):lambdaExecutionSecurityGroup}
+      subnetIds:
+        - ${file(${opt:variables}):privateSubnetId1}
+        - ${file(${opt:variables}):privateSubnetId2}
 
 resources:
   Outputs:
