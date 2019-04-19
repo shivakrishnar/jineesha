@@ -1,4 +1,5 @@
 import * as utilService from '../../../util.service';
+import * as companyService from './company.service';
 import * as tenantService from './tenants.service';
 
 import * as UUID from '@smallwins/validate/uuid';
@@ -144,3 +145,20 @@ export async function errorHandler(event: any, context: Context, callback: Proxy
         return callback(error);
     }
 }
+
+/**
+ * Returns a listing of the companies a user has access to.
+ */
+export const companyList = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('tenants.handler.companyList');
+
+    const { tenantId } = event.pathParameters;
+    const email = securityContext.principal.email;
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, adminsUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    return await companyService.list(tenantId, email);
+});
