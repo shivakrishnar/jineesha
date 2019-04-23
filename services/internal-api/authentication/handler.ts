@@ -28,6 +28,12 @@ export async function ssoTokenVerifier(event: APIGatewayEvent, context: Context,
     await verify(event, context, callback, apiSecret);
 }
 
+export async function hrTokenVerifier(event: APIGatewayEvent, context: Context, callback: any): Promise<void> {
+    console.info('authentication.hrTokenVerifier');
+    const apiSecret = JSON.parse(await utilService.getSecret(configService.getHrCredentialsId())).apiSecret;
+    await verify(event, context, callback, apiSecret);
+}
+
 async function verify(event: APIGatewayEvent, context: Context, callback: any, apiSecret: string): Promise<void> {
     console.info('authentication.verify');
 

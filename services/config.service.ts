@@ -55,3 +55,5 @@ export const getSsoCredentialsId = () => process.env.ssoCredentialsId;
 export const getHrDatabaseCreatorStateMachineArn = () => process.env.hrDatabaseCreatorStateMachineArn;
 
 export const getTeamNotificationTopicArn = () => process.env.teamNotificationTopicArn;
+
+export const getHrCredentialsId = () => process.env.hrCredentialsId;
