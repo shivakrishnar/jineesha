@@ -44,4 +44,11 @@ export const Queries = {
     // E-Signatures
     getDocumentsByCompanyId: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentsByCompanyId.sql')).toString(),
     getTaskListDocuments: fs.readFileSync(path.join(basePath, 'esignatures/getTaskListDocuments.sql')).toString(),
+
+    // Companies
+    getUserCompaniesById: fs.readFileSync(path.join(basePath, 'companies/getUserCompaniesById.sql')).toString(),
+    listCompanies: fs.readFileSync(path.join(basePath, 'companies/listCompanies.sql')).toString(),
+
+    // Users
+    getUserById: fs.readFileSync(path.join(basePath, 'users/getUserById.sql')).toString(),
 };

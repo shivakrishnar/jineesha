@@ -132,7 +132,15 @@ functions:
   errorHandler:
     handler: src/handler.errorHandler
 
-
+  listCompanies:
+    handler: src/handler.companyList
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies
+            method: get
+            authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
 
 stepFunctions:
   stateMachines:
