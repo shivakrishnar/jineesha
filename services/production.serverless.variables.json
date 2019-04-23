@@ -26,5 +26,6 @@
     "integrationId": "759f5d50-bc2f-4c69-8b53-649c3ba9c703",
     "goldilocksApplicationId": "19a7f2b0-1516-4c74-8dc4-1bdf224629e6",
     "eSignatureApiCredentialsId": "eSignatureApiCredentials",
-    "eSignatureApiDevModeOn": "true"
+    "eSignatureApiDevModeOn": "true",
+    "hrCredentialsId": "hrCredentials"
 }

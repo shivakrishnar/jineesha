@@ -176,12 +176,12 @@ void deploy(String environment) {
 void deployInternalServices(String awsCredentialsId, String environment) {
     dir('services/internal-api') {
          nvm(nodeVersion) {
-            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=2048 node_modules/.bin/serverless deploy --variables ${environment}.serverless.variables.json")
+            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=2048 node_modules/.bin/serverless deploy --variables ${environment}")
         }
     }
     dir('services/encryption') {
          nvm(nodeVersion) {
-            runWithAwsCredentials(awsCredentialsId, "./build.sh && node --max-old-space-size=2048 ../../node_modules/.bin/serverless deploy --variables ${environment}.serverless.variables.json")
+            runWithAwsCredentials(awsCredentialsId, "./build.sh && node --max-old-space-size=2048 ../../node_modules/.bin/serverless deploy --variables ${environment}")
         }
     }
 }
@@ -190,8 +190,8 @@ void deployInternalServices(String awsCredentialsId, String environment) {
 void deployService(String directory, String awsCredentialsId, String environment) {
     dir(directory) {
          nvm(nodeVersion) {
-            runWithAwsCredentials(awsCredentialsId, "node_modules/.bin/serverless create_domain --variables ${environment}.serverless.variables.json")
-            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=2048 node_modules/.bin/serverless deploy --variables ${environment}.serverless.variables.json")
+            runWithAwsCredentials(awsCredentialsId, "node_modules/.bin/serverless create_domain --variables ${environment}")
+            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=2048 node_modules/.bin/serverless deploy --variables ${environment}")
         }
     }
 }

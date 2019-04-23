@@ -8,21 +8,21 @@ provider:
   versionFunctions: false
   memorySize: 128
   environment:  #environment variables
-    awsRegion: ${file(${opt:variables}):awsRegion}
-    secretsAwsEndPoint: ${file(${opt:variables}):secretsAwsEndPoint}
-    apiSecretId: ${file(${opt:variables}):apiSecretId}
-    rdsCredentialsId: ${file(${opt:variables}):rdsCredentialsId}
-    sesSmtpCredentialsId: ${file(${opt:variables}):sesSmtpCredentialsId}
-    sesSmtpServerHost: ${file(${opt:variables}):sesSmtpServerHost}
-    sesSmtpServerPort: ${file(${opt:variables}):sesSmtpServerPort}
-    payrollApiCredentialsId: ${file(${opt:variables}):payrollApiCredentialsId}
-    ssoCredentialsId: ${file(${opt:variables}):ssoCredentialsId}
-    asureAdminRoleId: ${file(${opt:variables}):asureAdminRoleId}
-    evoHrGlobalAdmin: ${file(${opt:variables}):evoHrGlobalAdmin}
-    stage: ${file(${opt:variables}):stage}
-    apiDomain: ${file(${opt:variables}):apiDomain}
-    fromEmail: ${file(${opt:variables}):fromEmail}
-    hrCredentialsId: ${file(${opt:variables}):hrCredentialsId}
+    awsRegion: ${file(${self:custom.configFile}):awsRegion}
+    secretsAwsEndPoint: ${file(${self:custom.configFile}):secretsAwsEndPoint}
+    apiSecretId: ${file(${self:custom.configFile}):apiSecretId}
+    rdsCredentialsId: ${file(${self:custom.configFile}):rdsCredentialsId}
+    sesSmtpCredentialsId: ${file(${self:custom.configFile}):sesSmtpCredentialsId}
+    sesSmtpServerHost: ${file(${self:custom.configFile}):sesSmtpServerHost}
+    sesSmtpServerPort: ${file(${self:custom.configFile}):sesSmtpServerPort}
+    payrollApiCredentialsId: ${file(${self:custom.configFile}):payrollApiCredentialsId}
+    ssoCredentialsId: ${file(${self:custom.configFile}):ssoCredentialsId}
+    asureAdminRoleId: ${file(${self:custom.configFile}):asureAdminRoleId}
+    evoHrGlobalAdmin: ${file(${self:custom.configFile}):evoHrGlobalAdmin}
+    stage: ${file(${self:custom.configFile}):stage}
+    apiDomain: ${file(${self:custom.configFile}):apiDomain}
+    fromEmail: ${file(${self:custom.configFile}):fromEmail}
+    hrCredentialsId: ${file(${self:custom.configFile}):hrCredentialsId}
 
   iamRoleStatements:
     - Effect: Allow

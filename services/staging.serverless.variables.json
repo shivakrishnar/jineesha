@@ -27,4 +27,5 @@
     "eSignatureApiDevModeOn": "true",
     "eSignatureApiCredentialsId": "eSignatureApiCredentials",
     "asureAdminRoleId": "fe0d2d8c-ac86-47f8-b1e3-e2e626aacbbb",
+    "hrCredentialsId": "hrCredentials"
 }
