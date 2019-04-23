@@ -1,7 +1,7 @@
 service: asure-direct-deposits
 
 provider:
-  stage: ${file(${opt:variables}):stage}
+  stage: ${file(${self:custom.configFile}):stage}
   name: aws
   runtime: nodejs8.10
   timeout: 30  # AWS API Gateway timeout limit (30s)
@@ -9,26 +9,26 @@ provider:
   memorySize: 128
 
   environment:  #environment variables
-    awsRegion: ${file(${opt:variables}):awsRegion}
-    secretsAwsEndPoint: ${file(${opt:variables}):secretsAwsEndPoint}
-    apiSecretId: ${file(${opt:variables}):apiSecretId}
-    rdsCredentialsId: ${file(${opt:variables}):rdsCredentialsId}
-    sesSmtpCredentialsId: ${file(${opt:variables}):sesSmtpCredentialsId}
-    sesSmtpServerHost: ${file(${opt:variables}):sesSmtpServerHost}
-    sesSmtpServerPort: ${file(${opt:variables}):sesSmtpServerPort}
-    payrollApiCredentialsId: ${file(${opt:variables}):payrollApiCredentialsId}
+    awsRegion: ${file(${self:custom.configFile}):awsRegion}
+    secretsAwsEndPoint: ${file(${self:custom.configFile}):secretsAwsEndPoint}
+    apiSecretId: ${file(${self:custom.configFile}):apiSecretId}
+    rdsCredentialsId: ${file(${self:custom.configFile}):rdsCredentialsId}
+    sesSmtpCredentialsId: ${file(${self:custom.configFile}):sesSmtpCredentialsId}
+    sesSmtpServerHost: ${file(${self:custom.configFile}):sesSmtpServerHost}
+    sesSmtpServerPort: ${file(${self:custom.configFile}):sesSmtpServerPort}
+    payrollApiCredentialsId: ${file(${self:custom.configFile}):payrollApiCredentialsId}
     errorsTriggered: true
     pageLimitDefault: 30
     pageLimitMax: 100
-    stage: ${file(${opt:variables}):stage}
-    evoHrUserTypeSuperAdmin: ${file(${opt:variables}):evoHrUserTypeSuperAdmin}
-    evoHrUserTypeSBAdmin: ${file(${opt:variables}):evoHrUserTypeSBAdmin}
-    evoHrGroupPayroll: ${file(${opt:variables}):evoHrGroupPayroll}
-    evoHrGroupCompany: ${file(${opt:variables}):evoHrGroupCompany}
-    evoHrGroupEmployee: ${file(${opt:variables}):evoHrGroupEmployee}
-    evoHrGlobalAdmin: ${file(${opt:variables}):evoHrGlobalAdmin}
-    apiDomain: ${file(${opt:variables}):apiDomain}
-    fromEmail: ${file(${opt:variables}):fromEmail}
+    stage: ${file(${self:custom.configFile}):stage}
+    evoHrUserTypeSuperAdmin: ${file(${self:custom.configFile}):evoHrUserTypeSuperAdmin}
+    evoHrUserTypeSBAdmin: ${file(${self:custom.configFile}):evoHrUserTypeSBAdmin}
+    evoHrGroupPayroll: ${file(${self:custom.configFile}):evoHrGroupPayroll}
+    evoHrGroupCompany: ${file(${self:custom.configFile}):evoHrGroupCompany}
+    evoHrGroupEmployee: ${file(${self:custom.configFile}):evoHrGroupEmployee}
+    evoHrGlobalAdmin: ${file(${self:custom.configFile}):evoHrGlobalAdmin}
+    apiDomain: ${file(${self:custom.configFile}):apiDomain}
+    fromEmail: ${file(${self:custom.configFile}):fromEmail}
 
   iamRoleStatements:
     - Effect: Allow
@@ -137,6 +137,7 @@ package:
   excludeDevDependencies: true
 
 custom:
+  configFile: ../../${opt:variables, 'local'}.serverless.variables.json
   warmup:
     schedule: 'cron(0/5 * * * ? *)'    # Run every 5 minutes
     default:
@@ -144,11 +145,11 @@ custom:
         - development
         - staging
   webpack:
-    webpackConfig: ./webpack/${file(${opt:variables}):webpackConfigurationFile}
+    webpackConfig: ./webpack/${file(${self:custom.configFile}):webpackConfigurationFile}
     includeModules: true
     packager: 'npm'
   customDomain:
     basePath: direct-deposits
-    domainName: hr-services.${file(${opt:variables}):domain}
-    certificateName: '*.${file(${opt:variables}):domain}'
+    domainName: hr-services.${file(${self:custom.configFile}):domain}
+    certificateName: '*.${file(${self:custom.configFile}):domain}'
     createRoute53Record: false

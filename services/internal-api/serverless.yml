@@ -1,7 +1,7 @@
 service: hr-services-internal
 
 provider:
-  stage: ${file(${opt:variables}):stage}
+  stage: ${file(${self:custom.configFile}):stage}
   name: aws
   runtime: nodejs8.10
   timeout: 30  # AWS API Gateway timeout limit (30s)
@@ -87,10 +87,10 @@ functions:
     memorySize: 1024
     vpc:
       securityGroupIds:
-        - ${file(${opt:variables}):lambdaExecutionSecurityGroup}
+        - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}
       subnetIds:
-        - ${file(${opt:variables}):privateSubnetId1}
-        - ${file(${opt:variables}):privateSubnetId2}
+        - ${file(${self:custom.configFile}):privateSubnetId1}
+        - ${file(${self:custom.configFile}):privateSubnetId2}
 
 resources:
   Outputs:
@@ -117,10 +117,11 @@ package:
   excludeDevDependencies: true
 
 custom:
+  configFile: ../${opt:variables, 'local'}.serverless.variables.json
   output:
     handler: output.handler
     file: serverless-output.json
   webpack:
-    webpackConfig: ./webpack/${file(${opt:variables}):webpackConfigurationFile}
+    webpackConfig: ./webpack/${file(${self:custom.configFile}):webpackConfigurationFile}
     includeModules: true
     packager: 'npm'

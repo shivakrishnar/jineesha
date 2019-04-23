@@ -3,7 +3,7 @@ service: asure-encryption
 
 
 provider:
-  stage: ${file(${opt:variables}):stage}
+  stage: ${file(${self:custom.configFile}):stage}
   name: aws
   runtime: dotnetcore2.1
   timeout: 60
@@ -11,7 +11,7 @@ provider:
   memorySize: 256
   
   environment:  #environment variables
-    awsRegion: ${file(${opt:variables}):awsRegion}
+    awsRegion: ${file(${self:custom.configFile}):awsRegion}
   
   iamRoleStatements:
     - Effect: Allow
@@ -31,3 +31,6 @@ functions:
 
     package:
       artifact: asure.encryption.zip
+
+custom:
+  configFile: ../${opt:variables, 'local'}.serverless.variables.json

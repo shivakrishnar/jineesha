@@ -9,8 +9,7 @@
     "sesSmtpServerHost": "email-smtp.us-east-1.amazonaws.com",
     "sesSmtpServerPort": "587",
     "payrollApiCredentialsId": "PayrollApiCredentials",
-    "eSignatureApiCredentialsId": "eSignatureApiCredentials",
-    "eSignatureApiDevModeOn": "true",
+    "ssoCredentialsId": "ssoCredentials",
     "secretsAwsEndPoint": "https://secretsmanager.us-east-1.amazonaws.com",
     "webpackConfigurationFile": "production.config.js",
     "evoHrUserTypeSuperAdmin": "ad4a9359-d118-41cb-963c-dd4937ba71e0",
@@ -19,10 +18,13 @@
     "evoHrGroupCompany": "aae0d97b-43f1-4dea-ad89-f05b08dbc322",
     "evoHrGroupEmployee": "0ddee358-37c6-49b1-b587-53d38bd82424",
     "evoHrGlobalAdmin": "13ecbd1b-aa83-4645-a067-4638c7190040",
+    "asureAdminRoleId": "fe0d2d8c-ac86-47f8-b1e3-e2e626aacbbb",
     "stage": "production",
     "domain": "evolutionadvancedhr.com",
     "apiDomain": "https://evoapi.evolutionadvancedhr.com",
     "fromEmail": "AdvancedHR@evolutionadvancedhr.com",
     "integrationId": "759f5d50-bc2f-4c69-8b53-649c3ba9c703",
-    "goldilocksApplicationId": "19a7f2b0-1516-4c74-8dc4-1bdf224629e6"
+    "goldilocksApplicationId": "19a7f2b0-1516-4c74-8dc4-1bdf224629e6",
+    "eSignatureApiCredentialsId": "eSignatureApiCredentials",
+    "eSignatureApiDevModeOn": "true"
 }
