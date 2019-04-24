@@ -1,24 +1,24 @@
 service: asure-tenants
 
 provider:
-  stage: ${file(${opt:variables}):stage}
+  stage: ${file(${self:custom.configFile}):stage}
   name: aws
   runtime: nodejs8.10
   timeout: 900   # AWS API Gateway timeout limit (30s)
   versionFunctions: false
   memorySize: 1024
   environment:  #environment variables
-    awsRegion: ${file(${opt:variables}):awsRegion}
-    secretsAwsEndPoint: ${file(${opt:variables}):secretsAwsEndPoint}
-    apiSecretId: ${file(${opt:variables}):apiSecretId}
-    rdsCredentialsId: ${file(${opt:variables}):rdsCredentialsId}
-    payrollApiCredentialsId: ${file(${opt:variables}):payrollApiCredentialsId}
-    ssoCredentialsId: ${file(${opt:variables}):ssoCredentialsId}
-    asureAdminRoleId: ${file(${opt:variables}):asureAdminRoleId}
-    evoHrGlobalAdmin: ${file(${opt:variables}):evoHrGlobalAdmin}
-    stage: ${file(${opt:variables}):stage}
-    apiDomain: ${file(${opt:variables}):apiDomain}
-    domain: ${file(${opt:variables}):domain}
+    awsRegion: ${file(${self:custom.configFile}):awsRegion}
+    secretsAwsEndPoint: ${file(${self:custom.configFile}):secretsAwsEndPoint}
+    apiSecretId: ${file(${self:custom.configFile}):apiSecretId}
+    rdsCredentialsId: ${file(${self:custom.configFile}):rdsCredentialsId}
+    payrollApiCredentialsId: ${file(${self:custom.configFile}):payrollApiCredentialsId}
+    ssoCredentialsId: ${file(${self:custom.configFile}):ssoCredentialsId}
+    asureAdminRoleId: ${file(${self:custom.configFile}):asureAdminRoleId}
+    evoHrGlobalAdmin: ${file(${self:custom.configFile}):evoHrGlobalAdmin}
+    stage: ${file(${self:custom.configFile}):stage}
+    apiDomain: ${file(${self:custom.configFile}):apiDomain}
+    domain: ${file(${self:custom.configFile}):domain}
     hrDatabaseCreatorStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}
     teamNotificationTopicArn: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:mojojojo-status-notification
 
@@ -106,28 +106,28 @@ functions:
     handler: src/handler.checkTenantExistence
     vpc:
       securityGroupIds:
-        - ${file(${opt:variables}):lambdaExecutionSecurityGroup}
+        - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}
       subnetIds:
-        - ${file(${opt:variables}):privateSubnetId1}
-        - ${file(${opt:variables}):privateSubnetId2}
+        - ${file(${self:custom.configFile}):privateSubnetId1}
+        - ${file(${self:custom.configFile}):privateSubnetId2}
 
   determinant:
     handler: src/handler.dbPlacement
     vpc:
       securityGroupIds:
-        - ${file(${opt:variables}):lambdaExecutionSecurityGroup}
+        - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}
       subnetIds:
-        - ${file(${opt:variables}):privateSubnetId1}
-        - ${file(${opt:variables}):privateSubnetId2}
+        - ${file(${self:custom.configFile}):privateSubnetId1}
+        - ${file(${self:custom.configFile}):privateSubnetId2}
 
   dbCreator:
     handler: src/handler.createRdsTenantDb
     vpc:
       securityGroupIds:
-        - ${file(${opt:variables}):lambdaExecutionSecurityGroup}
+        - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}
       subnetIds:
-        - ${file(${opt:variables}):privateSubnetId1}
-        - ${file(${opt:variables}):privateSubnetId2}
+        - ${file(${self:custom.configFile}):privateSubnetId1}
+        - ${file(${self:custom.configFile}):privateSubnetId2}
 
   errorHandler:
     handler: src/handler.errorHandler
@@ -216,16 +216,17 @@ package:
   excludeDevDependencies: true
 
 custom:
+  configFile: ../../${opt:variables, 'local'}.serverless.variables.json
   warmup:
     schedule: 'cron(0/5 * * * ? *)'    # Run every 5 minutes
     default:
         - production
   webpack:
-    webpackConfig: ./webpack/${file(${opt:variables}):webpackConfigurationFile}
+    webpackConfig: ./webpack/${file(${self:custom.configFile}):webpackConfigurationFile}
     includeModules: true
     packager: 'npm'
   customDomain:
     basePath: 'internal'
-    domainName: hr-services.${file(${opt:variables}):domain}
-    certificateName: '*.${file(${opt:variables}):domain}'
+    domainName: hr-services.${file(${self:custom.configFile}):domain}
+    certificateName: '*.${file(${self:custom.configFile}):domain}'
     createRoute53Record: false
