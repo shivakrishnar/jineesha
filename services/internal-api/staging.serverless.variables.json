@@ -22,5 +22,6 @@
     "stage": "staging",
     "domain": "staging.evolution-software.com",
     "apiDomain": "https://api.staging.evolution-software.com",
-    "fromEmail": "email_test+staging@asuresoftware.com"
+    "fromEmail": "email_test+staging@asuresoftware.com",
+    "hrCredentialsId": "hrCredentials"
 }

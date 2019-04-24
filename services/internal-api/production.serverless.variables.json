@@ -22,5 +22,6 @@
     "stage": "production",
     "domain": "evolutionadvancedhr.com",
     "apiDomain": "https://evoapi.evolutionadvancedhr.com",
-    "fromEmail": "AdvancedHR@evolutionadvancedhr.com"
+    "fromEmail": "AdvancedHR@evolutionadvancedhr.com",
+    "hrCredentialsId": "hrCredentials"
 }

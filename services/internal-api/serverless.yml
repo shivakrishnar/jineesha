@@ -22,6 +22,7 @@ provider:
     stage: ${file(${opt:variables}):stage}
     apiDomain: ${file(${opt:variables}):apiDomain}
     fromEmail: ${file(${opt:variables}):fromEmail}
+    hrCredentialsId: ${file(${opt:variables}):hrCredentialsId}
 
   iamRoleStatements:
     - Effect: Allow
@@ -72,6 +73,9 @@ functions:
   ssoTokenVerifier:
     handler: authentication/handler.ssoTokenVerifier
 
+  hrTokenVerifier:
+    handler: authentication/handler.hrTokenVerifier
+
   eventNotifier:
     handler: notification/handler.send
 
@@ -98,6 +102,8 @@ resources:
       Value: { "Fn::GetAtt": ["AuditLoggerLambdaFunction", "Arn" ] }
     SsoTokenVerifierArn:
       Value: { "Fn::GetAtt": ["SsoTokenVerifierLambdaFunction", "Arn" ] }
+    HrTokenVerifierArn:
+      Value: { "Fn::GetAtt": ["HrTokenVerifierLambdaFunction", "Arn" ] }
 
 plugins:
   - serverless-stack-output
