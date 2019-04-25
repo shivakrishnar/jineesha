@@ -1,5 +1,13 @@
 #####  asure.hr.services
 
+#### [1.6.2](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.2..1.6.1)
+
+> 24 April 2019
+
+- [`MJ-2113`](https://evolutionpayroll.atlassian.net/browse/MJ-2113): Consolidate SLS variable files [`#64`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/64)
+- [`MJ-1873`](https://evolutionpayroll.atlassian.net/browse/MJ-1873): Update authorizer to authenticate HR-based tokens [`#63`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/63)
+- [`MJ-1989`](https://evolutionpayroll.atlassian.net/browse/MJ-1989): Implement company list endpoint [`#62`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/62)
+
 #### [1.6.1](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.1..1.6.0)
 
 > 18 April 2019
