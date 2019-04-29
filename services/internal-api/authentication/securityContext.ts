@@ -23,7 +23,7 @@ export class SecurityContext {
     principal: IAccount;
     roleMemberships: IRoleMembership[];
     accessToken: string;
-    payrollApiCredentials: IPayrollApiCredentials;
+    payrollApiCredentials: IPayrollApiCredentials | undefined;
     currentRoleLevel: ApplicationRoleLevel;
 
     public constructor(principal: IAccount, roleMemberships: IRoleMembership[] = [], accessToken: string, payrollApiCredentials: any) {
