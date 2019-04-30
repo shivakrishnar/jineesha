@@ -136,14 +136,6 @@ export function buildLambdaResponse(statusCode: number, headers: Headers, input:
     return response;
 }
 
-export function determineLimit(limit: number): number {
-    if (limit && limit >= 0 && limit <= configService.getPageLimitMax()) {
-        return limit;
-    } else {
-        return configService.getPageLimitDefault();
-    }
-}
-
 /**
  * Function that checks to ensure an object that is being updated does not contain
  * any properties that we did not define as valid for the object.
