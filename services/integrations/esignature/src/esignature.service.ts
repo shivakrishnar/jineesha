@@ -4,12 +4,14 @@ import * as uuidV4 from 'uuid/v4';
 
 import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
+import * as paginationService from '../../../pagination/pagination.service';
 import * as hellosignService from '../../../remote-services/hellosign.service';
 import * as integrationsService from '../../../remote-services/integrations.service';
 import * as utilService from '../../../util.service';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
+import { PaginatedResult } from '../../../pagination/paginatedResult';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
@@ -428,17 +430,22 @@ export async function createSignUrl(tenantId: string, companyId: string, employe
  * Lists all documents for E-Signature under a specified company.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for the company the user belongs to.
- * @param {{[i: string]: string}} queryParams: The query parameters that were specified by the user.
- * @returns {DocumentMetadataListResponse}: A Promise of a collection documents' metadata
+ * @param {any} queryParams: The query parameters that were specified by the user.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @returns {PaginatedResult}: A Promise of a collection documents' metadata
  */
 export async function listDocuments(
     tenantId: string,
     companyId: string,
-    queryParams: { [i: string]: string },
-): Promise<DocumentMetadataListResponse> {
+    queryParams: any,
+    domainName?: string,
+    path?: string,
+    useMaxLimit: boolean = false,
+): Promise<PaginatedResult> {
     console.info('esignatureService.listDocuments');
 
-    const validQueryStringParameters: string[] = ['category', 'categoryId', 'docType'];
+    const validQueryStringParameters: string[] = ['category', 'categoryId', 'docType', 'pageToken'];
 
     // Currently, the presence of query string parameters with the api call is enforced
     //  to ensure that the functionality is restricted to retrieving onboarding-related
@@ -493,6 +500,9 @@ export async function listDocuments(
         throw error;
     }
 
+    // Pagination validation
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
     const filterByHelloSignDocuments: boolean = queryParams.docType && queryParams.docType.toLowerCase() === 'hellosign' ? true : false;
     const filterByOriginalDocuments: boolean = queryParams.docType && queryParams.docType.toLowerCase() === 'original' ? true : false;
     const taskListId = Number(queryParams.categoryId);
@@ -503,15 +513,17 @@ export async function listDocuments(
         const query = new ParameterizedQuery('GetTaskListDocuments', Queries.getTaskListDocuments);
         query.setParameter('@companyId', companyId);
         query.setParameter('@taskListId', taskListId);
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page, useMaxLimit);
         const payload = {
             tenantId,
-            queryName: query.name,
-            query: query.value,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const totalRecords: number = result.recordsets[0][0].totalCount;
 
-        let documents: DocumentMetadata[] = (result.recordset || []).map((entry) => {
+        let documents: DocumentMetadata[] = (result.recordsets[1] || []).map((entry) => {
             return {
                 id: entry.ID,
                 filename: entry.Filename,
@@ -522,7 +534,12 @@ export async function listDocuments(
 
         if (filterByOriginalDocuments) {
             const originalDocs = documents.filter((doc) => doc.filename.includes('.'));
-            return originalDocs.length === 0 ? undefined : new DocumentMetadataListResponse({ results: originalDocs });
+            const originalDocsResponse = new DocumentMetadataListResponse({ results: originalDocs });
+            const paginatedResult =
+                originalDocs.length === 0
+                    ? undefined
+                    : await paginationService.createPaginatedResult(originalDocsResponse, baseUrl, totalRecords, page);
+            return paginatedResult;
         }
 
         if (filterByHelloSignDocuments) {
@@ -564,7 +581,8 @@ export async function listDocuments(
             documents = documents.filter((doc) => !unfoundDocuments.includes(doc));
         }
 
-        return documents.length === 0 ? undefined : new DocumentMetadataListResponse({ results: documents });
+        const documentsPaginatedResult = await paginationService.createPaginatedResult(documents, baseUrl, totalRecords, page);
+        return documents.length === 0 ? undefined : documentsPaginatedResult;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -815,7 +833,7 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
             docType: 'hellosign',
         };
 
-        const taskListTemplates = await listDocuments(tenantId, companyId, getDocumentsQueryParams);
+        const taskListTemplates = await listDocuments(tenantId, companyId, getDocumentsQueryParams, undefined, undefined, true);
 
         if (!taskListTemplates) {
             return undefined;
