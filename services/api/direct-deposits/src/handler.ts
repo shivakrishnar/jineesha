@@ -8,7 +8,7 @@ import { ApplicationRoleLevel } from '../../../internal-api/authentication/Appli
 import { IGatewayEventInput } from '../../../util.service';
 
 import { DirectDepositAction, IDirectDepositEvent, NotificationEventType } from '../../../internal-api/notification/events';
-import { DirectDeposits } from './directDeposits';
+import { PaginatedResult } from '../../../pagination/paginatedResult';
 
 const headerSchema = {
     authorization: { required: true, type: String },
@@ -162,7 +162,17 @@ export const list = utilService.gatewayEventHandler(async ({ securityContext, ev
     utilService.validateAndThrow(event.pathParameters, directDepositsResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
-    const directDeposits: DirectDeposits = await directDepositService.list(employeeId, tenantId);
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    const directDeposits: PaginatedResult = await directDepositService.list(
+        employeeId,
+        tenantId,
+        event.queryStringParameters,
+        domainName,
+        path,
+    );
     if (securityContext.currentRoleLevel === ApplicationRoleLevel.Employee) {
         directDeposits.results.map((directDeposit) => directDeposit.obfuscate());
     }

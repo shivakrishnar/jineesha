@@ -1,5 +1,6 @@
 import * as configService from '../../../config.service';
 import * as databaseService from '../../../internal-api/database/database.service';
+import * as paginationService from '../../../pagination/pagination.service';
 import * as payrollService from '../../../remote-services/payroll.service';
 import * as ssoService from '../../../remote-services/sso.service';
 import * as utilService from '../../../util.service';
@@ -7,9 +8,9 @@ import * as directDepositService from './direct-deposit.service';
 
 import { ConnectionPool } from 'mssql';
 import { ErrorMessage } from '../../../errors/errorMessage';
+import { PaginatedResult } from '../../../pagination/paginatedResult';
 import { BankAccount } from '../../models/BankAccount';
 import { DirectDeposit } from './directDeposit';
-import { DirectDeposits } from './directDeposits';
 import * as mockData from './mock-data';
 
 (configService as any).getSecretsAwsEndpoint = jest.fn(() => {
@@ -22,6 +23,10 @@ import * as mockData from './mock-data';
 
 (configService as any).getRdsCredentials = jest.fn(() => {
     return 'xxxorwhatever';
+});
+
+(configService as any).getPageLimitDefault = jest.fn(() => {
+    return 30;
 });
 
 (utilService as any).getSecret = jest.fn((params: any) => {
@@ -72,20 +77,39 @@ import * as mockData from './mock-data';
     return Promise.resolve('');
 });
 
+(paginationService as any).appendPaginationFilter = jest.fn((params: any) => {
+    return Promise.resolve('');
+});
+
 describe('directDepositService.list', () => {
     (utilService as any).invokeInternalService = jest.fn((params: any) => {
         return Promise.resolve(mockData.listResponseObject);
     });
 
     test('returns direct deposits', () => {
-        return directDepositService.list(mockData.employeeId, mockData.tenantId).then((directDeposits) => {
-            expect(directDeposits).toBeInstanceOf(DirectDeposits);
-            expect(directDeposits.results.length).toBe(mockData.listResponseObject.recordset.length);
+        return directDepositService.list(mockData.employeeId, mockData.tenantId, undefined, undefined, undefined).then((directDeposits) => {
+            expect(directDeposits.results.length).toBe(mockData.listResponseObject.recordsets[1].length);
             expect(directDeposits.results[0]).toBeInstanceOf(DirectDeposit);
             expect(directDeposits.results[0].bankAccount).toMatchObject(new BankAccount());
             expect(directDeposits.results[0]).toEqual(mockData.expectedObjects[0]);
             expect(directDeposits.results[1]).toEqual(mockData.expectedObjects[1]);
         });
+    });
+
+    test('returns paginated direct deposits', () => {
+        return directDepositService
+            .list(mockData.employeeId, mockData.tenantId, mockData.paginationQueryParams, mockData.domainName, mockData.path)
+            .then((directDeposits) => {
+                expect(directDeposits).toBeInstanceOf(PaginatedResult);
+                expect(directDeposits).toHaveProperty('limit');
+                expect(directDeposits).toHaveProperty('count');
+                expect(directDeposits).toHaveProperty('next');
+                expect(directDeposits).toHaveProperty('previous');
+                expect(directDeposits).toHaveProperty('first');
+                expect(directDeposits).toHaveProperty('last');
+                expect(directDeposits).toHaveProperty('results');
+                expect(directDeposits.results.length).toBeGreaterThan(0);
+            });
     });
 });
 
