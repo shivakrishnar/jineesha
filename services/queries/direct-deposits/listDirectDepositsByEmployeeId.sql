@@ -1,3 +1,14 @@
+declare @_employeeId int = @employeeId;
+
+-- Get total result count for pagination
+select
+    count(*) as totalCount
+from
+    dbo.EmployeeDirectDeposit
+where
+    EmployeeID = @_employeeId and
+    EndDate is null
+
 select 
     id = ID,
     amount = Amount,
@@ -22,4 +33,6 @@ select
 from 
     dbo.EmployeeDirectDeposit 
 where 
-    EmployeeID = @employeeId
+    EmployeeID = @_employeeId and
+    EndDate is null
+order by ID

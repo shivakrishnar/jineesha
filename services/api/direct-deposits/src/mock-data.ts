@@ -11,52 +11,45 @@ export const payrollApiCredentials: any = {
     evoApiUsername: 'bdyer@sharklasers.com',
     evoApiPassword: 'test',
 };
+export const domainName: string = 'https://test.evolution-software.com';
+export const path: string = '/tenants/1234/companies/1/employees/123/direct-deposits';
 
+export const paginationQueryParams: any = {
+    pageToken: 'Mg==',
+};
 export const listResponseObject = {
     recordsets: [
         [
             [
                 {
-                    id: '37',
-                    amount: '9000',
-                    routingNumber: '211274450',
-                    accountNumber: '49309909',
-                    amountType: 'Flat',
-                    status: 'No Status',
-                    designation: 'Checking',
+                    totalCount: 2,
                 },
             ],
-            [
-                {
-                    id: '38',
-                    amount: '100',
-                    routingNumber: '211274450',
-                    accountNumber: '490909909',
-                    amountType: 'Flat',
-                    status: 'No Status',
-                    designation: 'Savings',
-                },
-            ],
+        ],
+        [
+            {
+                id: '37',
+                amount: '9000',
+                routingNumber: '211274450',
+                accountNumber: '49309909',
+                amountType: 'Flat',
+                status: 'No Status',
+                designation: 'Checking',
+            },
+            {
+                id: '38',
+                amount: '100',
+                routingNumber: '211274450',
+                accountNumber: '490909909',
+                amountType: 'Flat',
+                status: 'No Status',
+                designation: 'Savings',
+            },
         ],
     ],
     recordset: [
         {
-            id: '37',
-            amount: '9000',
-            routingNumber: '211274450',
-            accountNumber: '49309909',
-            amountType: 'Flat',
-            status: 'No Status',
-            designation: 'Checking',
-        },
-        {
-            id: '38',
-            amount: '100',
-            routingNumber: '211274450',
-            accountNumber: '490909909',
-            amountType: 'Flat',
-            status: 'No Status',
-            designation: 'Savings',
+            totalCount: 2,
         },
     ],
     output: {},

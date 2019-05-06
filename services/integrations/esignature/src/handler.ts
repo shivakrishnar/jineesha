@@ -233,9 +233,12 @@ export const listDocuments = utilService.gatewayEventHandler(async ({ securityCo
     utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
+    const {
+        requestContext: { domainName, path },
+    } = event;
     const { tenantId, companyId } = event.pathParameters;
 
-    return await esignatureService.listDocuments(tenantId, companyId, event.queryStringParameters);
+    return await esignatureService.listDocuments(tenantId, companyId, event.queryStringParameters, domainName, path);
 });
 
 /**

@@ -42,6 +42,9 @@ end
 close onboarding_documents_cursor
 deallocate onboarding_documents_cursor
 
+-- Get total results for pagination
+select count(*) as totalCount from @tmp where isnumeric(DocumentID) <> 1
+
 ;with OriginalDocuments
 as 
 (
@@ -66,7 +69,7 @@ as
 select cast(ID as varchar(max)) as ID, Filename, Title, Description from OriginalDocuments
 union
 select ID = DocumentID, Filename = DocumentID, null, null from @tmp where isnumeric(DocumentID) <> 1
-
+order by ID
 
 
 

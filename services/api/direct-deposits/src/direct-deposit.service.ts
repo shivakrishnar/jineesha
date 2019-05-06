@@ -4,17 +4,18 @@ import { DirectDeposit } from './directDeposit';
 
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { IEvolutionKey } from '../../models/IEvolutionKey';
-import { DirectDeposits } from './directDeposits';
 
 import * as jwt from 'jsonwebtoken';
 import * as errorService from '../../../errors/error.service';
 import { ErrorMessage } from '../../../errors/errorMessage';
+import * as paginationService from '../../../pagination/pagination.service';
 import { IQuery, Query } from '../../../queries/query';
 import * as payrollService from '../../../remote-services/payroll.service';
 import * as ssoService from '../../../remote-services/sso.service';
 import * as utilService from '../../../util.service';
 
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
+import { PaginatedResult, PaginationData } from '../../../pagination/paginatedResult';
 import { InvocationType } from '../../../util.service';
 import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
 
@@ -22,10 +23,38 @@ import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
  * Returns a listing of direct deposits for specific employee within a tenant
  * @param {string} employeeId: The unique identifier for the employee
  * @param {string} tenantId: The unique identifier for the tenant the employee belongs to.
- * @returns {Promise<DiectDeposits>}: Promise of an array of direct deposits
+ * @returns {Promise<PaginatedResult>}: Promise of an array of direct deposits
  */
-export async function list(employeeId: string, tenantId: string): Promise<DirectDeposits> {
+export async function list(
+    employeeId: string,
+    tenantId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
     console.info('directDepositService.list');
+
+    const validQueryStringParameters: string[] = ['pageToken'];
+
+    if (queryParams) {
+        // Check for unsupported query params
+        if (!Object.keys(queryParams).every((param) => validQueryStringParameters.includes(param))) {
+            const error: ErrorMessage = errorService.getErrorResponse(30);
+            error
+                .setDeveloperMessage('Unsupported query parameter(s) supplied')
+                .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(',')}. See documentation for usage.`);
+            throw error;
+        }
+    }
+
+    // Pagination validation
+    const paginationData: PaginationData = await paginationService.retrievePaginationData(
+        validQueryStringParameters,
+        domainName,
+        path,
+        queryParams,
+    );
+    const { page } = paginationData;
 
     // employeeId value must be integral
     if (Number.isNaN(Number(employeeId))) {
@@ -35,13 +64,10 @@ export async function list(employeeId: string, tenantId: string): Promise<Direct
 
     try {
         const query = new ParameterizedQuery('DirectDepositListAll', Queries.directDepositList);
-        const endDateFilterCondition = `EndDate is null`;
-        query.appendFilter(endDateFilterCondition);
         query.setParameter('@employeeId', employeeId);
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
 
-        const resultSet = await getResultSet(tenantId, query);
-
-        return new DirectDeposits(resultSet);
+        return await getResultSet(tenantId, paginatedQuery, paginationData);
     } catch (error) {
         console.error(error);
         throw errorService.getErrorResponse(0);
@@ -428,9 +454,10 @@ async function endDateDirectDeposit(
  * Executes the specified query and returns the result as a DirectDeposit
  * @param {ConnectionPool} pool: The open connection to the database.
  * @param {IQuery} query: The query to run against the database.
- * @returns {Promise<DiectDeposit[]>}: Promise of an array of direct deposits
+ * @param {PaginationData} [paginationData]: The pagination data specified by the user.
+ * @returns {Promise<any>}: Promise of an array of direct deposits
  */
-async function getResultSet(tenantId: string, query: IQuery): Promise<DirectDeposit[]> {
+async function getResultSet(tenantId: string, query: IQuery, paginationData?: PaginationData): Promise<any> {
     const payload = {
         tenantId,
         queryName: query.name,
@@ -438,7 +465,13 @@ async function getResultSet(tenantId: string, query: IQuery): Promise<DirectDepo
         queryType: QueryType.Simple,
     } as DatabaseEvent;
     const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-    return (result.recordset || []).map((entry) => {
+    let recordSet = result.recordset;
+    let totalRecords: number;
+    if (paginationData) {
+        recordSet = result.recordsets[1];
+        totalRecords = result.recordsets[0][0].totalCount;
+    }
+    const directDeposits = recordSet.map((entry) => {
         return new DirectDeposit({
             id: Number(entry.id),
             amount: Number(parseFloat(entry.amount).toFixed(2)),
@@ -451,6 +484,9 @@ async function getResultSet(tenantId: string, query: IQuery): Promise<DirectDepo
             status: entry.status,
         });
     });
+    return paginationData
+        ? await paginationService.createPaginatedResult(directDeposits, paginationData.baseUrl, totalRecords, paginationData.page)
+        : directDeposits;
 }
 
 /**
