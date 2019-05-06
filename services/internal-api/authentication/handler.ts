@@ -15,30 +15,37 @@ import { SecurityContext } from './securityContext';
  * Gateway. This function allows API Gateway to validate the JWT before passing
  * the call on to the API endpoint.
  */
+
+enum AuthorizerType {
+    HR = 'HR',
+    Evolution = 'Evolution',
+    Golidlocks = 'Goldilocks',
+}
+
 export async function tokenVerifier(event: APIGatewayEvent, context: Context, callback: any): Promise<void> {
     console.info('authentication.tokenVerifier');
 
     const apiSecret = JSON.parse(await utilService.getSecret(configService.getApiSecretId())).apiSecret;
-    await verify(event, context, callback, apiSecret);
+    await verify(event, context, callback, apiSecret, AuthorizerType.Evolution);
 }
 
 export async function ssoTokenVerifier(event: APIGatewayEvent, context: Context, callback: any): Promise<void> {
     console.info('authentication.SsoTokenVerifier');
     const apiSecret = JSON.parse(await utilService.getSecret(configService.getSsoCredentialsId())).apiSecret;
-    await verify(event, context, callback, apiSecret);
+    await verify(event, context, callback, apiSecret, AuthorizerType.Golidlocks);
 }
 
 export async function hrTokenVerifier(event: APIGatewayEvent, context: Context, callback: any): Promise<void> {
     console.info('authentication.hrTokenVerifier');
     const apiSecret = JSON.parse(await utilService.getSecret(configService.getHrCredentialsId())).apiSecret;
-    await verify(event, context, callback, apiSecret);
+    await verify(event, context, callback, apiSecret, AuthorizerType.HR);
 }
 
-async function verify(event: APIGatewayEvent, context: Context, callback: any, apiSecret: string): Promise<void> {
+async function verify(event: APIGatewayEvent, context: Context, callback: any, apiSecret: string, authType: AuthorizerType): Promise<void> {
     console.info('authentication.verify');
 
     try {
-        const policy = await buildPolicy(event, apiSecret);
+        const policy = await buildPolicy(event, apiSecret, authType);
         callback(undefined, policy);
     } catch (error) {
         console.info('authentication.tokenVerifier error:' + JSON.stringify(utilService.makeSerializable(error)));
@@ -46,7 +53,7 @@ async function verify(event: APIGatewayEvent, context: Context, callback: any, a
     }
 }
 
-async function buildPolicy(event: any, secret: string): Promise<any> {
+async function buildPolicy(event: any, secret: string, authType: AuthorizerType): Promise<any> {
     console.info('authenticationService.buildPolicy');
 
     const accessToken = event.authorizationToken.replace(/Bearer /i, '');
@@ -59,8 +66,9 @@ async function buildPolicy(event: any, secret: string): Promise<any> {
     const decodedToken: any = jwt.decode(accessToken);
 
     const { account } = decodedToken;
-    const payrollApiCredentials: IPayrollApiCredentials = await utilService.getPayrollApiCredentials(account.tenantId);
     const roleMemberships = await ssoService.getRoleMemberships(account.tenantId, account.id, accessToken);
+    const payrollApiCredentials: IPayrollApiCredentials =
+        authType === AuthorizerType.Golidlocks ? undefined : await utilService.getPayrollApiCredentials(account.tenantId);
     const securityContext = new SecurityContext(account, roleMemberships, accessToken, payrollApiCredentials);
 
     const tmp = event.methodArn.split(':');
