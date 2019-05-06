@@ -1,8 +1,15 @@
 #####  asure.hr.services
 
+#### [1.6.3](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.3..1.6.2)
+
+> 6 May 2019
+
+- [`MJ-2165`](https://evolutionpayroll.atlassian.net/browse/MJ-2165): do not load HR global admin credentials if endpoint is invoked with a Golidlocks-based token [`#65`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/65)
+- [`MJ-1994`](https://evolutionpayroll.atlassian.net/browse/MJ-1994): Pagination service [`#66`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/66)
+
 #### [1.6.2](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.2..1.6.1)
 
-> 24 April 2019
+> 25 April 2019
 
 - [`MJ-2113`](https://evolutionpayroll.atlassian.net/browse/MJ-2113): Consolidate SLS variable files [`#64`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/64)
 - [`MJ-1873`](https://evolutionpayroll.atlassian.net/browse/MJ-1873): Update authorizer to authenticate HR-based tokens [`#63`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/63)
