@@ -57,3 +57,5 @@ export const getHrDatabaseCreatorStateMachineArn = () => process.env.hrDatabaseC
 export const getTeamNotificationTopicArn = () => process.env.teamNotificationTopicArn;
 
 export const getHrCredentialsId = () => process.env.hrCredentialsId;
+
+export const getFileBucketName = () => process.env.fileBucketName;

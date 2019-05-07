@@ -1,0 +1,20 @@
+insert
+into
+    dbo.FileMetadata
+(
+    CompanyID,
+    EmployeeCode,
+    Title,
+    Category,
+    UploadDate,
+    Pointer
+)
+values
+(
+    @companyId,
+    @employeeCode,
+    '@title',
+    '@category',
+    '@uploadDate',
+    '@pointer'
+)

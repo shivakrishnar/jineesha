@@ -258,6 +258,27 @@ export const listCompanySignatureRequests = utilService.gatewayEventHandler(asyn
 });
 
 /**
+ * Handles event callbacks from HelloSign
+ */
+export const eventCallback = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.eventCallback');
+
+    const hellosignEvent = JSON.parse(new Buffer(event.body, 'base64').toString('ascii').match(/\{(.*)\}/g)[0]);
+    if (hellosignEvent) {
+        switch (hellosignEvent.event.event_type) {
+            case 'callback_test':
+                console.info('callback test');
+                return 'Hello API Event Received';
+            case 'signature_request_downloadable':
+                console.info('signature request downloadable');
+                await utilService.invokeInternalService('uploadSignedDocument', hellosignEvent, utilService.InvocationType.Event);
+                return;
+            default:
+        }
+    }
+});
+
+/**
  * Performs the necessary steps for onboarding
  */
 export const onboarding = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
