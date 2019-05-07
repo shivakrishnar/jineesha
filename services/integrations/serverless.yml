@@ -39,6 +39,8 @@ provider:
     fromEmail: ${file(${self:custom.configFile}):fromEmail}
     integrationId: ${file(${self:custom.configFile}):integrationId}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
+    hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
+    eSignatureCallbackPath: ${file(${self:custom.configFile}):eSignatureCallbackPath}
 
   iamRoleStatements:
     - Effect: Allow
@@ -152,6 +154,15 @@ functions:
             cors:
               origin: '*'
 
+  eventCallback:
+    handler: esignature/src/handler.eventCallback
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/esignatures/callback
+            method: post
+            cors:
+              origin: '*'
+
   onboarding:
     handler: esignature/src/handler.onboarding
     events:
@@ -224,6 +235,7 @@ custom:
   apigwBinary:
     types:
       - 'application/pdf'
+      - 'multipart/form-data'
       - 'image/*'
       - 'text/plain'
       - 'text/html'

@@ -27,5 +27,8 @@
     "eSignatureApiDevModeOn": "true",
     "eSignatureApiCredentialsId": "eSignatureApiCredentials",
     "asureAdminRoleId": "fe0d2d8c-ac86-47f8-b1e3-e2e626aacbbb",
-    "hrCredentialsId": "hrCredentials"
+    "hrCredentialsId": "hrCredentials",
+    "fileBucketName": "staging.hr.files",
+    "hrServicesDomain": "https://hr-services.staging.evolution-software.com",
+    "eSignatureCallbackPath": "integrations/tenants/0/companies/0/esignatures/callback"
 }

@@ -23,6 +23,10 @@ provider:
     apiDomain: ${file(${self:custom.configFile}):apiDomain}
     fromEmail: ${file(${self:custom.configFile}):fromEmail}
     hrCredentialsId: ${file(${self:custom.configFile}):hrCredentialsId}
+    goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
+    fileBucketName: ${file(${self:custom.configFile}):fileBucketName}
+    eSignatureApiCredentialsId: ${file(${self:custom.configFile}):eSignatureApiCredentialsId}
+    integrationId: ${file(${self:custom.configFile}):integrationId}
 
   iamRoleStatements:
     - Effect: Allow
@@ -65,6 +69,13 @@ provider:
         - ses:SendEmail
         - ses:SendRawEmail
       Resource: "arn:aws:ses:us-east-1:*:*"
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+        - s3:GetBucket
+        - s3:ListBucket
+        - s3:PutObject
+      Resource: "arn:aws:s3:::*"
 
 functions:
   tokenVerifier:
@@ -91,6 +102,9 @@ functions:
       subnetIds:
         - ${file(${self:custom.configFile}):privateSubnetId1}
         - ${file(${self:custom.configFile}):privateSubnetId2}
+
+  uploadSignedDocument:
+    handler: esignatures/handler.uploadSignedDocument
 
 resources:
   Outputs:

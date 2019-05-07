@@ -43,7 +43,7 @@ import { Template, TemplateListResponse } from './template-list/templateListResp
 export async function createTemplate(tenantId: string, companyId: string, payload: TemplateRequest): Promise<TemplateDraftResponse> {
     console.info('esignatureService.createTemplate');
 
-    const { file, fileName, signerRoles, ccRoles, customFields } = payload;
+    const { file, fileName, signerRoles, ccRoles, customFields, category } = payload;
     const tmpFileName = `${fileName}-${uuidV4()}`;
 
     // companyId value must be integral
@@ -97,6 +97,7 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
                 companyAppId: appClientId,
                 tenantId,
                 companyId,
+                category,
             },
         };
 
@@ -141,7 +142,7 @@ export async function createBulkSignatureRequest(
     tenantId: string,
     companyId: string,
     request: BulkSignatureRequest,
-    metadata: any = {},
+    suppliedMetadata: any = {},
 ): Promise<SignatureRequestResponse> {
     console.info('esignature.handler.createBulkSignatureRequest');
 
@@ -156,6 +157,15 @@ export async function createBulkSignatureRequest(
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
             client_id: appDetails.integrationDetails.eSignatureAppClientId,
         });
+
+        const templateResponse = await eSigner.template.get(request.templateId);
+        const additionalMetadata = {
+            category: templateResponse.template.metadata.category,
+            tenantId,
+            companyId,
+            employeeCodes: request.employeeCodes,
+        };
+        const metadata = { ...suppliedMetadata, ...additionalMetadata };
 
         const options: { [i: string]: any } = {
             test_mode: configService.eSignatureApiDevModeOn ? 1 : 0,
@@ -260,6 +270,7 @@ export async function createSignatureRequest(
 
         const bulkSignRequest = new BulkSignatureRequest({
             templateId: request.templateId,
+            employeeCodes: [request.employeeCode],
             signatories: [
                 {
                     emailAddress: employeeRecord[0].emailAddress,
@@ -764,7 +775,7 @@ export async function listCompanySignatureRequests(
 export async function onboarding(tenantId: string, companyId: string, requestBody: Onboarding): Promise<SignatureRequestListResponse> {
     console.info('esignatureService.onboarding');
 
-    const { onboardingKey, taskListId, emailAddress, name } = requestBody;
+    const { onboardingKey, taskListId, emailAddress, name, employeeCode } = requestBody;
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -845,6 +856,7 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
         for (const template of taskListTemplates.results) {
             const signatureRequest: BulkSignatureRequest = {
                 templateId: template.id,
+                employeeCodes: [employeeCode],
                 signatories: [
                     {
                         emailAddress,
@@ -891,6 +903,7 @@ export async function configure(tenantId: string, companyId: string, token: stri
     console.info('esignatureService.configure');
 
     const { clientId, name, domain } = await getCompanyDetails(tenantId, companyId);
+    const eventCallbackUrl = `${configService.getHrServicesDomain()}/${configService.getEsignatureCallbackPath()}`;
 
     // Get configuration
     const integrationConfiguration: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
@@ -909,7 +922,7 @@ export async function configure(tenantId: string, companyId: string, token: stri
                 } else {
                     const {
                         api_app: { client_id: eSignatureClientId },
-                    } = await hellosignService.createApplicationForCompany(companyId, domain);
+                    } = await hellosignService.createApplicationForCompany(companyId, domain, eventCallbackUrl);
                     try {
                         await integrationsService.createIntegrationConfiguration(
                             tenantId,

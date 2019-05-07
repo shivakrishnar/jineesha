@@ -2,7 +2,7 @@ import * as request from 'request-promise-native';
 import * as configService from '../config.service';
 import * as utilService from '../util.service';
 
-export async function createApplicationForCompany(companyId: string, domain: string): Promise<any> {
+export async function createApplicationForCompany(companyId: string, domain: string, eventCallbackUrl: string): Promise<any> {
     console.info('hellosignService.createApplicationForCompany');
 
     try {
@@ -15,6 +15,7 @@ export async function createApplicationForCompany(companyId: string, domain: str
             body: {
                 name: `${domain} - ${companyId}`,
                 domain,
+                callback_url: eventCallbackUrl,
             },
         });
     } catch (e) {
@@ -36,5 +37,21 @@ export async function deleteApplicationById(clientId: string): Promise<any> {
     } catch (e) {
         console.log(e);
         throw new Error('Unable to delete eSignature application');
+    }
+}
+
+export async function getFileBySignatureRequestId(requestId: string): Promise<any> {
+    console.info('hellosignService.getFileBySignatureRequestId');
+
+    try {
+        const apiKey = JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey;
+        const url = `https://${apiKey}:@api.hellosign.com/v3/signature_request/files/${requestId}?get_data_uri=true`;
+
+        return await request.get({
+            url,
+        });
+    } catch (e) {
+        console.log(e);
+        throw new Error('Unable to retrieve the file associated with the signature request');
     }
 }

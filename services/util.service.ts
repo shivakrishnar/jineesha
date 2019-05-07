@@ -101,7 +101,7 @@ export function gatewayEventHandler<T>(
                 const securityContext = json ? SecurityContext.fromJSON(json) : undefined;
 
                 let requestBody: any;
-                if (event.body) {
+                if (event.body && !event.isBase64Encoded) {
                     requestBody = parseJson(event.body, true);
                 }
 

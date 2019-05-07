@@ -42,12 +42,17 @@ export const Queries = {
     getEmployeeDisplayNameById: fs.readFileSync(path.join(basePath, 'audit/getEmployeeDisplayNameById.sql')).toString(),
 
     // E-Signatures
+    checkForDuplicateFileMetadata: fs.readFileSync(path.join(basePath, 'esignatures/checkForDuplicateFileMetadata.sql')).toString(),
+    createFileMetadata: fs.readFileSync(path.join(basePath, 'esignatures/createFileMetadata.sql')).toString(),
     getDocumentsByCompanyId: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentsByCompanyId.sql')).toString(),
     getTaskListDocuments: fs.readFileSync(path.join(basePath, 'esignatures/getTaskListDocuments.sql')).toString(),
 
     // Companies
     getUserCompaniesById: fs.readFileSync(path.join(basePath, 'companies/getUserCompaniesById.sql')).toString(),
     listCompanies: fs.readFileSync(path.join(basePath, 'companies/listCompanies.sql')).toString(),
+
+    // Employees
+    listEmployeesByEmailAddresses: fs.readFileSync(path.join(basePath, 'employees/listEmployeesByEmailAddresses.sql')).toString(),
 
     // Users
     getUserById: fs.readFileSync(path.join(basePath, 'users/getUserById.sql')).toString(),

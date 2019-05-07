@@ -28,6 +28,7 @@ const createEmbeddedTemplateValidationSchema = {
     signerRoles: { required: true, type: Array },
     ccRoles: { required: false, type: Array },
     customFields: { required: false, type: Array },
+    category: { required: true, type: String },
 };
 
 const createEmbeddedTemplateSchema = Yup.object().shape({
@@ -38,6 +39,7 @@ const createEmbeddedTemplateSchema = Yup.object().shape({
         .required(),
     ccRoles: Yup.array(),
     customFields: Yup.array().of(Yup.object()),
+    category: Yup.string().required(),
 });
 const customFieldsSchema = Yup.object().shape({
     name: Yup.string().required(),
@@ -52,6 +54,7 @@ const bulkSignatureRequestValidationSchema = {
     subject: { required: false, type: String },
     message: { required: false, type: String },
     signatories: { required: true, type: Array },
+    employeeCodes: { required: true, type: Array },
 };
 
 const bulkSignatureRequestSchema = Yup.object().shape({
@@ -62,6 +65,10 @@ const bulkSignatureRequestSchema = Yup.object().shape({
         .min(1, 'You must provide at least one signatory')
         .max(250, 'You can only send 250 signatories at a time, consider batching your requests')
         .of(Yup.object())
+        .required(),
+    employeeCodes: Yup.array()
+        .min(1, 'You must provide at least one employee code')
+        .of(Yup.string())
         .required(),
 });
 
@@ -77,6 +84,7 @@ const signatureRequestValidationSchema = {
     subject: { required: false, type: String },
     message: { required: false, type: String },
     role: { required: true, type: String },
+    employeeCode: { required: true, type: String },
 };
 
 const signatureRequestSchema = Yup.object().shape({
@@ -84,6 +92,7 @@ const signatureRequestSchema = Yup.object().shape({
     subject: Yup.string(),
     message: Yup.string(),
     role: Yup.string().required(),
+    employeeCode: Yup.string().required(),
 });
 
 // Onboarding Signature Request schemas
@@ -92,6 +101,7 @@ const onboardingSignatureRequestValidationSchema = {
     taskListId: { required: true, type: Number },
     emailAddress: { required: true, type: String },
     name: { required: true, type: String },
+    employeeCode: { required: true, type: String },
 };
 
 const onboardingSignatureRequestSchema = Yup.object().shape({
@@ -99,6 +109,7 @@ const onboardingSignatureRequestSchema = Yup.object().shape({
     taskListId: Yup.number().required(),
     emailAddress: Yup.string().required(),
     name: Yup.string().required(),
+    employeeCode: Yup.string().required(),
 });
 
 //  Configuration schemas:
@@ -255,6 +266,27 @@ export const listCompanySignatureRequests = utilService.gatewayEventHandler(asyn
     const { tenantId, companyId } = event.pathParameters;
 
     return await esignatureService.listCompanySignatureRequests(tenantId, companyId, event.queryStringParameters);
+});
+
+/**
+ * Handles event callbacks from HelloSign
+ */
+export const eventCallback = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.eventCallback');
+
+    const hellosignEvent = JSON.parse(new Buffer(event.body, 'base64').toString('ascii').match(/\{(.*)\}/g)[0]);
+    if (hellosignEvent) {
+        switch (hellosignEvent.event.event_type) {
+            case 'callback_test':
+                console.info('callback test');
+                return 'Hello API Event Received';
+            case 'signature_request_downloadable':
+                console.info('signature request downloadable');
+                await utilService.invokeInternalService('uploadSignedDocument', hellosignEvent, utilService.InvocationType.Event);
+                return;
+            default:
+        }
+    }
 });
 
 /**

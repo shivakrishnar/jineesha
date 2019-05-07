@@ -27,5 +27,8 @@
     "goldilocksApplicationId": "19a7f2b0-1516-4c74-8dc4-1bdf224629e6",
     "eSignatureApiCredentialsId": "eSignatureApiCredentials",
     "eSignatureApiDevModeOn": "true",
-    "hrCredentialsId": "hrCredentials"
+    "hrCredentialsId": "hrCredentials",
+    "fileBucketName": "production.hr.files",
+    "hrServicesDomain": "https://hr-services.evolutionadvancedhr.com",
+    "eSignatureCallbackPath": "integrations/tenants/0/companies/0/esignatures/callback"
 }
