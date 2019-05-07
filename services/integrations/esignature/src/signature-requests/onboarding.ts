@@ -23,6 +23,12 @@ export class Onboarding {
      */
     name: string;
 
+    /**
+     * @property {string} employeeCode
+     * The code of the employee going through onboarding
+     */
+    employeeCode: string;
+
     public constructor(init?: Partial<Onboarding>) {
         Object.assign(this, init);
     }

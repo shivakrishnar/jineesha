@@ -20,6 +20,8 @@ export class BulkSignatureRequest implements ISignatureRequest {
 
     message?: string;
 
+    employeeCodes: string[];
+
     signatories: Signatory[];
 
     public constructor(init?: Partial<BulkSignatureRequest>) {
@@ -37,6 +39,8 @@ export class SignatureRequest implements ISignatureRequest {
     role: string;
 
     category: string;
+
+    employeeCode: string;
 
     public constructor(init?: Partial<SignatureRequest>) {
         Object.assign(this, init);

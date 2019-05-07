@@ -54,6 +54,7 @@ const bulkSignatureRequestValidationSchema = {
     subject: { required: false, type: String },
     message: { required: false, type: String },
     signatories: { required: true, type: Array },
+    employeeCodes: { required: true, type: Array },
 };
 
 const bulkSignatureRequestSchema = Yup.object().shape({
@@ -64,6 +65,10 @@ const bulkSignatureRequestSchema = Yup.object().shape({
         .min(1, 'You must provide at least one signatory')
         .max(250, 'You can only send 250 signatories at a time, consider batching your requests')
         .of(Yup.object())
+        .required(),
+    employeeCodes: Yup.array()
+        .min(1, 'You must provide at least one employee code')
+        .of(Yup.string())
         .required(),
 });
 
@@ -79,6 +84,7 @@ const signatureRequestValidationSchema = {
     subject: { required: false, type: String },
     message: { required: false, type: String },
     role: { required: true, type: String },
+    employeeCode: { required: true, type: String },
 };
 
 const signatureRequestSchema = Yup.object().shape({
@@ -86,6 +92,7 @@ const signatureRequestSchema = Yup.object().shape({
     subject: Yup.string(),
     message: Yup.string(),
     role: Yup.string().required(),
+    employeeCode: Yup.string().required(),
 });
 
 // Onboarding Signature Request schemas
@@ -94,6 +101,7 @@ const onboardingSignatureRequestValidationSchema = {
     taskListId: { required: true, type: Number },
     emailAddress: { required: true, type: String },
     name: { required: true, type: String },
+    employeeCode: { required: true, type: String },
 };
 
 const onboardingSignatureRequestSchema = Yup.object().shape({
@@ -101,6 +109,7 @@ const onboardingSignatureRequestSchema = Yup.object().shape({
     taskListId: Yup.number().required(),
     emailAddress: Yup.string().required(),
     name: Yup.string().required(),
+    employeeCode: Yup.string().required(),
 });
 
 //  Configuration schemas:

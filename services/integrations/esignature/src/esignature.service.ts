@@ -163,7 +163,7 @@ export async function createBulkSignatureRequest(
             category: templateResponse.template.metadata.category,
             tenantId,
             companyId,
-            emailAddress: request.signatories.map(({ emailAddress }) => emailAddress),
+            employeeCodes: request.employeeCodes,
         };
         const metadata = { ...suppliedMetadata, ...additionalMetadata };
 
@@ -270,6 +270,7 @@ export async function createSignatureRequest(
 
         const bulkSignRequest = new BulkSignatureRequest({
             templateId: request.templateId,
+            employeeCodes: [request.employeeCode],
             signatories: [
                 {
                     emailAddress: employeeRecord[0].emailAddress,
@@ -774,7 +775,7 @@ export async function listCompanySignatureRequests(
 export async function onboarding(tenantId: string, companyId: string, requestBody: Onboarding): Promise<SignatureRequestListResponse> {
     console.info('esignatureService.onboarding');
 
-    const { onboardingKey, taskListId, emailAddress, name } = requestBody;
+    const { onboardingKey, taskListId, emailAddress, name, employeeCode } = requestBody;
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -855,6 +856,7 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
         for (const template of taskListTemplates.results) {
             const signatureRequest: BulkSignatureRequest = {
                 templateId: template.id,
+                employeeCodes: [employeeCode],
                 signatories: [
                     {
                         emailAddress,
