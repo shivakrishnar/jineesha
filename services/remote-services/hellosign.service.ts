@@ -2,7 +2,7 @@ import * as request from 'request-promise-native';
 import * as configService from '../config.service';
 import * as utilService from '../util.service';
 
-export async function createApplicationForCompany(companyId: string, domain: string): Promise<any> {
+export async function createApplicationForCompany(companyId: string, domain: string, eventCallbackUrl: string): Promise<any> {
     console.info('hellosignService.createApplicationForCompany');
 
     try {
@@ -15,6 +15,7 @@ export async function createApplicationForCompany(companyId: string, domain: str
             body: {
                 name: `${domain} - ${companyId}`,
                 domain,
+                callback_url: eventCallbackUrl,
             },
         });
     } catch (e) {

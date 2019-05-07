@@ -39,6 +39,8 @@ provider:
     fromEmail: ${file(${self:custom.configFile}):fromEmail}
     integrationId: ${file(${self:custom.configFile}):integrationId}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
+    hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
+    eSignatureCallbackPath: ${file(${self:custom.configFile}):eSignatureCallbackPath}
 
   iamRoleStatements:
     - Effect: Allow

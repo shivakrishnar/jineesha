@@ -59,3 +59,7 @@ export const getTeamNotificationTopicArn = () => process.env.teamNotificationTop
 export const getHrCredentialsId = () => process.env.hrCredentialsId;
 
 export const getFileBucketName = () => process.env.fileBucketName;
+
+export const getHrServicesDomain = () => process.env.hrServicesDomain;
+
+export const getEsignatureCallbackPath = () => process.env.eSignatureCallbackPath;

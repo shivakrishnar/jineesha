@@ -901,6 +901,7 @@ export async function configure(tenantId: string, companyId: string, token: stri
     console.info('esignatureService.configure');
 
     const { clientId, name, domain } = await getCompanyDetails(tenantId, companyId);
+    const eventCallbackUrl = `${configService.getHrServicesDomain()}/${configService.getEsignatureCallbackPath()}`;
 
     // Get configuration
     const integrationConfiguration: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
@@ -919,7 +920,7 @@ export async function configure(tenantId: string, companyId: string, token: stri
                 } else {
                     const {
                         api_app: { client_id: eSignatureClientId },
-                    } = await hellosignService.createApplicationForCompany(companyId, domain);
+                    } = await hellosignService.createApplicationForCompany(companyId, domain, eventCallbackUrl);
                     try {
                         await integrationsService.createIntegrationConfiguration(
                             tenantId,

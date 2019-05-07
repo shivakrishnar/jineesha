@@ -28,5 +28,7 @@
     "integrationId": "8077ac79-faac-47cb-a240-a15cd5791915",
     "goldilocksApplicationId": "8f8a2b63-985b-4c59-9a9b-e25572068601",
     "hrCredentialsId": "hrCredentials",
-    "fileBucketName": "development.hr.files"
+    "fileBucketName": "development.hr.files",
+    "hrServicesDomain": "https://hr-services.dev.evolution-software.com",
+    "eSignatureCallbackPath": "integrations/tenants/0/companies/0/esignatures/callback"
 }
