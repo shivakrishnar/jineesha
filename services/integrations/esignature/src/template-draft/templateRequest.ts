@@ -22,6 +22,12 @@ export class TemplateRequest {
     signerRoles: Role[];
 
     /**
+     * @property {string} category
+     * The name of the category the document is in
+     */
+    category: string;
+
+    /**
      * @property {string[]} ccRoles
      * The collection of roles or email addresses that will be CC'd on emails related to the template
      */

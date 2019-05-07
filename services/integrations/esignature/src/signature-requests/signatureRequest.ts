@@ -36,6 +36,8 @@ export class SignatureRequest implements ISignatureRequest {
 
     role: string;
 
+    category: string;
+
     public constructor(init?: Partial<SignatureRequest>) {
         Object.assign(this, init);
     }

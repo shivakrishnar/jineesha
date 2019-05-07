@@ -28,6 +28,7 @@ const createEmbeddedTemplateValidationSchema = {
     signerRoles: { required: true, type: Array },
     ccRoles: { required: false, type: Array },
     customFields: { required: false, type: Array },
+    category: { required: true, type: String },
 };
 
 const createEmbeddedTemplateSchema = Yup.object().shape({
@@ -38,6 +39,7 @@ const createEmbeddedTemplateSchema = Yup.object().shape({
         .required(),
     ccRoles: Yup.array(),
     customFields: Yup.array().of(Yup.object()),
+    category: Yup.string().required(),
 });
 const customFieldsSchema = Yup.object().shape({
     name: Yup.string().required(),

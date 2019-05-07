@@ -43,7 +43,7 @@ import { Template, TemplateListResponse } from './template-list/templateListResp
 export async function createTemplate(tenantId: string, companyId: string, payload: TemplateRequest): Promise<TemplateDraftResponse> {
     console.info('esignatureService.createTemplate');
 
-    const { file, fileName, signerRoles, ccRoles, customFields } = payload;
+    const { file, fileName, signerRoles, ccRoles, customFields, category } = payload;
     const tmpFileName = `${fileName}-${uuidV4()}`;
 
     // companyId value must be integral
@@ -97,6 +97,7 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
                 companyAppId: appClientId,
                 tenantId,
                 companyId,
+                category,
             },
         };
 
@@ -141,7 +142,7 @@ export async function createBulkSignatureRequest(
     tenantId: string,
     companyId: string,
     request: BulkSignatureRequest,
-    metadata: any = {},
+    suppliedMetadata: any = {},
 ): Promise<SignatureRequestResponse> {
     console.info('esignature.handler.createBulkSignatureRequest');
 
@@ -156,6 +157,15 @@ export async function createBulkSignatureRequest(
             key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
             client_id: appDetails.integrationDetails.eSignatureAppClientId,
         });
+
+        const templateResponse = await eSigner.template.get(request.templateId);
+        const additionalMetadata = {
+            category: templateResponse.template.metadata.category,
+            tenantId,
+            companyId,
+            emailAddress: request.signatories.map(({ emailAddress }) => emailAddress),
+        };
+        const metadata = { ...suppliedMetadata, ...additionalMetadata };
 
         const options: { [i: string]: any } = {
             test_mode: configService.eSignatureApiDevModeOn ? 1 : 0,
