@@ -46,6 +46,27 @@ export async function getFileBySignatureRequestId(requestId: string): Promise<an
     try {
         const apiKey = JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey;
         const url = `https://${apiKey}:@api.hellosign.com/v3/signature_request/files/${requestId}?get_data_uri=true`;
+        return await request.get({
+            url,
+        });
+    } catch (e) {
+        console.log(e);
+        throw new Error('Unable to retrieve the file associated with the signature request');
+    }
+}
+
+/**
+ * According to HelloSign the query field for requests is currently unsupported in the SDK
+ * This hits their API directly for the request
+ * @param {string} query: A query string to used when requesting a signature_request list from HelloSign
+ * @returns {Promise<any>}: A promise of the JSON string from the helloSign API
+ */
+export async function getSignatureRequestListByQuery(query: string): Promise<any> {
+    console.info('hellosignService.getSignatureRequestListByQuery');
+
+    try {
+        const apiKey = JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey;
+        const url = `https://${apiKey}:@api.hellosign.com/v3/signature_request/list?query=${query}`;
 
         return await request.get({
             url,

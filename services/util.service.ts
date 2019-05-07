@@ -610,3 +610,17 @@ export async function getPayrollApiCredentials(tenantId: string): Promise<IPayro
         throw error;
     }
 }
+
+/**
+ * Extracts a list of role names from scope field of an ssoToken or hrToken
+ * @param {string[]} scope: The values from scope field of the decoded jwt
+ * @returns {string[]}: Array of role names associated with the account
+ */
+
+export function parseRoles(scopes: string[]): string[] {
+    const roles: string[] = [];
+    scopes.forEach((scope) => {
+        roles.push(scope.replace(configService.getScopeBaseDomain(), ''));
+    });
+    return roles;
+}

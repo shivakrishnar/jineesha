@@ -63,3 +63,7 @@ export const getFileBucketName = () => process.env.fileBucketName;
 export const getHrServicesDomain = () => process.env.hrServicesDomain;
 
 export const getEsignatureCallbackPath = () => process.env.eSignatureCallbackPath;
+
+export const getScopeBaseDomain = () => process.env.scopeBaseDomain;
+
+export const getHrApplicationId = () => process.env.hrApplicationId;

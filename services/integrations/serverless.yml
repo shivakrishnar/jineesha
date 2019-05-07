@@ -229,7 +229,7 @@ custom:
     packager: 'npm'
   customDomain:
     basePath: integrations
-    domainName: hr-services.${file(${self:custom.configFile}):domain}
+    domainName: cuong.${file(${self:custom.configFile}):domain}
     certificateName: '*.${file(${self:custom.configFile}):domain}'
     createRoute53Record: false
   apigwBinary:
