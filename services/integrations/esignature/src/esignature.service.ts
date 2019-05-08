@@ -44,7 +44,7 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
     console.info('esignatureService.createTemplate');
 
     const { file, fileName, signerRoles, ccRoles, customFields, category } = payload;
-    const tmpFileName = `${fileName}-${uuidV4()}`;
+    const tmpFileDir = `${uuidV4()}`;
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -65,7 +65,13 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
     // Note: we must write the file to the tmp directory on the Lambda container in order to upload it to HelloSign.
     // The file is saved as the specified file name in the payload with a guid attached to it in order to
     // prevent conflicts.
-    fs.writeFile(`/tmp/${tmpFileName}`, file.split(',')[1], 'base64', (e) => {
+    await fs.mkdir(`/tmp/${tmpFileDir}`, (e) => {
+        if (e) {
+            console.log(`Unable to create temporary directory tmp/${tmpFileDir}. Reason: ${JSON.stringify(e)}`);
+            throw errorService.getErrorResponse(0);
+        }
+    });
+    fs.writeFile(`/tmp/${tmpFileDir}/${fileName}`, file.split(',')[1], 'base64', (e) => {
         if (e) {
             console.log(`Unable to write file to /tmp partition. Reason: ${JSON.stringify(e)}`);
             throw errorService.getErrorResponse(0);
@@ -87,7 +93,7 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
 
         const options = {
             test_mode: configService.eSignatureApiDevModeOn ? 1 : 0,
-            files: [`/tmp/${tmpFileName}`],
+            files: [`/tmp/${tmpFileDir}/${fileName}`],
             signer_roles: signerRoles.map((role) => {
                 return {
                     name: role,
@@ -122,9 +128,14 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
         console.error(error);
         throw errorService.getErrorResponse(0);
     } finally {
-        fs.unlink(`/tmp/${tmpFileName}`, (e) => {
+        await fs.unlink(`/tmp/${tmpFileDir}/${fileName}`, (e) => {
             if (e) {
-                console.log(`Unable to delete temp file: ${tmpFileName}. Reason: ${JSON.stringify(e)}`);
+                console.log(`Unable to delete temp file: ${fileName}. Reason: ${JSON.stringify(e)}`);
+            }
+        });
+        fs.rmdir(`/tmp/${tmpFileDir}`, (e) => {
+            if (e) {
+                console.log(`Unable to delete temp directory: ${tmpFileDir}. Reason: ${JSON.stringify(e)}`);
             }
         });
     }
@@ -348,9 +359,7 @@ export async function listTemplates(
                     custom_fields,
                     documents,
                 }) => {
-                    const uuidRegex = /-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
-                    // If there is a uuid appended to the file name, remove it.
-                    const fileName = documents[0].name.replace(uuidRegex, '');
+                    const fileName = documents[0].name;
                     return new Template({
                         id,
                         title,
@@ -572,13 +581,9 @@ export async function listDocuments(
         // Extract template file information for document metadata
         for (const doc of documents) {
             if (!doc.filename.includes('.')) {
-                const uuidRegex = /-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
-
                 try {
                     const apiResponse = await eSigner.template.get(doc.filename);
-
-                    // Truncate UUID off filename
-                    doc.filename = apiResponse.template.documents[0].name.replace(uuidRegex, '');
+                    doc.filename = apiResponse.template.documents[0].name;
                     doc.title = apiResponse.template.title;
                 } catch (error) {
                     console.error(`issue accessing template id: ${doc.filename}`);
