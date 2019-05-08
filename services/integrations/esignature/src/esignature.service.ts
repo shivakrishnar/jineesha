@@ -605,19 +605,23 @@ export async function listDocuments(
 }
 
 /**
- * Lists all signature requests for E-Signature under a specified company.
+ * Lists all signature requests for E-Signature under a specified company if the user is not a manager.
+ * Lists all signature requests for users under the specified company who report to the user if user is a manager.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {string} emailAddress: The identifier for the user.
+ * @param {boolean} isManager: True if user has the hr.persona.manager role.
  * @param {{[i: string]: string}} queryParams: The query parameters that were specified by the user.
  * @returns {SignatureRequestListResponse | SignatureRequestConsolidatedResponse}: A promise of a collection of signature requests'/legacy documents' metadata.
  */
 export async function listCompanySignatureRequests(
     tenantId: string,
     companyId: string,
+    emailAddress: string,
+    isManager: boolean,
     queryParams: { [i: string]: string },
 ): Promise<SignatureRequestListResponse | SignatureRequestConsolidatedResponse> {
     console.info('esignatureService.listCompanySignatureRequests');
-
     const validQueryStringParameters: string[] = ['status', 'consolidated'];
     const validStatusValues: string[] = ['signed', 'pending'];
 
@@ -668,10 +672,44 @@ export async function listCompanySignatureRequests(
             client_id: appClientId,
         });
 
-        const response = await client.signatureRequest.list({
-            query: `metadata:${companyId}`,
-        });
+        let helloSignQuery: string = `metadata:${companyId}`;
+        let internalQueryEmails: string = "'";
+        let response: any;
+        // If isManager then add filters to the helloSign query to only include responses from subordinates
+        // If isManager create a query string for our internal query also
+        if (isManager) {
+            const getSubordinatesQuery = new ParameterizedQuery('getEmployeeEmailsByManager', Queries.getEmployeeEmailsByManager);
+            getSubordinatesQuery.setParameter('@managerEmail', emailAddress);
+            const getSubordinatesPayload = {
+                tenantId,
+                queryName: getSubordinatesQuery.name,
+                query: getSubordinatesQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            const subordinatesResult: any = await utilService.invokeInternalService(
+                'queryExecutor',
+                getSubordinatesPayload,
+                InvocationType.RequestResponse,
+            );
+            const subordinates = subordinatesResult.recordset.map(({ EmailAddress }) => {
+                return EmailAddress;
+            });
+            // set up for helloSign query
+            helloSignQuery += ' AND (to:';
+            helloSignQuery += subordinates.join(' OR to:');
+            helloSignQuery += ')';
 
+            // set up for internal query
+            internalQueryEmails += subordinates.join("', '");
+            internalQueryEmails += "'";
+
+            response = await hellosignService.getSignatureRequestListByQuery(helloSignQuery);
+            response = JSON.parse(response);
+        } else {
+            response = await client.signatureRequest.list({
+                query: helloSignQuery,
+            });
+        }
         let signatureRequests = response.signature_requests;
         if (queryParams && queryParams.status) {
             switch (queryParams.status) {
@@ -720,7 +758,14 @@ export async function listCompanySignatureRequests(
         });
 
         if (queryParams && queryParams.consolidated === 'true') {
-            const query = new ParameterizedQuery('GetDocumentsByCompanyId', Queries.getDocumentsByCompanyId);
+            let query: ParameterizedQuery;
+            if (isManager) {
+                query = new ParameterizedQuery('GetCompanyDocumentsByEE', Queries.getCompanyDocumentsByEE);
+                query.setParameter('@eeEmails', internalQueryEmails);
+            } else {
+                query = new ParameterizedQuery('GetDocumentsByCompanyId', Queries.getDocumentsByCompanyId);
+            }
+
             query.setParameter('@companyId', companyId);
             const payload = {
                 tenantId,
@@ -731,20 +776,13 @@ export async function listCompanySignatureRequests(
             const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
             const documentRecord = (result.recordset || []).map(
-                ({
-                    ID: id,
-                    Filename: filename,
-                    Title: title,
-                    ESignDate: eSignDate,
-                    EmailAddress: emailAddress,
-                    EmployeeCode: employeeCode,
-                }) => {
+                ({ ID: id, Filename: filename, Title: title, ESignDate: eSignDate, EmailAddress, EmployeeCode: employeeCode }) => {
                     return {
                         id,
                         filename,
                         title,
                         eSignDate,
-                        emailAddress,
+                        emailAddress: EmailAddress,
                         employeeCode,
                     };
                 },

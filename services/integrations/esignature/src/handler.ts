@@ -5,6 +5,7 @@ import * as utilService from '../../../util.service';
 import * as esignatureService from './esignature.service';
 
 import { IGatewayEventInput } from '../../../util.service';
+import { Role } from '../../../api/models/Role';
 
 const headerSchema = {
     authorization: { required: true, type: String },
@@ -264,8 +265,10 @@ export const listCompanySignatureRequests = utilService.gatewayEventHandler(asyn
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
     const { tenantId, companyId } = event.pathParameters;
+    const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
+    const emailAddress: string = securityContext.principal.email;
 
-    return await esignatureService.listCompanySignatureRequests(tenantId, companyId, event.queryStringParameters);
+    return await esignatureService.listCompanySignatureRequests(tenantId, companyId, emailAddress, isManager, event.queryStringParameters);
 });
 
 /**

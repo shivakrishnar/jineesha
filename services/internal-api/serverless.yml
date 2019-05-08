@@ -27,6 +27,8 @@ provider:
     fileBucketName: ${file(${self:custom.configFile}):fileBucketName}
     eSignatureApiCredentialsId: ${file(${self:custom.configFile}):eSignatureApiCredentialsId}
     integrationId: ${file(${self:custom.configFile}):integrationId}
+    scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
+    hrApplicationId: ${file(${self:custom.configFile}):hrApplicationId}
 
   iamRoleStatements:
     - Effect: Allow

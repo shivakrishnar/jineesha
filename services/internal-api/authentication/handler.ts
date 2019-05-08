@@ -64,11 +64,16 @@ async function buildPolicy(event: any, secret: string, authType: AuthorizerType)
     }
 
     const decodedToken: any = jwt.decode(accessToken);
+    const { account, scope } = decodedToken;
 
-    const { account } = decodedToken;
-    const roleMemberships = await ssoService.getRoleMemberships(account.tenantId, account.id, accessToken);
+    const hrAccessToken = (await ssoService.exchangeToken(account.tenantId, event.authorizationToken, configService.getHrApplicationId()))
+        .access_token;
+    const decodedHrToken: any = jwt.decode(hrAccessToken);
+    const { scope: hrScope } = decodedHrToken;
+
     const payrollApiCredentials: IPayrollApiCredentials =
         authType === AuthorizerType.Golidlocks ? undefined : await utilService.getPayrollApiCredentials(account.tenantId);
+    const roleMemberships = utilService.parseRoles(scope).concat(utilService.parseRoles(hrScope));
     const securityContext = new SecurityContext(account, roleMemberships, accessToken, payrollApiCredentials);
 
     const tmp = event.methodArn.split(':');

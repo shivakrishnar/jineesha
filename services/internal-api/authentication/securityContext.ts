@@ -1,8 +1,6 @@
 import { IAccount } from './account';
-import { IRoleMembership } from './roleMembership';
 
 import { IPayrollApiCredentials } from '../../api/models/IPayrollApiCredentials';
-import * as configService from '../../config.service';
 import * as errorService from '../../errors/error.service';
 import { ErrorMessage } from '../../errors/errorMessage';
 import { ParameterizedQuery } from '../../queries/parameterizedQuery';
@@ -11,6 +9,7 @@ import * as utilService from '../../util.service';
 import { InvocationType } from '../../util.service';
 import { DatabaseEvent, QueryType } from '../database/events';
 import { ApplicationRoleLevel } from './ApplicationRoleLevelEnum';
+import { Role } from '../../api/models/Role';
 
 /**
  * SecurityContext represents data pulled from the token when it is verified. AWS requires the
@@ -21,12 +20,12 @@ import { ApplicationRoleLevel } from './ApplicationRoleLevelEnum';
  */
 export class SecurityContext {
     principal: IAccount;
-    roleMemberships: IRoleMembership[];
+    roleMemberships: string[];
     accessToken: string;
     payrollApiCredentials: IPayrollApiCredentials | undefined;
     currentRoleLevel: ApplicationRoleLevel;
 
-    public constructor(principal: IAccount, roleMemberships: IRoleMembership[] = [], accessToken: string, payrollApiCredentials: any) {
+    public constructor(principal: IAccount, roleMemberships: string[] = [], accessToken: string, payrollApiCredentials: any) {
         this.principal = principal;
         this.roleMemberships = roleMemberships;
         this.accessToken = accessToken;
@@ -43,18 +42,11 @@ export class SecurityContext {
      * an hr employee role. It will throw a "403" exception if the authenticated user does not
      * meet this requirement.
      */
-    public requireHrEmployee(): void {
-        this.requireRole(configService.getEvoHrGroupEmployee(), 'hr-employee');
-    }
 
-    private requireRole(roleId?: string, roleName?: string): void {
-        if (!roleId || !this.roleMemberships || !this.roleMemberships.some((r) => r.roleId === roleId)) {
-            throw errorService.notAuthorized(roleName || roleId || 'undefined');
+    public requireRole(role: Role): void {
+        if (!role || !this.roleMemberships || !this.roleMemberships.some((r) => r === role)) {
+            throw errorService.notAuthorized(role || 'undefined');
         }
-    }
-
-    public requireAsureAdmin(): void {
-        this.requireRole(configService.getAsureAdminRoleId(), 'asure-admin');
     }
 
     /**

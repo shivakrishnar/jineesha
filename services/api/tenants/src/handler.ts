@@ -9,6 +9,7 @@ import { Headers } from '../../models/headers';
 import { Context, ProxyCallback } from 'aws-lambda';
 import { IAccount } from '../../../internal-api/authentication/account';
 import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
+import { Role } from '../../models/Role';
 
 const headerSchema = {
     authorization: { required: true, type: String },
@@ -30,7 +31,7 @@ const createTenantDbSchema = {
 export const addAdmin = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('tenants.handler.addAdmin');
 
-    securityContext.requireAsureAdmin();
+    securityContext.requireRole(Role.asureAdmin);
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
@@ -53,7 +54,7 @@ export const addTenantDb = utilService.gatewayEventHandler(async ({ securityCont
     console.info('tenants.handler.addTenantDb');
 
     // Note: this is the guards against at-will creation of databases in the Production tier
-    securityContext.requireAsureAdmin();
+    securityContext.requireRole(Role.asureAdmin);
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);

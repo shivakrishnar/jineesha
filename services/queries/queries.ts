@@ -46,6 +46,8 @@ export const Queries = {
     createFileMetadata: fs.readFileSync(path.join(basePath, 'esignatures/createFileMetadata.sql')).toString(),
     getDocumentsByCompanyId: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentsByCompanyId.sql')).toString(),
     getTaskListDocuments: fs.readFileSync(path.join(basePath, 'esignatures/getTaskListDocuments.sql')).toString(),
+    getEmployeeEmailsByManager: fs.readFileSync(path.join(basePath, 'esignatures/getEmployeeEmailsByManager.sql')).toString(),
+    getCompanyDocumentsByEE: fs.readFileSync(path.join(basePath, 'esignatures/getCompanyDocumentsByEE.sql')).toString(),
 
     // Companies
     getUserCompaniesById: fs.readFileSync(path.join(basePath, 'companies/getUserCompaniesById.sql')).toString(),
