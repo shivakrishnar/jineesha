@@ -17,8 +17,9 @@ import { Queries } from '../../../queries/queries';
 import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
 import { InvocationType } from '../../../util.service';
 import { DocumentMetadata, DocumentMetadataListResponse } from './documents/document';
+import { EditUrl, SignUrl } from './embedded/url';
 import { Onboarding } from './signature-requests/onboarding';
-import { Signatory, SignUrl } from './signature-requests/signatory';
+import { Signatory } from './signature-requests/signatory';
 import { BulkSignatureRequest, SignatureRequest } from './signature-requests/signatureRequest';
 import { SignatureRequestConsolidatedResponse } from './signature-requests/signatureRequestConsolidatedResponse';
 import { SignatureRequestListResponse } from './signature-requests/signatureRequestListResponse';
@@ -409,7 +410,7 @@ export async function listTemplates(
  * @param {string} companyId: The unique identifier for a company within a tenant
  * @param {string} employeeId: The unique identifer for the employee
  * @param {string} signatureId: The unique identifer for signature requested of the employee
- * @returns {string}: A Promise of a sign url
+ * @returns {Promise<SignUrl>}: A Promise of a sign url
  */
 export async function createSignUrl(tenantId: string, companyId: string, employeeId: string, signatureId: string): Promise<SignUrl> {
     console.info('esignatureService.createSignUrl');
@@ -429,14 +430,54 @@ export async function createSignUrl(tenantId: string, companyId: string, employe
 
         const response = await eSigner.embedded.getSignUrl(signatureId);
         const { sign_url, expires_at } = response.embedded;
-        return {
+        return new SignUrl({
             url: sign_url,
             expiration: expires_at,
             clientId: appClientId,
-        };
+        });
     } catch (error) {
         if (error.message) {
             if (error.message.includes('Signature not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Creates an edit url for an e-signature template
+ * @param {string} tenantId: The unique identifier for  a tenant
+ * @param {string} companyId: The unique identifier for a company within a tenant
+ * @param {string} templateId: The unique identifer for the template
+ * @returns {Promise<EditUrl>}: A Promise of an edit url
+ */
+export async function createEditUrl(tenantId: string, companyId: string, templateId: string): Promise<EditUrl> {
+    console.info('esignatureService.createEditUrl');
+
+    try {
+        // Company validation
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+        const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            tenantId,
+            companyInfo.clientId,
+            companyId,
+        );
+        const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
+
+        const response = JSON.parse(await hellosignService.getTemplateEditUrlById(templateId));
+
+        const { edit_url, expires_at } = response.embedded;
+        return new EditUrl({
+            url: edit_url,
+            expiration: expires_at,
+            clientId: appClientId,
+        });
+    } catch (error) {
+        if (error.message) {
+            if (error.message.includes('Template not found')) {
                 throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
             }
         }

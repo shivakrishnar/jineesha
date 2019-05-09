@@ -4,8 +4,8 @@ import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
 import * as esignatureService from './esignature.service';
 
-import { IGatewayEventInput } from '../../../util.service';
 import { Role } from '../../../api/models/Role';
+import { IGatewayEventInput } from '../../../util.service';
 
 const headerSchema = {
     authorization: { required: true, type: String },
@@ -16,6 +16,12 @@ const createSignUrlUriSchema = {
     companyId: { required: true, type: String },
     employeeId: { required: true, type: String },
     signatureId: { required: true, type: String },
+};
+
+const createEditUrlUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+    templateId: { required: true, type: String },
 };
 
 const companyResourceUriSchema = {
@@ -232,6 +238,20 @@ export const createSignUrl = utilService.gatewayEventHandler(async ({ securityCo
     const { tenantId, companyId, employeeId, signatureId } = event.pathParameters;
 
     return await esignatureService.createSignUrl(tenantId, companyId, employeeId, signatureId);
+});
+
+/**
+ * Generates an edit url for a specific e-signature template
+ */
+export const createEditUrl = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.createEditUrl');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.pathParameters, createEditUrlUriSchema);
+
+    const { tenantId, companyId, templateId } = event.pathParameters;
+
+    return await esignatureService.createEditUrl(tenantId, companyId, templateId);
 });
 
 /**
