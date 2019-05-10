@@ -8,7 +8,6 @@ import { Headers } from '../../models/headers';
 
 import { Context, ProxyCallback } from 'aws-lambda';
 import { IAccount } from '../../../internal-api/authentication/account';
-import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
 import { Role } from '../../models/Role';
 
 const headerSchema = {
@@ -40,9 +39,8 @@ export const addAdmin = utilService.gatewayEventHandler(async ({ securityContext
     const { tenantId } = event.pathParameters;
     const account: IAccount = securityContext.principal;
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
-    const globalAdminCredentials: IPayrollApiCredentials = securityContext.payrollApiCredentials;
 
-    await tenantService.addHrGlobalAdminAccount(tenantId, account.id, accessToken, globalAdminCredentials);
+    await tenantService.addHrGlobalAdminAccount(tenantId, account.id, accessToken);
 
     return { statusCode: 204, headers: new Headers() };
 });

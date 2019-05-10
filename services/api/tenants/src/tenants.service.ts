@@ -19,21 +19,19 @@ import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
  * @param {string} tenantId: The unique identifier for the tenant
  * @param {string} accountId: The identifier of the principal's SSO account invoking the action
  * @param {string}  accessToken: The access token authorizing the action
- * @param {IPayrollApiCredentials} globalAdminCredentials
  */
-export async function addHrGlobalAdminAccount(
-    tenantId: string,
-    accountId: string,
-    accessToken: string,
-    globalAdminCredentials: IPayrollApiCredentials,
-): Promise<void> {
+export async function addHrGlobalAdminAccount(tenantId: string, accountId: string, accessToken: string): Promise<void> {
     console.info('tenants.service.addHrGlobalAdminAccount');
 
     try {
+        const { evoApiUsername, evoApiPassword }: IPayrollApiCredentials = JSON.parse(
+            await utilService.getSecret(configService.getPayrollApiCredentials()),
+        );
+
         const accountDetails: { [i: string]: string } = {
-            username: globalAdminCredentials.evoApiUsername,
-            password: globalAdminCredentials.evoApiPassword,
-            email: globalAdminCredentials.evoApiUsername, // Within SSO the Global Admin username = email address
+            username: evoApiUsername,
+            password: evoApiPassword,
+            email: evoApiUsername, // Within SSO the Global Admin username = email address
             givenName: 'AHR Global',
             surname: 'Admin',
         };
