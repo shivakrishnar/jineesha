@@ -29,6 +29,12 @@ const companyResourceUriSchema = {
     companyId: { required: true, type: String },
 };
 
+const templateResourceUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+    templateId: { required: true, type: String },
+};
+
 const createEmbeddedTemplateValidationSchema = {
     file: { required: true, type: String },
     fileName: { required: true, type: String },
@@ -155,7 +161,24 @@ export const createTemplate = utilService.gatewayEventHandler(async ({ securityC
         await utilService.validateCollection(customFieldsSchema, requestBody.customFields);
     }
 
-    return await esignatureService.createTemplate(tenantId, companyId, requestBody);
+    const { email } = securityContext.principal;
+
+    return await esignatureService.createTemplate(tenantId, companyId, requestBody, email);
+});
+
+/**
+ * Saves a template's metadata
+ */
+export const saveTemplateMetadata = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.saveTemplateMetadata');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, templateResourceUriSchema);
+
+    const { tenantId, companyId, templateId } = event.pathParameters;
+
+    return await esignatureService.saveTemplateMetadata(tenantId, companyId, templateId);
 });
 
 export const createBulkSignatureRequest = utilService.gatewayEventHandler(

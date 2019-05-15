@@ -30,6 +30,7 @@ import {
     SignatureStatus,
 } from './signature-requests/signatureRequestResponse';
 import { TemplateDraftResponse } from './template-draft/templateDraftResponse';
+import { TemplateMetadata } from './template-draft/templateMetadata';
 import { ICustomField, Role, TemplateRequest } from './template-draft/templateRequest';
 import { TemplateDocumentListResponse } from './template-list/templateDocumentListResponse';
 import { Template, TemplateListResponse } from './template-list/templateListResponse';
@@ -41,10 +42,15 @@ import { Template, TemplateListResponse } from './template-list/templateListResp
  * @param {TemplateRequest} payload: The template request.
  * @returns {Promise<TemplateResponse>}: Promise of the created template
  */
-export async function createTemplate(tenantId: string, companyId: string, payload: TemplateRequest): Promise<TemplateDraftResponse> {
+export async function createTemplate(
+    tenantId: string,
+    companyId: string,
+    request: TemplateRequest,
+    email: string,
+): Promise<TemplateDraftResponse> {
     console.info('esignatureService.createTemplate');
 
-    const { file, fileName, signerRoles, ccRoles, customFields, category } = payload;
+    const { file, fileName, signerRoles, ccRoles, customFields, category } = request;
     const tmpFileDir = `${uuidV4()}`;
 
     // companyId value must be integral
@@ -92,6 +98,17 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
             client_id: appClientId,
         });
 
+        const query = new ParameterizedQuery('GetUserByEmail', Queries.getUserById);
+        query.setParameter('@username', email);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const response: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const { FirstName, LastName } = response.recordset[0];
+
         const options = {
             test_mode: configService.eSignatureApiDevModeOn ? 1 : 0,
             files: [`/tmp/${tmpFileDir}/${fileName}`],
@@ -105,6 +122,8 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
                 tenantId,
                 companyId,
                 category,
+                uploadDate: new Date().toISOString(),
+                uploadedBy: `${FirstName} ${LastName}`,
             },
         };
 
@@ -142,6 +161,112 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
     }
 }
 
+enum EsignatureMetadataType {
+    Template = 'Template',
+    SignatureRequest = 'SignatureRequest',
+}
+
+/**
+ * Saves a template's metadata to the HR database.
+ * @param {string} tenantId: The unique identifier for the tenant.
+ * @param {string} companyId: The unique identifier for the company.
+ * @param {string} templateId: The unique identifier for the e-signature template.
+ * @returns {Promise<TemplateMetadata>}: Promise of the template's metadata
+ */
+export async function saveTemplateMetadata(tenantId: string, companyId: string, templateId: string): Promise<TemplateMetadata> {
+    console.info('esignatureService.saveTemplateMetadata');
+
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    try {
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+        const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            tenantId,
+            companyInfo.clientId,
+            companyId,
+        );
+        const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
+        const client = await hellosign({
+            key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
+            client_id: appClientId,
+        });
+
+        const {
+            template: {
+                title,
+                documents,
+                metadata: { category, uploadedBy },
+            },
+        } = await client.template.get(templateId);
+
+        const uploadDate = new Date().toISOString();
+
+        let query = new ParameterizedQuery('GetEsignatureMetadataById', Queries.getEsignatureMetadataById);
+        query.setParameter('@id', templateId);
+        let payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (result.recordset.length > 0) {
+            console.info('Updating existing template metadata');
+            query = new ParameterizedQuery('UpdateEsignatureMetadataById', Queries.updateEsignatureMetadataById);
+            query.setParameter('@title', title);
+            query.setParameter('@id', templateId);
+            payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        } else {
+            console.info('Creating a new template metadata record');
+            query = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
+            query.setParameter('@id', templateId);
+            query.setParameter('@companyId', companyId);
+            query.setParameter('@type', EsignatureMetadataType.Template);
+            query.setParameter('@uploadDate', uploadDate);
+            query.setParameter('@uploadedBy', `'${uploadedBy}'`);
+            query.setParameter('@title', `'${title}'`);
+            query.setParameter('@fileName', `'${documents[0].name}'`);
+            query.setParameter('@category', category);
+            query.setParameter('@employeeCode', 'NULL');
+            payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        }
+
+        return {
+            id: templateId,
+            uploadDate,
+            uploadedBy,
+            title,
+            fileName: documents[0].name,
+            category,
+        } as TemplateMetadata;
+    } catch (error) {
+        if (error.message) {
+            if (error.message.includes('Template not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
 /**
  *  Creates an e-sginature request for an employee or group of employees for specified
  *  tenant's company.
@@ -176,6 +301,7 @@ export async function createBulkSignatureRequest(
             tenantId,
             companyId,
             employeeCodes: request.employeeCodes,
+            uploadDate: new Date().toISOString(),
         };
         const metadata = { ...suppliedMetadata, ...additionalMetadata };
 
@@ -202,6 +328,7 @@ export async function createBulkSignatureRequest(
 
         const response = await eSigner.signatureRequest.createEmbeddedWithTemplate(options);
         const signatureRequest = response.signature_request;
+        const { signature_request_id: requestId, title } = signatureRequest;
         const signatures: Signature[] = signatureRequest.signatures.map((signature) => {
             return {
                 id: signature.signature_id,
@@ -213,6 +340,27 @@ export async function createBulkSignatureRequest(
                 }),
             };
         });
+
+        // Save signature request metadata to the database
+        for (const code of request.employeeCodes) {
+            const query = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
+            query.setParameter('@id', requestId);
+            query.setParameter('@companyId', companyId);
+            query.setParameter('@type', EsignatureMetadataType.SignatureRequest);
+            query.setParameter('@uploadDate', new Date().toISOString());
+            query.setParameter('@uploadedBy', 'NULL');
+            query.setParameter('@title', `'${title}'`);
+            query.setParameter('@fileName', 'NULL');
+            query.setParameter('@category', templateResponse.template.metadata.category);
+            query.setParameter('@employeeCode', `'${code}'`);
+            const payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        }
 
         return new SignatureRequestResponse({
             id: signatureRequest.signature_request_id,

@@ -95,6 +95,16 @@ functions:
             cors:
               origin: '*'
 
+  saveTemplateMetadata:
+    handler: esignature/src/handler.saveTemplateMetadata
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/esignatures/templates/{templateId}/save-metadata
+            method: post
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
   createBulkSignRequest:
     handler: esignature/src/handler.createBulkSignatureRequest
     events:
