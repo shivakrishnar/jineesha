@@ -76,3 +76,19 @@ export async function getSignatureRequestListByQuery(query: string): Promise<any
         throw new Error('Unable to retrieve the file associated with the signature request');
     }
 }
+
+export async function getTemplateEditUrlById(templateId: string): Promise<any> {
+    console.info('hellosignService.getTemplateEditUrlById');
+
+    try {
+        const apiKey = JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey;
+        const url = `https://${apiKey}:@api.hellosign.com/v3/embedded/edit_url/${templateId}?skip_signer_roles=1`;
+
+        return await request.get({
+            url,
+        });
+    } catch (e) {
+        console.log(e);
+        throw new Error('Unable to retrieve the edit url for the specified template');
+    }
+}
