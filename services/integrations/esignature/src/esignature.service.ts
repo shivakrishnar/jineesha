@@ -21,7 +21,6 @@ import { EditUrl, SignUrl } from './embedded/url';
 import { Onboarding } from './signature-requests/onboarding';
 import { Signatory } from './signature-requests/signatory';
 import { BulkSignatureRequest, SignatureRequest } from './signature-requests/signatureRequest';
-import { SignatureRequestConsolidatedResponse } from './signature-requests/signatureRequestConsolidatedResponse';
 import { SignatureRequestListResponse } from './signature-requests/signatureRequestListResponse';
 import {
     Signature,
@@ -839,17 +838,22 @@ export async function listDocuments(
  * @param {string} companyId: The unique identifier for the company the user belongs to.
  * @param {string} emailAddress: The identifier for the user.
  * @param {boolean} isManager: True if user has the hr.persona.manager role.
- * @param {{[i: string]: string}} queryParams: The query parameters that were specified by the user.
- * @returns {SignatureRequestListResponse | SignatureRequestConsolidatedResponse}: A promise of a collection of signature requests'/legacy documents' metadata.
+ * @param {any} queryParams: The query parameters that were specified by the user.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @returns {PaginatedResult}: A promise of a paginated collection of signature requests'/legacy documents' metadata.
  */
 export async function listCompanySignatureRequests(
     tenantId: string,
     companyId: string,
     emailAddress: string,
     isManager: boolean,
-    queryParams: { [i: string]: string },
-): Promise<SignatureRequestListResponse | SignatureRequestConsolidatedResponse> {
+    queryParams: any,
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
     console.info('esignatureService.listCompanySignatureRequests');
+
     const validQueryStringParameters: string[] = ['status', 'consolidated'];
     const validStatusValues: string[] = ['signed', 'pending'];
 
@@ -886,9 +890,16 @@ export async function listCompanySignatureRequests(
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    try {
-        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
+    try {
+        let query: ParameterizedQuery;
+        let payload: DatabaseEvent;
+        let result: any;
+        const subordinateEmails: string[] = [];
+        const subordinateCodes: string[] = [];
+
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
         const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
             tenantId,
             companyInfo.clientId,
@@ -900,127 +911,128 @@ export async function listCompanySignatureRequests(
             client_id: appClientId,
         });
 
-        let helloSignQuery: string = `metadata:${companyId}`;
-        let internalQueryEmails: string = "'";
-        let response: any;
-        // If isManager then add filters to the helloSign query to only include responses from subordinates
-        // If isManager create a query string for our internal query also
         if (isManager) {
-            const getSubordinatesQuery = new ParameterizedQuery('getEmployeeEmailsByManager', Queries.getEmployeeEmailsByManager);
-            getSubordinatesQuery.setParameter('@managerEmail', emailAddress);
-            const getSubordinatesPayload = {
-                tenantId,
-                queryName: getSubordinatesQuery.name,
-                query: getSubordinatesQuery.value,
-                queryType: QueryType.Simple,
-            } as DatabaseEvent;
-            const subordinatesResult: any = await utilService.invokeInternalService(
-                'queryExecutor',
-                getSubordinatesPayload,
-                InvocationType.RequestResponse,
-            );
-            const subordinates = subordinatesResult.recordset.map(({ EmailAddress }) => {
-                return EmailAddress;
-            });
-            // set up for helloSign query
-            helloSignQuery += ' AND (to:';
-            helloSignQuery += subordinates.join(' OR to:');
-            helloSignQuery += ')';
-
-            // set up for internal query
-            internalQueryEmails += subordinates.join("', '");
-            internalQueryEmails += "'";
-
-            response = await hellosignService.getSignatureRequestListByQuery(helloSignQuery);
-            response = JSON.parse(response);
-        } else {
-            response = await client.signatureRequest.list({
-                query: helloSignQuery,
-            });
-        }
-        let signatureRequests = response.signature_requests;
-        if (queryParams && queryParams.status) {
-            switch (queryParams.status) {
-                case 'signed':
-                    signatureRequests = response.signature_requests.filter((request) => request.is_complete);
-                    break;
-                case 'pending':
-                    signatureRequests = response.signature_requests.filter((request) => !request.is_complete);
-                    break;
-                default:
-            }
-        }
-
-        const signatures: SignatureRequestResponse[] = signatureRequests.map((request) => {
-            return {
-                id: request.signature_request_id,
-                title: request.title,
-                status: request.is_complete ? SignatureRequestResponseStatus.Complete : SignatureRequestResponseStatus.Pending,
-                signatures: request.signatures.map((signature) => {
-                    let signatureStatus;
-                    switch (signature.status_code) {
-                        case 'signed':
-                            signatureStatus = SignatureRequestResponseStatus.Complete;
-                            break;
-                        case 'awaiting_signature':
-                            signatureStatus = SignatureRequestResponseStatus.Pending;
-                            break;
-                        case 'declined':
-                            signatureStatus = SignatureRequestResponseStatus.Declined;
-                            break;
-                        default:
-                            signatureStatus = SignatureRequestResponseStatus.Unknown;
-                            break;
-                    }
-                    return {
-                        id: signature.signature_id,
-                        status: signatureStatus,
-                        signer: new Signatory({
-                            emailAddress: signature.signer_email_address,
-                            name: signature.signer_name,
-                            role: signature.signer_role,
-                        }),
-                    } as Signature;
-                }),
-            } as SignatureRequestResponse;
-        });
-
-        if (queryParams && queryParams.consolidated === 'true') {
-            let query: ParameterizedQuery;
-            if (isManager) {
-                query = new ParameterizedQuery('GetCompanyDocumentsByEE', Queries.getCompanyDocumentsByEE);
-                query.setParameter('@eeEmails', internalQueryEmails);
-            } else {
-                query = new ParameterizedQuery('GetDocumentsByCompanyId', Queries.getDocumentsByCompanyId);
-            }
-
-            query.setParameter('@companyId', companyId);
-            const payload = {
+            query = new ParameterizedQuery('GetEmployeeEmailsByManager', Queries.getEmployeeEmailsByManager);
+            query.setParameter('@managerEmail', emailAddress);
+            payload = {
                 tenantId,
                 queryName: query.name,
                 query: query.value,
                 queryType: QueryType.Simple,
             } as DatabaseEvent;
-            const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-
-            const documentRecord = (result.recordset || []).map(
-                ({ ID: id, Filename: filename, Title: title, ESignDate: eSignDate, EmailAddress, EmployeeCode: employeeCode }) => {
-                    return {
-                        id,
-                        filename,
-                        title,
-                        eSignDate,
-                        emailAddress: EmailAddress,
-                        employeeCode,
-                    };
-                },
-            );
-
-            return signatures.length === 0 && documentRecord.length === 0
-                ? undefined
-                : new SignatureRequestConsolidatedResponse({ requests: signatures, hrDocuments: documentRecord });
+            result = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+            result.recordset.forEach(({ EmailAddress, EmployeeCode }) => {
+                subordinateEmails.push(EmailAddress);
+                subordinateCodes.push(EmployeeCode);
+            });
         }
-        return signatures.length === 0 ? undefined : new SignatureRequestListResponse({ results: signatures });
+
+        // Get request and document IDs from the database
+        if (queryParams && queryParams.consolidated === 'true') {
+            if (isManager) {
+                query = new ParameterizedQuery('GetConsolidatedEmployeeDocumentsByEE', Queries.getConsolidatedEmployeeDocumentsByEE);
+                query.setParameter('@eeEmails', `'${subordinateEmails.join("', '")}'`);
+                query.setParameter('@companyId', companyId);
+            } else {
+                query = new ParameterizedQuery(
+                    'GetConsolidatedEmployeeDocumentsByCompanyId',
+                    Queries.getConsolidatedEmployeeDocumentsByCompanyId,
+                );
+                query.setParameter('@companyId', companyId);
+            }
+        } else {
+            if (isManager) {
+                query = new ParameterizedQuery('GetEsignatureMetadataByEE', Queries.getEsignatureMetadataByEE);
+                query.setParameter(new RegExp('@employeeCodes', 'g'), `'${subordinateCodes.join("', '")}'`);
+            } else {
+                query = new ParameterizedQuery('GetEsignatureMetadataByCompanyId', Queries.getEsignatureMetadataByCompanyId);
+                query.setParameter('@companyId', companyId);
+            }
+        }
+        query.setParameter('@type', EsignatureMetadataType.SignatureRequest);
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+        payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        result = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const requests: any[] = result.recordsets[1];
+        const totalRecords: number = result.recordsets[0][0].totalCount;
+
+        if (requests.length === 0) {
+            return undefined;
+        }
+
+        const consolidatedRequests: any[] = [];
+
+        for (const request of requests) {
+            if (request.Type === 'legacy') {
+                const {
+                    ID: id,
+                    Filename: filename,
+                    Title: title,
+                    ESignDate: eSignDate,
+                    EmailAddress,
+                    EmployeeCode: employeeCode,
+                } = request;
+                consolidatedRequests.push({
+                    id,
+                    filename,
+                    title,
+                    eSignDate,
+                    emailAddress: EmailAddress,
+                    employeeCode,
+                });
+            } else {
+                try {
+                    const apiResponse = await client.signatureRequest.get(request.ID);
+                    const { signature_request_id: id, title, is_complete, signatures } = apiResponse.signature_request;
+                    if (queryParams && queryParams.status) {
+                        if ((queryParams.status === 'signed' && !is_complete) || (queryParams.status === 'pending' && is_complete)) {
+                            continue;
+                        }
+                    }
+                    consolidatedRequests.push({
+                        id,
+                        title,
+                        status: is_complete ? SignatureRequestResponseStatus.Complete : SignatureRequestResponseStatus.Pending,
+                        signatures: signatures.map((signature) => {
+                            let signatureStatus;
+                            switch (signature.status_code) {
+                                case 'signed':
+                                    signatureStatus = SignatureRequestResponseStatus.Complete;
+                                    break;
+                                case 'awaiting_signature':
+                                    signatureStatus = SignatureRequestResponseStatus.Pending;
+                                    break;
+                                case 'declined':
+                                    signatureStatus = SignatureRequestResponseStatus.Declined;
+                                    break;
+                                default:
+                                    signatureStatus = SignatureRequestResponseStatus.Unknown;
+                                    break;
+                            }
+                            return {
+                                id: signature.signature_id,
+                                status: signatureStatus,
+                                signer: new Signatory({
+                                    emailAddress: signature.signer_email_address,
+                                    name: signature.signer_name,
+                                    role: signature.signer_role,
+                                }),
+                            } as Signature;
+                        }),
+                    } as SignatureRequestResponse);
+                } catch (error) {
+                    console.error(`issue accessing signature request id: ${request.ID}`);
+                }
+            }
+        }
+
+        const paginatedResult = await paginationService.createPaginatedResult(consolidatedRequests, baseUrl, totalRecords, page);
+        return consolidatedRequests.length === 0 ? undefined : paginatedResult;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

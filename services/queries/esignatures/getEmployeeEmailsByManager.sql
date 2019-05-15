@@ -11,7 +11,8 @@ as
       hru.Username = '@managerEmail'
 )
 select 
-    ee.EmailAddress
+    ee.EmailAddress,
+    ee.EmployeeCode
 from
     dbo.Employee ee,
     Manager m

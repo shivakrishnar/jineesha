@@ -314,8 +314,19 @@ export const listCompanySignatureRequests = utilService.gatewayEventHandler(asyn
     const { tenantId, companyId } = event.pathParameters;
     const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
     const emailAddress: string = securityContext.principal.email;
+    const {
+        requestContext: { domainName, path },
+    } = event;
 
-    return await esignatureService.listCompanySignatureRequests(tenantId, companyId, emailAddress, isManager, event.queryStringParameters);
+    return await esignatureService.listCompanySignatureRequests(
+        tenantId,
+        companyId,
+        emailAddress,
+        isManager,
+        event.queryStringParameters,
+        domainName,
+        path,
+    );
 });
 
 /**
