@@ -32,8 +32,7 @@ import {
 import { TemplateDraftResponse } from './template-draft/templateDraftResponse';
 import { TemplateMetadata } from './template-draft/templateMetadata';
 import { ICustomField, Role, TemplateRequest } from './template-draft/templateRequest';
-import { TemplateDocumentListResponse } from './template-list/templateDocumentListResponse';
-import { Template, TemplateListResponse } from './template-list/templateListResponse';
+import { Template } from './template-list/templateListResponse';
 
 /**
  * Creates a template under the specified company.
@@ -464,20 +463,28 @@ export async function createSignatureRequest(
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} company: The unique identifier for the company the user belongs to.
  * @param {any} queryParams: The query parameters that were specified by the user.
- * @returns {Promise<TemplateListResponse>}: Promise of an array of templates
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @returns {Promise<PaginatedResult>}: Promise of a paginated array of templates
  */
 export async function listTemplates(
     tenantId: string,
     companyId: string,
     queryParams: any,
-): Promise<TemplateListResponse | TemplateDocumentListResponse> {
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
     console.info('esignatureService.listTemplates');
+
+    const validQueryStringParameters = ['pageToken', 'consolidated'];
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
         const errorMessage = `${companyId} is not a valid number`;
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
+
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
         const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
@@ -492,60 +499,87 @@ export async function listTemplates(
             client_id: appClientId,
         });
 
-        const response = await client.template.list();
+        let query: ParameterizedQuery;
+        // Get template IDs from the database
+        if (queryParams && queryParams.consolidated === 'true') {
+            query = new ParameterizedQuery('GetConslidatedDocumentsByCompanyId', Queries.getConsolidatedCompanyDocumentsByCompanyId);
+        } else {
+            query = new ParameterizedQuery('GetEsignatureMetadataByCompanyId', Queries.getEsignatureMetadataByCompanyId);
+        }
+        query.setParameter('@companyId', companyId);
+        query.setParameter('@type', EsignatureMetadataType.Template);
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+        const payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const documents: any[] = result.recordsets[1];
+        const totalRecords: number = result.recordsets[0][0].totalCount;
 
-        const results = response.templates
-            .filter((template) => template.metadata && template.metadata.companyAppId === appClientId)
-            .map(
-                ({
-                    template_id: id,
-                    title,
-                    message,
-                    can_edit: editable,
-                    is_locked: isLocked,
-                    signer_roles,
-                    cc_roles,
-                    custom_fields,
-                    documents,
-                }) => {
-                    const fileName = documents[0].name;
-                    return new Template({
-                        id,
+        if (documents.length === 0) {
+            return undefined;
+        }
+
+        const consolidatedDocuments: any[] = [];
+
+        // Extract template file information for document metadata
+        for (const document of documents) {
+            if (document.Type === 'legacy') {
+                consolidatedDocuments.push({
+                    id: document.ID,
+                    title: document.Title,
+                    filename: document.Filename,
+                    uploadDate: document.UploadDate,
+                    isLegacyDocument: true,
+                    uploadedBy: `${document.FirstName} ${document.LastName}`,
+                    category: document.Category,
+                });
+            } else {
+                try {
+                    const apiResponse = await client.template.get(document.ID);
+                    const {
+                        template_id: id,
                         title,
                         message,
-                        editable,
-                        isLocked,
-                        signerRoles: signer_roles.map(({ name }) => new Role({ name })),
-                        ccRoles: cc_roles.map(({ name }) => new Role({ name })),
-                        customFields: custom_fields.map(({ name, type }) => {
-                            return { name, type } as ICustomField;
+                        can_edit: editable,
+                        is_locked: isLocked,
+                        signer_roles,
+                        cc_roles,
+                        custom_fields,
+                        documents: files,
+                        metadata: { uploadDate, uploadedBy, category },
+                    } = apiResponse.template;
+                    const fileName = files[0].name;
+                    consolidatedDocuments.push(
+                        new Template({
+                            id,
+                            title,
+                            message,
+                            editable,
+                            isLocked,
+                            signerRoles: signer_roles.map(({ name }) => new Role({ name })),
+                            ccRoles: cc_roles.map(({ name }) => new Role({ name })),
+                            customFields: custom_fields.map(({ name, type }) => {
+                                return { name, type } as ICustomField;
+                            }),
+                            filename: fileName,
+                            uploadDate,
+                            uploadedBy,
+                            isLegacyDocument: queryParams && queryParams.consolidated === 'true' ? false : undefined,
+                            category,
                         }),
-                        filename: fileName,
-                    });
-                },
-            );
-
-        if (queryParams && queryParams.consolidated === 'true') {
-            const query = new ParameterizedQuery('GetDocumentsByCompanyId', Queries.getDocumentsByCompanyId);
-            query.setParameter('@companyId', companyId);
-            const payload = {
-                tenantId,
-                queryName: query.name,
-                query: query.value,
-                queryType: QueryType.Simple,
-            } as DatabaseEvent;
-            const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-
-            const documentRecord = (result.recordset || []).map((entry) => {
-                return {
-                    id: entry.ID,
-                    filename: entry.Filename,
-                };
-            });
-
-            return new TemplateDocumentListResponse({ templates: results, hrDocuments: documentRecord });
+                    );
+                } catch (error) {
+                    console.error(`issue accessing template id: ${document.id}`);
+                }
+            }
         }
-        return new TemplateListResponse({ results });
+
+        const paginatedResult = await paginationService.createPaginatedResult(consolidatedDocuments, baseUrl, totalRecords, page);
+        return consolidatedDocuments.length === 0 ? undefined : paginatedResult;
     } catch (error) {
         console.error(error);
         throw errorService.getErrorResponse(0);

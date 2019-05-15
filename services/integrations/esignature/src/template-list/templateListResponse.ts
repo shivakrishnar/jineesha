@@ -75,6 +75,30 @@ export class Template {
      */
     filename: string;
 
+    /**
+     * @property {string} uploadDate
+     * The date that the template was uploaded
+     */
+    uploadDate: string;
+
+    /**
+     * @property {string} uploadedBy
+     * The name of the user that uploaded the template
+     */
+    uploadedBy: string;
+
+    /**
+     * @property {boolean} isLegacyDocument
+     * Determines if the document is a legacy HR document
+     */
+    isLegacyDocument?: boolean;
+
+    /**
+     * @property {string} category
+     * Determines if the document is a legacy HR document
+     */
+    category: string;
+
     public constructor(init?: Partial<Template>) {
         Object.assign(this, init);
     }

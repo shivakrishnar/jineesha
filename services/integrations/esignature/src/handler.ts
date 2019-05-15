@@ -237,7 +237,11 @@ export const listTemplates = utilService.gatewayEventHandler(async ({ securityCo
     utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
-    return await esignatureService.listTemplates(tenantId, companyId, event.queryStringParameters);
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    return await esignatureService.listTemplates(tenantId, companyId, event.queryStringParameters, domainName, path);
 });
 
 /**
