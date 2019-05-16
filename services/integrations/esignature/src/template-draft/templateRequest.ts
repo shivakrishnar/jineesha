@@ -39,6 +39,18 @@ export class TemplateRequest {
      */
     customFields?: ICustomField[];
 
+    /**
+     * @property {string} title
+     * The title the user specified when creating the template
+     */
+    title: string;
+
+    /**
+     * @property {string} message
+     * The message the user specified when creating the template
+     */
+    message: string;
+
     public constructor(init?: Partial<TemplateRequest>) {
         Object.assign(this, init);
     }

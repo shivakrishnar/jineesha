@@ -82,7 +82,7 @@ export async function getTemplateEditUrlById(templateId: string): Promise<any> {
 
     try {
         const apiKey = JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey;
-        const url = `https://${apiKey}:@api.hellosign.com/v3/embedded/edit_url/${templateId}?skip_signer_roles=1`;
+        const url = `https://${apiKey}:@api.hellosign.com/v3/embedded/edit_url/${templateId}?skip_signer_roles=1&skip_subject_message=1`;
 
         return await request.get({
             url,
