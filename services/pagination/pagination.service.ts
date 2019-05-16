@@ -76,7 +76,7 @@ export async function retrievePaginationData(
  * Appends SQL filters used for pagination
  * @param {Query} query: The query to be appended with pagination filters.
  * @param {number} page: The page number specified by the user.
- * @param {number} limit: The number of results to be returned.
+ * @param {boolean} useMaxLimit: Determines whether or not to use the maximum limit.
  * @returns {Promise<Query>}: Promise of a paginated query
  */
 export async function appendPaginationFilter(query: Query, page: number = 1, useMaxLimit: boolean = false): Promise<Query> {

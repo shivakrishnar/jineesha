@@ -1,7 +1,9 @@
 select
     ID,
     IsGA,
-    IsSuperAdmin
+    IsSuperAdmin,
+    FirstName,
+    LastName
 from
     dbo.HRnextUser
 where

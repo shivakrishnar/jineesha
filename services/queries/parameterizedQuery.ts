@@ -11,10 +11,10 @@ export class ParameterizedQuery extends Query {
 
     /**
      * Sets a SQL parameter to a desired value
-     * @param {string} name The identifier of the parameter
+     * @param {any} name The identifier of the parameter
      * @param {string} value The parameter's valiue
      */
-    public setParameter(name: string, value: any): void {
+    public setParameter(name: any, value: any): void {
         this._query = this._query.replace(name, value);
     }
 }

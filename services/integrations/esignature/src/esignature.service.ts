@@ -21,7 +21,6 @@ import { EditUrl, SignUrl } from './embedded/url';
 import { Onboarding } from './signature-requests/onboarding';
 import { Signatory } from './signature-requests/signatory';
 import { BulkSignatureRequest, SignatureRequest } from './signature-requests/signatureRequest';
-import { SignatureRequestConsolidatedResponse } from './signature-requests/signatureRequestConsolidatedResponse';
 import { SignatureRequestListResponse } from './signature-requests/signatureRequestListResponse';
 import {
     Signature,
@@ -30,9 +29,9 @@ import {
     SignatureStatus,
 } from './signature-requests/signatureRequestResponse';
 import { TemplateDraftResponse } from './template-draft/templateDraftResponse';
+import { TemplateMetadata } from './template-draft/templateMetadata';
 import { ICustomField, Role, TemplateRequest } from './template-draft/templateRequest';
-import { TemplateDocumentListResponse } from './template-list/templateDocumentListResponse';
-import { Template, TemplateListResponse } from './template-list/templateListResponse';
+import { Template } from './template-list/templateListResponse';
 
 /**
  * Creates a template under the specified company.
@@ -41,10 +40,15 @@ import { Template, TemplateListResponse } from './template-list/templateListResp
  * @param {TemplateRequest} payload: The template request.
  * @returns {Promise<TemplateResponse>}: Promise of the created template
  */
-export async function createTemplate(tenantId: string, companyId: string, payload: TemplateRequest): Promise<TemplateDraftResponse> {
+export async function createTemplate(
+    tenantId: string,
+    companyId: string,
+    request: TemplateRequest,
+    email: string,
+): Promise<TemplateDraftResponse> {
     console.info('esignatureService.createTemplate');
 
-    const { file, fileName, signerRoles, ccRoles, customFields, category } = payload;
+    const { file, fileName, signerRoles, ccRoles, customFields, category } = request;
     const tmpFileDir = `${uuidV4()}`;
 
     // companyId value must be integral
@@ -92,6 +96,17 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
             client_id: appClientId,
         });
 
+        const query = new ParameterizedQuery('GetUserByEmail', Queries.getUserById);
+        query.setParameter('@username', email);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const response: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const { FirstName, LastName } = response.recordset[0];
+
         const options = {
             test_mode: configService.eSignatureApiDevModeOn ? 1 : 0,
             files: [`/tmp/${tmpFileDir}/${fileName}`],
@@ -105,6 +120,8 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
                 tenantId,
                 companyId,
                 category,
+                uploadDate: new Date().toISOString(),
+                uploadedBy: `${FirstName} ${LastName}`,
             },
         };
 
@@ -142,6 +159,112 @@ export async function createTemplate(tenantId: string, companyId: string, payloa
     }
 }
 
+enum EsignatureMetadataType {
+    Template = 'Template',
+    SignatureRequest = 'SignatureRequest',
+}
+
+/**
+ * Saves a template's metadata to the HR database.
+ * @param {string} tenantId: The unique identifier for the tenant.
+ * @param {string} companyId: The unique identifier for the company.
+ * @param {string} templateId: The unique identifier for the e-signature template.
+ * @returns {Promise<TemplateMetadata>}: Promise of the template's metadata
+ */
+export async function saveTemplateMetadata(tenantId: string, companyId: string, templateId: string): Promise<TemplateMetadata> {
+    console.info('esignatureService.saveTemplateMetadata');
+
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    try {
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+        const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            tenantId,
+            companyInfo.clientId,
+            companyId,
+        );
+        const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
+        const client = await hellosign({
+            key: JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey,
+            client_id: appClientId,
+        });
+
+        const {
+            template: {
+                title,
+                documents,
+                metadata: { category, uploadedBy },
+            },
+        } = await client.template.get(templateId);
+
+        const uploadDate = new Date().toISOString();
+
+        let query = new ParameterizedQuery('GetEsignatureMetadataById', Queries.getEsignatureMetadataById);
+        query.setParameter('@id', templateId);
+        let payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (result.recordset.length > 0) {
+            console.info('Updating existing template metadata');
+            query = new ParameterizedQuery('UpdateEsignatureMetadataById', Queries.updateEsignatureMetadataById);
+            query.setParameter('@title', title);
+            query.setParameter('@id', templateId);
+            payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        } else {
+            console.info('Creating a new template metadata record');
+            query = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
+            query.setParameter('@id', templateId);
+            query.setParameter('@companyId', companyId);
+            query.setParameter('@type', EsignatureMetadataType.Template);
+            query.setParameter('@uploadDate', uploadDate);
+            query.setParameter('@uploadedBy', `'${uploadedBy}'`);
+            query.setParameter('@title', `'${title}'`);
+            query.setParameter('@fileName', `'${documents[0].name}'`);
+            query.setParameter('@category', category);
+            query.setParameter('@employeeCode', 'NULL');
+            payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        }
+
+        return {
+            id: templateId,
+            uploadDate,
+            uploadedBy,
+            title,
+            fileName: documents[0].name,
+            category,
+        } as TemplateMetadata;
+    } catch (error) {
+        if (error.message) {
+            if (error.message.includes('Template not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
 /**
  *  Creates an e-sginature request for an employee or group of employees for specified
  *  tenant's company.
@@ -176,6 +299,7 @@ export async function createBulkSignatureRequest(
             tenantId,
             companyId,
             employeeCodes: request.employeeCodes,
+            uploadDate: new Date().toISOString(),
         };
         const metadata = { ...suppliedMetadata, ...additionalMetadata };
 
@@ -202,6 +326,7 @@ export async function createBulkSignatureRequest(
 
         const response = await eSigner.signatureRequest.createEmbeddedWithTemplate(options);
         const signatureRequest = response.signature_request;
+        const { signature_request_id: requestId, title } = signatureRequest;
         const signatures: Signature[] = signatureRequest.signatures.map((signature) => {
             return {
                 id: signature.signature_id,
@@ -213,6 +338,27 @@ export async function createBulkSignatureRequest(
                 }),
             };
         });
+
+        // Save signature request metadata to the database
+        for (const code of request.employeeCodes) {
+            const query = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
+            query.setParameter('@id', requestId);
+            query.setParameter('@companyId', companyId);
+            query.setParameter('@type', EsignatureMetadataType.SignatureRequest);
+            query.setParameter('@uploadDate', new Date().toISOString());
+            query.setParameter('@uploadedBy', 'NULL');
+            query.setParameter('@title', `'${title}'`);
+            query.setParameter('@fileName', 'NULL');
+            query.setParameter('@category', templateResponse.template.metadata.category);
+            query.setParameter('@employeeCode', `'${code}'`);
+            const payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        }
 
         return new SignatureRequestResponse({
             id: signatureRequest.signature_request_id,
@@ -316,20 +462,28 @@ export async function createSignatureRequest(
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} company: The unique identifier for the company the user belongs to.
  * @param {any} queryParams: The query parameters that were specified by the user.
- * @returns {Promise<TemplateListResponse>}: Promise of an array of templates
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @returns {Promise<PaginatedResult>}: Promise of a paginated array of templates
  */
 export async function listTemplates(
     tenantId: string,
     companyId: string,
     queryParams: any,
-): Promise<TemplateListResponse | TemplateDocumentListResponse> {
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
     console.info('esignatureService.listTemplates');
+
+    const validQueryStringParameters = ['pageToken', 'consolidated'];
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
         const errorMessage = `${companyId} is not a valid number`;
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
+
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
         const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
@@ -344,60 +498,87 @@ export async function listTemplates(
             client_id: appClientId,
         });
 
-        const response = await client.template.list();
+        let query: ParameterizedQuery;
+        // Get template IDs from the database
+        if (queryParams && queryParams.consolidated === 'true') {
+            query = new ParameterizedQuery('GetConslidatedDocumentsByCompanyId', Queries.getConsolidatedCompanyDocumentsByCompanyId);
+        } else {
+            query = new ParameterizedQuery('GetEsignatureMetadataByCompanyId', Queries.getEsignatureMetadataByCompanyId);
+        }
+        query.setParameter('@companyId', companyId);
+        query.setParameter('@type', EsignatureMetadataType.Template);
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+        const payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const documents: any[] = result.recordsets[1];
+        const totalRecords: number = result.recordsets[0][0].totalCount;
 
-        const results = response.templates
-            .filter((template) => template.metadata && template.metadata.companyAppId === appClientId)
-            .map(
-                ({
-                    template_id: id,
-                    title,
-                    message,
-                    can_edit: editable,
-                    is_locked: isLocked,
-                    signer_roles,
-                    cc_roles,
-                    custom_fields,
-                    documents,
-                }) => {
-                    const fileName = documents[0].name;
-                    return new Template({
-                        id,
+        if (documents.length === 0) {
+            return undefined;
+        }
+
+        const consolidatedDocuments: any[] = [];
+
+        // Extract template file information for document metadata
+        for (const document of documents) {
+            if (document.Type === 'legacy') {
+                consolidatedDocuments.push({
+                    id: document.ID,
+                    title: document.Title,
+                    filename: document.Filename,
+                    uploadDate: document.UploadDate,
+                    isLegacyDocument: true,
+                    uploadedBy: `${document.FirstName} ${document.LastName}`,
+                    category: document.Category,
+                });
+            } else {
+                try {
+                    const apiResponse = await client.template.get(document.ID);
+                    const {
+                        template_id: id,
                         title,
                         message,
-                        editable,
-                        isLocked,
-                        signerRoles: signer_roles.map(({ name }) => new Role({ name })),
-                        ccRoles: cc_roles.map(({ name }) => new Role({ name })),
-                        customFields: custom_fields.map(({ name, type }) => {
-                            return { name, type } as ICustomField;
+                        can_edit: editable,
+                        is_locked: isLocked,
+                        signer_roles,
+                        cc_roles,
+                        custom_fields,
+                        documents: files,
+                        metadata: { uploadDate, uploadedBy, category },
+                    } = apiResponse.template;
+                    const fileName = files[0].name;
+                    consolidatedDocuments.push(
+                        new Template({
+                            id,
+                            title,
+                            message,
+                            editable,
+                            isLocked,
+                            signerRoles: signer_roles.map(({ name }) => new Role({ name })),
+                            ccRoles: cc_roles.map(({ name }) => new Role({ name })),
+                            customFields: custom_fields.map(({ name, type }) => {
+                                return { name, type } as ICustomField;
+                            }),
+                            filename: fileName,
+                            uploadDate,
+                            uploadedBy,
+                            isLegacyDocument: queryParams && queryParams.consolidated === 'true' ? false : undefined,
+                            category,
                         }),
-                        filename: fileName,
-                    });
-                },
-            );
-
-        if (queryParams && queryParams.consolidated === 'true') {
-            const query = new ParameterizedQuery('GetDocumentsByCompanyId', Queries.getDocumentsByCompanyId);
-            query.setParameter('@companyId', companyId);
-            const payload = {
-                tenantId,
-                queryName: query.name,
-                query: query.value,
-                queryType: QueryType.Simple,
-            } as DatabaseEvent;
-            const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-
-            const documentRecord = (result.recordset || []).map((entry) => {
-                return {
-                    id: entry.ID,
-                    filename: entry.Filename,
-                };
-            });
-
-            return new TemplateDocumentListResponse({ templates: results, hrDocuments: documentRecord });
+                    );
+                } catch (error) {
+                    console.error(`issue accessing template id: ${document.id}`);
+                }
+            }
         }
-        return new TemplateListResponse({ results });
+
+        const paginatedResult = await paginationService.createPaginatedResult(consolidatedDocuments, baseUrl, totalRecords, page);
+        return consolidatedDocuments.length === 0 ? undefined : paginatedResult;
     } catch (error) {
         console.error(error);
         throw errorService.getErrorResponse(0);
@@ -657,17 +838,22 @@ export async function listDocuments(
  * @param {string} companyId: The unique identifier for the company the user belongs to.
  * @param {string} emailAddress: The identifier for the user.
  * @param {boolean} isManager: True if user has the hr.persona.manager role.
- * @param {{[i: string]: string}} queryParams: The query parameters that were specified by the user.
- * @returns {SignatureRequestListResponse | SignatureRequestConsolidatedResponse}: A promise of a collection of signature requests'/legacy documents' metadata.
+ * @param {any} queryParams: The query parameters that were specified by the user.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @returns {PaginatedResult}: A promise of a paginated collection of signature requests'/legacy documents' metadata.
  */
 export async function listCompanySignatureRequests(
     tenantId: string,
     companyId: string,
     emailAddress: string,
     isManager: boolean,
-    queryParams: { [i: string]: string },
-): Promise<SignatureRequestListResponse | SignatureRequestConsolidatedResponse> {
+    queryParams: any,
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
     console.info('esignatureService.listCompanySignatureRequests');
+
     const validQueryStringParameters: string[] = ['status', 'consolidated'];
     const validStatusValues: string[] = ['signed', 'pending'];
 
@@ -704,9 +890,16 @@ export async function listCompanySignatureRequests(
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    try {
-        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
+    try {
+        let query: ParameterizedQuery;
+        let payload: DatabaseEvent;
+        let result: any;
+        const subordinateEmails: string[] = [];
+        const subordinateCodes: string[] = [];
+
+        const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
         const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
             tenantId,
             companyInfo.clientId,
@@ -718,127 +911,128 @@ export async function listCompanySignatureRequests(
             client_id: appClientId,
         });
 
-        let helloSignQuery: string = `metadata:${companyId}`;
-        let internalQueryEmails: string = "'";
-        let response: any;
-        // If isManager then add filters to the helloSign query to only include responses from subordinates
-        // If isManager create a query string for our internal query also
         if (isManager) {
-            const getSubordinatesQuery = new ParameterizedQuery('getEmployeeEmailsByManager', Queries.getEmployeeEmailsByManager);
-            getSubordinatesQuery.setParameter('@managerEmail', emailAddress);
-            const getSubordinatesPayload = {
-                tenantId,
-                queryName: getSubordinatesQuery.name,
-                query: getSubordinatesQuery.value,
-                queryType: QueryType.Simple,
-            } as DatabaseEvent;
-            const subordinatesResult: any = await utilService.invokeInternalService(
-                'queryExecutor',
-                getSubordinatesPayload,
-                InvocationType.RequestResponse,
-            );
-            const subordinates = subordinatesResult.recordset.map(({ EmailAddress }) => {
-                return EmailAddress;
-            });
-            // set up for helloSign query
-            helloSignQuery += ' AND (to:';
-            helloSignQuery += subordinates.join(' OR to:');
-            helloSignQuery += ')';
-
-            // set up for internal query
-            internalQueryEmails += subordinates.join("', '");
-            internalQueryEmails += "'";
-
-            response = await hellosignService.getSignatureRequestListByQuery(helloSignQuery);
-            response = JSON.parse(response);
-        } else {
-            response = await client.signatureRequest.list({
-                query: helloSignQuery,
-            });
-        }
-        let signatureRequests = response.signature_requests;
-        if (queryParams && queryParams.status) {
-            switch (queryParams.status) {
-                case 'signed':
-                    signatureRequests = response.signature_requests.filter((request) => request.is_complete);
-                    break;
-                case 'pending':
-                    signatureRequests = response.signature_requests.filter((request) => !request.is_complete);
-                    break;
-                default:
-            }
-        }
-
-        const signatures: SignatureRequestResponse[] = signatureRequests.map((request) => {
-            return {
-                id: request.signature_request_id,
-                title: request.title,
-                status: request.is_complete ? SignatureRequestResponseStatus.Complete : SignatureRequestResponseStatus.Pending,
-                signatures: request.signatures.map((signature) => {
-                    let signatureStatus;
-                    switch (signature.status_code) {
-                        case 'signed':
-                            signatureStatus = SignatureRequestResponseStatus.Complete;
-                            break;
-                        case 'awaiting_signature':
-                            signatureStatus = SignatureRequestResponseStatus.Pending;
-                            break;
-                        case 'declined':
-                            signatureStatus = SignatureRequestResponseStatus.Declined;
-                            break;
-                        default:
-                            signatureStatus = SignatureRequestResponseStatus.Unknown;
-                            break;
-                    }
-                    return {
-                        id: signature.signature_id,
-                        status: signatureStatus,
-                        signer: new Signatory({
-                            emailAddress: signature.signer_email_address,
-                            name: signature.signer_name,
-                            role: signature.signer_role,
-                        }),
-                    } as Signature;
-                }),
-            } as SignatureRequestResponse;
-        });
-
-        if (queryParams && queryParams.consolidated === 'true') {
-            let query: ParameterizedQuery;
-            if (isManager) {
-                query = new ParameterizedQuery('GetCompanyDocumentsByEE', Queries.getCompanyDocumentsByEE);
-                query.setParameter('@eeEmails', internalQueryEmails);
-            } else {
-                query = new ParameterizedQuery('GetDocumentsByCompanyId', Queries.getDocumentsByCompanyId);
-            }
-
-            query.setParameter('@companyId', companyId);
-            const payload = {
+            query = new ParameterizedQuery('GetEmployeeEmailsByManager', Queries.getEmployeeEmailsByManager);
+            query.setParameter('@managerEmail', emailAddress);
+            payload = {
                 tenantId,
                 queryName: query.name,
                 query: query.value,
                 queryType: QueryType.Simple,
             } as DatabaseEvent;
-            const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-
-            const documentRecord = (result.recordset || []).map(
-                ({ ID: id, Filename: filename, Title: title, ESignDate: eSignDate, EmailAddress, EmployeeCode: employeeCode }) => {
-                    return {
-                        id,
-                        filename,
-                        title,
-                        eSignDate,
-                        emailAddress: EmailAddress,
-                        employeeCode,
-                    };
-                },
-            );
-
-            return signatures.length === 0 && documentRecord.length === 0
-                ? undefined
-                : new SignatureRequestConsolidatedResponse({ requests: signatures, hrDocuments: documentRecord });
+            result = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+            result.recordset.forEach(({ EmailAddress, EmployeeCode }) => {
+                subordinateEmails.push(EmailAddress);
+                subordinateCodes.push(EmployeeCode);
+            });
         }
-        return signatures.length === 0 ? undefined : new SignatureRequestListResponse({ results: signatures });
+
+        // Get request and document IDs from the database
+        if (queryParams && queryParams.consolidated === 'true') {
+            if (isManager) {
+                query = new ParameterizedQuery('GetConsolidatedEmployeeDocumentsByEE', Queries.getConsolidatedEmployeeDocumentsByEE);
+                query.setParameter('@eeEmails', `'${subordinateEmails.join("', '")}'`);
+                query.setParameter('@companyId', companyId);
+            } else {
+                query = new ParameterizedQuery(
+                    'GetConsolidatedEmployeeDocumentsByCompanyId',
+                    Queries.getConsolidatedEmployeeDocumentsByCompanyId,
+                );
+                query.setParameter('@companyId', companyId);
+            }
+        } else {
+            if (isManager) {
+                query = new ParameterizedQuery('GetEsignatureMetadataByEE', Queries.getEsignatureMetadataByEE);
+                query.setParameter(new RegExp('@employeeCodes', 'g'), `'${subordinateCodes.join("', '")}'`);
+            } else {
+                query = new ParameterizedQuery('GetEsignatureMetadataByCompanyId', Queries.getEsignatureMetadataByCompanyId);
+                query.setParameter('@companyId', companyId);
+            }
+        }
+        query.setParameter('@type', EsignatureMetadataType.SignatureRequest);
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+        payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        result = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const requests: any[] = result.recordsets[1];
+        const totalRecords: number = result.recordsets[0][0].totalCount;
+
+        if (requests.length === 0) {
+            return undefined;
+        }
+
+        const consolidatedRequests: any[] = [];
+
+        for (const request of requests) {
+            if (request.Type === 'legacy') {
+                const {
+                    ID: id,
+                    Filename: filename,
+                    Title: title,
+                    ESignDate: eSignDate,
+                    EmailAddress,
+                    EmployeeCode: employeeCode,
+                } = request;
+                consolidatedRequests.push({
+                    id,
+                    filename,
+                    title,
+                    eSignDate,
+                    emailAddress: EmailAddress,
+                    employeeCode,
+                });
+            } else {
+                try {
+                    const apiResponse = await client.signatureRequest.get(request.ID);
+                    const { signature_request_id: id, title, is_complete, signatures } = apiResponse.signature_request;
+                    if (queryParams && queryParams.status) {
+                        if ((queryParams.status === 'signed' && !is_complete) || (queryParams.status === 'pending' && is_complete)) {
+                            continue;
+                        }
+                    }
+                    consolidatedRequests.push({
+                        id,
+                        title,
+                        status: is_complete ? SignatureRequestResponseStatus.Complete : SignatureRequestResponseStatus.Pending,
+                        signatures: signatures.map((signature) => {
+                            let signatureStatus;
+                            switch (signature.status_code) {
+                                case 'signed':
+                                    signatureStatus = SignatureRequestResponseStatus.Complete;
+                                    break;
+                                case 'awaiting_signature':
+                                    signatureStatus = SignatureRequestResponseStatus.Pending;
+                                    break;
+                                case 'declined':
+                                    signatureStatus = SignatureRequestResponseStatus.Declined;
+                                    break;
+                                default:
+                                    signatureStatus = SignatureRequestResponseStatus.Unknown;
+                                    break;
+                            }
+                            return {
+                                id: signature.signature_id,
+                                status: signatureStatus,
+                                signer: new Signatory({
+                                    emailAddress: signature.signer_email_address,
+                                    name: signature.signer_name,
+                                    role: signature.signer_role,
+                                }),
+                            } as Signature;
+                        }),
+                    } as SignatureRequestResponse);
+                } catch (error) {
+                    console.error(`issue accessing signature request id: ${request.ID}`);
+                }
+            }
+        }
+
+        const paginatedResult = await paginationService.createPaginatedResult(consolidatedRequests, baseUrl, totalRecords, page);
+        return consolidatedRequests.length === 0 ? undefined : paginatedResult;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

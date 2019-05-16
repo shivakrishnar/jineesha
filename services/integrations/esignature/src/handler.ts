@@ -29,6 +29,12 @@ const companyResourceUriSchema = {
     companyId: { required: true, type: String },
 };
 
+const templateResourceUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+    templateId: { required: true, type: String },
+};
+
 const createEmbeddedTemplateValidationSchema = {
     file: { required: true, type: String },
     fileName: { required: true, type: String },
@@ -155,7 +161,24 @@ export const createTemplate = utilService.gatewayEventHandler(async ({ securityC
         await utilService.validateCollection(customFieldsSchema, requestBody.customFields);
     }
 
-    return await esignatureService.createTemplate(tenantId, companyId, requestBody);
+    const { email } = securityContext.principal;
+
+    return await esignatureService.createTemplate(tenantId, companyId, requestBody, email);
+});
+
+/**
+ * Saves a template's metadata
+ */
+export const saveTemplateMetadata = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.saveTemplateMetadata');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, templateResourceUriSchema);
+
+    const { tenantId, companyId, templateId } = event.pathParameters;
+
+    return await esignatureService.saveTemplateMetadata(tenantId, companyId, templateId);
 });
 
 export const createBulkSignatureRequest = utilService.gatewayEventHandler(
@@ -214,7 +237,11 @@ export const listTemplates = utilService.gatewayEventHandler(async ({ securityCo
     utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
-    return await esignatureService.listTemplates(tenantId, companyId, event.queryStringParameters);
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    return await esignatureService.listTemplates(tenantId, companyId, event.queryStringParameters, domainName, path);
 });
 
 /**
@@ -287,8 +314,19 @@ export const listCompanySignatureRequests = utilService.gatewayEventHandler(asyn
     const { tenantId, companyId } = event.pathParameters;
     const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
     const emailAddress: string = securityContext.principal.email;
+    const {
+        requestContext: { domainName, path },
+    } = event;
 
-    return await esignatureService.listCompanySignatureRequests(tenantId, companyId, emailAddress, isManager, event.queryStringParameters);
+    return await esignatureService.listCompanySignatureRequests(
+        tenantId,
+        companyId,
+        emailAddress,
+        isManager,
+        event.queryStringParameters,
+        domainName,
+        path,
+    );
 });
 
 /**

@@ -1,0 +1,26 @@
+insert
+into
+    dbo.EsignatureMetadata
+(
+    ID,
+    CompanyID,
+    Type,
+    UploadDate,
+    UploadedBy,
+    Title,
+    Filename,
+    Category,
+    EmployeeCode
+)
+values
+(
+    '@id',
+    @companyId,
+    '@type',
+    '@uploadDate',
+    @uploadedBy,
+    @title,
+    @fileName,
+    '@category',
+    @employeeCode
+)
