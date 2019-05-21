@@ -1134,6 +1134,7 @@ type Configuration = {
 enum Operation {
     Add = 'add',
     Remove = 'remove',
+    Delete = 'delete',
 }
 
 /**
@@ -1193,6 +1194,17 @@ export async function configure(tenantId: string, companyId: string, token: stri
 
                 integrationConfiguration.integrationDetails.enabled = false;
                 await integrationsService.updateIntegrationConfigurationById(tenantId, clientId, companyId, integrationConfiguration);
+
+                break;
+
+            case Operation.Delete:
+                console.log('Deleting a HelloSign App');
+                if (!integrationConfiguration) {
+                    throw errorService.getErrorResponse(50).setDeveloperMessage('No existing e-signature configuration found');
+                }
+                const iconfig = await integrationsService.getIntegrationConfigurationByCompany(tenantId, clientId, companyId);
+                await integrationsService.deleteIntegrationConfigurationbyId(tenantId, clientId, companyId, integrationConfiguration);
+                await hellosignService.deleteApplicationById(iconfig.integrationDetails.eSignatureAppClientId);
 
                 break;
 

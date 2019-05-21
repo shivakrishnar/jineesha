@@ -119,3 +119,37 @@ async function createAccessToken(tenantId: string): Promise<string> {
     const hrAccessToken = await ssoService.getAccessToken(tenantId, ssoToken, evoApiUsername, evoApiPassword);
     return (await ssoService.exchangeToken(tenantId, hrAccessToken, configService.getGoldilocksApplicationId())).access_token;
 }
+
+export async function deleteIntegrationConfigurationbyId(
+    tenantId: string,
+    clientId: string,
+    companyId: string,
+    body: EsignatureAppConfiguration,
+): Promise<void> {
+    console.info('integrationsService.deleteIntegrationConfigurationById');
+
+    const token = await createAccessToken(tenantId);
+
+    const apiUrl = `${baseUrl}/tenants/${tenantId}/clients/${clientId}/companies/${companyId}/integrations/${configService.getIntegrationId()}/integration-configurations/${
+        body.id
+    }`;
+    const payload = {
+        id: body.id,
+        integrationId: body.integrationId,
+        tenantId: tenantId,
+        clientId: clientId,
+        companyId: companyId,
+    };
+    console.log(`PAYLOAD ${JSON.stringify(payload)}`);
+    try {
+        return await request.delete({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            json: true,
+            body: payload,
+        });
+    } catch (e) {
+        console.log(e);
+        throw new Error('Unable to update e-signature configuration');
+    }
+}
