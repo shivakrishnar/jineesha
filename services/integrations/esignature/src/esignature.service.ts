@@ -133,6 +133,10 @@ export async function createTemplate(
             },
         });
     } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
         console.error(error);
         throw errorService.getErrorResponse(0);
     } finally {
@@ -226,6 +230,16 @@ export async function saveTemplateMetadata(
             category,
         } as TemplateMetadata;
     } catch (error) {
+        if (error.message) {
+            if (error.message.includes('Template not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
         console.error(error);
         throw errorService.getErrorResponse(0);
     }
@@ -346,6 +360,10 @@ export async function createBulkSignatureRequest(
                 const errorMessage = `The specified signatory cannot be found`;
                 throw errorService.getErrorResponse(50).setDeveloperMessage(errorMessage);
             }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
         }
 
         console.error(JSON.stringify(error));
@@ -546,6 +564,10 @@ export async function listTemplates(
         const paginatedResult = await paginationService.createPaginatedResult(consolidatedDocuments, baseUrl, totalRecords, page);
         return consolidatedDocuments.length === 0 ? undefined : paginatedResult;
     } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
         console.error(error);
         throw errorService.getErrorResponse(0);
     }
@@ -589,6 +611,10 @@ export async function createSignUrl(tenantId: string, companyId: string, employe
             }
         }
 
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
     }
@@ -624,9 +650,13 @@ export async function createEditUrl(tenantId: string, companyId: string, templat
         });
     } catch (error) {
         if (error.message) {
-            if (error.message.includes('Template not found')) {
+            if (error.message.includes('Unable to retrieve the edit url')) {
                 throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
             }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
         }
 
         console.error(JSON.stringify(error));
@@ -1120,6 +1150,10 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
             if (error.message.includes('Signature not found')) {
                 throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
             }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
         }
 
         console.error(`Failed on onboarding. Reason: ${JSON.stringify(error)}`);

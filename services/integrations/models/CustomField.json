@@ -1,0 +1,17 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Custom field schema",
+    "$id": "CustomField",
+    "type": "object",
+    "properties": {
+        "name": {
+            "description": "The name of the custom field",
+            "type": ["string"]
+        },
+        "type": {
+            "description": "The type of field that was specified",
+            "type": ["string"]
+        }
+    },
+    "required": ["name", "type"]
+}

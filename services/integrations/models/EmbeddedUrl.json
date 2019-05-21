@@ -1,0 +1,21 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Embedded URL Schema",
+    "$id": "EmbeddedUrl",
+    "type": "object",
+    "properties": {
+        "url": {
+            "description": "The URL associated with the embedded workflow.",
+            "type": ["string"]
+        },
+        "expiration": {
+            "description": "The time the URL will expire.",
+            "type": ["number"]
+        },
+        "clientId": {
+            "description": "The unique identifier associated with the e-signature application.",
+            "type": ["string"]
+        }
+    },
+    "required": ["url", "expiration", "clientId"]
+}
