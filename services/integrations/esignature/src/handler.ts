@@ -42,6 +42,8 @@ const createEmbeddedTemplateValidationSchema = {
     ccRoles: { required: false, type: Array },
     customFields: { required: false, type: Array },
     category: { required: true, type: String },
+    title: { required: true, type: String },
+    message: { required: true, type: String },
 };
 
 const createEmbeddedTemplateSchema = Yup.object().shape({
@@ -53,12 +55,27 @@ const createEmbeddedTemplateSchema = Yup.object().shape({
     ccRoles: Yup.array(),
     customFields: Yup.array().of(Yup.object()),
     category: Yup.string().required(),
+    title: Yup.string().required(),
+    message: Yup.string().required(),
 });
 const customFieldsSchema = Yup.object().shape({
     name: Yup.string().required(),
     type: Yup.string()
         .oneOf(['text', 'checkbox'], "The type field must be one of the following values: ['text', 'checkbox']")
         .required(),
+});
+
+// Save template metadata schemas
+const saveTemplateMetadataValidationSchema = {
+    fileName: { required: true, type: String },
+    title: { required: true, type: String },
+    category: { required: true, type: String },
+};
+
+const saveTemplateMetadataSchema = Yup.object().shape({
+    fileName: Yup.string().required(),
+    category: Yup.string().required(),
+    title: Yup.string().required(),
 });
 
 //   Bulk Signature Request schemas
@@ -169,16 +186,22 @@ export const createTemplate = utilService.gatewayEventHandler(async ({ securityC
 /**
  * Saves a template's metadata
  */
-export const saveTemplateMetadata = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+export const saveTemplateMetadata = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('esignature.handler.saveTemplateMetadata');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, templateResourceUriSchema);
 
-    const { tenantId, companyId, templateId } = event.pathParameters;
+    await utilService.requirePayload(requestBody);
+    utilService.validateAndThrow(requestBody, saveTemplateMetadataValidationSchema);
+    utilService.checkAdditionalProperties(saveTemplateMetadataValidationSchema, requestBody, 'Save Template Metadata');
+    await utilService.validateRequestBody(saveTemplateMetadataSchema, requestBody);
 
-    return await esignatureService.saveTemplateMetadata(tenantId, companyId, templateId);
+    const { tenantId, companyId, templateId } = event.pathParameters;
+    const { email } = securityContext.principal;
+
+    return await esignatureService.saveTemplateMetadata(tenantId, companyId, templateId, email, requestBody);
 });
 
 export const createBulkSignatureRequest = utilService.gatewayEventHandler(

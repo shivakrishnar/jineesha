@@ -95,7 +95,7 @@ export class Template {
 
     /**
      * @property {string} category
-     * Determines if the document is a legacy HR document
+     * The category the user specified when creating the template
      */
     category: string;
 
