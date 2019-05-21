@@ -21,11 +21,7 @@
             "description": "The status of the direct deposit.",
             "type": "string"
         },
-        "bankAccount": {
-            "description": "The bank account associated with this direct deposit record.",
-            "type": "object",
-            "$ref": "BankAccount"
-        }
+        "bankAccount": { "$ref": "BankAccount" }
     },
     "required": ["id", "bankAccount", "amount", "amountType", "status"]
 }

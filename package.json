@@ -8,8 +8,8 @@
         "lint": "node_modules/.bin/tslint -p tsconfig.json **/*.ts",
         "prettier": "prettier --write \"**/*.{js,ts,tsx,json,md}\"",
         "tslint:check": "tslint-config-prettier-check ./tslint.json",
-        "test:base": "node_modules/.bin/jest -c jest.integration.test.config.json -i --verbose",
-        "test:local": "INTEGRATION_TEST_CONFIG_FILENAME=development.config.json npm run test:base",
+        "test:base": "node_modules/.bin/jest -c jest.integration.test.config.json -i --verbose --detectOpenHandles",
+        "test:local": "INTEGRATION_TEST_CONFIG_FILENAME=local.config.json npm run test:base",
         "version": "auto-changelog --template changelog-template.hbs -u -p && git add CHANGELOG.md"
     },
     "husky": {

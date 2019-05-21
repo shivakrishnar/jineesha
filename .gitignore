@@ -12,3 +12,4 @@
 **/*.zip
 
 local.serverless.variables.json
+integration-tests/local.config.json
