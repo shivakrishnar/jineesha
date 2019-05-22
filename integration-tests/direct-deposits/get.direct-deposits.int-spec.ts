@@ -20,8 +20,14 @@ const errorMessageSchema = JSON.parse(fs.readFileSync('services/api/models/Error
 const bankAccountSchema = JSON.parse(fs.readFileSync('services/api/models/BankAccount.json').toString());
 const directDepositSchema = JSON.parse(fs.readFileSync('services/api/models/DirectDeposit.json').toString());
 const directDepositsSchema = JSON.parse(fs.readFileSync('services/api/models/DirectDeposits.json').toString());
+const paginatedDirectDepositSchema = JSON.parse(fs.readFileSync('services/api/models/PaginatedDirectDeposit.json').toString());
 
-const schemas = [bankAccountSchema, directDepositSchema, directDepositsSchema];
+const schemas = [bankAccountSchema, directDepositSchema, directDepositsSchema, paginatedDirectDepositSchema];
+
+const enum schemaNames {
+    ErrorMessage = 'ErrorMessage',
+    PaginatedDirectDeposits = 'PaginatedDirectDeposit',
+}
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
@@ -78,7 +84,7 @@ describe('get direct deposits', () => {
                 .expect(401)
                 .end((error, response) => {
                     utils.testResponse(error, response, done, () => {
-                        return utils.assertJson([errorMessageSchema], 'ErrorMessage', response.body);
+                        return utils.assertJson([errorMessageSchema], schemaNames.ErrorMessage, response.body);
                     });
                 });
         });
@@ -95,7 +101,7 @@ describe('get direct deposits', () => {
                 .expect(404)
                 .end((error, response) => {
                     utils.testResponse(error, response, done, () => {
-                        return utils.assertJson([errorMessageSchema], 'ErrorMessage', response.body);
+                        return utils.assertJson([errorMessageSchema], schemaNames.ErrorMessage, response.body);
                     });
                 });
         });
@@ -108,7 +114,7 @@ describe('get direct deposits', () => {
                 .expect(200)
                 .end((error, response) => {
                     utils.testResponse(error, response, done, () => {
-                        return utils.assertJson(schemas, 'DirectDeposits', response.body);
+                        return utils.assertJson(schemas, schemaNames.PaginatedDirectDeposits, response.body);
                     });
                 });
         });
@@ -144,7 +150,7 @@ describe('get direct deposits', () => {
                             const directDeposits: DirectDeposits = response.body;
                             expect(directDeposits.results.length).toBe(1);
                             expect(directDeposits.results[0].id).toBe(initialDirectDeposit.id);
-                            return utils.assertJson(schemas, 'DirectDeposits', directDeposits);
+                            return utils.assertJson(schemas, schemaNames.PaginatedDirectDeposits, directDeposits);
                         });
                     });
             } catch (error) {

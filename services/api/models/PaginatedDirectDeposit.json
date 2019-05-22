@@ -1,0 +1,40 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "PaginatedDirectDeposit Schema",
+    "$id": "PaginatedDirectDeposit",
+    "type": "object",
+    "properties": {
+        "count": {
+            "description": "The number of items returned in the results property.",
+            "type": "integer"
+        },
+        "limit": {
+            "description": "The number of items returned in the results property.",
+            "type": "integer"
+        },
+        "results": {
+            "description": "",
+            "type": "array",
+            "items": {
+                "$ref": "DirectDeposit"
+            }
+        },
+        "previous": {
+            "description": "URL that will return the previous set of paginated results.",
+            "type": "string"
+        },
+        "next": {
+            "description": "URL that will return the next set of paginated results.",
+            "type": "string"
+        },
+        "first": {
+            "description": "URL that will return the first set of paginated results.",
+            "type": "string"
+        },
+        "last": {
+            "description": "URL that will return the last set of paginated results.",
+            "type": "string"
+        }
+    },
+    "required": ["results"]
+}

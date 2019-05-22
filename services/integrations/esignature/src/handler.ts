@@ -159,7 +159,7 @@ const configurationValidationSchema = {
 
 const configurationSchema = Yup.object().shape({
     op: Yup.string()
-        .matches(/^(add|remove)$/, { excludeEmptyString: false })
+        .matches(/^(add|remove|delete)$/, { excludeEmptyString: false })
         .required(),
 });
 

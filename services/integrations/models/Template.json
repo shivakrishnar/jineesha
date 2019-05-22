@@ -1,0 +1,52 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Template Schema",
+    "$id": "Template",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "The unique identifier associated with the template.",
+            "type": ["string"]
+        },
+        "title": {
+            "description": "The title associated with the template.",
+            "type": ["string"]
+        },
+        "message": {
+            "description": "The message associated with the template.",
+            "type": ["string", "null"]
+        },
+        "editable": {
+            "description": "Determines whether or not the template can be edited.",
+            "type": ["boolean"]
+        },
+        "isLocked": {
+            "description": "Determines whether or not the template is locked.",
+            "type": ["boolean"]
+        },
+        "signerRoles": { "$ref": "Role" },
+        "ccRoles": { "$ref": "Role" },
+        "customFields": { "$ref": "CustomField" },
+        "filename": {
+            "description": "The name of the file associated with the template.",
+            "type": ["string"]
+        },
+        "uploadDate": {
+            "description": "The date the template was uploaded to the system.",
+            "type": ["string"]
+        },
+        "uploadedBy": {
+            "description": "The name of the user that uploaded the template to the system.",
+            "type": ["string"]
+        },
+        "isLegacyDocument": {
+            "description": "Determines whether or not the document is from the legacy system.",
+            "type": ["boolean", "null"]
+        },
+        "category": {
+            "description": "The category associated with the template.",
+            "type": ["string"]
+        }
+    },
+    "required": ["id", "title", "message", "editable", "isLocked", "signerRoles", "filename", "uploadDate", "uploadedBy", "category"]
+}

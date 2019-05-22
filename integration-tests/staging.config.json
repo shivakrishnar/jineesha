@@ -13,5 +13,10 @@
         "endpoint": "https://secretsmanager.us-east-1.amazonaws.com",
         "apiSecretId": "EvolutionApiSecret"
     },
-    "applicationId": "23e69dde-2260-4def-9032-08360435e210"
+    "applicationId": "23e69dde-2260-4def-9032-08360435e210",
+    "esignature": {
+        "signatureId": "582f1cab06463ca5f8b6e6767ab67673",
+        "templateId": "47a3603dbb264d63f034c37964649e382d25f117",
+        "companyWithNoData": 600373
+    }
 }

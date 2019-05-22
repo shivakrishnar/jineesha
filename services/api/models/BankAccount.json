@@ -2,6 +2,7 @@
     "$schema": "http://json-schema.org/draft-06/schema#",
     "title": "Bank Account Schema",
     "$id": "BankAccount",
+    "description": "The bank account associated with this direct deposit record.",
     "type": "object",
     "properties": {
         "routingNumber": {

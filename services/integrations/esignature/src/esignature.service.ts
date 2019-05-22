@@ -134,6 +134,10 @@ export async function createTemplate(
             },
         });
     } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
         console.error(error);
         throw errorService.getErrorResponse(0);
     } finally {
@@ -227,6 +231,16 @@ export async function saveTemplateMetadata(
             category,
         } as TemplateMetadata;
     } catch (error) {
+        if (error.message) {
+            if (error.message.includes('Template not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
         console.error(error);
         throw errorService.getErrorResponse(0);
     }
@@ -347,6 +361,10 @@ export async function createBulkSignatureRequest(
                 const errorMessage = `The specified signatory cannot be found`;
                 throw errorService.getErrorResponse(50).setDeveloperMessage(errorMessage);
             }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
         }
 
         console.error(JSON.stringify(error));
@@ -547,6 +565,10 @@ export async function listTemplates(
         const paginatedResult = await paginationService.createPaginatedResult(consolidatedDocuments, baseUrl, totalRecords, page);
         return consolidatedDocuments.length === 0 ? undefined : paginatedResult;
     } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
         console.error(error);
         throw errorService.getErrorResponse(0);
     }
@@ -590,6 +612,10 @@ export async function createSignUrl(tenantId: string, companyId: string, employe
             }
         }
 
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
     }
@@ -625,9 +651,13 @@ export async function createEditUrl(tenantId: string, companyId: string, templat
         });
     } catch (error) {
         if (error.message) {
-            if (error.message.includes('Template not found')) {
+            if (error.message.includes('Unable to retrieve the edit url')) {
                 throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
             }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
         }
 
         console.error(JSON.stringify(error));
@@ -1123,6 +1153,10 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
             }
         }
 
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
         console.error(`Failed on onboarding. Reason: ${JSON.stringify(error)}`);
         throw errorService.getErrorResponse(0);
     }
@@ -1135,6 +1169,7 @@ type Configuration = {
 enum Operation {
     Add = 'add',
     Remove = 'remove',
+    Delete = 'delete',
 }
 
 /**
@@ -1194,6 +1229,17 @@ export async function configure(tenantId: string, companyId: string, token: stri
 
                 integrationConfiguration.integrationDetails.enabled = false;
                 await integrationsService.updateIntegrationConfigurationById(tenantId, clientId, companyId, integrationConfiguration);
+
+                break;
+
+            case Operation.Delete:
+                console.log('Deleting a HelloSign App');
+                if (!integrationConfiguration) {
+                    throw errorService.getErrorResponse(50).setDeveloperMessage('No existing e-signature configuration found');
+                }
+                const iconfig = await integrationsService.getIntegrationConfigurationByCompany(tenantId, clientId, companyId);
+                await integrationsService.deleteIntegrationConfigurationbyId(tenantId, clientId, companyId, integrationConfiguration);
+                await hellosignService.deleteApplicationById(iconfig.integrationDetails.eSignatureAppClientId);
 
                 break;
 
