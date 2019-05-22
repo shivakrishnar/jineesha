@@ -24,9 +24,19 @@ const createEditUrlUriSchema = {
     templateId: { required: true, type: String },
 };
 
+const tenantResourceUriSchema = {
+    tenantId: { required: true, type: UUID },
+};
+
 const companyResourceUriSchema = {
     tenantId: { required: true, type: UUID },
     companyId: { required: true, type: String },
+};
+
+const employeeResourceUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+    employeeId: { required: true, type: String },
 };
 
 const templateResourceUriSchema = {
@@ -422,4 +432,97 @@ export const configure = utilService.gatewayEventHandler(async ({ securityContex
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
     return await esignatureService.configure(tenantId, companyId, accessToken, requestBody);
+});
+
+/**
+ *  List all legacy and Esigned documents for a given tenant
+ */
+export const listEmployeeDocumentsByTenant = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listCompanySignatureRequests');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, tenantResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId } = event.pathParameters;
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin;
+    });
+
+    if (!isAuthorized) {
+        errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    const emailAddress: string = securityContext.principal.email;
+
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    return await esignatureService.listEmployeeDocumentsByTenant(tenantId, event.queryStringParameters, domainName, path, emailAddress);
+});
+
+/**
+ *  List all legacy and Esigned documents for given company within a tenant
+ */
+export const listEmployeeDocumentsByCompany = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listCompanySignatureRequests');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId, companyId } = event.pathParameters;
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return (
+            role === Role.hrManager ||
+            role === Role.globalAdmin ||
+            role === Role.serviceBureauAdmin ||
+            role === Role.superAdmin ||
+            role === Role.hrAdmin ||
+            role === Role.hrRestrictedAdmin
+        );
+    });
+
+    if (!isAuthorized) {
+        errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
+    const emailAddress: string = securityContext.principal.email;
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    return await esignatureService.listEmployeeDocumentsByCompany(
+        tenantId,
+        companyId,
+        event.queryStringParameters,
+        domainName,
+        path,
+        isManager,
+        emailAddress,
+    );
+});
+
+/**
+ *  List all legacy and Esigned documents for given employee
+ */
+export const listEmployeeDocuments = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listCompanySignatureRequests');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId, employeeId } = event.pathParameters;
+
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    return await esignatureService.listEmployeeDocuments(tenantId, employeeId, event.queryStringParameters, domainName, path);
 });
