@@ -202,6 +202,36 @@ functions:
           cors:
             origin: '*'
 
+  listEmployeeDocumentsByTenant:
+    handler: esignature/src/handler.listEmployeeDocumentsByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/documents
+            method: get
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
+  listEmployeeDocumentsByCompany:
+    handler: esignature/src/handler.listEmployeeDocumentsByCompany
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/documents
+            method: get
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
+  listEmployeeDocuments:
+    handler: esignature/src/handler.listEmployeeDocuments
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents
+            method: get
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

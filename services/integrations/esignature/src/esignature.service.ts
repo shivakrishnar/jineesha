@@ -14,6 +14,7 @@ import { DatabaseEvent, QueryType } from '../../../internal-api/database/events'
 import { PaginatedResult } from '../../../pagination/paginatedResult';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
+import { Query } from '../../../queries/query';
 import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
 import { InvocationType } from '../../../util.service';
 import { DocumentMetadata, DocumentMetadataListResponse } from './documents/document';
@@ -1256,5 +1257,165 @@ async function getCompanyDetails(tenantId: string, companyId: string): Promise<C
         }
         console.error(`Unable to retrieve company info. Reason: ${error}`);
         throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Lists all e-signed documents and legacy documents for employees in a specified tenant
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {any} queryParams: The query parameters generated for paged results.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @param {string} emailAddress: The email address of the user.
+ * @returns {PaginatedResult}: A Promise of a paginated collection of employee e-signed and legacy documents.
+ */
+export async function listEmployeeDocumentsByTenant(
+    tenantId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+    emailAddress: string,
+): Promise<PaginatedResult> {
+    console.info('esignature.service.listEmployeeDocumentsByTenant');
+
+    const validQueryStringParameters = ['pageToken'];
+
+    validateQueryStringParameters(validQueryStringParameters, queryParams);
+    const query = new ParameterizedQuery('GetEmployeeLegacyAndSignedDocs', Queries.getEmployeeLegacyAndSignedDocuments);
+    query.setParameter('@user', emailAddress);
+
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);
+}
+
+/**
+ * Lists all e-signed documents and legacy documents for employees in a specified tenant
+ * for a given company
+ * @param {string} tenantId: The unique identifier for the tenant
+ * @param {string} companyId: The unique identifier for the company
+ * @param {any} queryParams: The query parameters generated for paged results.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @param {boolean} isManager: whether the user is a manager
+ * @param {string} emailAddress: user email address.
+ * @returns {PaginatedResult}: A Promise of a paginated collection of employee e-signed and legacy documents.
+ */
+export async function listEmployeeDocumentsByCompany(
+    tenantId: string,
+    companyId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+    isManager: boolean,
+    emailAddress: string,
+): Promise<PaginatedResult> {
+    console.info('esignature.service.listEmployeeDocumentsByCompany');
+
+    const validQueryStringParameters = ['pageToken'];
+    let query: ParameterizedQuery;
+
+    validateQueryStringParameters(validQueryStringParameters, queryParams);
+    query = new ParameterizedQuery('GetEmployeeLegacyAndSignedDocsByCompanyId', Queries.getEmployeeLegacyAndSignedDocumentsByCompanyId);
+    if (isManager) {
+        query = new ParameterizedQuery(
+            'GetEmployeeLegacyAndSignedDocsByCompanyIdForManager',
+            Queries.getEmployeeLegacyAndSignedDocumentsByCompanyForManager,
+        );
+        query.setParameter('@manager', emailAddress);
+    }
+    query.setParameter('@companyId', companyId);
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);
+}
+
+/**
+ * Lists all e-signed documents and legacy documents for specific employee
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} employeeId: The unique identifier employee.
+ * @param {any} queryParams: The query parameters that were specified by the user.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @returns {PaginatedResult}: A Promise of a paginated collection of employee e-signed and legacy documents.
+ */
+export async function listEmployeeDocuments(
+    tenantId: string,
+    employeeId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
+    console.info('esignature.service.listEmployeeDocuments');
+
+    const validQueryStringParameters = ['pageToken'];
+
+    validateQueryStringParameters(validQueryStringParameters, queryParams);
+    const query: ParameterizedQuery = new ParameterizedQuery(
+        'GetEmployeeLegacyAndSignedDocsByEmployeeId',
+        Queries.getEmployeeLegacyAndSignedDocumentsByEmployeeId,
+    );
+    query.setParameter('@employeeId', employeeId);
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);
+}
+
+/**
+ * Retrieves an employee legacy and e-signed documents
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {Query} query: The query to be executed
+ * @param {string} baseUrl: The url used for the api call
+ * @param {number} page: The requested page number
+ * @returns {PaginatedResult}: A Promise of a paginated collection of employee e-signed and legacy documents
+ */
+async function getEmployeeLegacyAndSignedDocuments(
+    tenantId: string,
+    query: Query,
+    baseUrl: string,
+    page: number,
+): Promise<PaginatedResult> {
+    console.info('esignature.service.getEmployeeLegacyAndSignedDocuments');
+    try {
+        const payload: DatabaseEvent = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        };
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const documents: any[] = result.recordsets[1];
+        const totalRecords: number = result.recordsets[0][0].totalCount;
+
+        if (documents.length === 0) {
+            return undefined;
+        }
+
+        return await paginationService.createPaginatedResult(documents, baseUrl, totalRecords, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Validates a given query string collection.
+ * @param {string []} validInputs - Validate query string parameters
+ * @param {any} queryParameters - The query string parameters
+ */
+function validateQueryStringParameters(validInputs: string[], queryParameters: any): void {
+    console.info('esignature.service.validateQueryStringParameters');
+    if (queryParameters) {
+        if (!Object.keys(queryParameters).every((param) => validInputs.includes(param))) {
+            const error: ErrorMessage = errorService.getErrorResponse(30);
+            error
+                .setDeveloperMessage('Unsupported query parameter(s) supplied')
+                .setMoreInfo(`Available query parameters: ${validInputs.join(',')}. See documentation for usage.`);
+            throw error;
+        }
     }
 }
