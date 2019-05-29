@@ -1,6 +1,8 @@
+import * as AWS from 'aws-sdk';
 import * as fs from 'fs';
 import * as hellosign from 'hellosign-sdk';
 import * as uuidV4 from 'uuid/v4';
+import Hashids from 'hashids';
 
 import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
@@ -1408,6 +1410,43 @@ export async function listEmployeeDocuments(
 }
 
 /**
+ * Generates a document preview for a specified signed document under a tenant
+ * @param {string} tenantId: The unique identifier for the tenant
+ * @param {string} id: The unique identifer for the specified document
+ * @returns {Promise<any>}: A Promise of a URL or file
+ */
+export async function getDocumentPreview(tenantId: string, id: string): Promise<any> {
+    console.info('esignatureService.getDocumentPreview');
+
+    try {
+        const [documentId, isLegacyDocument] = await decodeId(id);
+
+        if (!documentId) {
+            throw errorService.getErrorResponse(30).setDeveloperMessage(`Invalid document ID supplied: ${id}`);
+        }
+
+        if (isLegacyDocument === 1) {
+            // TODO: (MJ-2554) Add support to view legacy documents
+        } else {
+            return await getEmployeeSignedDocument(tenantId, documentId);
+        }
+    } catch (error) {
+        if (error.message) {
+            if (error.message.includes('Not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Retrieves an employee legacy and e-signed documents
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {Query} query: The query to be executed
@@ -1437,6 +1476,8 @@ async function getEmployeeLegacyAndSignedDocuments(
             return undefined;
         }
 
+        await encodeIds(documents);
+
         return await paginationService.createPaginatedResult(documents, baseUrl, totalRecords, page);
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -1448,6 +1489,55 @@ async function getEmployeeLegacyAndSignedDocuments(
     }
 }
 
+const s3Client = new AWS.S3({
+    region: configService.getAwsRegion(),
+});
+
+/**
+ * Retrieves an employee's e-signed document
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {number} documentId: The unique identifier of the specified document
+ * @returns {any}: A Promise of a presigned URL
+ */
+async function getEmployeeSignedDocument(
+    tenantId: string,
+    documentId: number
+): Promise<any> {
+    console.info('esignature.service.getEmployeeSignedDocument');
+
+    try {
+        const query = new ParameterizedQuery('GetFileMetadataById', Queries.getFileMetadataById);
+        query.setParameter('@id', documentId);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        let result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (result.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${documentId} not found`);
+        }
+
+        const key = result.recordset[0].Pointer;
+
+        const params = {
+            Bucket: configService.getFileBucketName(),
+            Key: key,
+        };
+        const url = s3Client.getSignedUrl('getObject', params);
+
+        return result ? { data: url } : undefined;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
 /**
  * Validates a given query string collection.
  * @param {string []} validInputs - Validate query string parameters
@@ -1464,4 +1554,18 @@ function validateQueryStringParameters(validInputs: string[], queryParameters: a
             throw error;
         }
     }
+}
+
+async function encodeIds(results: any[]): Promise<void> {
+    const salt = JSON.parse(await utilService.getSecret(configService.getSaltId())).salt;
+    const hashids = new Hashids(salt);
+    for (const result of results) {
+        result.id = hashids.encode(result.id, result.isLegacyDocument ? 1 : 0);
+    }
+}
+
+async function decodeId(id: string): Promise<number[]> {
+    const salt = JSON.parse(await utilService.getSecret(configService.getSaltId())).salt;
+    const hashids = new Hashids(salt);
+    return hashids.decode(id);
 }

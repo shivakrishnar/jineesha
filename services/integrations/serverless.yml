@@ -41,6 +41,8 @@ provider:
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
     hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
     eSignatureCallbackPath: ${file(${self:custom.configFile}):eSignatureCallbackPath}
+    fileBucketName: ${file(${self:custom.configFile}):fileBucketName}
+    saltId: ${file(${self:custom.configFile}):saltId}
 
   iamRoleStatements:
     - Effect: Allow
@@ -83,6 +85,12 @@ provider:
         - ses:SendEmail
         - ses:SendRawEmail
       Resource: "arn:aws:ses:us-east-1:*:*"
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+        - s3:GetBucket
+        - s3:ListBucket
+      Resource: "arn:aws:s3:::*"
 
 functions:
   createTemplate:
@@ -227,6 +235,36 @@ functions:
     events:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents
+            method: get
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
+  getDocumentPreviewByTenant:
+    handler: esignature/src/handler.getDocumentPreviewByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/documents/{documentId}/preview
+            method: get
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
+  getDocumentPreviewByCompany:
+    handler: esignature/src/handler.getDocumentPreviewByCompany
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/documents/{documentId}/preview
+            method: get
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
+  getDocumentPreview:
+    handler: esignature/src/handler.getDocumentPreview
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents/{documentId}/preview
             method: get
             authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
