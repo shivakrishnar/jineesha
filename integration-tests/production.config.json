@@ -15,8 +15,12 @@
     },
     "applicationId": "b205c02c-873b-4807-a694-9c5f1062f6bb",
     "esignature": {
+        "onboardingKey": "b87b65f3-7c27-4eaf-a275-3d1150fbb013",
+        "taskListId": 80,
+        "requestId": "7776347627dd3398f826b5ebe62060199b2f0a50",
         "signatureId": "582f1cab06463ca5f8b6e6767ab67673",
         "templateId": "47a3603dbb264d63f034c37964649e382d25f117",
-        "companyWithNoData": 600373
+        "companyWithNoData": 600373,
+        "documentId": "47fk"
     }
 }

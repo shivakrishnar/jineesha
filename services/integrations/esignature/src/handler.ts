@@ -526,3 +526,65 @@ export const listEmployeeDocuments = utilService.gatewayEventHandler(async ({ se
 
     return await esignatureService.listEmployeeDocuments(tenantId, employeeId, event.queryStringParameters, domainName, path);
 });
+
+/**
+ * Generates a preview of an employee's saved document under a tenant
+ */
+export const getDocumentPreviewByTenant = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.getDocumentPreviewByTenant');
+
+    utilService.validateAndThrow(event.pathParameters, tenantResourceUriSchema);
+
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin;
+    });
+
+    if (!isAuthorized) {
+        errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    const { tenantId, documentId } = event.pathParameters;
+
+    return await esignatureService.getDocumentPreview(tenantId, documentId);
+});
+
+/**
+ * Generates a preview of an employee's saved document under a company
+ */
+export const getDocumentPreviewByCompany = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.getDocumentPreviewByCompany');
+
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return (
+            role === Role.hrManager ||
+            role === Role.globalAdmin ||
+            role === Role.serviceBureauAdmin ||
+            role === Role.superAdmin ||
+            role === Role.hrAdmin ||
+            role === Role.hrRestrictedAdmin
+        );
+    });
+
+    if (!isAuthorized) {
+        errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    const { tenantId, documentId } = event.pathParameters;
+
+    return await esignatureService.getDocumentPreview(tenantId, documentId);
+});
+
+/**
+ * Generates a preview of an employee's saved document
+ */
+export const getDocumentPreview = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.getDocumentPreview');
+
+    utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
+
+    const { tenantId, documentId } = event.pathParameters;
+
+    return await esignatureService.getDocumentPreview(tenantId, documentId);
+});

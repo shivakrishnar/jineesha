@@ -1,0 +1,13 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Preview schema",
+    "$id": "Preview",
+    "type": "object",
+    "properties": {
+        "data": {
+            "description": "Document data to be previewed or rendered",
+            "type": ["string"]
+        }
+    },
+    "required": ["data"]
+}

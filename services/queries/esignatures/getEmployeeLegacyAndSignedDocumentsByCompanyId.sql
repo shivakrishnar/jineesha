@@ -11,6 +11,7 @@ declare @tmp table
 	Title nvarchar(max),
 	Category nvarchar(max),
 	UploadDate datetime2(3),
+	Extension nvarchar(max),
 	IsLegacyDocument bit
 )
 
@@ -32,7 +33,8 @@ LegacyDocuments as
 		 d.ID,
 		 Title = iif(d.Title is null, d.Filename, d.Title), 
 		 Category = d.DocumentCategory, 
-		 d.UploadDate
+		 d.UploadDate,
+		 d.Extension
 	from
 		dbo.Document d
 		inner join EmployeeInfo e on d.EmployeeID = e.ID 
@@ -54,9 +56,9 @@ SignedDocuments as
 
 CollatedDocuments as
 (
-	select ID, Title, Category, UploadDate, IsLegacyDocument = 1 from LegacyDocuments
+	select ID, Title, Category, UploadDate, Extension, IsLegacyDocument = 1 from LegacyDocuments
 	union 
-	select ID, Title, Category, UploadDate, IsLegacyDocument = 0 from SignedDocuments
+	select ID, Title, Category, UploadDate, '.pdf', IsLegacyDocument = 0 from SignedDocuments
 )
 
 insert into @tmp
@@ -68,6 +70,7 @@ select totalCount = count(*) from @tmp
 select 
 	id = ID, 
 	title = Title, 
+	extension = Extension,
 	category = Category, 
 	uploadDate = UploadDate, 
 	isLegacyDocument = IsLegacyDocument

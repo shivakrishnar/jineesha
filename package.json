@@ -74,7 +74,9 @@
     },
     "dependencies": {
         "@smallwins/validate": "^4.3.0",
+        "@types/hashids": "^1.0.30",
         "aws-sdk": "^2.307.0",
+        "hashids": "^1.2.2",
         "jsonwebtoken": "^8.4.0",
         "mssql": "4.3.1",
         "njwt": "^0.4.0",
