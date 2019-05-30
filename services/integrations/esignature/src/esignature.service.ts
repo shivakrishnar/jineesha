@@ -1426,7 +1426,7 @@ export async function getDocumentPreview(tenantId: string, id: string): Promise<
         }
 
         if (isLegacyDocument === 1) {
-            // TODO: (MJ-2554) Add support to view legacy documents
+            return await getEmployeeLegacyDocument(tenantId, documentId);
         } else {
             return await getEmployeeSignedDocument(tenantId, documentId);
         }
@@ -1538,6 +1538,51 @@ async function getEmployeeSignedDocument(
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * Retrieves an employee's legacy document
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {number} documentId: The unique identifier of the specified document
+ * @returns {any}: A Promise of a document
+ */
+async function getEmployeeLegacyDocument(
+    tenantId: string,
+    documentId: number
+): Promise<any> {
+    console.info('esignature.service.getEmployeeLegacyDocument');
+
+    try {
+        const query = new ParameterizedQuery('GetDocumentById', Queries.getDocumentById);
+        query.setParameter('@id', documentId);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        let result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (result.recordset.length === 0) {
+            console.log('here');
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${documentId} not found`);
+        }
+
+        console.log(result);
+
+        const base64String = result.recordset[0].FSDocument;
+        const extension = result.recordset[0].Extension;
+
+        return result ? { data: `data:application/${extension};base64,${base64String}` } : undefined;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
 /**
  * Validates a given query string collection.
  * @param {string []} validInputs - Validate query string parameters

@@ -73,6 +73,7 @@ export const Queries = {
         .readFileSync(path.join(basePath, 'esignatures/getEmployeeLegacyAndSignedDocumentsByEmployeeId.sql'))
         .toString(),
     getFileMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/getFileMetadataById.sql')).toString(),
+    getDocumentById: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentById.sql')).toString(),
 
     // Companies
     getUserCompaniesById: fs.readFileSync(path.join(basePath, 'companies/getUserCompaniesById.sql')).toString(),
