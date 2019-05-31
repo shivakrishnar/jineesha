@@ -43,6 +43,7 @@ provider:
     eSignatureCallbackPath: ${file(${self:custom.configFile}):eSignatureCallbackPath}
     fileBucketName: ${file(${self:custom.configFile}):fileBucketName}
     saltId: ${file(${self:custom.configFile}):saltId}
+    lambdaPerfMonitorApiKey: ${file(${self:custom.configFile}):lambdaPerfMonitorApiKey}
 
   iamRoleStatements:
     - Effect: Allow

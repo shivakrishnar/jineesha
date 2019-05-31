@@ -1,5 +1,6 @@
 import * as UUID from '@smallwins/validate/uuid';
 import * as Yup from 'yup';
+import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
 import * as esignatureService from './esignature.service';
@@ -10,7 +11,7 @@ import { IGatewayEventInput } from '../../../util.service';
 import * as thundra from '@thundra/core';
 
 const thundraWrapper = thundra({
-    apiKey: '003d5b8a-2329-4a9c-8b0f-ed5febed6414',
+    apiKey: configService.lambdaPerfMonitorApiKey(),
 });
 
 const headerSchema = {
@@ -616,7 +617,6 @@ export const listEmployeeDocuments = thundraWrapper(
         );
     }),
 );
-
 
 /**
  * Generates a preview of an employee's saved document under a tenant

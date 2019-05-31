@@ -22,7 +22,7 @@ import { EsignatureAppConfiguration } from '../../../remote-services/integration
 import { InvocationType } from '../../../util.service';
 import { DocumentMetadata, DocumentMetadataListResponse } from './documents/document';
 import { EditUrl, SignUrl } from './embedded/url';
-//import { Onboarding } from './signature-requests/onboarding';
+import { Onboarding } from './signature-requests/onboarding';
 import { Signatory } from './signature-requests/signatory';
 import { BulkSignatureRequest, SignatureRequest } from './signature-requests/signatureRequest';
 import { SignatureRequestListResponse } from './signature-requests/signatureRequestListResponse';
@@ -206,7 +206,7 @@ export async function saveTemplateMetadata(
         query.setParameter('@type', EsignatureMetadataType.Template);
         query.setParameter('@uploadDate', uploadDate);
         query.setParameter('@uploadedBy', `'${uploadedBy}'`);
-        query.setParameter('@title', `'${title.replace(/'/g, "\\'")}'`);
+        query.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
         query.setParameter('@fileName', `'${fileName}'`);
         query.setParameter('@category', category);
         query.setParameter('@employeeCode', 'NULL');
@@ -316,7 +316,7 @@ export async function createBulkSignatureRequest(
             query.setParameter('@type', EsignatureMetadataType.SignatureRequest);
             query.setParameter('@uploadDate', new Date().toISOString());
             query.setParameter('@uploadedBy', 'NULL');
-            query.setParameter('@title', `'${title.replace(/'/g, "\\'")}'`);
+            query.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
             query.setParameter('@fileName', 'NULL');
             query.setParameter('@category', templateResponse.template.metadata.category);
             query.setParameter('@employeeCode', `'${code}'`);
@@ -1008,7 +1008,7 @@ export async function listCompanySignatureRequests(
 export async function onboarding(
     tenantId: string,
     companyId: string,
-    requestBody: any,
+    requestBody: Onboarding,
     payrollApiCredentials: IPayrollApiCredentials,
 ): Promise<SignatureRequestListResponse> {
     console.info('esignatureService.onboarding');

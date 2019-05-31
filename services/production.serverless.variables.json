@@ -33,5 +33,6 @@
     "saltId": "salt",
     "fileBucketName": "production.hr.files",
     "hrServicesDomain": "https://hr-services.evolutionadvancedhr.com",
-    "eSignatureCallbackPath": "integrations/tenants/0/companies/0/esignatures/callback"
+    "eSignatureCallbackPath": "integrations/tenants/0/companies/0/esignatures/callback",
+    "lambdaPerfMonitorApiKey": ""
 }

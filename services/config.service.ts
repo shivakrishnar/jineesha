@@ -69,3 +69,5 @@ export const getScopeBaseDomain = () => process.env.scopeBaseDomain;
 export const getHrApplicationId = () => process.env.hrApplicationId;
 
 export const getSaltId = () => process.env.saltId;
+
+export const lambdaPerfMonitorApiKey = () => process.env.lambdaPerfMonitorApiKey;

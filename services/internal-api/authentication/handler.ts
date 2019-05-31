@@ -13,7 +13,7 @@ import { SecurityContext } from './securityContext';
 import * as thundra from '@thundra/core';
 
 const thundraWrapper = thundra({
-    apiKey: '003d5b8a-2329-4a9c-8b0f-ed5febed6414',
+    apiKey: configService.lambdaPerfMonitorApiKey(),
 });
 
 /**
