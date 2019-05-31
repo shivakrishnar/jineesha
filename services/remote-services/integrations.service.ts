@@ -115,6 +115,7 @@ async function createAccessToken(tenantId: string): Promise<string> {
     const { evoApiUsername, evoApiPassword }: IPayrollApiCredentials = JSON.parse(
         await utilService.getSecret(configService.getPayrollApiCredentials()),
     );
+
     const ssoToken = await utilService.getSSOToken(tenantId);
     const hrAccessToken = await ssoService.getAccessToken(tenantId, ssoToken, evoApiUsername, evoApiPassword);
     return (await ssoService.exchangeToken(tenantId, hrAccessToken, configService.getGoldilocksApplicationId())).access_token;

@@ -89,7 +89,7 @@ export function gatewayEventHandler<T>(
 
         if (isLambdaWarmupInvocation(event)) {
             console.log('warm up invocation');
-            return;
+            return callback(undefined, buildLambdaResponse(204, undefined, {}, 'warm-up-invocation'));
         }
 
         event = event as APIGatewayEvent;
@@ -147,6 +147,7 @@ export function buildLambdaResponse(statusCode: number, headers: Headers, input:
  * @author swallace
  */
 export function checkAdditionalProperties(schema: object, body: object, objectName: string): void {
+    console.info('utilService.checkAdditionalProperties');
     const schemaProperties = new Array<string>();
 
     Object.keys(schema).forEach((key) => {
@@ -184,6 +185,7 @@ export function combineValidationResults(...multipleValidationResults: Array<Err
  * Invoke smallwins/validate to validate an object against a schema, and throw appropriate exception if it fails.
  */
 export function validateAndThrow(params: { [name: string]: string }, schema: { [name: string]: { required: boolean; type: any } }): void {
+    console.info('utilService.validateAndThrow');
     const errors = validate(params, schema);
     if (errors) {
         throw errorService
@@ -239,6 +241,7 @@ export async function requirePayload(payload: any): Promise<void> {
  * @param requestBody Request body to validate.
  */
 export async function validateRequestBody(schema: ObjectSchema<{}>, requestBody: any): Promise<void> {
+    console.info('utilService.validateRequestBody');
     await schema.validate(requestBody, { abortEarly: false }).catch((error) => {
         console.error(error.errors[0]);
         throw errorService.getErrorResponse(30).setDeveloperMessage(error.errors[0]);
