@@ -1438,10 +1438,11 @@ async function getEmployeeLegacyAndSignedDocuments(
 ): Promise<PaginatedResult> {
     console.info('esignature.service.getEmployeeLegacyAndSignedDocuments');
     try {
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
         const payload: DatabaseEvent = {
             tenantId,
-            queryName: query.name,
-            query: query.value,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
             queryType: QueryType.Simple,
         };
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);

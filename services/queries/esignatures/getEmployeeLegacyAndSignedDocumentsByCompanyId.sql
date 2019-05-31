@@ -76,3 +76,4 @@ select
 	isLegacyDocument = IsLegacyDocument
 from 
 	@tmp
+order by uploadDate desc
