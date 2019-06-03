@@ -1,5 +1,23 @@
 #####  asure.hr.services
 
+#### [1.6.4](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.4..1.6.3)
+
+> 3 June 2019
+
+- [`MJ-2573`](https://evolutionpayroll.atlassian.net/browse/MJ-2573): disable broken tests for staging & production environments [`#80`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/80)
+- [`MJ-2573`](https://evolutionpayroll.atlassian.net/browse/MJ-2573): use non-proxied api domain for preview integration tests [`#79`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/79)
+- [`MJ-2573`](https://evolutionpayroll.atlassian.net/browse/MJ-2573): improve performance of esignature endpoints [`#78`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/78)
+- [`MJ-2554`](https://evolutionpayroll.atlassian.net/browse/MJ-2554): Add endpoint to retrieve legacy doc from database [`#77`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/77)
+- [`MJ-1480`](https://evolutionpayroll.atlassian.net/browse/MJ-1480) [`#76`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/76)
+- [`MJ-2110`](https://evolutionpayroll.atlassian.net/browse/MJ-2110) [`#75`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/75)
+- [`MJ-1988`](https://evolutionpayroll.atlassian.net/browse/MJ-1988): implement endpoints to retrieve employees' legacy & signed docs [`#74`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/74)
+- [`MJ-2320`](https://evolutionpayroll.atlassian.net/browse/MJ-2320): Update saveTemplateMetadata endpoint to take in template metadata and provide skip_subject_message flag when retrieving edit url [`#73`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/73)
+- [`MJ-2175`](https://evolutionpayroll.atlassian.net/browse/MJ-2175) [`#72`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/72)
+- [`MJ-1993`](https://evolutionpayroll.atlassian.net/browse/MJ-1993): Implement template edit url endpoint [`#71`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/71)
+- [`MJ-2218`](https://evolutionpayroll.atlassian.net/browse/MJ-2218): explicitly load the global admin creds instead of using the SecurityContext [`#69`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/69)
+- [`MJ-2109`](https://evolutionpayroll.atlassian.net/browse/MJ-2109) [`#67`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/67)
+- [`MJ-2129`](https://evolutionpayroll.atlassian.net/browse/MJ-2129) [`#68`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/68)
+
 #### [1.6.3](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.3..1.6.2)
 
 > 6 May 2019
