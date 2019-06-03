@@ -89,7 +89,7 @@ export async function createTemplate(
     });
 
     try {
-        const { appDetails, eSigner: client } = await getConfigurationData(tenantId, companyId);
+        const { appDetails, eSigner: client } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
         const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
 
         const options = {
@@ -260,7 +260,7 @@ export async function createBulkSignatureRequest(
     console.info('esignature.handler.createBulkSignatureRequest');
 
     try {
-        const { eSigner } = await getConfigurationData(tenantId, companyId);
+        const { eSigner } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
 
         const templateResponse = await eSigner.template.get(request.templateId);
         const additionalMetadata = {
@@ -461,7 +461,7 @@ export async function listTemplates(
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-        const { eSigner: client } = await getConfigurationData(tenantId, companyId);
+        const { eSigner: client } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
 
         let query: ParameterizedQuery;
         // Get template IDs from the database
@@ -572,7 +572,7 @@ export async function createSignUrl(
     console.info('esignatureService.createSignUrl');
 
     try {
-        const { appDetails, eSigner } = await getConfigurationData(tenantId, companyId);
+        const { appDetails, eSigner } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
         const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
 
         const response = await eSigner.embedded.getSignUrl(signatureId);
@@ -614,7 +614,7 @@ export async function createEditUrl(
     console.info('esignatureService.createEditUrl');
 
     try {
-        const { appDetails } = await getConfigurationData(tenantId, companyId);
+        const { appDetails } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
         const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
 
         const response = JSON.parse(await hellosignService.getTemplateEditUrlById(templateId));
@@ -724,7 +724,7 @@ export async function listDocuments(
     const taskListId = Number(queryParams.categoryId);
 
     try {
-        const { eSigner } = await getConfigurationData(tenantId, companyId);
+        const { eSigner } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
 
         const query = new ParameterizedQuery('GetTaskListDocuments', Queries.getTaskListDocuments);
         query.setParameter('@companyId', companyId);
@@ -864,7 +864,7 @@ export async function listCompanySignatureRequests(
         const subordinateEmails: string[] = [];
         const subordinateCodes: string[] = [];
 
-        const { eSigner: client } = await getConfigurationData(tenantId, companyId);
+        const { eSigner: client } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
 
         if (isManager) {
             query = new ParameterizedQuery('GetEmployeeEmailsByManager', Queries.getEmployeeEmailsByManager);
@@ -1022,7 +1022,7 @@ export async function onboarding(
     }
 
     try {
-        const { eSigner } = await getConfigurationData(tenantId, companyId);
+        const { eSigner } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
 
         const { signature_requests: existingSignatureRequests } = await eSigner.signatureRequest.list({
             query: `metadata:${onboardingKey}`,
@@ -1165,6 +1165,7 @@ export async function configure(
         tenantId,
         clientId,
         companyId,
+        payrollApiCredentials,
     );
 
     try {
@@ -1173,7 +1174,13 @@ export async function configure(
                 console.log('Adding a configuration');
                 if (integrationConfiguration) {
                     integrationConfiguration.integrationDetails.enabled = true;
-                    await integrationsService.updateIntegrationConfigurationById(tenantId, clientId, companyId, integrationConfiguration);
+                    await integrationsService.updateIntegrationConfigurationById(
+                        tenantId,
+                        clientId,
+                        companyId,
+                        integrationConfiguration,
+                        payrollApiCredentials,
+                    );
                 } else {
                     const {
                         api_app: { client_id: eSignatureClientId },
@@ -1186,6 +1193,7 @@ export async function configure(
                             name,
                             domain,
                             eSignatureClientId,
+                            payrollApiCredentials,
                         );
                     } catch (e) {
                         await hellosignService.deleteApplicationById(eSignatureClientId);
@@ -1203,7 +1211,13 @@ export async function configure(
                 }
 
                 integrationConfiguration.integrationDetails.enabled = false;
-                await integrationsService.updateIntegrationConfigurationById(tenantId, clientId, companyId, integrationConfiguration);
+                await integrationsService.updateIntegrationConfigurationById(
+                    tenantId,
+                    clientId,
+                    companyId,
+                    integrationConfiguration,
+                    payrollApiCredentials,
+                );
 
                 break;
 
@@ -1212,8 +1226,19 @@ export async function configure(
                 if (!integrationConfiguration) {
                     throw errorService.getErrorResponse(50).setDeveloperMessage('No existing e-signature configuration found');
                 }
-                const iconfig = await integrationsService.getIntegrationConfigurationByCompany(tenantId, clientId, companyId);
-                await integrationsService.deleteIntegrationConfigurationbyId(tenantId, clientId, companyId, integrationConfiguration);
+                const iconfig = await integrationsService.getIntegrationConfigurationByCompany(
+                    tenantId,
+                    clientId,
+                    companyId,
+                    payrollApiCredentials,
+                );
+                await integrationsService.deleteIntegrationConfigurationbyId(
+                    tenantId,
+                    clientId,
+                    companyId,
+                    integrationConfiguration,
+                    payrollApiCredentials,
+                );
                 await hellosignService.deleteApplicationById(iconfig.integrationDetails.eSignatureAppClientId);
 
                 break;
@@ -1488,7 +1513,7 @@ async function getEmployeeSignedDocument(tenantId: string, documentId: number): 
             query: query.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        let result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
         if (result.recordset.length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${documentId} not found`);
@@ -1531,7 +1556,7 @@ async function getEmployeeLegacyDocument(tenantId: string, documentId: number): 
             query: query.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        let result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
         if (result.recordset.length === 0) {
             console.log('here');
@@ -1594,7 +1619,11 @@ type EsignatureConfiguration = {
 
 let configuration: EsignatureConfiguration = undefined;
 
-async function getConfigurationData(tenantId: string, companyId: string): Promise<EsignatureConfiguration> {
+async function getConfigurationData(
+    tenantId: string,
+    companyId: string,
+    payrollApiCredentials: IPayrollApiCredentials,
+): Promise<EsignatureConfiguration> {
     if (configuration) {
         return configuration;
     }
@@ -1603,6 +1632,7 @@ async function getConfigurationData(tenantId: string, companyId: string): Promis
         tenantId,
         companyInfo.clientId,
         companyId,
+        payrollApiCredentials,
     );
     const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
     const eSigner = hellosign({
