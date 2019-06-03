@@ -114,7 +114,7 @@ describe('get edit url', () => {
             });
     });
 
-    test('must return a 200 when the template exists', (done) => {
+    test.skip('must return a 200 when the template exists', (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates/${
             configs.esignature.templateId
         }/edit-url`;

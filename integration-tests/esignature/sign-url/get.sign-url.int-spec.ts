@@ -84,7 +84,7 @@ describe('get sign url', () => {
             });
     });
 
-    test('must return a 200 when the request exists', (done) => {
+    test.skip('must return a 200 when the request exists', (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/esignatures/${
             configs.esignature.signatureId
         }/sign-url`;
