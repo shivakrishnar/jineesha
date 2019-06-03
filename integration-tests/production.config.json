@@ -1,5 +1,6 @@
 {
     "apiDomain": "https://evoapi.evolutionadvancedhr.com/api",
+    "nonProxiedApiDomain": "https://hr-services.evolutionadvancedhr.com",
     "tokenUrl": "https://evoapi.evolutionadvancedhr.com",
     "tenantId": "4aa76830-94c5-4190-a404-7253342afba9",
     "companyId": 600036,

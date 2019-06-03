@@ -120,7 +120,7 @@ describe('create template', () => {
             });
     });
 
-    test('must return a 201 when a template is created', (done) => {
+    test.skip('must return a 201 when a template is created', (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates`;
         request(baseUri)
             .post(uri)
