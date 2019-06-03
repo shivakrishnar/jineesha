@@ -90,7 +90,7 @@ describe('list signature requests', () => {
     });
 
     describe('list HelloSign templates', () => {
-        test('must return a 204 when no requests exist', (done) => {
+        test.skip('must return a 204 when no requests exist', (done) => {
             const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyWithNoData}/esignatures/requests`;
             request(baseUri)
                 .get(uri)
@@ -104,7 +104,7 @@ describe('list signature requests', () => {
                 });
         });
 
-        test('must return a 200 when requests exist', (done) => {
+        test.skip('must return a 200 when requests exist', (done) => {
             const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
             request(baseUri)
                 .get(uri)
