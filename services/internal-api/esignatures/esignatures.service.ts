@@ -69,7 +69,7 @@ export async function uploadSignedDocument(request: any): Promise<boolean> {
             query = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
             query.setParameter('@companyId', companyId);
             query.setParameter('@employeeCode', code);
-            query.setParameter('@title', title);
+            query.setParameter('@title', `${title.replace(/'/g, "''")}`);
             query.setParameter('@category', category);
             query.setParameter('@uploadDate', new Date().toISOString());
             query.setParameter('@pointer', key);

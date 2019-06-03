@@ -29,10 +29,11 @@ export async function getIntegrationConfigurationByCompany(
     tenantId: string,
     clientId: string,
     companyId: string,
+    payrollApiCredentials: IPayrollApiCredentials,
 ): Promise<EsignatureAppConfiguration> {
     console.info('integrationsService.getEsignatureAppByCompany');
 
-    const token = await createAccessToken(tenantId);
+    const token = await createAccessToken(tenantId, payrollApiCredentials);
 
     const apiUrl = `${baseUrl}/tenants/${tenantId}/integrations/${configService.getIntegrationId()}/integration-configurations`;
     try {
@@ -55,10 +56,11 @@ export async function createIntegrationConfiguration(
     companyName: string,
     domainName: string,
     eSignatureAppClientId: string,
+    payrollApiCredentials: IPayrollApiCredentials,
 ): Promise<EsignatureAppConfiguration> {
     console.info('integrationsService.createIntegrationConfiguration');
 
-    const token = await createAccessToken(tenantId);
+    const token = await createAccessToken(tenantId, payrollApiCredentials);
 
     const apiUrl = `${baseUrl}/tenants/${tenantId}/clients/${clientId}/companies/${companyId}/integrations/${configService.getIntegrationId()}/integration-configurations`;
     try {
@@ -90,10 +92,11 @@ export async function updateIntegrationConfigurationById(
     clientId: string,
     companyId: string,
     body: EsignatureAppConfiguration,
+    payrollApiCredentials: IPayrollApiCredentials,
 ): Promise<EsignatureAppConfiguration> {
     console.info('integrationsService.updateIntegrationConfigurationById');
 
-    const token = await createAccessToken(tenantId);
+    const token = await createAccessToken(tenantId, payrollApiCredentials);
 
     const apiUrl = `${baseUrl}/tenants/${tenantId}/clients/${clientId}/companies/${companyId}/integrations/${configService.getIntegrationId()}/integration-configurations/${
         body.id
@@ -111,10 +114,14 @@ export async function updateIntegrationConfigurationById(
     }
 }
 
-async function createAccessToken(tenantId: string): Promise<string> {
-    const { evoApiUsername, evoApiPassword }: IPayrollApiCredentials = JSON.parse(
-        await utilService.getSecret(configService.getPayrollApiCredentials()),
-    );
+async function createAccessToken(tenantId: string, payrollApiCredentials: IPayrollApiCredentials): Promise<string> {
+    console.info('integrationsService.createAccessToken');
+
+    if (!payrollApiCredentials) {
+        payrollApiCredentials = await utilService.getPayrollApiCredentials(tenantId);
+    }
+
+    const { evoApiUsername, evoApiPassword } = payrollApiCredentials;
     const ssoToken = await utilService.getSSOToken(tenantId);
     const hrAccessToken = await ssoService.getAccessToken(tenantId, ssoToken, evoApiUsername, evoApiPassword);
     return (await ssoService.exchangeToken(tenantId, hrAccessToken, configService.getGoldilocksApplicationId())).access_token;
@@ -125,10 +132,11 @@ export async function deleteIntegrationConfigurationbyId(
     clientId: string,
     companyId: string,
     body: EsignatureAppConfiguration,
+    payrollApiCredentials: IPayrollApiCredentials,
 ): Promise<void> {
     console.info('integrationsService.deleteIntegrationConfigurationById');
 
-    const token = await createAccessToken(tenantId);
+    const token = await createAccessToken(tenantId, payrollApiCredentials);
 
     const apiUrl = `${baseUrl}/tenants/${tenantId}/clients/${clientId}/companies/${companyId}/integrations/${configService.getIntegrationId()}/integration-configurations/${
         body.id
