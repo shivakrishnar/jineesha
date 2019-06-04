@@ -313,6 +313,8 @@ export async function createBulkSignatureRequest(
             };
         });
 
+        const queryExecutions: Array<Promise<any>> = [];
+
         // Save signature request metadata to the database
         for (const code of request.employeeCodes) {
             const query = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
@@ -331,8 +333,11 @@ export async function createBulkSignatureRequest(
                 query: query.value,
                 queryType: QueryType.Simple,
             } as DatabaseEvent;
-            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+            queryExecutions.push(utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse));
         }
+
+        await Promise.all(queryExecutions);
 
         return new SignatureRequestResponse({
             id: signatureRequest.signature_request_id,
