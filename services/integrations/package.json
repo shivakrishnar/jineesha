@@ -10,8 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "@smallwins/validate": "^4.3.0",
-    "@types/hashids": "^1.0.30",
     "@thundra/core": "^2.4.1",
+    "@types/hashids": "^1.0.30",
     "aws-auth-policy": "^0.1.0",
     "aws-sdk": "^2.307.0",
     "hashids": "^1.2.2",
@@ -22,6 +22,7 @@
     "mssql": "^4.3.1",
     "njwt": "^0.4.0",
     "nodemailer": "^5.1.1",
+    "p-settle": "^3.1.0",
     "serverless-plugin-thundra": "^1.2.0",
     "uuid": "^3.0.1",
     "yup": "^0.26.10"

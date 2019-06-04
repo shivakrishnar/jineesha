@@ -4,6 +4,7 @@ import Hashids from 'hashids';
 import * as hellosign from 'hellosign-sdk';
 import * as uuidV4 from 'uuid/v4';
 
+import * as pSettle from 'p-settle';
 import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import * as paginationService from '../../../pagination/pagination.service';
@@ -256,11 +257,15 @@ export async function createBulkSignatureRequest(
     request: BulkSignatureRequest,
     suppliedMetadata: any,
     payrollApiCredentials: IPayrollApiCredentials,
+    configuration: EsignatureConfiguration,
 ): Promise<SignatureRequestResponse> {
     console.info('esignature.handler.createBulkSignatureRequest');
 
     try {
-        const { eSigner } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        if (!configuration) {
+            configuration = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        }
+        const { eSigner } = configuration;
 
         const templateResponse = await eSigner.template.get(request.templateId);
         const additionalMetadata = {
@@ -308,6 +313,8 @@ export async function createBulkSignatureRequest(
             };
         });
 
+        const queryExecutions: Array<Promise<any>> = [];
+
         // Save signature request metadata to the database
         for (const code of request.employeeCodes) {
             const query = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
@@ -326,8 +333,11 @@ export async function createBulkSignatureRequest(
                 query: query.value,
                 queryType: QueryType.Simple,
             } as DatabaseEvent;
-            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+            queryExecutions.push(utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse));
         }
+
+        await Promise.all(queryExecutions);
 
         return new SignatureRequestResponse({
             id: signatureRequest.signature_request_id,
@@ -420,7 +430,8 @@ export async function createSignatureRequest(
             bulkSignRequest.message = request.message;
         }
 
-        return await createBulkSignatureRequest(tenantId, companyId, bulkSignRequest, {}, payrollApiCredentials);
+        const configuration: EsignatureConfiguration = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        return await createBulkSignatureRequest(tenantId, companyId, bulkSignRequest, {}, payrollApiCredentials, configuration);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -658,6 +669,7 @@ export async function listDocuments(
     path: string,
     useMaxLimit: boolean,
     payrollApiCredentials: IPayrollApiCredentials,
+    configuration: EsignatureConfiguration,
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listDocuments');
 
@@ -724,7 +736,10 @@ export async function listDocuments(
     const taskListId = Number(queryParams.categoryId);
 
     try {
-        const { eSigner } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        if (!configuration) {
+            configuration = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        }
+        const { eSigner } = configuration;
 
         const query = new ParameterizedQuery('GetTaskListDocuments', Queries.getTaskListDocuments);
         query.setParameter('@companyId', companyId);
@@ -764,16 +779,34 @@ export async function listDocuments(
 
         const unfoundDocuments: DocumentMetadata[] = [];
 
-        // Extract template file information for document metadata
+        const invocations: Array<Promise<any>> = [];
+
         for (const doc of documents) {
             if (!doc.filename.includes('.')) {
-                try {
-                    const apiResponse = await eSigner.template.get(doc.filename);
-                    doc.filename = apiResponse.template.documents[0].name;
-                    doc.title = apiResponse.template.title;
-                } catch (error) {
-                    console.error(`issue accessing template id: ${doc.filename}`);
-                    unfoundDocuments.push(doc);
+                invocations.push(eSigner.template.get(doc.filename));
+            }
+        }
+
+        // Run template api calls in parallel
+        const templateApiResults = await pSettle(invocations);
+
+        // Extract template file information for document metadata
+        for (let index = 0; index < documents.length; index++) {
+            const doc = documents[index];
+            if (!doc.filename.includes('.')) {
+                const templateApiInvocation = templateApiResults[index];
+
+                if (templateApiInvocation) {
+                    if (templateApiInvocation.isFulfilled) {
+                        const apiResponse = templateApiInvocation.value;
+                        doc.filename = apiResponse.template.documents[0].name;
+                        doc.title = apiResponse.template.title;
+                    }
+
+                    if (templateApiInvocation.isRejected) {
+                        console.error(`issue accessing template id: ${doc.filename}`);
+                        unfoundDocuments.push(doc);
+                    }
                 }
             }
         }
@@ -790,7 +823,7 @@ export async function listDocuments(
             throw error;
         }
 
-        console.error(JSON.stringify(error));
+        console.error(`${JSON.stringify(error)} raw error: ${error}`);
         throw errorService.getErrorResponse(0);
     }
 }
@@ -1022,7 +1055,8 @@ export async function onboarding(
     }
 
     try {
-        const { eSigner } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        const configuration: EsignatureConfiguration = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        const { eSigner } = configuration;
 
         const { signature_requests: existingSignatureRequests } = await eSigner.signatureRequest.list({
             query: `metadata:${onboardingKey}`,
@@ -1080,6 +1114,7 @@ export async function onboarding(
             undefined,
             true,
             payrollApiCredentials,
+            configuration,
         );
 
         if (!taskListTemplates) {
@@ -1105,7 +1140,14 @@ export async function onboarding(
             };
 
             invocations.push(
-                createBulkSignatureRequest(tenantId, companyId, signatureRequest, signatureRequestMetadata, payrollApiCredentials),
+                createBulkSignatureRequest(
+                    tenantId,
+                    companyId,
+                    signatureRequest,
+                    signatureRequestMetadata,
+                    payrollApiCredentials,
+                    configuration,
+                ),
             );
         }
 
@@ -1611,22 +1653,17 @@ async function decodeId(id: string): Promise<number[]> {
     return hashids.decode(id);
 }
 
-type EsignatureConfiguration = {
+export type EsignatureConfiguration = {
     companyInfo: CompanyDetail;
     appDetails: EsignatureAppConfiguration;
     eSigner: any;
 };
 
-let configuration: EsignatureConfiguration = undefined;
-
-async function getConfigurationData(
+export async function getConfigurationData(
     tenantId: string,
     companyId: string,
     payrollApiCredentials: IPayrollApiCredentials,
 ): Promise<EsignatureConfiguration> {
-    if (configuration) {
-        return configuration;
-    }
     const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
     const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
         tenantId,
@@ -1640,11 +1677,9 @@ async function getConfigurationData(
         client_id: appClientId,
     });
 
-    configuration = {
+    return {
         companyInfo,
         appDetails,
         eSigner,
     };
-
-    return configuration;
 }
