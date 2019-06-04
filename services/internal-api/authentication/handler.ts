@@ -41,7 +41,7 @@ export const ssoTokenVerifier = thundraWrapper(
     async (event: APIGatewayEvent, context: Context, callback: any): Promise<void> => {
         console.info('authentication.SsoTokenVerifier');
         const apiSecret = JSON.parse(await utilService.getSecret(configService.getSsoCredentialsId())).apiSecret;
-        await verify(event, context, callback, apiSecret, AuthorizerType.Evolution);
+        await verify(event, context, callback, apiSecret, AuthorizerType.Golidlocks);
     },
 );
 
@@ -78,14 +78,25 @@ async function buildPolicy(event: any, secret: string, authType: AuthorizerType)
     const decodedToken: any = jwt.decode(accessToken);
     const { account, scope } = decodedToken;
 
-    const hrAccessToken = (await ssoService.exchangeToken(account.tenantId, event.authorizationToken, configService.getHrApplicationId()))
-        .access_token;
-    const decodedHrToken: any = jwt.decode(hrAccessToken);
-    const { scope: hrScope } = decodedHrToken;
+    let payrollApiCredentials: IPayrollApiCredentials;
+    let roleMemberships;
+    if (authType === AuthorizerType.Golidlocks) {
+        payrollApiCredentials = undefined;
+        roleMemberships = utilService.parseRoles(scope);
+    }
 
-    const payrollApiCredentials: IPayrollApiCredentials =
-        authType === AuthorizerType.Golidlocks ? undefined : await utilService.getPayrollApiCredentials(account.tenantId);
-    const roleMemberships = utilService.parseRoles(scope).concat(utilService.parseRoles(hrScope));
+    if (authType === AuthorizerType.Evolution) {
+        payrollApiCredentials = await utilService.getPayrollApiCredentials(account.tenantId);
+        const hrAccessToken = (await ssoService.exchangeToken(
+            account.tenantId,
+            event.authorizationToken,
+            configService.getHrApplicationId(),
+        )).access_token;
+        const decodedHrToken: any = jwt.decode(hrAccessToken);
+        const { scope: hrScope } = decodedHrToken;
+        roleMemberships = utilService.parseRoles(scope).concat(utilService.parseRoles(hrScope));
+    }
+
     const securityContext = new SecurityContext(account, roleMemberships, accessToken, payrollApiCredentials);
 
     const tmp = event.methodArn.split(':');
