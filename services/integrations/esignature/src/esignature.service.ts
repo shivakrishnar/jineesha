@@ -94,7 +94,7 @@ export async function createTemplate(
         const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
 
         const options = {
-            test_mode: configService.eSignatureApiDevModeOn ? 1 : 0,
+            test_mode: configService.eSignatureApiDevModeOn() ? 1 : 0,
             files: [`/tmp/${tmpFileDir}/${fileName}`],
             title,
             message,
@@ -278,7 +278,7 @@ export async function createBulkSignatureRequest(
         const metadata = { ...suppliedMetadata, ...additionalMetadata };
 
         const options: { [i: string]: any } = {
-            test_mode: configService.eSignatureApiDevModeOn ? 1 : 0,
+            test_mode: configService.eSignatureApiDevModeOn() ? 1 : 0,
             template_id: request.templateId,
             metadata,
             signers: request.signatories.map((signer: Signatory) => {

@@ -28,7 +28,7 @@
     "goldilocksApplicationId": "19a7f2b0-1516-4c74-8dc4-1bdf224629e6",
     "hrApplicationId": "919ba036-5554-4a18-a572-c4cba7d557c9",
     "eSignatureApiCredentialsId": "eSignatureApiCredentials",
-    "eSignatureApiDevModeOn": "true",
+    "eSignatureApiDevModeOn": "false",
     "hrCredentialsId": "hrCredentials",
     "saltId": "salt",
     "fileBucketName": "production.hr.files",
