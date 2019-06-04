@@ -256,11 +256,15 @@ export async function createBulkSignatureRequest(
     request: BulkSignatureRequest,
     suppliedMetadata: any,
     payrollApiCredentials: IPayrollApiCredentials,
+    configuration: EsignatureConfiguration,
 ): Promise<SignatureRequestResponse> {
     console.info('esignature.handler.createBulkSignatureRequest');
 
     try {
-        const { eSigner } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        if (!configuration) {
+            configuration = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        }
+        const { eSigner } = configuration;
 
         const templateResponse = await eSigner.template.get(request.templateId);
         const additionalMetadata = {
@@ -420,7 +424,8 @@ export async function createSignatureRequest(
             bulkSignRequest.message = request.message;
         }
 
-        return await createBulkSignatureRequest(tenantId, companyId, bulkSignRequest, {}, payrollApiCredentials);
+        const configuration: EsignatureConfiguration = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        return await createBulkSignatureRequest(tenantId, companyId, bulkSignRequest, {}, payrollApiCredentials, configuration);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -658,6 +663,7 @@ export async function listDocuments(
     path: string,
     useMaxLimit: boolean,
     payrollApiCredentials: IPayrollApiCredentials,
+    configuration: EsignatureConfiguration,
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listDocuments');
 
@@ -724,7 +730,10 @@ export async function listDocuments(
     const taskListId = Number(queryParams.categoryId);
 
     try {
-        const { eSigner } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        if (!configuration) {
+            configuration = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        }
+        const { eSigner } = configuration;
 
         const query = new ParameterizedQuery('GetTaskListDocuments', Queries.getTaskListDocuments);
         query.setParameter('@companyId', companyId);
@@ -1022,7 +1031,8 @@ export async function onboarding(
     }
 
     try {
-        const { eSigner } = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        const configuration: EsignatureConfiguration = await getConfigurationData(tenantId, companyId, payrollApiCredentials);
+        const { eSigner } = configuration;
 
         const { signature_requests: existingSignatureRequests } = await eSigner.signatureRequest.list({
             query: `metadata:${onboardingKey}`,
@@ -1080,6 +1090,7 @@ export async function onboarding(
             undefined,
             true,
             payrollApiCredentials,
+            configuration,
         );
 
         if (!taskListTemplates) {
@@ -1105,7 +1116,14 @@ export async function onboarding(
             };
 
             invocations.push(
-                createBulkSignatureRequest(tenantId, companyId, signatureRequest, signatureRequestMetadata, payrollApiCredentials),
+                createBulkSignatureRequest(
+                    tenantId,
+                    companyId,
+                    signatureRequest,
+                    signatureRequestMetadata,
+                    payrollApiCredentials,
+                    configuration,
+                ),
             );
         }
 
@@ -1611,22 +1629,17 @@ async function decodeId(id: string): Promise<number[]> {
     return hashids.decode(id);
 }
 
-type EsignatureConfiguration = {
+export type EsignatureConfiguration = {
     companyInfo: CompanyDetail;
     appDetails: EsignatureAppConfiguration;
     eSigner: any;
 };
 
-let configuration: EsignatureConfiguration = undefined;
-
-async function getConfigurationData(
+export async function getConfigurationData(
     tenantId: string,
     companyId: string,
     payrollApiCredentials: IPayrollApiCredentials,
 ): Promise<EsignatureConfiguration> {
-    if (configuration) {
-        return configuration;
-    }
     const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
     const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
         tenantId,
@@ -1640,11 +1653,9 @@ async function getConfigurationData(
         client_id: appClientId,
     });
 
-    configuration = {
+    return {
         companyInfo,
         appDetails,
         eSigner,
     };
-
-    return configuration;
 }

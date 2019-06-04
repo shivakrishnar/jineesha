@@ -7,6 +7,7 @@ import * as esignatureService from './esignature.service';
 
 import { Role } from '../../../api/models/Role';
 import { IGatewayEventInput } from '../../../util.service';
+import { EsignatureConfiguration } from './esignature.service';
 
 import * as thundra from '@thundra/core';
 
@@ -250,12 +251,19 @@ export const createBulkSignatureRequest = thundraWrapper(
 
         const { tenantId, companyId } = event.pathParameters;
 
+        const configuration: EsignatureConfiguration = await esignatureService.getConfigurationData(
+            tenantId,
+            companyId,
+            securityContext.payrollApiCredentials,
+        );
+
         return await esignatureService.createBulkSignatureRequest(
             tenantId,
             companyId,
             requestBody,
             {},
             securityContext.payrollApiCredentials,
+            configuration,
         );
     }),
 );
@@ -375,6 +383,12 @@ export const listDocuments = thundraWrapper(
         } = event;
         const { tenantId, companyId } = event.pathParameters;
 
+        const configuration: EsignatureConfiguration = await esignatureService.getConfigurationData(
+            tenantId,
+            companyId,
+            securityContext.payrollApiCredentials,
+        );
+
         return await esignatureService.listDocuments(
             tenantId,
             companyId,
@@ -383,6 +397,7 @@ export const listDocuments = thundraWrapper(
             path,
             false,
             securityContext.payrollApiCredentials,
+            configuration,
         );
     }),
 );
