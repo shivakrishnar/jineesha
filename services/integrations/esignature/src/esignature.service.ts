@@ -4,6 +4,7 @@ import Hashids from 'hashids';
 import * as hellosign from 'hellosign-sdk';
 import * as uuidV4 from 'uuid/v4';
 
+import * as pSettle from 'p-settle';
 import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import * as paginationService from '../../../pagination/pagination.service';
@@ -773,16 +774,34 @@ export async function listDocuments(
 
         const unfoundDocuments: DocumentMetadata[] = [];
 
-        // Extract template file information for document metadata
+        const invocations: Array<Promise<any>> = [];
+
         for (const doc of documents) {
             if (!doc.filename.includes('.')) {
-                try {
-                    const apiResponse = await eSigner.template.get(doc.filename);
-                    doc.filename = apiResponse.template.documents[0].name;
-                    doc.title = apiResponse.template.title;
-                } catch (error) {
-                    console.error(`issue accessing template id: ${doc.filename}`);
-                    unfoundDocuments.push(doc);
+                invocations.push(eSigner.template.get(doc.filename));
+            }
+        }
+
+        // Run template api calls in parallel
+        const templateApiResults = await pSettle(invocations);
+
+        // Extract template file information for document metadata
+        for (let index = 0; index < documents.length; index++) {
+            const doc = documents[index];
+            if (!doc.filename.includes('.')) {
+                const templateApiInvocation = templateApiResults[index];
+
+                if (templateApiInvocation) {
+                    if (templateApiInvocation.isFulfilled) {
+                        const apiResponse = templateApiInvocation.value;
+                        doc.filename = apiResponse.template.documents[0].name;
+                        doc.title = apiResponse.template.title;
+                    }
+
+                    if (templateApiInvocation.isRejected) {
+                        console.error(`issue accessing template id: ${doc.filename}`);
+                        unfoundDocuments.push(doc);
+                    }
                 }
             }
         }
@@ -799,7 +818,7 @@ export async function listDocuments(
             throw error;
         }
 
-        console.error(JSON.stringify(error));
+        console.error(`${JSON.stringify(error)} raw error: ${error}`);
         throw errorService.getErrorResponse(0);
     }
 }
