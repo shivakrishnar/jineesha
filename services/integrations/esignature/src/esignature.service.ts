@@ -500,9 +500,10 @@ export async function listTemplates(
 
         const consolidatedDocuments: any[] = [];
 
-        // Extract template file information for document metadata
-        for (const document of documents) {
-            if (document.Type === 'legacy') {
+        // extract legacy documentation metadata
+        documents
+            .filter((doc) => doc.Type === 'legacy')
+            .forEach((document) => {
                 consolidatedDocuments.push({
                     id: document.ID,
                     title: document.Title,
@@ -512,9 +513,23 @@ export async function listTemplates(
                     uploadedBy: `${document.FirstName} ${document.LastName}`,
                     category: document.Category,
                 });
-            } else {
-                try {
-                    const apiResponse = await client.template.get(document.ID);
+            });
+
+        const invocations: Array<Promise<any>> = [];
+
+        // extract esignature documentation metadata
+        const nonLegacyDocuments = documents.filter((doc) => doc.Type !== 'legacy');
+        nonLegacyDocuments.forEach((document) => {
+            invocations.push(client.template.get(document.ID));
+        });
+
+        const templateApiResults = await pSettle(invocations);
+
+        templateApiResults.forEach((apiInvocation, index) => {
+            if (apiInvocation) {
+                if (apiInvocation.isFulfilled) {
+                    const apiResponse = apiInvocation.value;
+
                     const {
                         template_id: id,
                         title,
@@ -547,11 +562,14 @@ export async function listTemplates(
                             category,
                         }),
                     );
-                } catch (error) {
-                    console.error(`issue accessing template id: ${document.id}`);
+                }
+
+                if (apiInvocation.isRejected) {
+                    const failingDocumentId = nonLegacyDocuments[index];
+                    console.error(`issue accessing template id: ${failingDocumentId}`);
                 }
             }
-        }
+        });
 
         const paginatedResult = await paginationService.createPaginatedResult(consolidatedDocuments, baseUrl, totalRecords, page);
         return consolidatedDocuments.length === 0 ? undefined : paginatedResult;
