@@ -1,5 +1,14 @@
 #####  asure.hr.services
 
+#### [1.6.5](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.5..1.6.4)
+
+> 5 June 2019
+
+- [`MJ-2640`](https://evolutionpayroll.atlassian.net/browse/MJ-2640): parallelize calls to HelloSign API from listTemplates endpoint [`#84`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/84)
+- [`MJ-2633`](https://evolutionpayroll.atlassian.net/browse/MJ-2633): fix authorizer logic [`#82`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/82)
+- [`MJ-2344`](https://evolutionpayroll.atlassian.net/browse/MJ-2344): enable legally binding esignature documentation [`#83`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/83)
+- [`MJ-2615`](https://evolutionpayroll.atlassian.net/browse/MJ-2615): prevent caching of integration configuration in pre-warmed lambdas [`#81`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/81)
+
 #### [1.6.4](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.4..1.6.3)
 
 > 3 June 2019
