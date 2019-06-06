@@ -627,3 +627,24 @@ export function parseRoles(scopes: string[]): string[] {
     });
     return roles;
 }
+
+/**
+ * Utility for splitting string at a given index
+ * @example
+ *    let str = 'helloworld.txt'
+ *    splitAt(9)(str);   //returns ['helloworld', '.txt']
+ * @param {number} index: The index to split on
+ * @param {string} str: The string to split
+ * @returns {string []}: An array of the two parts of the string after splitting
+ */
+const splitAt = (index: number) => (str: string) => [str.slice(0, index), str.slice(index)];
+
+/**
+ * Splits a given filename including its extension into the filename and the extension
+ * @param {string} filenameWithExtension: The filename including its extension
+ * @returns {string[]}: An array of the filename and extension.
+ */
+export function splitFilename(filenameWithExtension: string): string[] {
+    const extensionIndex = filenameWithExtension.lastIndexOf('.');
+    return splitAt(extensionIndex)(filenameWithExtension);
+}

@@ -5,6 +5,7 @@ import * as hellosign from 'hellosign-sdk';
 import * as uuidV4 from 'uuid/v4';
 
 import * as pSettle from 'p-settle';
+import * as shortid from 'shortid';
 import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import * as paginationService from '../../../pagination/pagination.service';
@@ -389,7 +390,7 @@ export async function createSignatureRequest(
     console.info('esignature.handler.createSignatureRequest');
 
     try {
-        const query = new ParameterizedQuery('GetEmployeeDisplayNameById', Queries.getEmployeeDisplayNameById);
+        const query = new ParameterizedQuery('GetEmployeeInfoById', Queries.getEmployeeInfoById);
         query.setParameter('@employeeId', employeeId);
         const payload = {
             tenantId,
@@ -1538,7 +1539,9 @@ async function getEmployeeLegacyAndSignedDocuments(
             return undefined;
         }
 
-        await encodeIds(documents);
+        for (const document of documents) {
+            await encodeId(document);
+        }
 
         return await paginationService.createPaginatedResult(documents, baseUrl, totalRecords, page);
     } catch (error) {
@@ -1640,6 +1643,135 @@ async function getEmployeeLegacyDocument(tenantId: string, documentId: number): 
 }
 
 /**
+ * Creates a specified document record for an employee and uploads the file to S3
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {string} employeeId: The unique identifier for the specified employee.
+ * @param {any} request: The employee document request.
+ * @returns {any}: A Promise of a created employee document
+ */
+export async function createEmployeeDocument(tenantId: string, companyId: string, employeeId: string, request: any): Promise<any> {
+    console.info('esignature.service.createEmployeeDocument');
+
+    const { file, fileName, title } = request;
+
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+    // employeeId value must be integral
+    if (Number.isNaN(Number(employeeId))) {
+        const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    try {
+        // get employee code and check if employee exists
+        let query = new ParameterizedQuery('GetEmployeeInfoById', Queries.getEmployeeInfoById);
+        query.setParameter('@employeeId', employeeId);
+        let payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        // Note: we don't need to utilize the returned result from the getCompanyDetails function so we purposefully deconstruct only the first item in the array.
+        const [employeeResult]: any[] = await Promise.all([
+            utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse),
+            getCompanyDetails(tenantId, companyId),
+        ]);
+
+        if (employeeResult.recordset.length === 0) {
+            const developerMessage = `Employee with ID ${employeeId} not found.`;
+            throw errorService.getErrorResponse(50).setDeveloperMessage(developerMessage);
+        }
+        const employeeCode = employeeResult.recordset[0].EmployeeCode;
+
+        // upload to S3
+        const [fileData, fileContent] = file.split(',');
+        const fileBuffer = new Buffer(fileContent, 'base64');
+        const contentType = fileData.split(':')[1].split(';')[0];
+        const extension = fileData.split(';')[0].split('/')[1];
+
+        let key = `${tenantId}/${companyId}/${employeeId}/${fileName}`;
+        let updatedFilename: string = fileName;
+
+        // check for file existence in S3
+        try {
+            const objectMetadata = await s3Client
+                .headObject({
+                    Bucket: configService.getFileBucketName(),
+                    Key: key,
+                })
+                .promise();
+
+            if (objectMetadata) {
+                updatedFilename = appendDuplicationSuffix(fileName);
+                key = `${tenantId}/${companyId}/${employeeId}/${updatedFilename}`;
+                console.log('key updated');
+            }
+        } catch (missingError) {
+            // We really dont mind since we expect it to be missing
+        }
+
+        s3Client
+            .upload({
+                Bucket: configService.getFileBucketName(),
+                Key: key,
+                Body: fileBuffer,
+                Metadata: {
+                    fileName,
+                },
+                ContentEncoding: 'base64',
+                ContentType: contentType,
+            })
+            .promise()
+            .catch((e) => {
+                throw new Error(e);
+            });
+
+        // create file metadata
+        const uploadDate = new Date().toISOString();
+        query = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
+        query.setParameter('@companyId', companyId);
+        query.setParameter('@employeeCode', employeeCode);
+        query.setParameter('@title', `${title.replace(/'/g, "''")}`);
+        query.setParameter('@category', 'NULL');
+        query.setParameter('@uploadDate', uploadDate);
+        query.setParameter('@pointer', key);
+        payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const fileMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        const response = {
+            id: fileMetadataResult.recordset[0].ID,
+            title,
+            fileName: updatedFilename,
+            extension,
+            uploadDate,
+            isLegacyDocument: false,
+        };
+
+        await encodeId(response);
+
+        return response;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Validates a given query string collection.
  * @param {string []} validInputs - Validate query string parameters
  * @param {any} queryParameters - The query string parameters
@@ -1657,13 +1789,11 @@ function validateQueryStringParameters(validInputs: string[], queryParameters: a
     }
 }
 
-async function encodeIds(results: any[]): Promise<void> {
+async function encodeId(result: any): Promise<void> {
     const salt = JSON.parse(await utilService.getSecret(configService.getSaltId())).salt;
     const hashids = new Hashids(salt);
-    for (const result of results) {
         result.id = hashids.encode(result.id, result.isLegacyDocument ? 1 : 0);
     }
-}
 
 async function decodeId(id: string): Promise<number[]> {
     const salt = JSON.parse(await utilService.getSecret(configService.getSaltId())).salt;
@@ -1700,4 +1830,18 @@ export async function getConfigurationData(
         appDetails,
         eSigner,
     };
+}
+
+/**
+ * Appends a guid suffix to a filename to indicate duplication
+ * @example
+ *  // returns duplicate-PPBqWA9.pdf
+ *  letappendDuplicationSuffix('duplicate.pdf');
+ * @param {string} filenameWithExtension
+ * @returns {string}: The file name with a duplication suffix
+ */
+function appendDuplicationSuffix(filenameWithExtension: string): string {
+    console.info('esignature.service.appendDuplicationSuffix');
+    const [filename, extension] = utilService.splitFilename(filenameWithExtension);
+    return `${filename}-${shortid.generate()}${extension}`;
 }

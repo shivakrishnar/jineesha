@@ -70,7 +70,7 @@ export async function uploadSignedDocument(request: any): Promise<boolean> {
             query.setParameter('@companyId', companyId);
             query.setParameter('@employeeCode', code);
             query.setParameter('@title', `${title.replace(/'/g, "''")}`);
-            query.setParameter('@category', category);
+            query.setParameter('@category', `'${category}'`); // TODO: (MJ-2669) string interpolation no longer needed after making Category column not nullable
             query.setParameter('@uploadDate', new Date().toISOString());
             query.setParameter('@pointer', key);
             payload = {

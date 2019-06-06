@@ -39,7 +39,7 @@ export const Queries = {
     // Audit
     createAuditEntry: fs.readFileSync(path.join(basePath, 'audit/createAuditEntry.sql')).toString(),
     createAuditDetailEntry: fs.readFileSync(path.join(basePath, 'audit/createAuditDetailEntry.sql')).toString(),
-    getEmployeeDisplayNameById: fs.readFileSync(path.join(basePath, 'audit/getEmployeeDisplayNameById.sql')).toString(),
+    getEmployeeInfoById: fs.readFileSync(path.join(basePath, 'audit/getEmployeeInfoById.sql')).toString(),
 
     // E-Signatures
     checkForDuplicateFileMetadata: fs.readFileSync(path.join(basePath, 'esignatures/checkForDuplicateFileMetadata.sql')).toString(),
