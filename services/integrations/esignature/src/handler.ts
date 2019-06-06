@@ -550,7 +550,7 @@ export const listEmployeeDocumentsByTenant = thundraWrapper(
         });
 
         if (!isAuthorized) {
-            errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+            return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
         }
 
         const emailAddress: string = securityContext.principal.email;
@@ -595,7 +595,7 @@ export const listEmployeeDocumentsByCompany = thundraWrapper(
         });
 
         if (!isAuthorized) {
-            errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+            return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
         }
 
         const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
@@ -659,7 +659,7 @@ export const getDocumentPreviewByTenant = utilService.gatewayEventHandler(async 
     });
 
     if (!isAuthorized) {
-        errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
     }
 
     const { tenantId, documentId } = event.pathParameters;
@@ -687,7 +687,7 @@ export const getDocumentPreviewByCompany = utilService.gatewayEventHandler(async
     });
 
     if (!isAuthorized) {
-        errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
     }
 
     const { tenantId, documentId } = event.pathParameters;
