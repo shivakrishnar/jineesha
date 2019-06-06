@@ -1589,8 +1589,10 @@ async function getEmployeeSignedDocument(tenantId: string, documentId: number): 
             Key: key,
         };
         const url = s3Client.getSignedUrl('getObject', params);
+        // parse key to get file extension
+        const mimeType = key.split('.')[key.split('.').length - 1];
 
-        return result ? { data: url } : undefined;
+        return result ? { data: url, mimeType: `.${mimeType}` } : undefined;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -1631,7 +1633,7 @@ async function getEmployeeLegacyDocument(tenantId: string, documentId: number): 
         const base64String = result.recordset[0].FSDocument;
         const extension = result.recordset[0].Extension;
 
-        return result ? { data: `data:application/${extension};base64,${base64String}` } : undefined;
+        return result ? { data: `data:application/${extension};base64,${base64String}`, mimeType: extension } : undefined;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -1792,8 +1794,8 @@ function validateQueryStringParameters(validInputs: string[], queryParameters: a
 async function encodeId(result: any): Promise<void> {
     const salt = JSON.parse(await utilService.getSecret(configService.getSaltId())).salt;
     const hashids = new Hashids(salt);
-        result.id = hashids.encode(result.id, result.isLegacyDocument ? 1 : 0);
-    }
+    result.id = hashids.encode(result.id, result.isLegacyDocument ? 1 : 0);
+}
 
 async function decodeId(id: string): Promise<number[]> {
     const salt = JSON.parse(await utilService.getSecret(configService.getSaltId())).salt;
