@@ -1,5 +1,7 @@
+import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
 import * as companyService from './company.service';
+import * as employeeService from './employee.service';
 import * as tenantService from './tenants.service';
 
 import * as UUID from '@smallwins/validate/uuid';
@@ -16,6 +18,11 @@ const headerSchema = {
 
 const adminsUriSchema = {
     tenantId: { required: true, type: UUID },
+};
+
+const companyUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
 };
 
 const createTenantDbSchema = {
@@ -160,4 +167,84 @@ export const companyList = utilService.gatewayEventHandler(async ({ securityCont
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
     return await companyService.list(tenantId, email);
+});
+
+/**
+ * Returns a listing of the employees a user has access to under a tenant.
+ */
+export const listEmployeesByTenant = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('tenants.handler.listEmployeesByTenant');
+
+    const { tenantId } = event.pathParameters;
+    const email = securityContext.principal.email;
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, adminsUriSchema);
+
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin;
+    });
+
+    if (!isAuthorized) {
+        return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    const {
+        requestContext: { domainName, path },
+        queryStringParameters,
+    } = event;
+
+    return await employeeService.listByTenant(
+        tenantId,
+        email,
+        securityContext.roleMemberships,
+        domainName,
+        path,
+        queryStringParameters
+    );
+});
+
+/**
+ * Returns a listing of the employees a user has access to under a company.
+ */
+export const listEmployeesByCompany = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('tenants.handler.listEmployeesByCompany');
+
+    const { tenantId, companyId } = event.pathParameters;
+    const email = securityContext.principal.email;
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyUriSchema);
+
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return (
+            role === Role.hrManager ||
+            role === Role.globalAdmin ||
+            role === Role.serviceBureauAdmin ||
+            role === Role.superAdmin ||
+            role === Role.hrAdmin ||
+            role === Role.hrRestrictedAdmin
+        );
+    });
+
+    if (!isAuthorized) {
+        return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    const {
+        requestContext: { domainName, path },
+        queryStringParameters,
+    } = event;
+
+    return await employeeService.listByCompany(
+        tenantId,
+        companyId,
+        email,
+        securityContext.roleMemberships,
+        domainName,
+        path,
+        queryStringParameters,
+    );
 });

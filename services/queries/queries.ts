@@ -81,6 +81,12 @@ export const Queries = {
 
     // Employees
     listEmployeesByEmailAddresses: fs.readFileSync(path.join(basePath, 'employees/listEmployeesByEmailAddresses.sql')).toString(),
+    listEmployeesByTenant: fs.readFileSync(path.join(basePath, 'employees/listEmployeesByTenant.sql')).toString(),
+    listEmployeesForSbAdminByTenant: fs.readFileSync(path.join(basePath, 'employees/listEmployeesForSbAdminByTenant.sql')).toString(),
+    listEmployeesByCompany: fs.readFileSync(path.join(basePath, 'employees/listEmployeesByCompany.sql')).toString(),
+    listEmployeesForAdminByCompany: fs.readFileSync(path.join(basePath, 'employees/listEmployeesForAdminByCompany.sql')).toString(),
+    listEmployeesForManagerByCompany: fs.readFileSync(path.join(basePath, 'employees/listEmployeesForManagerByCompany.sql')).toString(),
+    listEmployeesForSbAdminByCompany: fs.readFileSync(path.join(basePath, 'employees/listEmployeesForSbAdminByCompany.sql')).toString(),
 
     // Users
     getUserById: fs.readFileSync(path.join(basePath, 'users/getUserById.sql')).toString(),
