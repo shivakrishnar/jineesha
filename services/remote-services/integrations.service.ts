@@ -34,15 +34,14 @@ export async function getIntegrationConfigurationByCompany(
     console.info('integrationsService.getEsignatureAppByCompany');
 
     const token = await createAccessToken(tenantId, payrollApiCredentials);
-
-    const apiUrl = `${baseUrl}/tenants/${tenantId}/integrations/${configService.getIntegrationId()}/integration-configurations`;
+    const apiUrl = `${baseUrl}/tenants/${tenantId}/clients/${clientId}/companies/${companyId}/integrations/${configService.getIntegrationId()}/integration-configurations`;
     try {
         const configurations = await request.get({
             url: encodeURI(apiUrl),
             headers: { Authorization: `Bearer ${token}` },
             json: true,
         });
-        return configurations.filter((config) => config.clientId === Number(clientId) && config.companyId === Number(companyId))[0];
+        return configurations[0];
     } catch (e) {
         console.log(e);
         throw new Error('Unable to get e-signature app client id');
