@@ -166,7 +166,12 @@ export const companyList = utilService.gatewayEventHandler(async ({ securityCont
     utilService.validateAndThrow(event.pathParameters, adminsUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
-    return await companyService.list(tenantId, email);
+    const {
+        requestContext: { domainName, path },
+        queryStringParameters,
+    } = event;
+
+    return await companyService.list(tenantId, email, domainName, path, queryStringParameters);
 });
 
 /**
@@ -195,14 +200,7 @@ export const listEmployeesByTenant = utilService.gatewayEventHandler(async ({ se
         queryStringParameters,
     } = event;
 
-    return await employeeService.listByTenant(
-        tenantId,
-        email,
-        securityContext.roleMemberships,
-        domainName,
-        path,
-        queryStringParameters
-    );
+    return await employeeService.listByTenant(tenantId, email, securityContext.roleMemberships, domainName, path, queryStringParameters);
 });
 
 /**

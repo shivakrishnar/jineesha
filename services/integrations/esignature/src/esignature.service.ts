@@ -1712,7 +1712,6 @@ export async function createEmployeeDocument(tenantId: string, companyId: string
             if (objectMetadata) {
                 updatedFilename = appendDuplicationSuffix(fileName);
                 key = `${tenantId}/${companyId}/${employeeId}/${updatedFilename}`;
-                console.log('key updated');
             }
         } catch (missingError) {
             // We really dont mind since we expect it to be missing
