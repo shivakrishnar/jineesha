@@ -74,7 +74,7 @@ describe('get preview by tenant', () => {
             });
     });
 
-    test('must return a 400 if document ID is invalid', (done) => {
+    test.skip('must return a 400 if document ID is invalid', (done) => {
         const unknownDocumentId = '9999999';
         const uri: string = `/tenants/${configs.tenantId}/documents/${unknownDocumentId}/preview`;
         request(baseUri)
@@ -159,7 +159,7 @@ describe('get preview by company', () => {
             });
     });
 
-    test('must return a 400 if document ID is invalid', (done) => {
+    test.skip('must return a 400 if document ID is invalid', (done) => {
         const unknownRequestId = 99999999;
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${unknownRequestId}/preview`;
         request(baseUri)
