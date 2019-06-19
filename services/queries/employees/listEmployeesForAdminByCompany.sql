@@ -1,0 +1,81 @@
+declare @_companyId as int = @companyId;
+declare @_username as nvarchar(max) = '@username';
+declare @_userId as int;
+declare @_adminRoleLevel as int = 50;
+declare @employeeList table (
+    ID int,
+    CompanyID int,
+    FirstName nvarchar(max),
+    LastName nvarchar(max)
+);
+
+set @_userId = (select ID from dbo.HRnextUser where Username = @_username);
+
+with Roles as (
+    select
+        sr.CompanyID,
+        srl.Level
+    from
+        dbo.SecRoleUser sru
+    left join dbo.SecRole sr on sr.ID = sru.RoleID
+    left join dbo.SecRoleLevel srl on srl.ID = sr.RoleLevelID
+    where
+        sru.UserID = @_userId and
+        srl.Level = @_adminRoleLevel
+),
+EmployeeCompanies as (
+    select
+        ee.CompanyID
+    from
+        dbo.Employee ee
+    left join dbo.HRnextUserEmployee ue on ue.EmployeeID = ee.ID
+    where
+        ue.HRnextUserID = @_userId
+),
+AssignedCompanies as
+(
+    select
+        CompanyID
+    from
+        dbo.HRnextUserCompany
+    where
+        HRnextUserID = @_userId
+),
+EmployeeList as 
+(
+	select 
+		ee.ID,
+		ee.CompanyID,
+		ee.FirstName,
+        ee.LastName
+	from
+		dbo.Employee ee
+	where 
+        ee.CompanyID = @_companyId
+	and	ee.CompanyID in (select CompanyID from EmployeeCompanies)
+    and ee.CompanyID in (select CompanyID from AssignedCompanies)
+    and ee.CompanyID in (select CompanyID from Roles)
+)
+insert into @employeeList
+select
+    ID,
+    CompanyID,
+    FirstName,
+    LastName
+from
+    EmployeeList
+
+-- Get total count for pagination
+select
+    count(*) as totalCount
+from
+    @employeeList
+
+select
+    ID,
+    CompanyID,
+    FirstName,
+    LastName
+from
+    @employeeList
+order by CompanyID

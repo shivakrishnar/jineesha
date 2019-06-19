@@ -76,7 +76,7 @@ async function createAuditEntry(tenantId: string, transactionName: string, userE
  * @return {string}: The employee's display name in the correct format.
  */
 async function getEmployeeDisplayName(tenantId: string, employeeId: string): Promise<string> {
-    const query = new ParameterizedQuery('GetEmployeeDisplayNameById', Queries.getEmployeeDisplayNameById);
+    const query = new ParameterizedQuery('GetEmployeeInfoById', Queries.getEmployeeInfoById);
     query.setParameter('@employeeId', employeeId);
 
     const payload = {

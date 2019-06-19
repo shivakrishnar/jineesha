@@ -171,6 +171,19 @@ const configurationSchema = Yup.object().shape({
         .required(),
 });
 
+// Employee Document schemas
+const createEmployeeDocumentValidationSchema = {
+    file: { required: true, type: String },
+    fileName: { required: true, type: String },
+    title: { required: true, type: String },
+};
+
+const createEmployeeDocumentSchema = Yup.object().shape({
+    file: Yup.string().required(),
+    fileName: Yup.string().required(),
+    title: Yup.string().required(),
+});
+
 /**
  * Creates a new template of a document to be e-signed
  */
@@ -537,7 +550,7 @@ export const listEmployeeDocumentsByTenant = thundraWrapper(
         });
 
         if (!isAuthorized) {
-            errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+            return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
         }
 
         const emailAddress: string = securityContext.principal.email;
@@ -582,7 +595,7 @@ export const listEmployeeDocumentsByCompany = thundraWrapper(
         });
 
         if (!isAuthorized) {
-            errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+            return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
         }
 
         const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
@@ -646,7 +659,7 @@ export const getDocumentPreviewByTenant = utilService.gatewayEventHandler(async 
     });
 
     if (!isAuthorized) {
-        errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
     }
 
     const { tenantId, documentId } = event.pathParameters;
@@ -674,7 +687,7 @@ export const getDocumentPreviewByCompany = utilService.gatewayEventHandler(async
     });
 
     if (!isAuthorized) {
-        errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
     }
 
     const { tenantId, documentId } = event.pathParameters;
@@ -694,3 +707,26 @@ export const getDocumentPreview = utilService.gatewayEventHandler(async ({ secur
 
     return await esignatureService.getDocumentPreview(tenantId, documentId);
 });
+
+/**
+ * Creates a specified document record for an employee
+ */
+export const createEmployeeDocument = thundraWrapper(
+    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.createEmployeeDocument');
+
+        const { tenantId, companyId, employeeId } = event.pathParameters;
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
+        utilService.checkBoundedIntegralValues(event.pathParameters);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, createEmployeeDocumentValidationSchema);
+        utilService.checkAdditionalProperties(createEmployeeDocumentValidationSchema, requestBody, 'Create Employee Document');
+        await utilService.validateRequestBody(createEmployeeDocumentSchema, requestBody);
+
+        return await esignatureService.createEmployeeDocument(tenantId, companyId, employeeId, requestBody);
+    }),
+);

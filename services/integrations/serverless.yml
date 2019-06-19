@@ -91,6 +91,7 @@ provider:
         - s3:GetObject
         - s3:GetBucket
         - s3:ListBucket
+        - s3:PutObject
       Resource: "arn:aws:s3:::*"
 
 functions:
@@ -267,6 +268,16 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents/{documentId}/preview
             method: get
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
+  createEmployeeDocument:
+    handler: esignature/src/handler.createEmployeeDocument
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents
+            method: post
             authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
