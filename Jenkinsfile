@@ -107,7 +107,8 @@ stage("Build")
                     }
                     deploymentNotification("${projectName}: successfully deployed version: ${nextVersion} to production!", teamEmail, true)
                 }
-                runIntegrationTests("production") 
+                // TODO: Run integration tests in production when e-signatures is turned on for EvoNPD
+                // runIntegrationTests("production") 
             }
         }
     }

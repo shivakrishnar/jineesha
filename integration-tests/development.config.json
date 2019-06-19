@@ -7,6 +7,10 @@
     "employeeId": 24666,
     "user": {
         "username": "direct-deposit-tester-dev@sharklasers.com",
+        "password": "Testing12#$"
+    },
+    "sbAdminUser": {
+        "username": "pre-prod-sb-admin@sharklasers.com",
         "password": "Demo123!"
     },
     "secretsManager": {
