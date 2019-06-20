@@ -1,5 +1,13 @@
 #####  asure.hr.services
 
+#### [1.6.6](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.6..1.6.5)
+
+> 20 June 2019
+
+- [`MJ-2774`](https://evolutionpayroll.atlassian.net/browse/MJ-2774): Fix integration tests for dev [`#88`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/88)
+- [`MJ-2339`](https://evolutionpayroll.atlassian.net/browse/MJ-2339): implement endpoint for uploading an employee document [`#86`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/86)
+- [`MJ-2685`](https://evolutionpayroll.atlassian.net/browse/MJ-2685): use indexed integrations endpoint for retrieving  a company's esignature configuration [`#85`](https://bitbucket.org/iSystemsTeam/asure.hr.services/pull-requests/85)
+
 #### [1.6.5](https://bitbucket.org/iSystemsTeam/asure.hr.services/compare/1.6.5..1.6.4)
 
 > 5 June 2019
