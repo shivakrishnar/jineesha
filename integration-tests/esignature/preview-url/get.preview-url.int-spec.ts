@@ -48,6 +48,7 @@ describe('get preview by tenant', () => {
         const uri: string = `/tenants/${configs.tenantId}/documents/${configs.esignature.documentId}/preview`;
         request(baseUri)
             .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
             .expect(401)
             .end((error, response) => {
@@ -150,6 +151,7 @@ describe('get preview by company', () => {
         }/preview`;
         request(baseUri)
             .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
             .expect(401)
             .end((error, response) => {

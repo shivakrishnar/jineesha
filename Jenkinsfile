@@ -109,6 +109,7 @@ stage("Build")
                 }
                 // TODO: Run integration tests in production when e-signatures is turned on for EvoNPD
                 // runIntegrationTests("production") 
+                sh "INTEGRATION_TEST_CONFIG_FILENAME=production.config.json node_modules/.bin/jest -c jest.integration.test.config.json -i -t direct deposit"
             }
         }
     }
