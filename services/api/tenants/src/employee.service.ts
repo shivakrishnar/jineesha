@@ -12,9 +12,9 @@ import * as paginationService from '../../../pagination/pagination.service';
 import * as utilService from '../../../util.service';
 
 type Employee = {
-    id: number,
-    name: string,
-    companyName: string,
+    id: number;
+    name: string;
+    companyName: string;
 };
 
 /**
@@ -99,7 +99,7 @@ export async function listByCompany(
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-        await validateCompany(tenantId, companyId);
+        await utilService.validateCompany(tenantId, companyId);
 
         let query: ParameterizedQuery;
         if (roles.includes(Role.globalAdmin) || roles.includes(Role.superAdmin)) {
@@ -121,7 +121,7 @@ export async function listByCompany(
 
         const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
 
-        return await getEmployees(tenantId, paginatedQuery, baseUrl, page)
+        return await getEmployees(tenantId, paginatedQuery, baseUrl, page);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -146,11 +146,7 @@ async function getEmployees(tenantId: string, query: Query, baseUrl: string, pag
         query: query.value,
         queryType: QueryType.Simple,
     } as DatabaseEvent;
-    const result: any = await utilService.invokeInternalService(
-        'queryExecutor',
-        payload,
-        utilService.InvocationType.RequestResponse,
-    );
+    const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
 
     const totalCount = result.recordsets[0][0].totalCount;
     const recordSet = result.recordsets[1];
@@ -168,42 +164,4 @@ async function getEmployees(tenantId: string, query: Query, baseUrl: string, pag
     });
 
     return await paginationService.createPaginatedResult(employees, baseUrl, totalCount, page);
-}
-
-/**
- * Validates that a specified company exists
- * @param {string} tenantId: The unique identifier for the tenant.
- * @param {string} companyId: The unique identifier for the company.
- */
-async function validateCompany(tenantId: string, companyId: string): Promise<void> {
-    console.info('esignatureService.validateCompany');
-
-    // companyId value must be integral
-    if (Number.isNaN(Number(companyId))) {
-        const errorMessage = `${companyId} is not a valid number`;
-        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
-    }
-
-    try {
-        // Check that the company id is valid.
-        const query = new ParameterizedQuery('GetCompanyInfo', Queries.companyInfo);
-        query.setParameter('@companyId', companyId);
-        const payload = {
-            tenantId,
-            queryName: query.name,
-            query: query.value,
-            queryType: QueryType.Simple,
-        } as DatabaseEvent;
-        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-        if (result.recordset.length === 0) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`The company id: ${companyId} not found`);
-        }
-    } catch (error) {
-        if (error instanceof ErrorMessage) {
-            throw error;
-        }
-
-        console.error(`Unable to retrieve company info. Reason: ${error}`);
-        throw errorService.getErrorResponse(0);
-    }
 }

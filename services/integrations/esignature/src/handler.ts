@@ -6,8 +6,8 @@ import * as utilService from '../../../util.service';
 import * as esignatureService from './esignature.service';
 
 import { Role } from '../../../api/models/Role';
-import { Headers } from '../../models/headers';
 import { IGatewayEventInput } from '../../../util.service';
+import { Headers } from '../../models/headers';
 import { EsignatureConfiguration } from './esignature.service';
 
 import * as thundra from '@thundra/core';
@@ -172,14 +172,14 @@ const configurationSchema = Yup.object().shape({
         .required(),
 });
 
-// Employee Document schemas
-const createEmployeeDocumentValidationSchema = {
+// Create Document schemas
+const createDocumentValidationSchema = {
     file: { required: true, type: String },
     fileName: { required: true, type: String },
     title: { required: true, type: String },
 };
 
-const createEmployeeDocumentSchema = Yup.object().shape({
+const createDocumentSchema = Yup.object().shape({
     file: Yup.string().required(),
     fileName: Yup.string().required(),
     title: Yup.string().required(),
@@ -750,10 +750,43 @@ export const createEmployeeDocument = thundraWrapper(
         utilService.checkBoundedIntegralValues(event.pathParameters);
 
         await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, createEmployeeDocumentValidationSchema);
-        utilService.checkAdditionalProperties(createEmployeeDocumentValidationSchema, requestBody, 'Create Employee Document');
-        await utilService.validateRequestBody(createEmployeeDocumentSchema, requestBody);
+        utilService.validateAndThrow(requestBody, createDocumentValidationSchema);
+        utilService.checkAdditionalProperties(createDocumentValidationSchema, requestBody, 'Create Employee Document');
+        await utilService.validateRequestBody(createDocumentSchema, requestBody);
 
-        return await esignatureService.createEmployeeDocument(tenantId, companyId, employeeId, requestBody);
+        const { givenName, surname } = securityContext.principal;
+
+        return {
+            statusCode: 201,
+            body: await esignatureService.createEmployeeDocument(tenantId, companyId, employeeId, requestBody, givenName, surname),
+        };
+    }),
+);
+
+/**
+ * Creates a specified document record for a company
+ */
+export const createCompanyDocument = thundraWrapper(
+    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.createCompanyDocument');
+
+        const { tenantId, companyId } = event.pathParameters;
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+        utilService.checkBoundedIntegralValues(event.pathParameters);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, createDocumentValidationSchema);
+        utilService.checkAdditionalProperties(createDocumentValidationSchema, requestBody, 'Create Company Document');
+        await utilService.validateRequestBody(createDocumentSchema, requestBody);
+
+        const { givenName, surname } = securityContext.principal;
+
+        return {
+            statusCode: 201,
+            body: await esignatureService.createCompanyDocument(tenantId, companyId, requestBody, givenName, surname),
+        };
     }),
 );

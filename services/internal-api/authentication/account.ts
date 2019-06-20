@@ -9,6 +9,8 @@ const TAccount = t.exact(
         email: t.string,
         password: t.string,
         enabled: t.boolean,
+        givenName: t.string,
+        surname: t.string,
     }),
     'Account',
 );
