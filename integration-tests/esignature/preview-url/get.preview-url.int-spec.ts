@@ -44,6 +44,20 @@ describe('get preview by tenant', () => {
             });
     });
 
+    test('must return a 401 if a user does not have the correct permissions', (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/documents/${configs.esignature.documentId}/preview`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(401)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return undefined;
+                });
+            });
+    });
+
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
         const uri: string = `/tenants/${invalidTenantId}/documents/${configs.esignature.documentId}/preview`;
@@ -74,7 +88,8 @@ describe('get preview by tenant', () => {
             });
     });
 
-    test.skip('must return a 400 if document ID is invalid', (done) => {
+    test('must return a 400 if document ID is invalid', async (done) => {
+        accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
         const unknownDocumentId = '9999999';
         const uri: string = `/tenants/${configs.tenantId}/documents/${unknownDocumentId}/preview`;
         request(baseUri)
@@ -89,7 +104,8 @@ describe('get preview by tenant', () => {
             });
     });
 
-    test.skip('must return a 200 when the document exists', (done) => {
+    test.skip('must return a 200 when the document exists', async (done) => {
+        accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
         const uri: string = `/tenants/${configs.tenantId}/documents/${configs.esignature.documentId}/preview`;
         request(baseUri)
             .get(uri)
@@ -129,6 +145,22 @@ describe('get preview by company', () => {
             });
     });
 
+    test('must return a 401 if a user does not have the correct permissions', (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${
+            configs.esignature.documentId
+        }/preview`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(401)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return undefined;
+                });
+            });
+    });
+
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
         const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents/${configs.esignature.documentId}/preview`;
@@ -159,7 +191,8 @@ describe('get preview by company', () => {
             });
     });
 
-    test.skip('must return a 400 if document ID is invalid', (done) => {
+    test('must return a 400 if document ID is invalid', async (done) => {
+        accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
         const unknownRequestId = 99999999;
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${unknownRequestId}/preview`;
         request(baseUri)
@@ -174,7 +207,8 @@ describe('get preview by company', () => {
             });
     });
 
-    test.skip('must return a 200 when the document exists', (done) => {
+    test.skip('must return a 200 when the document exists', async (done) => {
+        accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${
             configs.esignature.documentId
         }/preview`;
