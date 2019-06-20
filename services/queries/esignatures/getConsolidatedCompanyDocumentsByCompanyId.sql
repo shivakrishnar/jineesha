@@ -44,7 +44,23 @@ where
     CompanyID = @_companyId and
     Type = '@type'
 
+insert into @tmp
+select
+    ID,
+    UploadDate,
+    UploadedBy,
+    null,
+    Pointer,
+    Title,
+    Category,
+    'non-signature'
+from
+    dbo.FileMetadata
+where
+    CompanyID = @_companyId and
+    EmployeeCode is null
 
+-- get total count for pagination
 select count(*) as totalCount from @tmp
 
 select * from @tmp

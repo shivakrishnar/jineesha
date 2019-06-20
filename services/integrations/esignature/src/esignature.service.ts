@@ -497,27 +497,37 @@ export async function listTemplates(
             return undefined;
         }
 
-        const consolidatedDocuments: any[] = [];
-
-        // extract legacy documentation metadata
-        documents
-            .filter((doc) => doc.Type === 'legacy')
-            .forEach((document) => {
-                consolidatedDocuments.push({
+        const reducer = (memo, document) => {
+            if (document.Type === 'non-signature' || document.Type === 'legacy') {
+                const filename =
+                    document.Type === 'non-signature'
+                        ? document.Filename.split('/')[document.Filename.split('/').length - 1]
+                        : document.Filename;
+                const uploadedBy =
+                    document.Type === 'non-signature'
+                        ? document.FirstName // Note: the query returns the full name as the FirstName field
+                        : `${document.FirstName} ${document.LastName}`;
+                memo.push({
                     id: document.ID,
                     title: document.Title,
-                    filename: document.Filename,
+                    filename,
                     uploadDate: document.UploadDate,
+                    // Note: we currently don't support previewing or downloading
+                    // non-HelloSign documents in the Company Documents screen,
+                    // so we treat non-signatory documents as legacy documents.
                     isLegacyDocument: true,
-                    uploadedBy: `${document.FirstName} ${document.LastName}`,
+                    uploadedBy,
                     category: document.Category,
                 });
-            });
+            }
+            return memo;
+        };
+        const consolidatedDocuments: any[] = documents.reduce(reducer, []);
 
         const invocations: Array<Promise<any>> = [];
 
         // extract esignature documentation metadata
-        const nonLegacyDocuments = documents.filter((doc) => doc.Type !== 'legacy');
+        const nonLegacyDocuments = documents.filter((doc) => doc.Type === 'esignature');
         nonLegacyDocuments.forEach((document) => {
             invocations.push(client.template.get(document.ID));
         });
@@ -1843,7 +1853,10 @@ export async function createEmployeeDocument(
             fileName: updatedFilename,
             extension,
             uploadDate,
-            isLegacyDocument: false,
+            // Note: we currently don't support previewing or downloading
+            // non-HelloSign documents in the Company Documents screen,
+            // so we treat this as a legacy document.
+            isLegacyDocument: true,
         };
 
         await encodeId(response);
