@@ -16,3 +16,17 @@ export class DocumentMetadataListResponse {
         Object.assign(this, init);
     }
 }
+
+/**
+ * @class DocumentCategory
+ */
+export class DocumentCategory {
+    /**
+     * @property {string} value: The value that should be used to represent the category in the database
+     */
+    value: string;
+    /**
+     * @property {string} label: The label that should be used to represent the category to the user
+     */
+    label: string;
+}

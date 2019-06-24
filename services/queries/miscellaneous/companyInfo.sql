@@ -1,6 +1,6 @@
 select 
 	CompanyName,
-	ClientID = PRIntegration_ClientID,
+	ClientID = iif(PRIntegration_ClientID IS NULL, 0, PRIntegration_ClientID),
 	MatchingUrls
 from
 	dbo.Company

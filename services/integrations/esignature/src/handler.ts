@@ -6,6 +6,7 @@ import * as utilService from '../../../util.service';
 import * as esignatureService from './esignature.service';
 
 import { Role } from '../../../api/models/Role';
+import { Headers } from '../../models/headers';
 import { IGatewayEventInput } from '../../../util.service';
 import { EsignatureConfiguration } from './esignature.service';
 
@@ -444,6 +445,32 @@ export const listCompanySignatureRequests = thundraWrapper(
             path,
             securityContext.payrollApiCredentials,
         );
+    }),
+);
+
+/**
+ * List each document category among a company's documents
+ */
+export const listCompanyDocumentCategories = thundraWrapper(
+    utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+        utilService.checkBoundedIntegralValues(event.pathParameters);
+
+        const { tenantId, companyId } = event.pathParameters;
+        const {
+            requestContext: { domainName, path },
+        } = event;
+
+        const results = await esignatureService.listCompanyDocumentCategories(
+            tenantId,
+            companyId,
+            event.queryStringParameters,
+            domainName,
+            path,
+        );
+        return results.count === 0 ? { statusCode: 204, headers: new Headers() } : results;
     }),
 );
 

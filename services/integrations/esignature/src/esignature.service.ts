@@ -22,7 +22,7 @@ import { Queries } from '../../../queries/queries';
 import { Query } from '../../../queries/query';
 import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
 import { InvocationType } from '../../../util.service';
-import { DocumentMetadata, DocumentMetadataListResponse } from './documents/document';
+import { DocumentMetadata, DocumentMetadataListResponse, DocumentCategory } from './documents/document';
 import { EditUrl, SignUrl } from './embedded/url';
 import { Onboarding } from './signature-requests/onboarding';
 import { Signatory } from './signature-requests/signatory';
@@ -180,7 +180,6 @@ export async function saveTemplateMetadata(
         const errorMessage = `${companyId} is not a valid number`;
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
-
     try {
         let query = new ParameterizedQuery('GetUserByEmail', Queries.getUserById);
         query.setParameter('@username', emailAddress);
@@ -196,7 +195,6 @@ export async function saveTemplateMetadata(
             utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse),
             getCompanyDetails(tenantId, companyId),
         ]);
-
         const { FirstName, LastName } = result.recordset[0];
 
         const uploadedBy = `${FirstName} ${LastName}`;
@@ -1046,6 +1044,85 @@ export async function listCompanySignatureRequests(
         }
 
         console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * This returns a paginated list of all unique document categories among all of a company's documents
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for a company within a tenant
+ * @param {any} queryParams: The query parameters that were specified by the user. (Only page in this case)
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @returns {Promise<PaginatedResult>}: A promise of a paginated list of document categories
+ */
+export async function listCompanyDocumentCategories(
+    tenantId: string,
+    companyId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
+    console.info('esignatureService.listCompanyDocumentCategories');
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    const validQueryStringParameters: string[] = ['pageToken'];
+
+    if (queryParams) {
+        // Check for unsupported query params
+        if (!Object.keys(queryParams).every((param) => validQueryStringParameters.includes(param))) {
+            const error: ErrorMessage = errorService.getErrorResponse(30);
+            error
+                .setDeveloperMessage('Unsupported query parameter(s) supplied')
+                .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(',')}. See documentation for usage.`);
+            throw error;
+        }
+    }
+
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    try {
+        // Check that the company id is valid.
+        const companyValidationQuery = new ParameterizedQuery('GetCompanyInfo', Queries.companyInfo);
+        companyValidationQuery.setParameter('@companyId', companyId);
+        const companyValidationPayload = {
+            tenantId,
+            queryName: companyValidationQuery.name,
+            query: companyValidationQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const companyValidationResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            companyValidationPayload,
+            InvocationType.RequestResponse,
+        );
+        if (companyValidationResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The company id: ${companyId} not found`);
+        }
+
+        const query = new ParameterizedQuery('GetCompanyDocumentCategories', Queries.getDocumentCategoriesByCompany);
+        query.setParameter('@companyId', companyId);
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+        const payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const categories: DocumentCategory[] = result.recordsets[1].map((entry) => ({ value: entry.Category, label: entry.Category }));
+        const totalResults: number = result.recordsets[0][0].totalCount;
+        return paginationService.createPaginatedResult(categories, baseUrl, totalResults, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(`Failed to get document category list, reason: ${JSON.stringify(error)}`);
         throw errorService.getErrorResponse(0);
     }
 }
