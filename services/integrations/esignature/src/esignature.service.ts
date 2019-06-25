@@ -22,7 +22,7 @@ import { Queries } from '../../../queries/queries';
 import { Query } from '../../../queries/query';
 import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
 import { InvocationType } from '../../../util.service';
-import { DocumentMetadata, DocumentMetadataListResponse, DocumentCategory } from './documents/document';
+import { DocumentCategory, DocumentMetadata, DocumentMetadataListResponse } from './documents/document';
 import { EditUrl, SignUrl } from './embedded/url';
 import { Onboarding } from './signature-requests/onboarding';
 import { Signatory } from './signature-requests/signatory';
@@ -1075,11 +1075,6 @@ export async function listCompanyDocumentCategories(
     path: string,
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listCompanyDocumentCategories');
-    // companyId value must be integral
-    if (Number.isNaN(Number(companyId))) {
-        const errorMessage = `${companyId} is not a valid number`;
-        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
-    }
 
     const validQueryStringParameters: string[] = ['pageToken'];
 
@@ -1097,23 +1092,7 @@ export async function listCompanyDocumentCategories(
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-        // Check that the company id is valid.
-        const companyValidationQuery = new ParameterizedQuery('GetCompanyInfo', Queries.companyInfo);
-        companyValidationQuery.setParameter('@companyId', companyId);
-        const companyValidationPayload = {
-            tenantId,
-            queryName: companyValidationQuery.name,
-            query: companyValidationQuery.value,
-            queryType: QueryType.Simple,
-        } as DatabaseEvent;
-        const companyValidationResult: any = await utilService.invokeInternalService(
-            'queryExecutor',
-            companyValidationPayload,
-            InvocationType.RequestResponse,
-        );
-        if (companyValidationResult.recordset.length === 0) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`The company id: ${companyId} not found`);
-        }
+        await utilService.validateCompany(tenantId, companyId);
 
         const query = new ParameterizedQuery('GetCompanyDocumentCategories', Queries.getDocumentCategoriesByCompany);
         query.setParameter('@companyId', companyId);
@@ -1853,10 +1832,7 @@ export async function createEmployeeDocument(
             fileName: updatedFilename,
             extension,
             uploadDate,
-            // Note: we currently don't support previewing or downloading
-            // non-HelloSign documents in the Company Documents screen,
-            // so we treat this as a legacy document.
-            isLegacyDocument: true,
+            isLegacyDocument: false,
         };
 
         await encodeId(response);
@@ -1890,7 +1866,7 @@ export async function createCompanyDocument(
 ): Promise<any> {
     console.info('esignature.service.createCompanyDocument');
 
-    const { file, fileName, title } = request;
+    const { file, fileName, title, category } = request;
 
     try {
         // verify that the company exists
@@ -1945,7 +1921,7 @@ export async function createCompanyDocument(
         query.setParameter('@companyId', companyId);
         query.setParameter('@employeeCode', 'NULL');
         query.setParameter('@title', `${title.replace(/'/g, "''")}`);
-        query.setParameter('@category', 'NULL');
+        query.setParameter('@category', `'${category}'`);
         query.setParameter('@uploadDate', uploadDate);
         query.setParameter('@pointer', key);
         query.setParameter('@uploadedBy', `'${firstName} ${lastName}'`);
@@ -1963,7 +1939,11 @@ export async function createCompanyDocument(
             fileName: updatedFilename,
             extension,
             uploadDate,
-            isLegacyDocument: false,
+            // Note: we currently don't support previewing or downloading
+            // non-HelloSign documents in the Company Documents screen,
+            // so we treat this as a legacy document.
+            isLegacyDocument: true,
+            category,
         };
 
         await encodeId(response);

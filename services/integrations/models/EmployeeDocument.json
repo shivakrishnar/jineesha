@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Employee Document Schema",
+    "$id": "EmployeeDocument",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "The unique identifier of the document.",
+            "type": ["string"]
+        },
+        "title": {
+            "description": "The title of the document.",
+            "type": ["string"]
+        },
+        "fileName": {
+            "description": "The name of the file associated with the document.",
+            "type": ["string"]
+        },
+        "extension": {
+            "description": "The extension of the file associated with the document.",
+            "type": ["string"]
+        },
+        "uploadDate": {
+            "description": "The date the document was uploaded to the system.",
+            "type": ["string"]
+        },
+        "isLegacyDocument": {
+            "description": "Determines whether or not the document is from the legacy system.",
+            "type": ["boolean"]
+        }
+    },
+    "required": ["id", "title", "fileName", "extension", "uploadDate", "isLegacyDocument"]
+}

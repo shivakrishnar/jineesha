@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
-    "title": "Document Schema",
-    "$id": "Document",
+    "title": "Company Document Schema",
+    "$id": "CompanyDocument",
     "type": "object",
     "properties": {
         "id": {
@@ -27,7 +27,11 @@
         "isLegacyDocument": {
             "description": "Determines whether or not the document is from the legacy system.",
             "type": ["boolean"]
+        },
+        "category": {
+            "description": "The category that is associated with the document.",
+            "type": ["string"]
         }
     },
-    "required": ["id", "title", "fileName", "extension", "uploadDate", "isLegacyDocument"]
+    "required": ["id", "title", "fileName", "extension", "uploadDate", "isLegacyDocument", "category"]
 }

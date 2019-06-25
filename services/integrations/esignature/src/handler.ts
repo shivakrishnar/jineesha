@@ -172,17 +172,32 @@ const configurationSchema = Yup.object().shape({
         .required(),
 });
 
-// Create Document schemas
-const createDocumentValidationSchema = {
+// Create Employee Document schemas
+const createEmployeeDocumentValidationSchema = {
     file: { required: true, type: String },
     fileName: { required: true, type: String },
     title: { required: true, type: String },
 };
 
-const createDocumentSchema = Yup.object().shape({
+const createEmployeeDocumentSchema = Yup.object().shape({
     file: Yup.string().required(),
     fileName: Yup.string().required(),
     title: Yup.string().required(),
+});
+
+// Create Company Document schemas
+const createCompanyDocumentValidationSchema = {
+    file: { required: true, type: String },
+    fileName: { required: true, type: String },
+    title: { required: true, type: String },
+    category: { required: true, type: String },
+};
+
+const createCompanyDocumentSchema = Yup.object().shape({
+    file: Yup.string().required(),
+    fileName: Yup.string().required(),
+    title: Yup.string().required(),
+    category: Yup.string().required(),
 });
 
 /**
@@ -750,9 +765,9 @@ export const createEmployeeDocument = thundraWrapper(
         utilService.checkBoundedIntegralValues(event.pathParameters);
 
         await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, createDocumentValidationSchema);
-        utilService.checkAdditionalProperties(createDocumentValidationSchema, requestBody, 'Create Employee Document');
-        await utilService.validateRequestBody(createDocumentSchema, requestBody);
+        utilService.validateAndThrow(requestBody, createEmployeeDocumentValidationSchema);
+        utilService.checkAdditionalProperties(createEmployeeDocumentValidationSchema, requestBody, 'Create Employee Document');
+        await utilService.validateRequestBody(createEmployeeDocumentSchema, requestBody);
 
         const { givenName, surname } = securityContext.principal;
 
@@ -778,9 +793,9 @@ export const createCompanyDocument = thundraWrapper(
         utilService.checkBoundedIntegralValues(event.pathParameters);
 
         await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, createDocumentValidationSchema);
-        utilService.checkAdditionalProperties(createDocumentValidationSchema, requestBody, 'Create Company Document');
-        await utilService.validateRequestBody(createDocumentSchema, requestBody);
+        utilService.validateAndThrow(requestBody, createCompanyDocumentValidationSchema);
+        utilService.checkAdditionalProperties(createCompanyDocumentValidationSchema, requestBody, 'Create Company Document');
+        await utilService.validateRequestBody(createCompanyDocumentSchema, requestBody);
 
         const { givenName, surname } = securityContext.principal;
 

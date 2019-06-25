@@ -5,19 +5,21 @@ import * as utils from '../../utils';
 import * as esignatureService from '../esignature.service';
 
 const configs = utils.getConfig();
-const baseUri = configs.apiDomain;
+const baseUri = `${configs.nonProxiedApiDomain}/integrations`;
 
 let accessToken: string;
 let document: any;
 
 const errorMessageSchema = JSON.parse(fs.readFileSync('services/api/models/ErrorMessage.json').toString());
-const documentSchema = JSON.parse(fs.readFileSync('services/integrations/models/Document.json').toString());
+const companyDocumentSchema = JSON.parse(fs.readFileSync('services/integrations/models/CompanyDocument.json').toString());
+const employeeDocumentSchema = JSON.parse(fs.readFileSync('services/integrations/models/EmployeeDocument.json').toString());
 
-const schemas = [errorMessageSchema, documentSchema];
+const schemas = [errorMessageSchema, companyDocumentSchema, employeeDocumentSchema];
 
 const enum schemaNames {
     ErrorMessage = 'ErrorMessage',
-    Document = 'Document',
+    CompanyDocument = 'CompanyDocument',
+    EmployeeDocument = 'EmployeeDocument',
 }
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
@@ -26,7 +28,7 @@ describe('create company document', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken();
-            document = esignatureService.getValidDocumentObject();
+            document = esignatureService.getValidCompanyDocumentObject();
 
             done();
         } catch (error) {
@@ -105,6 +107,7 @@ describe('create company document', () => {
             file: 'bobam',
             fileName: 1234,
             title: 'title',
+            category: 'bobam',
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
@@ -125,6 +128,7 @@ describe('create company document', () => {
         const invalidRequest = {
             fileName: 'name.png',
             title: 'title',
+            category: 'bobam',
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
@@ -146,6 +150,7 @@ describe('create company document', () => {
             file: 'bobam',
             fileName: 'name.png',
             title: 'title',
+            category: 'bobam',
             extraField: 'man playing handball',
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
@@ -174,7 +179,7 @@ describe('create company document', () => {
             .expect(201)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
-                    return utils.assertJson(schemas, schemaNames.Document, response.body);
+                    return utils.assertJson(schemas, schemaNames.CompanyDocument, response.body);
                 });
             });
     });
@@ -184,7 +189,7 @@ describe('create employee document', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken();
-            document = esignatureService.getValidDocumentObject();
+            document = esignatureService.getValidEmployeeDocumentObject();
 
             done();
         } catch (error) {
@@ -338,7 +343,7 @@ describe('create employee document', () => {
             });
     });
 
-    test('must return a 201 when a company document is created', (done) => {
+    test('must return a 201 when an employee document is created', (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .post(uri)
@@ -349,7 +354,7 @@ describe('create employee document', () => {
             .expect(201)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
-                    return utils.assertJson(schemas, schemaNames.Document, response.body);
+                    return utils.assertJson(schemas, schemaNames.EmployeeDocument, response.body);
                 });
             });
     });
