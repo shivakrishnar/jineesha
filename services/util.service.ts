@@ -16,6 +16,7 @@ import { SecurityContext } from './internal-api/authentication/securityContext';
 import { DatabaseEvent, QueryType } from './internal-api/database/events';
 import { INotificationEvent } from './internal-api/notification/events';
 
+import { ParameterizedQuery } from './queries/parameterizedQuery';
 import { Queries } from './queries/queries';
 import { Query } from './queries/query';
 
@@ -647,4 +648,42 @@ const splitAt = (index: number) => (str: string) => [str.slice(0, index), str.sl
 export function splitFilename(filenameWithExtension: string): string[] {
     const extensionIndex = filenameWithExtension.lastIndexOf('.');
     return splitAt(extensionIndex)(filenameWithExtension);
+}
+
+/**
+ * Validates that a specified company exists
+ * @param {string} tenantId: The unique identifier for the tenant.
+ * @param {string} companyId: The unique identifier for the company.
+ */
+export async function validateCompany(tenantId: string, companyId: string): Promise<void> {
+    console.info('utilService.validateCompany');
+
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    try {
+        // Check that the company id is valid.
+        const query = new ParameterizedQuery('GetCompanyInfo', Queries.companyInfo);
+        query.setParameter('@companyId', companyId);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        if (result.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The company id: ${companyId} not found`);
+        }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(`Unable to retrieve company info. Reason: ${error}`);
+        throw errorService.getErrorResponse(0);
+    }
 }

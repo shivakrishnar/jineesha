@@ -22,7 +22,7 @@ import { Queries } from '../../../queries/queries';
 import { Query } from '../../../queries/query';
 import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
 import { InvocationType } from '../../../util.service';
-import { DocumentMetadata, DocumentMetadataListResponse, DocumentCategory } from './documents/document';
+import { DocumentCategory, DocumentMetadata, DocumentMetadataListResponse } from './documents/document';
 import { EditUrl, SignUrl } from './embedded/url';
 import { Onboarding } from './signature-requests/onboarding';
 import { Signatory } from './signature-requests/signatory';
@@ -497,27 +497,37 @@ export async function listTemplates(
             return undefined;
         }
 
-        const consolidatedDocuments: any[] = [];
-
-        // extract legacy documentation metadata
-        documents
-            .filter((doc) => doc.Type === 'legacy')
-            .forEach((document) => {
-                consolidatedDocuments.push({
+        const reducer = (memo, document) => {
+            if (document.Type === 'non-signature' || document.Type === 'legacy') {
+                const filename =
+                    document.Type === 'non-signature'
+                        ? document.Filename.split('/')[document.Filename.split('/').length - 1]
+                        : document.Filename;
+                const uploadedBy =
+                    document.Type === 'non-signature'
+                        ? document.FirstName // Note: the query returns the full name as the FirstName field
+                        : `${document.FirstName} ${document.LastName}`;
+                memo.push({
                     id: document.ID,
                     title: document.Title,
-                    filename: document.Filename,
+                    filename,
                     uploadDate: document.UploadDate,
+                    // Note: we currently don't support previewing or downloading
+                    // non-HelloSign documents in the Company Documents screen,
+                    // so we treat non-signatory documents as legacy documents.
                     isLegacyDocument: true,
-                    uploadedBy: `${document.FirstName} ${document.LastName}`,
+                    uploadedBy,
                     category: document.Category,
                 });
-            });
+            }
+            return memo;
+        };
+        const consolidatedDocuments: any[] = documents.reduce(reducer, []);
 
         const invocations: Array<Promise<any>> = [];
 
         // extract esignature documentation metadata
-        const nonLegacyDocuments = documents.filter((doc) => doc.Type !== 'legacy');
+        const nonLegacyDocuments = documents.filter((doc) => doc.Type === 'esignature');
         nonLegacyDocuments.forEach((document) => {
             invocations.push(client.template.get(document.ID));
         });
@@ -1065,11 +1075,6 @@ export async function listCompanyDocumentCategories(
     path: string,
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listCompanyDocumentCategories');
-    // companyId value must be integral
-    if (Number.isNaN(Number(companyId))) {
-        const errorMessage = `${companyId} is not a valid number`;
-        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
-    }
 
     const validQueryStringParameters: string[] = ['pageToken'];
 
@@ -1087,23 +1092,7 @@ export async function listCompanyDocumentCategories(
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-        // Check that the company id is valid.
-        const companyValidationQuery = new ParameterizedQuery('GetCompanyInfo', Queries.companyInfo);
-        companyValidationQuery.setParameter('@companyId', companyId);
-        const companyValidationPayload = {
-            tenantId,
-            queryName: companyValidationQuery.name,
-            query: companyValidationQuery.value,
-            queryType: QueryType.Simple,
-        } as DatabaseEvent;
-        const companyValidationResult: any = await utilService.invokeInternalService(
-            'queryExecutor',
-            companyValidationPayload,
-            InvocationType.RequestResponse,
-        );
-        if (companyValidationResult.recordset.length === 0) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`The company id: ${companyId} not found`);
-        }
+        await utilService.validateCompany(tenantId, companyId);
 
         const query = new ParameterizedQuery('GetCompanyDocumentCategories', Queries.getDocumentCategoriesByCompany);
         query.setParameter('@companyId', companyId);
@@ -1727,9 +1716,18 @@ async function getEmployeeLegacyDocument(tenantId: string, documentId: number): 
  * @param {string} companyId: The unique identifier for the company the user belongs to.
  * @param {string} employeeId: The unique identifier for the specified employee.
  * @param {any} request: The employee document request.
+ * @param {string} firstName: The first name of the invoking user.
+ * @param {string} lastName: The last name of the invoking user.
  * @returns {any}: A Promise of a created employee document
  */
-export async function createEmployeeDocument(tenantId: string, companyId: string, employeeId: string, request: any): Promise<any> {
+export async function createEmployeeDocument(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    request: any,
+    firstName: string,
+    lastName: string,
+): Promise<any> {
     console.info('esignature.service.createEmployeeDocument');
 
     const { file, fileName, title } = request;
@@ -1814,11 +1812,12 @@ export async function createEmployeeDocument(tenantId: string, companyId: string
         const uploadDate = new Date().toISOString();
         query = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
         query.setParameter('@companyId', companyId);
-        query.setParameter('@employeeCode', employeeCode);
+        query.setParameter('@employeeCode', `'${employeeCode}'`);
         query.setParameter('@title', `${title.replace(/'/g, "''")}`);
         query.setParameter('@category', 'NULL');
         query.setParameter('@uploadDate', uploadDate);
         query.setParameter('@pointer', key);
+        query.setParameter('@uploadedBy', `'${firstName} ${lastName}'`);
         payload = {
             tenantId,
             queryName: query.name,
@@ -1834,6 +1833,117 @@ export async function createEmployeeDocument(tenantId: string, companyId: string
             extension,
             uploadDate,
             isLegacyDocument: false,
+        };
+
+        await encodeId(response);
+
+        return response;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Creates a specified document record under a company and uploads the file to S3
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {any} request: The company document request.
+ * @param {string} firstName: The first name of the invoking user.
+ * @param {string} lastName: The last name of the invoking user.
+ * @returns {any}: A Promise of a created company document
+ */
+export async function createCompanyDocument(
+    tenantId: string,
+    companyId: string,
+    request: any,
+    firstName: string,
+    lastName: string,
+): Promise<any> {
+    console.info('esignature.service.createCompanyDocument');
+
+    const { file, fileName, title, category } = request;
+
+    try {
+        // verify that the company exists
+        await utilService.validateCompany(tenantId, companyId);
+
+        // get file data
+        const [fileData, fileContent] = file.split(',');
+        const fileBuffer = new Buffer(fileContent, 'base64');
+        const contentType = fileData.split(':')[1].split(';')[0];
+        const extension = fileData.split(';')[0].split('/')[1];
+
+        let key = `${tenantId}/${companyId}/${fileName}`;
+        let updatedFilename: string = fileName;
+
+        // check for file existence in S3
+        try {
+            const objectMetadata = await s3Client
+                .headObject({
+                    Bucket: configService.getFileBucketName(),
+                    Key: key,
+                })
+                .promise();
+
+            if (objectMetadata) {
+                updatedFilename = appendDuplicationSuffix(fileName);
+                key = `${tenantId}/${companyId}/${updatedFilename}`;
+            }
+        } catch (missingError) {
+            // We really don't mind since we expect it to be missing
+        }
+
+        // upload to S3
+        s3Client
+            .upload({
+                Bucket: configService.getFileBucketName(),
+                Key: key,
+                Body: fileBuffer,
+                Metadata: {
+                    fileName,
+                },
+                ContentEncoding: 'base64',
+                ContentType: contentType,
+            })
+            .promise()
+            .catch((e) => {
+                throw new Error(e);
+            });
+
+        // create file metadata
+        const uploadDate = new Date().toISOString();
+        const query = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
+        query.setParameter('@companyId', companyId);
+        query.setParameter('@employeeCode', 'NULL');
+        query.setParameter('@title', `${title.replace(/'/g, "''")}`);
+        query.setParameter('@category', `'${category}'`);
+        query.setParameter('@uploadDate', uploadDate);
+        query.setParameter('@pointer', key);
+        query.setParameter('@uploadedBy', `'${firstName} ${lastName}'`);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const fileMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        const response = {
+            id: fileMetadataResult.recordset[0].ID,
+            title,
+            fileName: updatedFilename,
+            extension,
+            uploadDate,
+            // Note: we currently don't support previewing or downloading
+            // non-HelloSign documents in the Company Documents screen,
+            // so we treat this as a legacy document.
+            isLegacyDocument: true,
+            category,
         };
 
         await encodeId(response);

@@ -7,7 +7,8 @@ into
     Title,
     Category,
     UploadDate,
-    Pointer
+    Pointer,
+    UploadedBy
 )
 values
 (
@@ -16,7 +17,8 @@ values
     '@title',
     @category, -- TODO: (MJ-2669) wrap in single quotes after changing Category column not nullable
     '@uploadDate',
-    '@pointer'
+    '@pointer',
+    @uploadedBy
 )
 
 select SCOPE_IDENTITY() as ID
