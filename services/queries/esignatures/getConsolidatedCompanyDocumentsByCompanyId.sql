@@ -8,7 +8,8 @@ declare @tmp table
     Filename nvarchar(max),
     Title nvarchar(max),
     Category nvarchar(max),
-    Type nvarchar(max)
+    Type nvarchar(max),
+    IsPublishedToEmployee bit
 )
 
 insert into @tmp
@@ -20,7 +21,8 @@ select
     Filename,
     Title,
     DocumentCategory,
-    'legacy'
+    'legacy',
+    IsPublishedToEmployee
 from 
     dbo.Document d
     inner join dbo.HRnextUser u
@@ -37,7 +39,8 @@ select
     null,
     null,
     null,
-    'esignature'
+    'esignature',
+    null
 from
     dbo.EsignatureMetadata
 where
@@ -53,7 +56,8 @@ select
     Pointer,
     Title,
     Category,
-    'non-signature'
+    'non-signature',
+    IsPublishedToEmployee
 from
     dbo.FileMetadata
 where
