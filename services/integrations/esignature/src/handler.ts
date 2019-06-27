@@ -190,7 +190,7 @@ const createCompanyDocumentValidationSchema = {
     file: { required: true, type: String },
     fileName: { required: true, type: String },
     title: { required: true, type: String },
-    category: { required: true, type: String },
+    category: { required: false, type: String },
     isPublishedToEmployee: { required: true, type: Boolean },
 };
 
@@ -198,7 +198,7 @@ const createCompanyDocumentSchema = Yup.object().shape({
     file: Yup.string().required(),
     fileName: Yup.string().required(),
     title: Yup.string().required(),
-    category: Yup.string().required(),
+    category: Yup.string(),
     isPublishedToEmployee: Yup.bool().required(),
 });
 

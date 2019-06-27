@@ -460,12 +460,18 @@ export async function listTemplates(
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listTemplates');
 
-    const validQueryStringParameters = ['pageToken', 'consolidated'];
+    const validQueryStringParameters = ['pageToken', 'consolidated', 'onboarding'];
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
         const errorMessage = `${companyId} is not a valid number`;
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    //cannot get onboarding and consolidated documents at the same time
+    if (queryParams && queryParams.consolidated && queryParams.onboarding) {
+        const errorMessage = 'Query params may contain either consolidated=true or onboarding=true, not both';
+        throw errorService.getErrorResponse(60).setDeveloperMessage(errorMessage);
     }
 
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
@@ -477,6 +483,8 @@ export async function listTemplates(
         // Get template IDs from the database
         if (queryParams && queryParams.consolidated === 'true') {
             query = new ParameterizedQuery('GetConslidatedDocumentsByCompanyId', Queries.getConsolidatedCompanyDocumentsByCompanyId);
+        } else if (queryParams.onboarding === 'true') {
+            query = new ParameterizedQuery('GetOnboardingDocumentsByCompanyId', Queries.getOnboardingDocumentsByCompanyId);
         } else {
             query = new ParameterizedQuery('GetEsignatureMetadataByCompanyId', Queries.getEsignatureMetadataByCompanyId);
         }
