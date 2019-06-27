@@ -74,5 +74,6 @@ export function getValidCompanyDocumentObject(): any {
         fileName: 'Create company document integration test.png',
         title: 'Create company document integration test',
         category: 'Integration test category',
+        isPublishedToEmployee: false,
     };
 }

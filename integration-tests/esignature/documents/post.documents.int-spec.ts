@@ -108,6 +108,7 @@ describe('create company document', () => {
             fileName: 1234,
             title: 'title',
             category: 'bobam',
+            isPublishedToEmployee: true,
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
@@ -129,6 +130,7 @@ describe('create company document', () => {
             fileName: 'name.png',
             title: 'title',
             category: 'bobam',
+            isPublishedToEmployee: true,
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
@@ -151,6 +153,7 @@ describe('create company document', () => {
             fileName: 'name.png',
             title: 'title',
             category: 'bobam',
+            isPublishedToEmployee: true,
             extraField: 'man playing handball',
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;

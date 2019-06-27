@@ -518,6 +518,7 @@ export async function listTemplates(
                     isLegacyDocument: true,
                     uploadedBy,
                     category: document.Category,
+                    isPublishedToEmployee: document.IsPublishedToEmployee,
                 });
             }
             return memo;
@@ -1818,6 +1819,7 @@ export async function createEmployeeDocument(
         query.setParameter('@uploadDate', uploadDate);
         query.setParameter('@pointer', key);
         query.setParameter('@uploadedBy', `'${firstName} ${lastName}'`);
+        query.setParameter('@isPublishedToEmployee', 'NULL');
         payload = {
             tenantId,
             queryName: query.name,
@@ -1866,7 +1868,7 @@ export async function createCompanyDocument(
 ): Promise<any> {
     console.info('esignature.service.createCompanyDocument');
 
-    const { file, fileName, title, category } = request;
+    const { file, fileName, title, category, isPublishedToEmployee } = request;
 
     try {
         // verify that the company exists
@@ -1925,6 +1927,7 @@ export async function createCompanyDocument(
         query.setParameter('@uploadDate', uploadDate);
         query.setParameter('@pointer', key);
         query.setParameter('@uploadedBy', `'${firstName} ${lastName}'`);
+        query.setParameter('@isPublishedToEmployee', isPublishedToEmployee ? '1' : '0');
         const payload = {
             tenantId,
             queryName: query.name,
@@ -1944,6 +1947,7 @@ export async function createCompanyDocument(
             // so we treat this as a legacy document.
             isLegacyDocument: true,
             category,
+            isPublishedToEmployee,
         };
 
         await encodeId(response);

@@ -31,7 +31,11 @@
         "category": {
             "description": "The category that is associated with the document.",
             "type": ["string"]
+        },
+        "isPublishedToEmployee": {
+            "description": "Determines whether or not the document is available to all employees under a company.",
+            "type": ["boolean"]
         }
     },
-    "required": ["id", "title", "fileName", "extension", "uploadDate", "isLegacyDocument", "category"]
+    "required": ["id", "title", "fileName", "extension", "uploadDate", "isLegacyDocument", "category", "isPublishedToEmployee"]
 }
