@@ -21,6 +21,6 @@ values
     @uploadedBy,
     @title,
     @fileName,
-    '@category',
+    @category,
     @employeeCode
 )

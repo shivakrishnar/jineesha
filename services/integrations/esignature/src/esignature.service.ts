@@ -208,7 +208,7 @@ export async function saveTemplateMetadata(
         query.setParameter('@uploadedBy', `'${uploadedBy}'`);
         query.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
         query.setParameter('@fileName', `'${fileName}'`);
-        query.setParameter('@category', category);
+        query.setParameter('@category', category ? `'${category}'` : 'NULL');
         query.setParameter('@employeeCode', 'NULL');
         payload = {
             tenantId,
@@ -313,6 +313,7 @@ export async function createBulkSignatureRequest(
         });
 
         const queryExecutions: Array<Promise<any>> = [];
+        const { category } = templateResponse.template.metadata;
 
         // Save signature request metadata to the database
         for (const code of request.employeeCodes) {
@@ -324,7 +325,7 @@ export async function createBulkSignatureRequest(
             query.setParameter('@uploadedBy', 'NULL');
             query.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
             query.setParameter('@fileName', 'NULL');
-            query.setParameter('@category', templateResponse.template.metadata.category);
+            query.setParameter('@category', category ? `'${category}'` : 'NULL');
             query.setParameter('@employeeCode', `'${code}'`);
             const payload = {
                 tenantId,
@@ -1931,7 +1932,7 @@ export async function createCompanyDocument(
         query.setParameter('@companyId', companyId);
         query.setParameter('@employeeCode', 'NULL');
         query.setParameter('@title', `${title.replace(/'/g, "''")}`);
-        query.setParameter('@category', `'${category}'`);
+        query.setParameter('@category', category ? `'${category}'` : 'NULL');
         query.setParameter('@uploadDate', uploadDate);
         query.setParameter('@pointer', key);
         query.setParameter('@uploadedBy', `'${firstName} ${lastName}'`);
