@@ -47,6 +47,19 @@ LegacyDocuments as
 	where
 		d.IsPrivateDocument = 1
 ),
+LegacyDocumentPublishedToEmployee as
+(
+ 	select 
+		 d.ID,
+		 Title = iif(d.Title is NULL, d.Filename, d.Title), 
+		 Category = d.DocumentCategory, 
+		 d.UploadDate
+	from
+		dbo.Document d
+		inner join EmployeeInfo e on d.CompanyID = e.CompanyID
+	where
+		d. IsPublishedToEmployee = 1
+),
 SignedDocuments as 
 (
 	select
@@ -59,14 +72,35 @@ SignedDocuments as
 		inner join EmployeeInfo e on 
 			d.CompanyID = e.CompanyID
 			and d.EmployeeCode = e.EmployeeCode
+	where
+		d.IsPublishedToEmployee <> 1 or d.IsPublishedToEmployee is null
 
+),
+
+NewDocumentPublishedToEmployee as 
+(
+	select
+		  d.ID,
+		  d.Title, 
+		  d.Category, 
+		  d.UploadDate
+	from
+		dbo.FileMetadata d
+		inner join EmployeeInfo e on 
+			d.CompanyID = e.CompanyID
+	where
+		d.IsPublishedToEmployee = 1
 ),
 
 CollatedDocuments as
 (
+    select ID, Title, Category, UploadDate, IsLegacyDocument = 1 from LegacyDocumentPublishedToEmployee
+    union
 	select ID, Title, Category, UploadDate, IsLegacyDocument = 1 from LegacyDocuments
 	union 
 	select ID, Title, Category, UploadDate, IsLegacyDocument = 0 from SignedDocuments
+	union
+	select ID, Title, Category, UploadDate, IsLegacyDocument = 0 from NewDocumentPublishedToEmployee
 )
 
 insert into @tmp

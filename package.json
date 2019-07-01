@@ -9,8 +9,7 @@
         "prettier": "prettier --write \"**/*.{js,ts,tsx,json,md}\"",
         "tslint:check": "tslint-config-prettier-check ./tslint.json",
         "test:base": "node_modules/.bin/jest -c jest.integration.test.config.json -i --verbose --detectOpenHandles",
-        "test:local": "INTEGRATION_TEST_CONFIG_FILENAME=local.config.json npm run test:base",
-        "version": "auto-changelog --template changelog-template.hbs -u -p && git add CHANGELOG.md"
+        "test:local": "INTEGRATION_TEST_CONFIG_FILENAME=local.config.json npm run test:base"
     },
     "husky": {
         "hooks": {
@@ -22,13 +21,6 @@
             "prettier --write",
             "git add"
         ]
-    },
-    "auto-changelog": {
-        "issueUrl": "https://evolutionpayroll.atlassian.net/browse/{id}",
-        "issuePattern": "[A-Z]+-\\d+",
-        "replaceText": {
-            "([A-Z]+-\\d+)": "[`$1`](https://evolutionpayroll.atlassian.net/browse/$1)"
-        }
     },
     "repository": {
         "type": "git",
