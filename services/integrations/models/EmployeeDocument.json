@@ -24,10 +24,10 @@
             "description": "The date the document was uploaded to the system.",
             "type": ["string"]
         },
-        "isLegacyDocument": {
-            "description": "Determines whether or not the document is from the legacy system.",
+        "isEsignatureDocument": {
+            "description": "Determines whether or not the document is an e-signature document.",
             "type": ["boolean"]
         }
     },
-    "required": ["id", "title", "fileName", "extension", "uploadDate", "isLegacyDocument"]
+    "required": ["id", "title", "fileName", "extension", "uploadDate", "isEsignatureDocument"]
 }

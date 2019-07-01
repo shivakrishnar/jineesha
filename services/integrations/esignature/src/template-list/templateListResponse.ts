@@ -88,10 +88,10 @@ export class Template {
     uploadedBy: string;
 
     /**
-     * @property {boolean} isLegacyDocument
-     * Determines if the document is a legacy HR document
+     * @property {boolean} isEsignatureDocument
+     * Determines if the document is a e-signature document
      */
-    isLegacyDocument?: boolean;
+    isEsignatureDocument?: boolean;
 
     /**
      * @property {string} category
