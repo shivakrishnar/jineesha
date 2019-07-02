@@ -60,7 +60,7 @@ const createEmbeddedTemplateValidationSchema = {
     signerRoles: { required: true, type: Array },
     ccRoles: { required: false, type: Array },
     customFields: { required: false, type: Array },
-    category: { required: true, type: String },
+    category: { required: false, type: String },
     title: { required: true, type: String },
     message: { required: true, type: String },
 };
@@ -73,7 +73,7 @@ const createEmbeddedTemplateSchema = Yup.object().shape({
         .required(),
     ccRoles: Yup.array(),
     customFields: Yup.array().of(Yup.object()),
-    category: Yup.string().required(),
+    category: Yup.string(),
     title: Yup.string().required(),
     message: Yup.string().required(),
 });
@@ -88,12 +88,12 @@ const customFieldsSchema = Yup.object().shape({
 const saveTemplateMetadataValidationSchema = {
     fileName: { required: true, type: String },
     title: { required: true, type: String },
-    category: { required: true, type: String },
+    category: { required: false, type: String },
 };
 
 const saveTemplateMetadataSchema = Yup.object().shape({
     fileName: Yup.string().required(),
-    category: Yup.string().required(),
+    category: Yup.string(),
     title: Yup.string().required(),
 });
 
@@ -190,7 +190,7 @@ const createCompanyDocumentValidationSchema = {
     file: { required: true, type: String },
     fileName: { required: true, type: String },
     title: { required: true, type: String },
-    category: { required: true, type: String },
+    category: { required: false, type: String },
     isPublishedToEmployee: { required: true, type: Boolean },
 };
 
@@ -198,7 +198,7 @@ const createCompanyDocumentSchema = Yup.object().shape({
     file: Yup.string().required(),
     fileName: Yup.string().required(),
     title: Yup.string().required(),
-    category: Yup.string().required(),
+    category: Yup.string(),
     isPublishedToEmployee: Yup.bool().required(),
 });
 

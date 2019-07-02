@@ -208,7 +208,7 @@ export async function saveTemplateMetadata(
         query.setParameter('@uploadedBy', `'${uploadedBy}'`);
         query.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
         query.setParameter('@fileName', `'${fileName}'`);
-        query.setParameter('@category', category);
+        query.setParameter('@category', category ? `'${category}'` : 'NULL');
         query.setParameter('@employeeCode', 'NULL');
         payload = {
             tenantId,
@@ -313,6 +313,7 @@ export async function createBulkSignatureRequest(
         });
 
         const queryExecutions: Array<Promise<any>> = [];
+        const { category } = templateResponse.template.metadata;
 
         // Save signature request metadata to the database
         for (const code of request.employeeCodes) {
@@ -324,7 +325,7 @@ export async function createBulkSignatureRequest(
             query.setParameter('@uploadedBy', 'NULL');
             query.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
             query.setParameter('@fileName', 'NULL');
-            query.setParameter('@category', templateResponse.template.metadata.category);
+            query.setParameter('@category', category ? `'${category}'` : 'NULL');
             query.setParameter('@employeeCode', `'${code}'`);
             const payload = {
                 tenantId,
@@ -460,12 +461,18 @@ export async function listTemplates(
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listTemplates');
 
-    const validQueryStringParameters = ['pageToken', 'consolidated'];
+    const validQueryStringParameters = ['pageToken', 'consolidated', 'onboarding'];
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
         const errorMessage = `${companyId} is not a valid number`;
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    //cannot get onboarding and consolidated documents at the same time
+    if (queryParams && queryParams.consolidated && queryParams.onboarding) {
+        const errorMessage = 'Query params may contain either consolidated=true or onboarding=true, not both';
+        throw errorService.getErrorResponse(60).setDeveloperMessage(errorMessage);
     }
 
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
@@ -477,6 +484,8 @@ export async function listTemplates(
         // Get template IDs from the database
         if (queryParams && queryParams.consolidated === 'true') {
             query = new ParameterizedQuery('GetConslidatedDocumentsByCompanyId', Queries.getConsolidatedCompanyDocumentsByCompanyId);
+        } else if (queryParams.onboarding === 'true') {
+            query = new ParameterizedQuery('GetOnboardingDocumentsByCompanyId', Queries.getOnboardingDocumentsByCompanyId);
         } else {
             query = new ParameterizedQuery('GetEsignatureMetadataByCompanyId', Queries.getEsignatureMetadataByCompanyId);
         }
@@ -1923,7 +1932,7 @@ export async function createCompanyDocument(
         query.setParameter('@companyId', companyId);
         query.setParameter('@employeeCode', 'NULL');
         query.setParameter('@title', `${title.replace(/'/g, "''")}`);
-        query.setParameter('@category', `'${category}'`);
+        query.setParameter('@category', category ? `'${category}'` : 'NULL');
         query.setParameter('@uploadDate', uploadDate);
         query.setParameter('@pointer', key);
         query.setParameter('@uploadedBy', `'${firstName} ${lastName}'`);
