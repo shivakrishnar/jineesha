@@ -89,7 +89,7 @@ async function buildPolicy(event: any, secret: string, authType: AuthorizerType)
         payrollApiCredentials = await utilService.getPayrollApiCredentials(account.tenantId);
         const hrAccessToken = (await ssoService.exchangeToken(
             account.tenantId,
-            event.authorizationToken,
+            accessToken,
             configService.getHrApplicationId(),
         )).access_token;
         const decodedHrToken: any = jwt.decode(hrAccessToken);
