@@ -32,6 +32,7 @@ insert into @employeeList
 select
     ID,
     CompanyID,
+    EmployeeCode,
     FirstName,
     LastName
 from
@@ -48,6 +49,7 @@ from
 select
     ID,
     CompanyID,
+    EmployeeCode,
     FirstName,
     LastName
 from

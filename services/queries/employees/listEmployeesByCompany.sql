@@ -11,6 +11,7 @@ where
 select
     ID,
     CompanyID,
+    EmployeeCode,
     FirstName,
     LastName
 from
