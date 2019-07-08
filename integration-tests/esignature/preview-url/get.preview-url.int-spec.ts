@@ -88,7 +88,7 @@ describe('get preview by tenant', () => {
             });
     });
 
-    test('must return a 400 if document ID is invalid', async (done) => {
+    test('must return a 404 if document ID is not found', async (done) => {
         accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
         const unknownDocumentId = '9999999';
         const uri: string = `/tenants/${configs.tenantId}/documents/${unknownDocumentId}/preview`;
@@ -96,7 +96,7 @@ describe('get preview by tenant', () => {
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(400)
+            .expect(404)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
                     return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
@@ -191,7 +191,7 @@ describe('get preview by company', () => {
             });
     });
 
-    test('must return a 400 if document ID is invalid', async (done) => {
+    test('must return a 404 if document ID is not found', async (done) => {
         accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
         const unknownRequestId = 99999999;
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${unknownRequestId}/preview`;
@@ -199,7 +199,7 @@ describe('get preview by company', () => {
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(400)
+            .expect(404)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
                     return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
@@ -284,7 +284,7 @@ describe('get preview by employee', () => {
             });
     });
 
-    test('must return a 400 if document ID is invalid', (done) => {
+    test('must return a 404 if document ID is not found', (done) => {
         const unknownRequestId = 99999999;
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
             configs.employeeId
@@ -293,7 +293,7 @@ describe('get preview by employee', () => {
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(400)
+            .expect(404)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
                     return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);

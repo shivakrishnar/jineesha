@@ -471,7 +471,7 @@ export async function listTemplates(
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    //cannot get onboarding and consolidated documents at the same time
+    // cannot get onboarding and consolidated documents at the same time
     if (queryParams && queryParams.consolidated && queryParams.onboarding) {
         const errorMessage = 'Query params may contain either consolidated=true or onboarding=true, not both';
         throw errorService.getErrorResponse(60).setDeveloperMessage(errorMessage);
@@ -1558,7 +1558,14 @@ export async function getDocumentPreview(tenantId: string, id: string): Promise<
     console.info('esignatureService.getDocumentPreview');
 
     try {
-        const [documentId, type] = await decodeId(id);
+        const decoded = await decodeId(id);
+
+        // if id does not decode properly, assume it's a HelloSign document
+        if (decoded.length === 0) {
+            return await getTemplateFiles(id);
+        }
+
+        const [documentId, type] = decoded;
 
         if (!documentId) {
             throw errorService.getErrorResponse(30).setDeveloperMessage(`Invalid document ID supplied: ${id}`);
@@ -1566,9 +1573,8 @@ export async function getDocumentPreview(tenantId: string, id: string): Promise<
 
         if (type === DocType.LegacyDocument) {
             return await getLegacyDocument(tenantId, documentId);
-        } else {
-            return await getNonLegacyDocument(tenantId, documentId);
         }
+        return await getNonLegacyDocument(tenantId, documentId);
     } catch (error) {
         if (error.message) {
             if (error.message.includes('Not found')) {
@@ -1721,6 +1727,33 @@ async function getLegacyDocument(tenantId: string, documentId: number): Promise<
         }
 
         console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Generates a document preview for a specified signed document under a tenant
+ * @param {string} templateId: The unique identifer for the specified template
+ * @returns {Promise<any>}: A Promise of a URL or file
+ */
+export async function getTemplateFiles(templateId: any): Promise<any> {
+    console.info('esignatureService.getTemplateFiles');
+
+    try {
+        const data = JSON.parse(await hellosignService.getTemplateFilesById(templateId)).data_uri;
+        return { data, mimeType: '.pdf' };
+    } catch (error) {
+        console.log(JSON.stringify(error));
+        if (error.message) {
+            if (error.message.includes('Template not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
         throw errorService.getErrorResponse(0);
     }
 }
