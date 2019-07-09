@@ -7,6 +7,7 @@ from
 select
     ID,
     CompanyID,
+    EmployeeCode,
     FirstName,
     LastName
 from

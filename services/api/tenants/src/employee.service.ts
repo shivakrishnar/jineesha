@@ -13,7 +13,9 @@ import * as utilService from '../../../util.service';
 
 type Employee = {
     id: number;
-    name: string;
+    firstName: string;
+    lastName: string;
+    eeCode: string;
     companyName: string;
 };
 
@@ -158,7 +160,9 @@ async function getEmployees(tenantId: string, query: Query, baseUrl: string, pag
     const employees: Employee[] = recordSet.map((record) => {
         return {
             id: record.ID,
-            name: `${record.FirstName} ${record.LastName}`,
+            firstName: record.FirstName,
+            lastName: record.LastName,
+            eeCode: record.EmployeeCode,
             companyName: record.CompanyName,
         } as Employee;
     });

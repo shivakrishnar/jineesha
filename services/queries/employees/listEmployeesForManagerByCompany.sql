@@ -5,6 +5,7 @@ declare @_managerRoleLevel as int = 25;
 declare @employeeList table (
     ID int,
     CompanyID int,
+    EmployeeCode nvarchar(50),
     FirstName nvarchar(max),
     LastName nvarchar(max)
 );
@@ -45,6 +46,7 @@ ManagedEmployees as
 	select 
 		ee.ID,
 		ee.CompanyID,
+        ee.EmployeeCode,
 		ee.FirstName,
         ee.LastName
 	from
@@ -60,6 +62,7 @@ insert into @employeeList
 select
     ID,
     CompanyID,
+    EmployeeCode,
     FirstName,
     LastName
 from
@@ -74,6 +77,7 @@ from
 select
     ID,
     CompanyID,
+    EmployeeCode,
     FirstName,
     LastName
 from

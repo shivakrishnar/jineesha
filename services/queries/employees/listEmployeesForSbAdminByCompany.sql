@@ -3,6 +3,7 @@ declare @_username as nvarchar(max) = '@username';
 declare @employeeList table (
     ID int,
     CompanyID int,
+    EmployeeCode nvarchar(50),
     FirstName nvarchar(max),
     LastName nvarchar(max)
 )
@@ -22,6 +23,7 @@ insert into @employeeList
 select
     ee.ID,
     ee.CompanyID,
+    ee.EmployeeCode,
     ee.FirstName,
     ee.LastName
 from
@@ -41,6 +43,7 @@ from
 select
     ID,
     CompanyID,
+    EmployeeCode,
     FirstName,
     LastName
 from
