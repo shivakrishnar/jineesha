@@ -92,3 +92,20 @@ export async function getTemplateEditUrlById(templateId: string): Promise<any> {
         throw new Error('Unable to retrieve the edit url for the specified template');
     }
 }
+
+export async function getTemplateFilesById(templateId: string): Promise<any> {
+    console.info('hellosignService.getTemplateFilesById');
+
+    try {
+        const apiKey = JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey;
+        const url = `https://${apiKey}:@api.hellosign.com/v3/template/files/${templateId}?get_data_uri=true`;
+
+        return await request.get({
+            url,
+            encoding: undefined,
+        });
+    } catch (e) {
+        console.log(e);
+        throw e;
+    }
+}

@@ -225,6 +225,8 @@ export async function saveTemplateMetadata(
             title,
             fileName,
             category,
+            isEsignatureDocument: true,
+            isPublishedToEmployee: false,
         } as TemplateMetadata;
     } catch (error) {
         if (error.message) {
@@ -469,7 +471,7 @@ export async function listTemplates(
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    //cannot get onboarding and consolidated documents at the same time
+    // cannot get onboarding and consolidated documents at the same time
     if (queryParams && queryParams.consolidated && queryParams.onboarding) {
         const errorMessage = 'Query params may contain either consolidated=true or onboarding=true, not both';
         throw errorService.getErrorResponse(60).setDeveloperMessage(errorMessage);
@@ -506,7 +508,8 @@ export async function listTemplates(
             return undefined;
         }
 
-        const reducer = (memo, document) => {
+        const reducer = async (memoPromise, document) => {
+            const memo = await memoPromise;
             if (document.Type === 'non-signature' || document.Type === 'legacy') {
                 const filename =
                     document.Type === 'non-signature'
@@ -516,15 +519,13 @@ export async function listTemplates(
                     document.Type === 'non-signature'
                         ? document.FirstName // Note: the query returns the full name as the FirstName field
                         : `${document.FirstName} ${document.LastName}`;
+                const id = await encodeId(document.ID, document.Type === 'non-signature' ? DocType.S3Document : DocType.LegacyDocument);
                 memo.push({
-                    id: document.ID,
+                    id,
                     title: document.Title,
                     filename,
                     uploadDate: document.UploadDate,
-                    // Note: we currently don't support previewing or downloading
-                    // non-HelloSign documents in the Company Documents screen,
-                    // so we treat non-signatory documents as legacy documents.
-                    isLegacyDocument: true,
+                    isEsignatureDocument: false,
                     uploadedBy,
                     category: document.Category,
                     isPublishedToEmployee: document.IsPublishedToEmployee,
@@ -532,7 +533,7 @@ export async function listTemplates(
             }
             return memo;
         };
-        const consolidatedDocuments: any[] = documents.reduce(reducer, []);
+        const consolidatedDocuments: any[] = await documents.reduce(reducer, []);
 
         const invocations: Array<Promise<any>> = [];
 
@@ -577,7 +578,7 @@ export async function listTemplates(
                             filename: fileName,
                             uploadDate,
                             uploadedBy,
-                            isLegacyDocument: queryParams && queryParams.consolidated === 'true' ? false : undefined,
+                            isEsignatureDocument: true,
                             category,
                         }),
                     );
@@ -1557,17 +1558,23 @@ export async function getDocumentPreview(tenantId: string, id: string): Promise<
     console.info('esignatureService.getDocumentPreview');
 
     try {
-        const [documentId, isLegacyDocument] = await decodeId(id);
+        const decoded = await decodeId(id);
+
+        // if id does not decode properly, assume it's a HelloSign document
+        if (decoded.length === 0) {
+            return await getTemplateFiles(id);
+        }
+
+        const [documentId, type] = decoded;
 
         if (!documentId) {
             throw errorService.getErrorResponse(30).setDeveloperMessage(`Invalid document ID supplied: ${id}`);
         }
 
-        if (isLegacyDocument === 1) {
-            return await getEmployeeLegacyDocument(tenantId, documentId);
-        } else {
-            return await getEmployeeSignedDocument(tenantId, documentId);
+        if (type === DocType.LegacyDocument) {
+            return await getLegacyDocument(tenantId, documentId);
         }
+        return await getNonLegacyDocument(tenantId, documentId);
     } catch (error) {
         if (error.message) {
             if (error.message.includes('Not found')) {
@@ -1615,11 +1622,18 @@ async function getEmployeeLegacyAndSignedDocuments(
             return undefined;
         }
 
+        const updatedDocuments = [];
         for (const document of documents) {
-            await encodeId(document);
+            const id = await encodeId(document.id, document.isLegacyDocument ? DocType.LegacyDocument : DocType.S3Document);
+            updatedDocuments.push({
+                id,
+                title: document.title,
+                category: document.category,
+                uploadDate: document.uploadDate,
+            });
         }
 
-        return await paginationService.createPaginatedResult(documents, baseUrl, totalRecords, page);
+        return await paginationService.createPaginatedResult(updatedDocuments, baseUrl, totalRecords, page);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -1635,13 +1649,13 @@ const s3Client = new AWS.S3({
 });
 
 /**
- * Retrieves an employee's e-signed document
+ * Retrieves a non-legacy document
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {number} documentId: The unique identifier of the specified document
  * @returns {any}: A Promise of a presigned URL
  */
-async function getEmployeeSignedDocument(tenantId: string, documentId: number): Promise<any> {
-    console.info('esignature.service.getEmployeeSignedDocument');
+async function getNonLegacyDocument(tenantId: string, documentId: number): Promise<any> {
+    console.info('esignature.service.getNonLegacyDocument');
 
     try {
         const query = new ParameterizedQuery('GetFileMetadataById', Queries.getFileMetadataById);
@@ -1680,13 +1694,13 @@ async function getEmployeeSignedDocument(tenantId: string, documentId: number): 
 }
 
 /**
- * Retrieves an employee's legacy document
+ * Retrieves an HR legacy document
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {number} documentId: The unique identifier of the specified document
  * @returns {any}: A Promise of a document
  */
-async function getEmployeeLegacyDocument(tenantId: string, documentId: number): Promise<any> {
-    console.info('esignature.service.getEmployeeLegacyDocument');
+async function getLegacyDocument(tenantId: string, documentId: number): Promise<any> {
+    console.info('esignature.service.getLegacyDocument');
 
     try {
         const query = new ParameterizedQuery('GetDocumentById', Queries.getDocumentById);
@@ -1700,11 +1714,8 @@ async function getEmployeeLegacyDocument(tenantId: string, documentId: number): 
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
         if (result.recordset.length === 0) {
-            console.log('here');
             throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${documentId} not found`);
         }
-
-        console.log(result);
 
         const base64String = result.recordset[0].FSDocument;
         const extension = result.recordset[0].Extension;
@@ -1716,6 +1727,33 @@ async function getEmployeeLegacyDocument(tenantId: string, documentId: number): 
         }
 
         console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Generates a document preview for a specified signed document under a tenant
+ * @param {string} templateId: The unique identifer for the specified template
+ * @returns {Promise<any>}: A Promise of a URL or file
+ */
+export async function getTemplateFiles(templateId: any): Promise<any> {
+    console.info('esignatureService.getTemplateFiles');
+
+    try {
+        const data = JSON.parse(await hellosignService.getTemplateFilesById(templateId)).data_uri;
+        return { data, mimeType: '.pdf' };
+    } catch (error) {
+        console.log(JSON.stringify(error));
+        if (error.message) {
+            if (error.message.includes('Template not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
         throw errorService.getErrorResponse(0);
     }
 }
@@ -1837,16 +1875,16 @@ export async function createEmployeeDocument(
         } as DatabaseEvent;
         const fileMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
+        const id = await encodeId(fileMetadataResult.recordset[0].ID, DocType.S3Document);
+
         const response = {
-            id: fileMetadataResult.recordset[0].ID,
+            id,
             title,
             fileName: updatedFilename,
             extension,
             uploadDate,
-            isLegacyDocument: false,
+            isEsignatureDocument: false,
         };
-
-        await encodeId(response);
 
         return response;
     } catch (error) {
@@ -1945,21 +1983,18 @@ export async function createCompanyDocument(
         } as DatabaseEvent;
         const fileMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
+        const id = await encodeId(fileMetadataResult.recordset[0].ID, DocType.S3Document);
+
         const response = {
-            id: fileMetadataResult.recordset[0].ID,
+            id,
             title,
             fileName: updatedFilename,
             extension,
             uploadDate,
-            // Note: we currently don't support previewing or downloading
-            // non-HelloSign documents in the Company Documents screen,
-            // so we treat this as a legacy document.
-            isLegacyDocument: true,
+            isEsignatureDocument: false,
             category,
             isPublishedToEmployee,
         };
-
-        await encodeId(response);
 
         return response;
     } catch (error) {
@@ -1990,10 +2025,15 @@ function validateQueryStringParameters(validInputs: string[], queryParameters: a
     }
 }
 
-async function encodeId(result: any): Promise<void> {
+enum DocType {
+    LegacyDocument = 1,
+    S3Document = 2,
+}
+
+async function encodeId(id: any, type: DocType): Promise<string> {
     const salt = JSON.parse(await utilService.getSecret(configService.getSaltId())).salt;
     const hashids = new Hashids(salt);
-    result.id = hashids.encode(result.id, result.isLegacyDocument ? 1 : 0);
+    return hashids.encode(id, type);
 }
 
 async function decodeId(id: string): Promise<number[]> {
