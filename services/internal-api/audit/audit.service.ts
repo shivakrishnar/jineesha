@@ -2,9 +2,58 @@ import { ParameterizedQuery } from '../../queries/parameterizedQuery';
 import { Queries } from '../../queries/queries';
 
 import * as utilService from '../../util.service';
-import { InvocationType } from '../../util.service';
+import { InvocationType, CompanyInfo } from '../../util.service';
 import { DatabaseEvent, QueryType } from '../database/events';
 import { IAudit } from './audit';
+import * as AWS from 'aws-sdk';
+import * as configService from '../../config.service';
+import * as uuidV4 from 'uuid/v4';
+
+/**
+ *  Logs a message to cloud watch
+ *  @param {string} message: the message to be logged
+ */
+async function logToCloudWatch(message: string): Promise<void> {
+    const cloudwatchLogs = new AWS.CloudWatchLogs({
+        region: configService.getAwsRegion(),
+    });
+    let logGroupFound = false;
+    let nextTokenValue = '';
+    let hasNextToken = false;
+    do {
+        const apiResult = await cloudwatchLogs.describeLogGroups(hasNextToken ? { nextToken: nextTokenValue } : {}).promise();
+        const names = apiResult.logGroups.filter((logGroup) => logGroup.logGroupName === configService.getAuditLogGroupName());
+        if (names.length != 0) {
+            logGroupFound = true;
+            break;
+        }
+        hasNextToken = apiResult.nextToken ? true : false;
+        nextTokenValue = apiResult.nextToken;
+    } while (hasNextToken && !logGroupFound);
+
+    if (!logGroupFound) {
+        await cloudwatchLogs.createLogGroup({ logGroupName: configService.getAuditLogGroupName() }).promise();
+    }
+
+    const date = new Date()
+        .toISOString()
+        .replace(/-/g, '/')
+        .replace(/:/g, '.');
+    const logStreamName = `${date} - ${uuidV4()}`;
+    await cloudwatchLogs.createLogStream({ logGroupName: configService.getAuditLogGroupName(), logStreamName }).promise();
+
+    const putLogEventsParams = {
+        logEvents: [
+            {
+                message,
+                timestamp: Date.now(),
+            },
+        ],
+        logGroupName: configService.getAuditLogGroupName(),
+        logStreamName,
+    };
+    await cloudwatchLogs.putLogEvents(putLogEventsParams).promise();
+}
 
 /**
  * Logs an event to the audit trail.
@@ -24,6 +73,7 @@ export async function logAudit(audit: IAudit): Promise<boolean> {
             const employeeDisplayName = await getEmployeeDisplayName(tenantId, employeeId);
             await createAuditDetailEntries(tenantId, auditId, audit, employeeDisplayName);
         }
+
         return true;
     } catch (error) {
         console.error(`error creating audit: ${error}`);
@@ -117,6 +167,32 @@ async function createAuditDetailEntries(tenantId: string, auditId: number, audit
         // tslint:enable no-null-keyword
         fieldQuery.setParameter('@areaOfChange', areaOfChange);
         auditDetailQuery.appendFilter(fieldQuery.value, false);
+
+        let companyDetails: CompanyInfo = await utilService.validateCompany(tenantId, companyId);
+        let date = new Date().toISOString();
+        const auditPayload = {
+            tenantID: tenantId,
+            company: {
+                name: companyDetails.CompanyName,
+                id: Number(companyId),
+            },
+            employe: employeeDisplayName,
+            changes: {
+                area: areaOfChange,
+                field: fieldKeys[i],
+                previous: oldValues[i],
+                current: newValues[i],
+                type,
+                transaction: await getTransactionName(audit.isEvoCall, audit),
+            },
+            username: audit.userEmail,
+            auditDate: date,
+        };
+        if (auditPayload.changes.field === 'SSN') {
+            auditPayload.changes.previous = utilService.MaskSSN(auditPayload.changes.previous);
+            auditPayload.changes.current = utilService.MaskSSN(auditPayload.changes.current);
+        }
+        logToCloudWatch(JSON.stringify(auditPayload));
     }
 
     const payload = {

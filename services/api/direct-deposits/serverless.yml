@@ -29,6 +29,7 @@ provider:
     evoHrGlobalAdmin: ${file(${self:custom.configFile}):evoHrGlobalAdmin}
     apiDomain: ${file(${self:custom.configFile}):apiDomain}
     fromEmail: ${file(${self:custom.configFile}):fromEmail}
+    AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
 
   iamRoleStatements:
     - Effect: Allow

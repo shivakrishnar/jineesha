@@ -30,8 +30,16 @@ provider:
     scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
     hrApplicationId: ${file(${self:custom.configFile}):hrApplicationId}
     lambdaPerfMonitorApiKey: ${file(${self:custom.configFile}):lambdaPerfMonitorApiKey}
+    AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
 
   iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+        - logs:DescribeLogGroups
+      Resource: "*"
     - Effect: Allow
       Action: # Gives permission to create the necessary ENIs for execution in VPC
         - ec2:CreateNetworkInterface

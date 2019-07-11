@@ -21,7 +21,8 @@
     "nodemailer": "^5.1.1",
     "request-promise-native": "^1.0.5",
     "serverless-plugin-thundra": "^1.2.0",
-    "superagent": "^3.5.2"
+    "superagent": "^3.5.2",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.17",

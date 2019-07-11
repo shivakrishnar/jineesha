@@ -695,3 +695,14 @@ export async function validateCompany(tenantId: string, companyId: string): Prom
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * masks a given social security number
+ * @param {string} ssn: Social Security Number in form "XXX-XX-XXXX"
+ * @returns: The masked SSN, showing only the last four digits
+ */
+export function MaskSSN(ssn: string): string {
+    const ssnSections = ssn.split('-');
+    const lastFourDigits: string = ssnSections[ssnSections.length - 1];
+    return 'XXX-XX-' + lastFourDigits;
+}
