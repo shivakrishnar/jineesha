@@ -165,6 +165,16 @@ functions:
             cors:
               origin: '*'
 
+  listUserRoles:
+    handler: src/handler.listUserRoles
+    events:
+        - http:
+            path: /tenants/{tenantId}/roles
+            method: get
+            authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
 stepFunctions:
   stateMachines:
      HrDatabaseCreator:
