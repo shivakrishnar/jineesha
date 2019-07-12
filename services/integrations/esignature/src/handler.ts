@@ -177,12 +177,14 @@ const createEmployeeDocumentValidationSchema = {
     file: { required: true, type: String },
     fileName: { required: true, type: String },
     title: { required: true, type: String },
+    isPrivate: { required: true, type: Boolean },
 };
 
 const createEmployeeDocumentSchema = Yup.object().shape({
     file: Yup.string().required(),
     fileName: Yup.string().required(),
     title: Yup.string().required(),
+    isPrivate: Yup.string().required(),
 });
 
 // Create Company Document schemas

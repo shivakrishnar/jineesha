@@ -1816,7 +1816,7 @@ export async function createEmployeeDocument(
 ): Promise<any> {
     console.info('esignature.service.createEmployeeDocument');
 
-    const { file, fileName, title } = request;
+    const { file, fileName, title, isPrivate } = request;
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -1889,7 +1889,7 @@ export async function createEmployeeDocument(
         query.setParameter('@uploadDate', uploadDate);
         query.setParameter('@pointer', key);
         query.setParameter('@uploadedBy', `'${firstName} ${lastName}'`);
-        query.setParameter('@isPublishedToEmployee', 'NULL');
+        query.setParameter('@isPublishedToEmployee', isPrivate ? '0' : '1');
         payload = {
             tenantId,
             queryName: query.name,

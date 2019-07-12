@@ -78,7 +78,7 @@ SignedDocuments as
 			d.CompanyID = e.CompanyID
 			and d.EmployeeCode = e.EmployeeCode
 	where
-		d.IsPublishedToEmployee <> 1 or d.IsPublishedToEmployee is null
+		d.IsPublishedToEmployee <> 0 or d.IsPublishedToEmployee is null
 
 ),
 
@@ -95,7 +95,7 @@ NewDocumentPublishedToEmployee as
 		inner join EmployeeInfo e on 
 			d.CompanyID = e.CompanyID
 	where
-		d.IsPublishedToEmployee = 1
+		d.IsPublishedToEmployee = 1 and d.EmployeeCode is null
 ),
 
 CollatedDocuments as
