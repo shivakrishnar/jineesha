@@ -650,12 +650,19 @@ export function splitFilename(filenameWithExtension: string): string[] {
     return splitAt(extensionIndex)(filenameWithExtension);
 }
 
+export type CompanyInfo = {
+    CompanyName: string;
+    ClientID: string;
+    MatchingUrls: string;
+};
+
 /**
  * Validates that a specified company exists
  * @param {string} tenantId: The unique identifier for the tenant.
  * @param {string} companyId: The unique identifier for the company.
+ * @returns: The company details.
  */
-export async function validateCompany(tenantId: string, companyId: string): Promise<void> {
+export async function validateCompany(tenantId: string, companyId: string): Promise<CompanyInfo> {
     console.info('utilService.validateCompany');
 
     // companyId value must be integral
@@ -678,6 +685,7 @@ export async function validateCompany(tenantId: string, companyId: string): Prom
         if (result.recordset.length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage(`The company id: ${companyId} not found`);
         }
+        return result.recordset[0];
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -686,4 +694,15 @@ export async function validateCompany(tenantId: string, companyId: string): Prom
         console.error(`Unable to retrieve company info. Reason: ${error}`);
         throw errorService.getErrorResponse(0);
     }
+}
+
+/**
+ * masks a given social security number
+ * @param {string} ssn: Social Security Number in form "XXX-XX-XXXX"
+ * @returns: The masked SSN, showing only the last four digits
+ */
+export function MaskSSN(ssn: string): string {
+    const ssnSections = ssn.split('-');
+    const lastFourDigits: string = ssnSections[ssnSections.length - 1];
+    return 'XXX-XX-' + lastFourDigits;
 }

@@ -23,6 +23,7 @@ provider:
     teamNotificationTopicArn: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:mojojojo-status-notification
     pageLimitDefault: 30
     pageLimitMax: 100
+    AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
 
   iamRoleStatements:
     - Effect: Allow
