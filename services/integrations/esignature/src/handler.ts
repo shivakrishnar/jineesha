@@ -697,7 +697,7 @@ export const listEmployeeDocuments = thundraWrapper(
         utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
         utilService.checkBoundedIntegralValues(event.pathParameters);
 
-        const { tenantId, employeeId } = event.pathParameters;
+        const { tenantId, companyId, employeeId } = event.pathParameters;
 
         const {
             requestContext: { domainName, path },
@@ -705,6 +705,7 @@ export const listEmployeeDocuments = thundraWrapper(
 
         return await esignatureService.listEmployeeDocuments(
             tenantId,
+            companyId,
             employeeId,
             event.queryStringParameters,
             domainName,

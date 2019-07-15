@@ -11,6 +11,7 @@ declare @tmp table
     ID  bigint,
 	CompanyID int, 
 	Title nvarchar(max),
+	Filename nvarchar(max),
 	Category nvarchar(max),
 	UploadDate datetime2(3),
 	IsLegacyDocument bit
@@ -43,6 +44,7 @@ SignedDocuments as
 	  ID,
 	  CompanyID,
 	  Title, 
+	  Filename = right(Pointer, charindex('/', reverse(Pointer) + '/') - 1),
 	  Category, 
 	  UploadDate
 	from
@@ -60,9 +62,9 @@ ExcludedCompanies as
 ),
 CollatedDocuments as
 (
-	select ID, CompanyID, Title, Category, UploadDate, IsLegacyDocument = 1 from LegacyDocuments
+	select ID, CompanyID, Title, Filename, Category, UploadDate, IsLegacyDocument = 1 from LegacyDocuments
 	union 
-	select ID, CompanyID, Title, Category, UploadDate, IsLegacyDocument = 0 from SignedDocuments
+	select ID, CompanyID, Title, Filename, Category, UploadDate, IsLegacyDocument = 0 from SignedDocuments
 )
 
 insert into @tmp
@@ -78,6 +80,7 @@ select totalCount = count(*) from @tmp
 select 
 	id = ID, 
 	title = Title, 
+	fileName = Filename,
 	category = Category, 
 	uploadDate = UploadDate,
 	isLegacyDocument = IsLegacyDocument
