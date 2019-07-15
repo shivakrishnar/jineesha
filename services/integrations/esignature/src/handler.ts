@@ -202,6 +202,30 @@ const createCompanyDocumentSchema = Yup.object().shape({
     isPublishedToEmployee: Yup.bool().required(),
 });
 
+// Update Company Document schemas
+const updateCompanyDocumentValidationSchema = {
+    title: { required: false, type: String },
+    category: { required: false, type: String },
+    fileObject: { required: false, type: Object },
+    isPublishedToEmployee: { required: false, type: Boolean },
+};
+const updateCompanyDocumentSchema = Yup.object().shape({
+    title: Yup.string(),
+    category: Yup.string(),
+    fileObject: Yup.object(),
+    isPublishedToEmployee: Yup.bool(),
+});
+const fileObjectValidationSchema = {
+    file: { required: false, type: String },
+    fileName: { required: false, type: String },
+};
+const fileObjectSchema = Yup.object().shape({
+    file: Yup.string().required(),
+    fileName: Yup.string()
+        .required()
+        .test('file-name-has-extension', 'fileName must include a file extension.', (value) => value.includes('.')),
+});
+
 /**
  * Creates a new template of a document to be e-signed
  */
@@ -805,5 +829,33 @@ export const createCompanyDocument = thundraWrapper(
             statusCode: 201,
             body: await esignatureService.createCompanyDocument(tenantId, companyId, requestBody, givenName, surname),
         };
+    }),
+);
+
+/**
+ * Updates a specified document record for a company
+ */
+export const updateCompanyDocument = thundraWrapper(
+    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.updateCompanyDocument');
+
+        const { tenantId, companyId, documentId } = event.pathParameters;
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, updateCompanyDocumentValidationSchema);
+        utilService.checkAdditionalProperties(updateCompanyDocumentValidationSchema, requestBody, 'Update Company Document');
+        await utilService.validateRequestBody(updateCompanyDocumentSchema, requestBody);
+        if (requestBody.fileObject) {
+            await utilService.requirePayload(requestBody.fileObject);
+            utilService.validateAndThrow(requestBody.fileObject, fileObjectValidationSchema);
+            utilService.checkAdditionalProperties(fileObjectValidationSchema, requestBody.fileObject, 'File Object');
+            await utilService.validateRequestBody(fileObjectSchema, requestBody.fileObject);
+        }
+
+        return await esignatureService.updateCompanyDocument(tenantId, companyId, documentId, requestBody);
     }),
 );

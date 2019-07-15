@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as request from 'supertest';
 import * as uuidV4 from 'uuid/v4';
 import * as utils from '../../utils';
-import * as esignatureService from '../esignature.service';
+import * as documentsService from './documents.service';
 
 const configs = utils.getConfig();
 const baseUri = `${configs.nonProxiedApiDomain}/integrations`;
@@ -28,7 +28,7 @@ describe('create company document', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken();
-            document = esignatureService.getValidCompanyDocumentObject();
+            document = documentsService.getValidPostCompanyDocumentObject();
 
             done();
         } catch (error) {
@@ -192,7 +192,7 @@ describe('create employee document', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken();
-            document = esignatureService.getValidEmployeeDocumentObject();
+            document = documentsService.getValidPostEmployeeDocumentObject();
 
             done();
         } catch (error) {

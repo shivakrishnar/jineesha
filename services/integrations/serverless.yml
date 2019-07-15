@@ -93,6 +93,7 @@ provider:
         - s3:GetBucket
         - s3:ListBucket
         - s3:PutObject
+        - s3:DeleteObject
       Resource: "arn:aws:s3:::*"
 
 functions:
@@ -299,6 +300,16 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/documents
             method: post
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
+  updateCompanyDocument:
+    handler: esignature/src/handler.updateCompanyDocument
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/documents/{documentId}
+            method: patch
             authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'

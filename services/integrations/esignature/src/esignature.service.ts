@@ -1823,22 +1823,7 @@ export async function createEmployeeDocument(
         let key = `${tenantId}/${companyId}/${employeeId}/${fileName}`;
         let updatedFilename: string = fileName;
 
-        // check for file existence in S3
-        try {
-            const objectMetadata = await s3Client
-                .headObject({
-                    Bucket: configService.getFileBucketName(),
-                    Key: key,
-                })
-                .promise();
-
-            if (objectMetadata) {
-                updatedFilename = appendDuplicationSuffix(fileName);
-                key = `${tenantId}/${companyId}/${employeeId}/${updatedFilename}`;
-            }
-        } catch (missingError) {
-            // We really dont mind since we expect it to be missing
-        }
+        [updatedFilename, key] = await checkForFileExistence(key, fileName, tenantId, companyId);
 
         s3Client
             .upload({
@@ -1930,22 +1915,7 @@ export async function createCompanyDocument(
         let key = `${tenantId}/${companyId}/${fileName}`;
         let updatedFilename: string = fileName;
 
-        // check for file existence in S3
-        try {
-            const objectMetadata = await s3Client
-                .headObject({
-                    Bucket: configService.getFileBucketName(),
-                    Key: key,
-                })
-                .promise();
-
-            if (objectMetadata) {
-                updatedFilename = appendDuplicationSuffix(fileName);
-                key = `${tenantId}/${companyId}/${updatedFilename}`;
-            }
-        } catch (missingError) {
-            // We really don't mind since we expect it to be missing
-        }
+        [updatedFilename, key] = await checkForFileExistence(key, fileName, tenantId, companyId);
 
         // upload to S3
         s3Client
@@ -2008,6 +1978,281 @@ export async function createCompanyDocument(
 }
 
 /**
+ * Updates a specified document record under a company
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {string} documentId: The unique identifier for the document to be updated.
+ * @param {any} request: The company document request.
+ * @returns {any}: A Promise of an updated company document
+ */
+export async function updateCompanyDocument(tenantId: string, companyId: string, documentId: string, request: any): Promise<any> {
+    console.info('esignature.service.updateCompanyDocument');
+
+    try {
+        // verify that the company exists
+        await utilService.validateCompany(tenantId, companyId);
+
+        const decoded = await decodeId(documentId);
+
+        const [decodedId, type] = decoded;
+
+        if (!decodedId) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Document with ID ${documentId} not found.`);
+        }
+
+        if (type === DocType.S3Document) {
+            return await updateS3Document(tenantId, companyId, decodedId, request);
+        }
+        return await updateLegacyDocument(tenantId, decodedId, request);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Updates a specified S3 document record under a company
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {string} documentId: The unique identifier for the document to be updated.
+ * @param {any} request: The company document request.
+ * @returns {any}: A Promise of an updated S3 company document
+ */
+async function updateS3Document(tenantId: string, companyId: string, documentId: number, request: any): Promise<any> {
+    console.info('esignature.service.updateS3Document');
+
+    const { fileObject, title, category, isPublishedToEmployee } = request;
+
+    try {
+        // get file metadata / make sure it exists in the database
+        let query = new ParameterizedQuery('getFileMetadataById', Queries.getFileMetadataById);
+        query.setParameter('@id', documentId);
+        let payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const fileMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (fileMetadataResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${documentId} not found`);
+        }
+
+        const {
+            Title: oldTitle,
+            Category: oldCategory,
+            Pointer: oldPointer,
+            IsPublishedToEmployee: oldIsPublishedToEmployee,
+            UploadDate: oldUploadDate,
+        } = fileMetadataResult.recordset[0];
+        const oldExtension = oldPointer.split('.').pop();
+        const oldFileName = oldPointer.split('/').pop();
+
+        let newFileName;
+        let newExtension;
+        let newKey;
+        if (fileObject && fileObject.file && fileObject.fileName) {
+            const { file, fileName } = fileObject;
+            // get file data
+            const [fileData, fileContent] = file.split(',');
+            const fileBuffer = new Buffer(fileContent, 'base64');
+            const contentType = fileData.split(':')[1].split(';')[0];
+            newExtension = fileName.split('.').pop();
+            newFileName = fileName;
+            newKey = `${tenantId}/${companyId}/${newFileName}`;
+
+            [newFileName, newKey] = await checkForFileExistence(newKey, newFileName, tenantId, companyId);
+
+            // upload new file to S3
+            s3Client
+                .upload({
+                    Bucket: configService.getFileBucketName(),
+                    Key: newKey,
+                    Body: fileBuffer,
+                    Metadata: {
+                        fileName,
+                    },
+                    ContentEncoding: 'base64',
+                    ContentType: contentType,
+                })
+                .promise()
+                .catch((e) => {
+                    throw new Error(e);
+                });
+
+            s3Client
+                .deleteObject({
+                    Bucket: configService.getFileBucketName(),
+                    Key: oldPointer,
+                })
+                .promise()
+                .catch((e) => {
+                    throw new Error(e);
+                });
+        }
+
+        // update record in database
+        let published = oldIsPublishedToEmployee ? '1' : '0';
+        if (isPublishedToEmployee !== undefined) {
+            published = isPublishedToEmployee ? '1' : '0';
+        }
+        query = new ParameterizedQuery('UpdateFileMetadataById', Queries.updateFileMetadataById);
+        query.setParameter('@id', documentId);
+        query.setParameter('@title', title ? `${title.replace(/'/g, "''")}` : `${oldTitle.replace(/'/g, "''")}`);
+        query.setParameter('@category', category !== undefined ? `'${category}'` : `'${oldCategory}'`);
+        query.setParameter('@pointer', newKey || oldPointer);
+        query.setParameter('@isPublishedToEmployee', published);
+        payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        const encodedId = await encodeId(documentId, DocType.S3Document);
+
+        const response = {
+            id: encodedId,
+            title: title || oldTitle,
+            fileName: newFileName || oldFileName,
+            extension: newExtension || oldExtension,
+            uploadDate: oldUploadDate,
+            isEsignatureDocument: false,
+            category: category !== undefined ? category : oldCategory,
+            isPublishedToEmployee: isPublishedToEmployee !== undefined ? isPublishedToEmployee : oldIsPublishedToEmployee,
+        };
+
+        return response;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Updates a specified legacy document record under a company
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} documentId: The unique identifier for the document to be updated.
+ * @param {any} request: The company document request.
+ * @returns {any}: A Promise of an updated legacy company document
+ */
+async function updateLegacyDocument(tenantId: string, documentId: number, request: any): Promise<any> {
+    console.info('esignature.service.updateLegacyDocument');
+
+    const {
+        fileObject: { file, fileName },
+        title,
+        category,
+        isPublishedToEmployee,
+    } = request;
+
+    try {
+        // get document metadata / make sure it exists in the database
+        let query = new ParameterizedQuery('getDocumentMetadataById', Queries.getDocumentMetadataById);
+        query.setParameter('@id', documentId);
+        let payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const fileMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (fileMetadataResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${documentId} not found`);
+        }
+
+        const {
+            Title: prevTitle,
+            DocumentCategory: prevCategory,
+            IsPublishedToEmployee: prevIsPublishedToEmployee,
+            UploadDate: prevUploadDate,
+            Extension: prevExtension,
+            Filename: prevFileName,
+        } = fileMetadataResult.recordset[0];
+
+        let newExtension;
+        if (file && fileName) {
+            // get file data
+            const [fileData, fileContent] = file.split(',');
+            const contentType = fileData.split(':')[1].split(';')[0];
+            newExtension = fileName.split('.').pop();
+
+            query = new ParameterizedQuery('UpdateDocumentById', Queries.updateDocumentById);
+            query.setParameter('@id', documentId);
+            query.setParameter('@file', fileContent);
+            query.setParameter('@fileName', fileName);
+            query.setParameter('@extension', `.${newExtension}`);
+            query.setParameter('@contentType', contentType);
+            payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        }
+
+        // update record in database
+        let published = prevIsPublishedToEmployee ? '1' : '0';
+        if (isPublishedToEmployee !== undefined) {
+            published = isPublishedToEmployee ? '1' : '0';
+        }
+
+        let titleToUse = prevTitle !== null ? `'${prevTitle.replace(/'/g, "''")}'` : 'NULL';
+        titleToUse = title ? `'${title.replace(/'/g, "''")}'` : titleToUse;
+
+        let categoryToUse = prevCategory !== null ? `'${prevCategory}'` : 'NULL';
+        categoryToUse = category !== undefined ? `'${category}'` : categoryToUse;
+
+        query = new ParameterizedQuery('UpdateDocumentMetadataById', Queries.updateDocumentMetadataById);
+        query.setParameter('@id', documentId);
+        query.setParameter('@title', titleToUse);
+        query.setParameter('@category', categoryToUse);
+        query.setParameter('@isPublishedToEmployee', published);
+        payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        const encodedId = await encodeId(documentId, DocType.LegacyDocument);
+
+        const response = {
+            id: encodedId,
+            title: title || prevTitle,
+            fileName: fileName || prevFileName,
+            extension: newExtension || prevExtension,
+            uploadDate: prevUploadDate,
+            isEsignatureDocument: false,
+            category: category !== undefined ? category : prevCategory,
+            isPublishedToEmployee: isPublishedToEmployee !== undefined ? isPublishedToEmployee : prevIsPublishedToEmployee,
+        };
+
+        return response;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Validates a given query string collection.
  * @param {string []} validInputs - Validate query string parameters
  * @param {any} queryParameters - The query string parameters
@@ -2028,6 +2273,7 @@ function validateQueryStringParameters(validInputs: string[], queryParameters: a
 enum DocType {
     LegacyDocument = 1,
     S3Document = 2,
+    EsignatureDocument = 3,
 }
 
 async function encodeId(id: any, type: DocType): Promise<string> {
@@ -2085,4 +2331,24 @@ function appendDuplicationSuffix(filenameWithExtension: string): string {
     console.info('esignature.service.appendDuplicationSuffix');
     const [filename, extension] = utilService.splitFilename(filenameWithExtension);
     return `${filename}-${shortid.generate()}${extension}`;
+}
+
+async function checkForFileExistence(key: string, fileName: string, tenantId: string, companyId: string): Promise<string[]> {
+    try {
+        const objectMetadata = await s3Client
+            .headObject({
+                Bucket: configService.getFileBucketName(),
+                Key: key,
+            })
+            .promise();
+
+        if (objectMetadata) {
+            const newFileName = appendDuplicationSuffix(fileName);
+            const newKey = `${tenantId}/${companyId}/${newFileName}`;
+            return [newFileName, newKey];
+        }
+    } catch (missingError) {
+        // We really don't mind since we expect it to be missing
+        return [fileName, key];
+    }
 }
