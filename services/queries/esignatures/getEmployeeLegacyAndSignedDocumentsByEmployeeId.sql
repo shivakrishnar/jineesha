@@ -9,6 +9,7 @@ declare @tmp table
 (
   ID  bigint,
 	Title nvarchar(max),
+	Filename nvarchar(max),
 	Category nvarchar(max),
 	UploadDate datetime2(3),
 	IsLegacyDocument bit
@@ -30,6 +31,7 @@ LegacyDocuments as
 	select 
 		 d.ID,
 		 Title = iif(d.Title is NULL, d.Filename, d.Title), 
+		 d.Filename,
 		 Category = d.DocumentCategory, 
 		 d.UploadDate
 	from
@@ -39,6 +41,7 @@ LegacyDocuments as
 		select 
 		 d.ID,
 		 Title = iif(d.Title is NULL, d.Filename, d.Title), 
+		 d.Filename,
 		 Category = d.DocumentCategory, 
 		 d.UploadDate
 	from
@@ -52,6 +55,7 @@ LegacyDocumentPublishedToEmployee as
  	select 
 		 d.ID,
 		 Title = iif(d.Title is NULL, d.Filename, d.Title), 
+		 d.Filename,
 		 Category = d.DocumentCategory, 
 		 d.UploadDate
 	from
@@ -65,6 +69,7 @@ SignedDocuments as
 	select
 	  d.ID,
 	  d.Title, 
+	  Filename = right(d.Pointer, charindex('/', reverse(d.Pointer) + '/') - 1),
 	  d.Category, 
 	  d.UploadDate
 	from
@@ -82,6 +87,7 @@ NewDocumentPublishedToEmployee as
 	select
 		  d.ID,
 		  d.Title, 
+		  Filename = right(d.Pointer, charindex('/', reverse(d.Pointer) + '/') - 1),
 		  d.Category, 
 		  d.UploadDate
 	from
@@ -94,13 +100,13 @@ NewDocumentPublishedToEmployee as
 
 CollatedDocuments as
 (
-    select ID, Title, Category, UploadDate, IsLegacyDocument = 1 from LegacyDocumentPublishedToEmployee
+    select ID, Title, Filename, Category, UploadDate, IsLegacyDocument = 1 from LegacyDocumentPublishedToEmployee
     union
-	select ID, Title, Category, UploadDate, IsLegacyDocument = 1 from LegacyDocuments
+	select ID, Title, Filename, Category, UploadDate, IsLegacyDocument = 1 from LegacyDocuments
 	union 
-	select ID, Title, Category, UploadDate, IsLegacyDocument = 0 from SignedDocuments
+	select ID, Title, Filename, Category, UploadDate, IsLegacyDocument = 0 from SignedDocuments
 	union
-	select ID, Title, Category, UploadDate, IsLegacyDocument = 0 from NewDocumentPublishedToEmployee
+	select ID, Title, Filename, Category, UploadDate, IsLegacyDocument = 0 from NewDocumentPublishedToEmployee
 )
 
 insert into @tmp
@@ -112,6 +118,7 @@ select totalCount = count(*) from @tmp
 select 
 	id = ID, 
 	title = Title, 
+	fileName = Filename,
 	category = Category, 
 	uploadDate = UploadDate, 
 	isLegacyDocument = IsLegacyDocument

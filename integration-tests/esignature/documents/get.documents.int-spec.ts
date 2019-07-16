@@ -20,7 +20,7 @@ const enum schemaNames {
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
-describe('list documents', () => {
+describe('list company documents', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken();

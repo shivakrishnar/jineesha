@@ -1466,12 +1466,22 @@ export async function listEmployeeDocumentsByTenant(
     const validQueryStringParameters = ['pageToken'];
 
     validateQueryStringParameters(validQueryStringParameters, queryParams);
-    const query = new ParameterizedQuery('GetEmployeeLegacyAndSignedDocs', Queries.getEmployeeLegacyAndSignedDocuments);
-    query.setParameter('@user', emailAddress);
 
-    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+    try {
+        const query = new ParameterizedQuery('GetEmployeeLegacyAndSignedDocs', Queries.getEmployeeLegacyAndSignedDocuments);
+        query.setParameter('@user', emailAddress);
 
-    return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);
+        const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+        return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
 }
 
 /**
@@ -1502,23 +1512,36 @@ export async function listEmployeeDocumentsByCompany(
     let query: ParameterizedQuery;
 
     validateQueryStringParameters(validQueryStringParameters, queryParams);
-    query = new ParameterizedQuery('GetEmployeeLegacyAndSignedDocsByCompanyId', Queries.getEmployeeLegacyAndSignedDocumentsByCompanyId);
-    if (isManager) {
-        query = new ParameterizedQuery(
-            'GetEmployeeLegacyAndSignedDocsByCompanyIdForManager',
-            Queries.getEmployeeLegacyAndSignedDocumentsByCompanyForManager,
-        );
-        query.setParameter('@manager', emailAddress);
-    }
-    query.setParameter('@companyId', companyId);
-    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
-    return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);
+    try {
+        await getCompanyDetails(tenantId, companyId);
+
+        query = new ParameterizedQuery('GetEmployeeLegacyAndSignedDocsByCompanyId', Queries.getEmployeeLegacyAndSignedDocumentsByCompanyId);
+        if (isManager) {
+            query = new ParameterizedQuery(
+                'GetEmployeeLegacyAndSignedDocsByCompanyIdForManager',
+                Queries.getEmployeeLegacyAndSignedDocumentsByCompanyForManager,
+            );
+            query.setParameter('@manager', emailAddress);
+        }
+        query.setParameter('@companyId', companyId);
+        const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+        return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
 }
 
 /**
  * Lists all e-signed documents and legacy documents for specific employee
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the specified company.
  * @param {string} employeeId: The unique identifier employee.
  * @param {any} queryParams: The query parameters that were specified by the user.
  * @param {string} domainName: The domain name of the request.
@@ -1527,6 +1550,7 @@ export async function listEmployeeDocumentsByCompany(
  */
 export async function listEmployeeDocuments(
     tenantId: string,
+    companyId: string,
     employeeId: string,
     queryParams: any,
     domainName: string,
@@ -1538,14 +1562,27 @@ export async function listEmployeeDocuments(
     const validQueryStringParameters = ['pageToken'];
 
     validateQueryStringParameters(validQueryStringParameters, queryParams);
-    const query: ParameterizedQuery = new ParameterizedQuery(
-        'GetEmployeeLegacyAndSignedDocsByEmployeeId',
-        Queries.getEmployeeLegacyAndSignedDocumentsByEmployeeId,
-    );
-    query.setParameter('@employeeId', employeeId);
-    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
-    return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);
+    try {
+        // validate company and employee id
+        await Promise.all([validateEmployeeId(tenantId, companyId, employeeId), getCompanyDetails(tenantId, companyId)]);
+
+        const query = new ParameterizedQuery(
+            'GetEmployeeLegacyAndSignedDocsByEmployeeId',
+            Queries.getEmployeeLegacyAndSignedDocumentsByEmployeeId,
+        );
+        query.setParameter('@employeeId', employeeId);
+        const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+        return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
 }
 
 /**
@@ -1628,6 +1665,7 @@ async function getEmployeeLegacyAndSignedDocuments(
             updatedDocuments.push({
                 id,
                 title: document.title,
+                fileName: document.fileName,
                 category: document.category,
                 uploadDate: document.uploadDate,
             });
@@ -2350,5 +2388,46 @@ async function checkForFileExistence(key: string, fileName: string, tenantId: st
     } catch (missingError) {
         // We really don't mind since we expect it to be missing
         return [fileName, key];
+    }
+}
+
+/**
+ * Validates a specified employee ID.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {string} employeeId: The unique identifier for the specified employee
+ */
+async function validateEmployeeId(tenantId: string, companyId: string, employeeId: string): Promise<void> {
+    console.info('esignature.service.validateEmployeeId');
+
+    try {
+        // companyId value must be integral
+        if (Number.isNaN(Number(employeeId))) {
+            const errorMessage = `${employeeId} is not a valid number`;
+            throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        }
+
+        const query: ParameterizedQuery = new ParameterizedQuery('GetEmployeeByCompanyIdAndId', Queries.getEmployeeByCompanyIdAndId);
+        query.setParameter('@companyId', companyId);
+        query.setParameter('@id', employeeId);
+        const payload: DatabaseEvent = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        };
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (result.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Employee with ID ${employeeId} not found`);
+        }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(error);
+        throw errorService.getErrorResponse(0);
     }
 }
