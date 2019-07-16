@@ -120,8 +120,9 @@ describe('update company document', () => {
     });
 
     test('must return a 404 if documentId is not found', (done) => {
-        const unknownDocumentId = 'xKkRXzFg';
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${unknownDocumentId}`;
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${
+            configs.esignature.nonExistingDocumentId
+        }`;
         request(baseUri)
             .patch(uri)
             .set('Authorization', `Bearer ${accessToken}`)

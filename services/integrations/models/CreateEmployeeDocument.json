@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
-    "title": "Employee Document Schema",
-    "$id": "EmployeeDocument",
+    "title": "Create Employee Document Schema",
+    "$id": "CreateEmployeeDocument",
     "type": "object",
     "properties": {
         "id": {
@@ -16,14 +16,18 @@
             "description": "The name of the file associated with the document.",
             "type": ["string"]
         },
-        "category": {
-            "description": "The category that the document belongs to.",
-            "type": ["string", "null"]
+        "extension": {
+            "description": "The extension of the file associated with the document.",
+            "type": ["string"]
         },
         "uploadDate": {
             "description": "The date the document was uploaded to the system.",
             "type": ["string"]
+        },
+        "isEsignatureDocument": {
+            "description": "Determines whether or not the document is an e-signature document.",
+            "type": ["boolean"]
         }
     },
-    "required": ["id", "title", "fileName", "category", "uploadDate"]
+    "required": ["id", "title", "fileName", "extension", "uploadDate", "isEsignatureDocument"]
 }
