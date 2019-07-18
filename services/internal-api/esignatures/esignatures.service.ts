@@ -74,6 +74,7 @@ export async function uploadSignedDocument(request: any): Promise<boolean> {
             query.setParameter('@uploadDate', new Date().toISOString());
             query.setParameter('@pointer', key);
             query.setParameter('@uploadedBy', 'NULL');
+            query.setParameter('@isPublishedToEmployee', '1');
             payload = {
                 tenantId,
                 queryName: query.name,

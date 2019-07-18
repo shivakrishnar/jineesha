@@ -246,3 +246,11 @@ export const listEmployeesByCompany = utilService.gatewayEventHandler(async ({ s
         queryStringParameters,
     );
 });
+
+/**
+ * Returns a listing of the roles that the user belongs to
+ */
+export const listUserRoles = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('tenants.handler.listUserRoles');
+    return { roles: securityContext.roleMemberships };
+});
