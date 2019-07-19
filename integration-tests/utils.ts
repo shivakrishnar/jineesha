@@ -2,6 +2,7 @@ import * as Ajv from 'ajv';
 import * as AWS from 'aws-sdk';
 import * as fs from 'fs';
 import * as jwt from 'jsonwebtoken';
+import * as mime from 'mime-types';
 import * as nJwt from 'njwt';
 import * as request from 'superagent';
 import * as uuidV4 from 'uuid/v4';
@@ -179,4 +180,15 @@ export const expectResponse = ({ statusCode, body, code, message, developerMessa
     }
     assertHeader(response, 'content-type', /json/);
     return response;
+};
+
+export const base64EncodeFile = (filePath: string): string => {
+    const bitmap = fs.readFileSync(filePath);
+    return new Buffer(bitmap).toString('base64');
+};
+
+export const uriEncodeTestFile = (filePath: string): string => {
+    const mimeType = mime.lookup(filePath);
+    const encoding = base64EncodeFile(filePath);
+    return `data:${mimeType};base64,${encoding}`;
 };
