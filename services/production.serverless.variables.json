@@ -26,6 +26,7 @@
     "fromEmail": "AdvancedHR@evolutionadvancedhr.com",
     "integrationId": "759f5d50-bc2f-4c69-8b53-649c3ba9c703",
     "goldilocksApplicationId": "19a7f2b0-1516-4c74-8dc4-1bdf224629e6",
+    "goldilocksTenantId": "380f947c-8176-47bd-bb00-3e1a6ad96150",
     "hrApplicationId": "919ba036-5554-4a18-a572-c4cba7d557c9",
     "eSignatureApiCredentialsId": "eSignatureApiCredentials",
     "eSignatureApiDevModeOn": "false",
@@ -35,5 +36,6 @@
     "hrServicesDomain": "https://hr-services.evolutionadvancedhr.com",
     "eSignatureCallbackPath": "integrations/tenants/0/companies/0/esignatures/callback",
     "lambdaPerfMonitorApiKey": "",
-    "AuditLogGroupName": "AdvancedHR-Audit-Log"
+    "AuditLogGroupName": "AdvancedHR-Audit-Log",
+    "tenantAdminCredentialsId": "tenantAdminCredentials"
 }

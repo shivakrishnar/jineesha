@@ -23,6 +23,26 @@ export async function getAccessToken(tenantId: string, token: string, username: 
     }
 }
 
+export async function getAccessTokenByClientCredentials(apiKey: string, apiSecret: string, audience: string): Promise<string> {
+    console.info('ssoService.getAccessTokenByClientCredentials');
+    const apiUrl = `${baseUrl}/identity/tenants/${configService.getGoldilocksTenantId()}/oauth/token`;
+    try {
+        const result = await request.post({
+            url: apiUrl,
+            body: {
+                grant_type: 'CLIENT_CREDENTIALS',
+                apiKey,
+                apiSecret,
+                audience,
+            },
+            json: true,
+        });
+        return result.access_token;
+    } catch (e) {
+        console.log(e);
+    }
+}
+
 export async function getTenantById(tenantId: string, token: string): Promise<any> {
     console.info('ssoService.getTenantById');
     const apiUrl = `${baseUrl}/identity/tenants/${tenantId}`;

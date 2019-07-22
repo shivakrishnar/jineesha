@@ -79,25 +79,26 @@ async function buildPolicy(event: any, secret: string, authType: AuthorizerType)
     const { account, scope } = decodedToken;
 
     let payrollApiCredentials: IPayrollApiCredentials;
+    let adminToken: string;
     let roleMemberships;
     if (authType === AuthorizerType.Golidlocks) {
-        payrollApiCredentials = undefined;
         roleMemberships = utilService.parseRoles(scope);
     }
 
     if (authType === AuthorizerType.Evolution) {
         payrollApiCredentials = await utilService.getPayrollApiCredentials(account.tenantId);
-        const hrAccessToken = (await ssoService.exchangeToken(
-            account.tenantId,
-            accessToken,
-            configService.getHrApplicationId(),
-        )).access_token;
+        const tokens = await Promise.all([
+            utilService.generateAdminToken(),
+            ssoService.exchangeToken(account.tenantId, accessToken, configService.getHrApplicationId()),
+        ]);
+        adminToken = tokens[0];
+        const hrAccessToken = tokens[1].access_token;
         const decodedHrToken: any = jwt.decode(hrAccessToken);
         const { scope: hrScope } = decodedHrToken;
         roleMemberships = utilService.parseRoles(scope).concat(utilService.parseRoles(hrScope));
     }
 
-    const securityContext = new SecurityContext(account, roleMemberships, accessToken, payrollApiCredentials);
+    const securityContext = new SecurityContext(account, roleMemberships, accessToken, payrollApiCredentials, adminToken);
 
     const tmp = event.methodArn.split(':');
     const region = tmp[3];

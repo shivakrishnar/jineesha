@@ -1,8 +1,5 @@
 import * as request from 'request-promise-native';
-import { IPayrollApiCredentials } from '../api/models/IPayrollApiCredentials';
 import * as configService from '../config.service';
-import * as utilService from '../util.service';
-import * as ssoService from './sso.service';
 
 export type EsignatureAppConfiguration = {
     id: string;
@@ -29,16 +26,15 @@ export async function getIntegrationConfigurationByCompany(
     tenantId: string,
     clientId: string,
     companyId: string,
-    payrollApiCredentials: IPayrollApiCredentials,
+    adminToken: string,
 ): Promise<EsignatureAppConfiguration> {
     console.info('integrationsService.getEsignatureAppByCompany');
 
-    const token = await createAccessToken(tenantId, payrollApiCredentials);
     const apiUrl = `${baseUrl}/tenants/${tenantId}/clients/${clientId}/companies/${companyId}/integrations/${configService.getIntegrationId()}/integration-configurations`;
     try {
         const configurations = await request.get({
             url: encodeURI(apiUrl),
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${adminToken}` },
             json: true,
         });
         return configurations[0];
@@ -55,17 +51,15 @@ export async function createIntegrationConfiguration(
     companyName: string,
     domainName: string,
     eSignatureAppClientId: string,
-    payrollApiCredentials: IPayrollApiCredentials,
+    adminToken: string,
 ): Promise<EsignatureAppConfiguration> {
     console.info('integrationsService.createIntegrationConfiguration');
-
-    const token = await createAccessToken(tenantId, payrollApiCredentials);
 
     const apiUrl = `${baseUrl}/tenants/${tenantId}/clients/${clientId}/companies/${companyId}/integrations/${configService.getIntegrationId()}/integration-configurations`;
     try {
         return await request.post({
             url: encodeURI(apiUrl),
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${adminToken}` },
             json: true,
             body: {
                 integrationId: configService.getIntegrationId(),
@@ -91,11 +85,9 @@ export async function updateIntegrationConfigurationById(
     clientId: string,
     companyId: string,
     body: EsignatureAppConfiguration,
-    payrollApiCredentials: IPayrollApiCredentials,
+    adminToken: string,
 ): Promise<EsignatureAppConfiguration> {
     console.info('integrationsService.updateIntegrationConfigurationById');
-
-    const token = await createAccessToken(tenantId, payrollApiCredentials);
 
     const apiUrl = `${baseUrl}/tenants/${tenantId}/clients/${clientId}/companies/${companyId}/integrations/${configService.getIntegrationId()}/integration-configurations/${
         body.id
@@ -103,7 +95,7 @@ export async function updateIntegrationConfigurationById(
     try {
         return await request.put({
             url: encodeURI(apiUrl),
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${adminToken}` },
             json: true,
             body,
         });
@@ -113,29 +105,14 @@ export async function updateIntegrationConfigurationById(
     }
 }
 
-async function createAccessToken(tenantId: string, payrollApiCredentials: IPayrollApiCredentials): Promise<string> {
-    console.info('integrationsService.createAccessToken');
-
-    if (!payrollApiCredentials) {
-        payrollApiCredentials = await utilService.getPayrollApiCredentials(tenantId);
-    }
-
-    const { evoApiUsername, evoApiPassword } = payrollApiCredentials;
-    const ssoToken = await utilService.getSSOToken(tenantId);
-    const hrAccessToken = await ssoService.getAccessToken(tenantId, ssoToken, evoApiUsername, evoApiPassword);
-    return (await ssoService.exchangeToken(tenantId, hrAccessToken, configService.getGoldilocksApplicationId())).access_token;
-}
-
 export async function deleteIntegrationConfigurationbyId(
     tenantId: string,
     clientId: string,
     companyId: string,
     body: EsignatureAppConfiguration,
-    payrollApiCredentials: IPayrollApiCredentials,
+    adminToken: string,
 ): Promise<void> {
     console.info('integrationsService.deleteIntegrationConfigurationById');
-
-    const token = await createAccessToken(tenantId, payrollApiCredentials);
 
     const apiUrl = `${baseUrl}/tenants/${tenantId}/clients/${clientId}/companies/${companyId}/integrations/${configService.getIntegrationId()}/integration-configurations/${
         body.id
@@ -143,15 +120,15 @@ export async function deleteIntegrationConfigurationbyId(
     const payload = {
         id: body.id,
         integrationId: body.integrationId,
-        tenantId: tenantId,
-        clientId: clientId,
-        companyId: companyId,
+        tenantId,
+        clientId,
+        companyId,
     };
     console.log(`PAYLOAD ${JSON.stringify(payload)}`);
     try {
         return await request.delete({
             url: encodeURI(apiUrl),
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${adminToken}` },
             json: true,
             body: payload,
         });
