@@ -25,92 +25,89 @@ boolean isMasterBranch = env.BRANCH_NAME == "master"
 
 stage("Build")
 {
-    node("linux")
-    {
+    timeout(time: timeoutDays, unit: "DAYS") {
         stage("Choose semantic version") {
             semanticVersion = input(id: 'userInput', message: "Please select the semantic version of build...",
                     parameters: [[$class: 'ChoiceParameterDefinition', choices: 'patch\nminor\nmajor', name: "choices"]])
         }
-        node("linux") {
-            try {
-                projectName = env.JOB_NAME.substring(0, env.JOB_NAME.indexOf('/'))
-                bitbucketStatusNotify(buildState: "INPROGRESS")
-                // Make sure we have a clean workspace before we get started
-                cleanUpWorkspace()
-                withCredentials([[$class: "UsernamePasswordMultiBinding", credentialsId: "e0860691-2bc8-45eb-900a-a5583dad5747", usernameVariable: "GIT_USERNAME", passwordVariable: "GIT_PASSWORD"]]) {
-                    sh "git clone https://${env.GIT_USERNAME}:${env.GIT_PASSWORD}@bitbucket.org/iSystemsTeam/${projectName}.git"
-                }
-                dir(projectName) {
-                    sh "git checkout ${env.BRANCH_NAME}"
-
-                    configData = readJSON file: './jenkins.config.json'
-                    teamEmail = configData.teamEmail
-                    slackRoomName = configData.slackRoomName
-                    slackCredentials = configData.slackCredentials
-
-                    sh "git checkout -b temp-${env.BRANCH_NAME}"
-
-                    nvm(nodeVersion) {
-                        sh "npm install"
-                        installServiceApiDependencies()
-                        sh "npm test"
-                    }
-
-                    // Bump the build version
-                    currentVersion = getVersion()
-                    sh "npm --no-git-tag-version version ${semanticVersion}"
-                    nextVersion = getVersion()
-                }
+    }
+    node("linux") {
+        try {
+            projectName = env.JOB_NAME.substring(0, env.JOB_NAME.indexOf('/'))
+            bitbucketStatusNotify(buildState: "INPROGRESS")
+            // Make sure we have a clean workspace before we get started
+            cleanUpWorkspace()
+            withCredentials([[$class: "UsernamePasswordMultiBinding", credentialsId: "e0860691-2bc8-45eb-900a-a5583dad5747", usernameVariable: "GIT_USERNAME", passwordVariable: "GIT_PASSWORD"]]) {
+                sh "git clone https://${env.GIT_USERNAME}:${env.GIT_PASSWORD}@bitbucket.org/iSystemsTeam/${projectName}.git"
             }
-            catch (Exception e) {
-                cleanUpWorkspace()
-                // Notify build breaking culprit and team of regressions on critical branches
-                if (isMasterBranch) {
-                    notifyTeam(e)
+            dir(projectName) {
+                sh "git checkout ${env.BRANCH_NAME}"
+
+                configData = readJSON file: './jenkins.config.json'
+                teamEmail = configData.teamEmail
+                slackRoomName = configData.slackRoomName
+                slackCredentials = configData.slackCredentials
+
+                sh "git checkout -b temp-${env.BRANCH_NAME}"
+
+                nvm(nodeVersion) {
+                    sh "npm install"
+                    installServiceApiDependencies()
+                    sh "npm test"
                 }
 
-                bitbucketStatusNotify(buildState: "FAILED")
-                throw e
+                // Bump the build version
+                currentVersion = getVersion()
+                sh "npm --no-git-tag-version version ${semanticVersion}"
+                nextVersion = getVersion()
             }
+        }
+        catch (Exception e) {
+            cleanUpWorkspace()
+            // Notify build breaking culprit and team of regressions on critical branches
+            if (isMasterBranch) {
+                notifyTeam(e)
+            }
+
+            bitbucketStatusNotify(buildState: "FAILED")
+            throw e
         }
     }
-    node ("linux") {
 
-        stage("deploy - development") {
-            deployStage("development")
-            runIntegrationTests("development")
-        }
-        stage("deploy - staging") {
-            deployStage("staging")
-            runIntegrationTests("staging")
-        }
+    stage("deploy - development") {
+        deployStage("development")
+        runIntegrationTests("development")
+    }
+    stage("deploy - staging") {
+        deployStage("staging")
+        runIntegrationTests("staging")
+    }
 
-        if (isMasterBranch) {
-            stage("Deploy to Production") {
-                deploymentNotification("${projectName}: ready to deploy version: ${nextVersion} to production.", teamEmail, false)
-                deployStage("production")
-                node("linux") {
-                    dir(projectName) {
-                        sh "git add package.json package-lock.json"
-                        sh "git commit -m 'version bump to ${nextVersion}'"
+    if (isMasterBranch) {
+        stage("Deploy to Production") {
+            deploymentNotification("${projectName}: ready to deploy version: ${nextVersion} to production.", teamEmail, false)
+            deployStage("production")
+            node("linux") {
+                dir(projectName) {
+                    sh "git add package.json package-lock.json"
+                    sh "git commit -m 'version bump to ${nextVersion}'"
 
-                        sh "git checkout ${env.BRANCH_NAME}" // This should always be 'master'
-                        sh "git merge temp-${env.BRANCH_NAME}" // This should always be 'temp-master'
-                        //Get commit id:
-                        commit_id = sh(
-                                script: "git rev-parse --short HEAD",
-                                returnStdout: true
-                        ).trim()
+                    sh "git checkout ${env.BRANCH_NAME}" // This should always be 'master'
+                    sh "git merge temp-${env.BRANCH_NAME}" // This should always be 'temp-master'
+                    //Get commit id:
+                    commit_id = sh(
+                            script: "git rev-parse --short HEAD",
+                            returnStdout: true
+                    ).trim()
 
-                        sh "git tag -m \"Built by Jenkins\" -a ${nextVersion} ${commit_id}"
-                        sh "git push origin ${env.BRANCH_NAME} ${nextVersion}"
-                    }
-                    deploymentNotification("${projectName}: successfully deployed version: ${nextVersion} to production!", teamEmail, true)
+                    sh "git tag -m \"Built by Jenkins\" -a ${nextVersion} ${commit_id}"
+                    sh "git push origin ${env.BRANCH_NAME} ${nextVersion}"
                 }
-                // TODO: Run integration tests in production when e-signatures is turned on for EvoNPD
-                // runIntegrationTests("production") 
-                sh "INTEGRATION_TEST_CONFIG_FILENAME=production.config.json node_modules/.bin/jest -c jest.integration.test.config.json -i -t direct deposit"
+                deploymentNotification("${projectName}: successfully deployed version: ${nextVersion} to production!", teamEmail, true)
             }
+            // TODO: Run integration tests in production when e-signatures is turned on for EvoNPD
+            // runIntegrationTests("production") 
+            sh "INTEGRATION_TEST_CONFIG_FILENAME=production.config.json node_modules/.bin/jest -c jest.integration.test.config.json -i -t direct deposit"
         }
     }
 }
