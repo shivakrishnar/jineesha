@@ -21,6 +21,10 @@ provider:
         - kms:ListAliases
         - kms:ListKeys
       Resource: "*"
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+      Resource: "*"
 
 package:
   individually: true
@@ -32,5 +36,14 @@ functions:
     package:
       artifact: asure.encryption.zip
 
+plugins:
+  - serverless-plugin-warmup
+
 custom:
   configFile: ../${opt:variables, 'local'}.serverless.variables.json
+  warmup:
+    schedule: 'cron(0/5 * * * ? *)'    # Run every 5 minutes
+    default:
+        - production
+        - development
+        - staging

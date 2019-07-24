@@ -91,7 +91,7 @@ stage("Build")
                 deployStage("production")
                 node("linux") {
                     dir(projectName) {
-                        sh "git add package.json package-lock.json CHANGELOG.md"
+                        sh "git add package.json package-lock.json"
                         sh "git commit -m 'version bump to ${nextVersion}'"
 
                         sh "git checkout ${env.BRANCH_NAME}" // This should always be 'master'
@@ -212,6 +212,10 @@ void installServiceApiDependencies() {
     }
 
     dir('services/api/tenants') {
+        sh 'npm install'
+    }
+
+    dir('services/encryption') {
         sh 'npm install'
     }
 }

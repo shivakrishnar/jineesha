@@ -28,6 +28,7 @@
     "eSignatureApiDevModeOn": "true",
     "integrationId": "8077ac79-faac-47cb-a240-a15cd5791915",
     "goldilocksApplicationId": "8f8a2b63-985b-4c59-9a9b-e25572068601",
+    "goldilocksTenantId": "eee50fd3-a300-4d85-a87b-97bd99754452",
     "hrCredentialsId": "hrCredentials",
     "saltId": "salt",
     "fileBucketName": "development.hr.files",
@@ -35,5 +36,6 @@
     "eSignatureCallbackPath": "integrations/tenants/0/companies/0/esignatures/callback",
     "hrApplicationId": "c254ec95-4c45-4eb2-9697-dc0c03dfed6a",
     "lambdaPerfMonitorApiKey": "003d5b8a-2329-4a9c-8b0f-ed5febed6414",
-    "AuditLogGroupName": "AdvancedHR-Audit-Log"
+    "AuditLogGroupName": "AdvancedHR-Audit-Log",
+    "tenantAdminCredentialsId": "tenantAdminCredentials"
 }

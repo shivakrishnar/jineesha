@@ -1,6 +1,7 @@
 import { IAccount } from './account';
 
 import { IPayrollApiCredentials } from '../../api/models/IPayrollApiCredentials';
+import { Role } from '../../api/models/Role';
 import * as errorService from '../../errors/error.service';
 import { ErrorMessage } from '../../errors/errorMessage';
 import { ParameterizedQuery } from '../../queries/parameterizedQuery';
@@ -9,7 +10,6 @@ import * as utilService from '../../util.service';
 import { InvocationType } from '../../util.service';
 import { DatabaseEvent, QueryType } from '../database/events';
 import { ApplicationRoleLevel } from './ApplicationRoleLevelEnum';
-import { Role } from '../../api/models/Role';
 
 /**
  * SecurityContext represents data pulled from the token when it is verified. AWS requires the
@@ -23,18 +23,26 @@ export class SecurityContext {
     roleMemberships: string[];
     accessToken: string;
     payrollApiCredentials: IPayrollApiCredentials | undefined;
+    adminToken: string | undefined;
     currentRoleLevel: ApplicationRoleLevel;
 
-    public constructor(principal: IAccount, roleMemberships: string[] = [], accessToken: string, payrollApiCredentials: any) {
+    public constructor(
+        principal: IAccount,
+        roleMemberships: string[] = [],
+        accessToken: string,
+        payrollApiCredentials: any,
+        adminToken: string,
+    ) {
         this.principal = principal;
         this.roleMemberships = roleMemberships;
         this.accessToken = accessToken;
         this.payrollApiCredentials = payrollApiCredentials;
+        this.adminToken = adminToken;
     }
 
     public static fromJSON(json: string): SecurityContext {
         const data = JSON.parse(json);
-        return new SecurityContext(data.principal, data.roleMemberships, data.accessToken, data.payrollApiCredentials);
+        return new SecurityContext(data.principal, data.roleMemberships, data.accessToken, data.payrollApiCredentials, data.adminToken);
     }
 
     /**

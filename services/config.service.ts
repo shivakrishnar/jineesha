@@ -48,6 +48,8 @@ export const getIntegrationId = () => process.env.integrationId;
 
 export const getGoldilocksApplicationId = () => process.env.goldilocksApplicationId;
 
+export const getGoldilocksTenantId = () => process.env.goldilocksTenantId;
+
 export const getAsureAdminRoleId = () => process.env.asureAdminRoleId;
 
 export const getSsoCredentialsId = () => process.env.ssoCredentialsId;
@@ -73,3 +75,5 @@ export const getSaltId = () => process.env.saltId;
 export const lambdaPerfMonitorApiKey = () => process.env.lambdaPerfMonitorApiKey;
 
 export const getAuditLogGroupName = () => process.env.AuditLogGroupName;
+
+export const getTenantAdminCredentialsId = () => process.env.tenantAdminCredentialsId;

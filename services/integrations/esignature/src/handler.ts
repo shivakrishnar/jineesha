@@ -257,7 +257,7 @@ export const createTemplate = thundraWrapper(
 
         const { email } = securityContext.principal;
 
-        return await esignatureService.createTemplate(tenantId, companyId, requestBody, email, securityContext.payrollApiCredentials);
+        return await esignatureService.createTemplate(tenantId, companyId, requestBody, email, securityContext.adminToken);
     }),
 );
 
@@ -280,14 +280,7 @@ export const saveTemplateMetadata = thundraWrapper(
         const { tenantId, companyId, templateId } = event.pathParameters;
         const { email } = securityContext.principal;
 
-        return await esignatureService.saveTemplateMetadata(
-            tenantId,
-            companyId,
-            templateId,
-            email,
-            requestBody,
-            securityContext.payrollApiCredentials,
-        );
+        return await esignatureService.saveTemplateMetadata(tenantId, companyId, templateId, email, requestBody);
     }),
 );
 
@@ -311,7 +304,7 @@ export const createBulkSignatureRequest = thundraWrapper(
         const configuration: EsignatureConfiguration = await esignatureService.getConfigurationData(
             tenantId,
             companyId,
-            securityContext.payrollApiCredentials,
+            securityContext.adminToken,
         );
 
         return await esignatureService.createBulkSignatureRequest(
@@ -319,7 +312,7 @@ export const createBulkSignatureRequest = thundraWrapper(
             companyId,
             requestBody,
             {},
-            securityContext.payrollApiCredentials,
+            securityContext.adminToken,
             configuration,
         );
     }),
@@ -340,13 +333,7 @@ export const createSignatureRequest = thundraWrapper(
 
         const { tenantId, companyId, employeeId } = event.pathParameters;
 
-        return await esignatureService.createSignatureRequest(
-            tenantId,
-            companyId,
-            employeeId,
-            requestBody,
-            securityContext.payrollApiCredentials,
-        );
+        return await esignatureService.createSignatureRequest(tenantId, companyId, employeeId, requestBody, securityContext.adminToken);
     }),
 );
 
@@ -377,7 +364,7 @@ export const listTemplates = thundraWrapper(
             event.queryStringParameters,
             domainName,
             path,
-            securityContext.payrollApiCredentials,
+            securityContext.adminToken,
         );
     }),
 );
@@ -403,7 +390,7 @@ export const createSignUrl = thundraWrapper(
 
         const { tenantId, companyId, employeeId, signatureId } = event.pathParameters;
 
-        return await esignatureService.createSignUrl(tenantId, companyId, employeeId, signatureId, undefined);
+        return await esignatureService.createSignUrl(tenantId, companyId, employeeId, signatureId);
     }),
 );
 
@@ -419,7 +406,7 @@ export const createEditUrl = thundraWrapper(
 
         const { tenantId, companyId, templateId } = event.pathParameters;
 
-        return await esignatureService.createEditUrl(tenantId, companyId, templateId, securityContext.payrollApiCredentials);
+        return await esignatureService.createEditUrl(tenantId, companyId, templateId, securityContext.adminToken);
     }),
 );
 
@@ -443,7 +430,7 @@ export const listDocuments = thundraWrapper(
         const configuration: EsignatureConfiguration = await esignatureService.getConfigurationData(
             tenantId,
             companyId,
-            securityContext.payrollApiCredentials,
+            securityContext.adminToken,
         );
 
         return await esignatureService.listDocuments(
@@ -453,7 +440,7 @@ export const listDocuments = thundraWrapper(
             domainName,
             path,
             false,
-            securityContext.payrollApiCredentials,
+            securityContext.adminToken,
             configuration,
         );
     }),
@@ -486,7 +473,7 @@ export const listCompanySignatureRequests = thundraWrapper(
             event.queryStringParameters,
             domainName,
             path,
-            securityContext.payrollApiCredentials,
+            securityContext.adminToken,
         );
     }),
 );
@@ -572,7 +559,7 @@ export const onboarding = thundraWrapper(
 
         const { tenantId, companyId } = event.pathParameters;
 
-        const result = await esignatureService.onboarding(tenantId, companyId, requestBody, undefined);
+        const result = await esignatureService.onboarding(tenantId, companyId, requestBody);
         return result;
     }),
 );
@@ -598,7 +585,7 @@ export const configure = thundraWrapper(
         const { tenantId, companyId } = event.pathParameters;
         const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
-        return await esignatureService.configure(tenantId, companyId, accessToken, requestBody, securityContext.payrollApiCredentials);
+        return await esignatureService.configure(tenantId, companyId, accessToken, requestBody, securityContext.adminToken);
     }),
 );
 
@@ -629,14 +616,7 @@ export const listEmployeeDocumentsByTenant = thundraWrapper(
             requestContext: { domainName, path },
         } = event;
 
-        return await esignatureService.listEmployeeDocumentsByTenant(
-            tenantId,
-            event.queryStringParameters,
-            domainName,
-            path,
-            emailAddress,
-            securityContext.payrollApiCredentials,
-        );
+        return await esignatureService.listEmployeeDocumentsByTenant(tenantId, event.queryStringParameters, domainName, path, emailAddress);
     }),
 );
 
@@ -682,7 +662,6 @@ export const listEmployeeDocumentsByCompany = thundraWrapper(
             path,
             isManager,
             emailAddress,
-            securityContext.payrollApiCredentials,
         );
     }),
 );
@@ -712,7 +691,6 @@ export const listEmployeeDocuments = thundraWrapper(
             event.queryStringParameters,
             domainName,
             path,
-            securityContext.payrollApiCredentials,
         );
     }),
 );

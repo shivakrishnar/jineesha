@@ -7,6 +7,7 @@ import * as uniqueifier from 'uuid/v4';
 import { ObjectSchema } from 'yup';
 import * as configService from './config.service';
 import * as errorService from './errors/error.service';
+import * as ssoService from './remote-services/sso.service';
 
 import { APIGatewayEvent, Context, ProxyCallback, ProxyResult, ScheduledEvent } from 'aws-lambda';
 import { Headers } from './api/models/headers';
@@ -705,4 +706,10 @@ export function MaskSSN(ssn: string): string {
     const ssnSections = ssn.split('-');
     const lastFourDigits: string = ssnSections[ssnSections.length - 1];
     return 'XXX-XX-' + lastFourDigits;
+}
+
+export async function generateAdminToken(): Promise<string> {
+    console.info('util.service.generateAdminToken');
+    const credentials = JSON.parse(await getSecret(configService.getTenantAdminCredentialsId()));
+    return await ssoService.getAccessTokenByClientCredentials(credentials.apiKey, credentials.apiSecret, credentials.audience);
 }

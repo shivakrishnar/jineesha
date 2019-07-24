@@ -24,6 +24,7 @@ provider:
     fromEmail: ${file(${self:custom.configFile}):fromEmail}
     hrCredentialsId: ${file(${self:custom.configFile}):hrCredentialsId}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
+    goldilocksTenantId: ${file(${self:custom.configFile}):goldilocksTenantId}
     fileBucketName: ${file(${self:custom.configFile}):fileBucketName}
     eSignatureApiCredentialsId: ${file(${self:custom.configFile}):eSignatureApiCredentialsId}
     integrationId: ${file(${self:custom.configFile}):integrationId}
@@ -31,6 +32,7 @@ provider:
     hrApplicationId: ${file(${self:custom.configFile}):hrApplicationId}
     lambdaPerfMonitorApiKey: ${file(${self:custom.configFile}):lambdaPerfMonitorApiKey}
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
+    tenantAdminCredentialsId: ${file(${self:custom.configFile}):tenantAdminCredentialsId}
 
   iamRoleStatements:
     - Effect: Allow
