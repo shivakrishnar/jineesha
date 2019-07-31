@@ -186,6 +186,24 @@ describe('create company document', () => {
                 });
             });
     });
+
+    test('must return a 201 when a company document with special characters in filename is created', (done) => {
+        const testDocumentWithSpecialChars: any = Object.assign({}, document);
+        testDocumentWithSpecialChars.fileName = `_Interview &&#$@ Questions Do's & Dont's $%@(1).pdf`;
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
+        request(baseUri)
+            .post(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .send(testDocumentWithSpecialChars)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(201)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.CompanyDocument, response.body);
+                });
+            });
+    });
 });
 
 describe('create employee document', () => {
@@ -347,6 +365,25 @@ describe('create employee document', () => {
     });
 
     test('must return a 201 when an employee document is created', (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        request(baseUri)
+            .post(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .send(document)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(201)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.CreateEmployeeDocument, response.body);
+                });
+            });
+    });
+
+    test('must return a 201 when an employee document with special characters in filename is created', (done) => {
+        const testDocumentWithSpecialChars: any = Object.assign({}, document);
+        testDocumentWithSpecialChars.filename = `_Interview &&#$@ Questions Do's & Dont's $%@(1).pdf`;
+
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .post(uri)
