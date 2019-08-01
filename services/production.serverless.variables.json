@@ -37,5 +37,6 @@
     "eSignatureCallbackPath": "integrations/tenants/0/companies/0/esignatures/callback",
     "lambdaPerfMonitorApiKey": "",
     "AuditLogGroupName": "AdvancedHR-Audit-Log",
-    "tenantAdminCredentialsId": "tenantAdminCredentials"
+    "tenantAdminCredentialsId": "tenantAdminCredentials",
+    "logRetentionInDays": 365
 }

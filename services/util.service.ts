@@ -713,3 +713,15 @@ export async function generateAdminToken(): Promise<string> {
     const credentials = JSON.parse(await getSecret(configService.getTenantAdminCredentialsId()));
     return await ssoService.getAccessTokenByClientCredentials(credentials.apiKey, credentials.apiSecret, credentials.audience);
 }
+
+/**
+ * The replaces S3 key names with special characters with a space.
+ * Reference: https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html
+ * @param {string} key: The unique identifier of an S3 object
+ * @returns {string}: The sanitized key
+ */
+export function sanitizeForS3(key: string): string {
+    console.info('utilService.sanitizeForS3');
+    const charactersToReplace = /[\\{^}%`\]">\[~<#\|]/g;
+    return key.replace(charactersToReplace, ' ');
+}

@@ -1847,6 +1847,8 @@ export async function createEmployeeDocument(
 
         [updatedFilename, key] = await checkForFileExistence(key, fileName, tenantId, companyId);
 
+        key = utilService.sanitizeForS3(key);
+
         s3Client
             .upload({
                 Bucket: configService.getFileBucketName(),
@@ -1871,7 +1873,7 @@ export async function createEmployeeDocument(
         query.setParameter('@title', `${title.replace(/'/g, "''")}`);
         query.setParameter('@category', 'NULL');
         query.setParameter('@uploadDate', uploadDate);
-        query.setParameter('@pointer', key);
+        query.setParameter('@pointer', key.replace(/'/g, "''"));
         query.setParameter('@uploadedBy', `'${firstName} ${lastName}'`);
         query.setParameter('@isPublishedToEmployee', isPrivate ? '0' : '1');
         payload = {
@@ -1939,6 +1941,8 @@ export async function createCompanyDocument(
 
         [updatedFilename, key] = await checkForFileExistence(key, fileName, tenantId, companyId);
 
+        key = utilService.sanitizeForS3(key);
+
         // upload to S3
         s3Client
             .upload({
@@ -1964,7 +1968,7 @@ export async function createCompanyDocument(
         query.setParameter('@title', `${title.replace(/'/g, "''")}`);
         query.setParameter('@category', category ? `'${category}'` : 'NULL');
         query.setParameter('@uploadDate', uploadDate);
-        query.setParameter('@pointer', key);
+        query.setParameter('@pointer', key.replace(/'/g, "''"));
         query.setParameter('@uploadedBy', `'${firstName} ${lastName}'`);
         query.setParameter('@isPublishedToEmployee', isPublishedToEmployee ? '1' : '0');
         const payload = {
@@ -2090,6 +2094,8 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
 
             [newFileName, newKey] = await checkForFileExistence(newKey, newFileName, tenantId, companyId);
 
+            newKey = utilService.sanitizeForS3(newKey);
+
             // upload new file to S3
             s3Client
                 .upload({
@@ -2127,7 +2133,7 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
         query.setParameter('@id', documentId);
         query.setParameter('@title', title ? `${title.replace(/'/g, "''")}` : `${oldTitle.replace(/'/g, "''")}`);
         query.setParameter('@category', category !== undefined ? `'${category}'` : `'${oldCategory}'`);
-        query.setParameter('@pointer', newKey || oldPointer);
+        query.setParameter('@pointer', newKey.replace(/'/g, "''") || oldPointer);
         query.setParameter('@isPublishedToEmployee', published);
         payload = {
             tenantId,

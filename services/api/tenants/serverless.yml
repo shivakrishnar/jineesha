@@ -7,6 +7,8 @@ provider:
   timeout: 900   # AWS API Gateway timeout limit (30s)
   versionFunctions: false
   memorySize: 1024
+  logRetentionInDays: ${file(${self:custom.configFile}):logRetentionInDays}
+  
   environment:  #environment variables
     awsRegion: ${file(${self:custom.configFile}):awsRegion}
     secretsAwsEndPoint: ${file(${self:custom.configFile}):secretsAwsEndPoint}
