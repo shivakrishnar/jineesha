@@ -37,5 +37,6 @@
     "hrApplicationId": "c254ec95-4c45-4eb2-9697-dc0c03dfed6a",
     "lambdaPerfMonitorApiKey": "003d5b8a-2329-4a9c-8b0f-ed5febed6414",
     "AuditLogGroupName": "AdvancedHR-Audit-Log",
-    "tenantAdminCredentialsId": "tenantAdminCredentials"
+    "tenantAdminCredentialsId": "tenantAdminCredentials",
+    "logRetentionInDays": 5
 }

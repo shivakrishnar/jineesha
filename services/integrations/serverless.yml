@@ -7,6 +7,7 @@ provider:
   timeout: 30  # AWS API Gateway timeout limit (30s)
   versionFunctions: false
   memorySize: 128
+  logRetentionInDays: ${file(${self:custom.configFile}):logRetentionInDays}
   vpc:
     securityGroupIds:
       - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}

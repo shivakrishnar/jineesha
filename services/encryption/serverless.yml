@@ -9,6 +9,7 @@ provider:
   timeout: 60
   versionFunctions: false
   memorySize: 256
+  logRetentionInDays: ${file(${self:custom.configFile}):logRetentionInDays}
   
   environment:  #environment variables
     awsRegion: ${file(${self:custom.configFile}):awsRegion}
