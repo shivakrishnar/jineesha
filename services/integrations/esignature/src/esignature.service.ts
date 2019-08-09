@@ -1825,8 +1825,7 @@ export async function createEmployeeDocument(
             queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        // Note: we don't need to utilize the returned result from the getCompanyDetails function so we purposefully deconstruct only the first item in the array.
-        const [employeeResult]: any[] = await Promise.all([
+        const [employeeResult, companyResult]: any[] = await Promise.all([
             utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse),
             getCompanyDetails(tenantId, companyId),
         ]);
@@ -1835,7 +1834,10 @@ export async function createEmployeeDocument(
             const developerMessage = `Employee with ID ${employeeId} not found.`;
             throw errorService.getErrorResponse(50).setDeveloperMessage(developerMessage);
         }
-        const employeeCode = employeeResult.recordset[0].EmployeeCode;
+        const employee = employeeResult.recordset[0];
+        const employeeCode = employee.EmployeeCode;
+        const employeeName = employee.FirstName && employee.LastName ? `${employee.FirstName} ${employee.LastName}` : undefined;
+        const companyName = companyResult.name;
 
         // upload to S3
         const [fileData, fileContent] = file.split(',');
@@ -1894,6 +1896,13 @@ export async function createEmployeeDocument(
             extension,
             uploadDate,
             isEsignatureDocument: false,
+            employeeId: Number(employeeId),
+            employeeName,
+            companyId: Number(companyId),
+            companyName,
+            isSignedDocument: false,
+            isPrivate,
+            isPublishedToEmployee: false,
         };
 
         return response;
