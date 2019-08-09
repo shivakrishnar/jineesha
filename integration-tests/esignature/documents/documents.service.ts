@@ -22,6 +22,25 @@ export function createCompanyDocument(baseUri: string, accessToken: string): Pro
     });
 }
 
+export function createEmployeeDocument(baseUri: string, accessToken: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const url = `${baseUri}/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const document = getValidPostEmployeeDocumentObject();
+        request
+            .post(url)
+            .send(document)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .end((error, response) => {
+                if (error) {
+                    reject(response.body);
+                } else {
+                    resolve(response.body);
+                }
+            });
+    });
+}
+
 export function getValidPostEmployeeDocumentObject(): any {
     return {
         file: utils.uriEncodeTestFile('integration-tests/test-files/test.png'),
@@ -50,5 +69,16 @@ export function getValidPatchCompanyDocumentObject(): any {
         title: 'Update company document integration test',
         category: 'Updated integration test category',
         isPublishedToEmployee: false,
+    };
+}
+
+export function getValidPatchEmployeeDocumentObject(): any {
+    return {
+        fileObject: {
+            file: utils.uriEncodeTestFile('integration-tests/test-files/test.png'),
+            fileName: 'Update employee document integration test.png',
+        },
+        title: 'Update employee document integration test',
+        isPrivate: false,
     };
 }
