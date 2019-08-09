@@ -134,6 +134,67 @@ export async function listByCompany(
 }
 
 /**
+ * Returns the details for the specified employee record.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the employee belongs to.
+ * @param {string} employeeId: The unique identifier for the employee.
+ * @param {string} email: The email address of the user.
+ * @param {string[]} roles: The roles memberships that are associated with the user.
+ * @returns {Promise<Employee>}: Promise of an employee.
+ */
+export async function getById(tenantId: string, companyId: string, employeeId: string, email: string, roles: string[]): Promise<Employee> {
+    console.info('employeeService.getById');
+
+    try {
+        let query: ParameterizedQuery;
+        if (roles.includes(Role.globalAdmin) || roles.includes(Role.superAdmin)) {
+            query = new ParameterizedQuery('GetEmployeeById', Queries.getEmployeeById);
+            query.setParameter('@employeeId', employeeId);
+        } else if (roles.includes(Role.serviceBureauAdmin)) {
+            query = new ParameterizedQuery('GetEmployeeForSbAdminById', Queries.getEmployeeForSbAdminById);
+            query.setParameter('@employeeId', employeeId);
+            query.setParameter('@username', email);
+        } else if (roles.includes(Role.hrAdmin) || roles.includes(Role.hrRestrictedAdmin)) {
+            query = new ParameterizedQuery('GetEmployeeForAdminById', Queries.getEmployeeForAdminById);
+            query.setParameter('@employeeId', employeeId);
+            query.setParameter('@username', email);
+        } else if (roles.includes(Role.hrManager)) {
+            query = new ParameterizedQuery('GetEmployeeForManagerById', Queries.getEmployeeForManagerById);
+            query.setParameter('@employeeId', employeeId);
+            query.setParameter('@username', email);
+        }
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        if (result.recordset.length === 0) {
+            return undefined;
+        }
+
+        const record = result.recordset[0];
+
+        return {
+            id: record.ID,
+            firstName: record.FirstName,
+            lastName: record.LastName,
+            eeCode: record.EmployeeCode,
+            companyName: record.CompanyName,
+        } as Employee;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Retrieves a listing of employees.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {Query} query: The query to be executed to retrieve a listing of employees.

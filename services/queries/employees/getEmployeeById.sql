@@ -1,7 +1,7 @@
 select
-    CurrentDisplayName,
+    ID,
+    CompanyID,
     EmployeeCode,
-    EmailAddress,
     FirstName,
     LastName
 from
