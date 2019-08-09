@@ -1647,12 +1647,34 @@ async function getEmployeeLegacyAndSignedDocuments(
         const updatedDocuments = [];
         for (const document of documents) {
             const id = await encodeId(document.id, document.isLegacyDocument ? DocType.LegacyDocument : DocType.S3Document);
+            // set defaults for legacy documents
+            // note: default to false if value is null for isPublishedToEmployee and isPrivate flags
+            let isPublishedToEmployee = document.isPublishedToEmployee !== null ? document.isPublishedToEmployee : false;
+            let isPrivate = document.isPrivateDocument !== null ? document.isPrivateDocument : false;
+            let isSignedDocument = false;
+            if (!document.isLegacyDocument) {
+                isSignedDocument = !document.uploadedBy && document.category === 'onboarding';
+                if (document.employeeCode) {
+                    isPublishedToEmployee = false;
+                    isPrivate = document.isPublishedToEmployee !== null ? !document.isPublishedToEmployee : false;
+                } else {
+                    isPrivate = false;
+                }
+            }
             updatedDocuments.push({
                 id,
                 title: document.title,
                 fileName: document.fileName,
                 category: document.category,
                 uploadDate: document.uploadDate,
+                isPrivate,
+                isPublishedToEmployee,
+                employeeId: document.employeeId,
+                employeeName: document.firstName && document.lastName ? `${document.firstName} ${document.lastName}` : undefined,
+                companyId: document.companyId,
+                companyName: document.companyName,
+                isSignedDocument,
+                uploadedBy: document.uploadedBy,
             });
         }
 
