@@ -3,6 +3,7 @@ update
 set
     Title = @title,
     DocumentCategory = @category,
-    IsPublishedToEmployee = @isPublishedToEmployee
+    IsPublishedToEmployee = @isPublishedToEmployee,
+    IsPrivateDocument = @isPrivateDocument
 where
     ID = @id

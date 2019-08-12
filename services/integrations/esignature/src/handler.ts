@@ -204,19 +204,35 @@ const createCompanyDocumentSchema = Yup.object().shape({
     isPublishedToEmployee: Yup.bool().required(),
 });
 
-// Update Company Document schemas
-const updateCompanyDocumentValidationSchema = {
+// Update Document schemas
+const updateDocumentValidationSchema = {
     title: { required: false, type: String },
-    category: { required: false, type: String },
     fileObject: { required: false, type: Object },
+};
+const updateDocumentSchema = {
+    title: Yup.string(),
+    fileObject: Yup.object(),
+};
+
+const updateCompanyDocumentValidationSchema = {
+    ...updateDocumentValidationSchema,
+    category: { required: false, type: String },
     isPublishedToEmployee: { required: false, type: Boolean },
 };
 const updateCompanyDocumentSchema = Yup.object().shape({
-    title: Yup.string(),
+    ...updateDocumentSchema,
     category: Yup.string(),
-    fileObject: Yup.object(),
     isPublishedToEmployee: Yup.bool(),
 });
+const updateEmployeeDocumentValidationSchema = {
+    ...updateDocumentValidationSchema,
+    isPrivate: { required: false, type: Boolean },
+};
+const updateEmployeeDocumentSchema = Yup.object().shape({
+    ...updateDocumentSchema,
+    isPrivate: Yup.bool(),
+});
+
 const fileObjectValidationSchema = {
     file: { required: false, type: String },
     fileName: { required: false, type: String },
@@ -838,5 +854,58 @@ export const updateCompanyDocument = thundraWrapper(
         }
 
         return await esignatureService.updateCompanyDocument(tenantId, companyId, documentId, requestBody);
+    }),
+);
+
+/**
+ * Updates a specified document record for a company
+ */
+export const updateEmployeeDocument = thundraWrapper(
+    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.updateEmployeeDocument');
+
+        const { tenantId, companyId, employeeId, documentId } = event.pathParameters;
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
+
+        const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+            return (
+                role === Role.hrManager ||
+                role === Role.globalAdmin ||
+                role === Role.serviceBureauAdmin ||
+                role === Role.superAdmin ||
+                role === Role.hrAdmin ||
+                role === Role.hrRestrictedAdmin
+            );
+        });
+
+        if (!isAuthorized) {
+            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        }
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, updateEmployeeDocumentValidationSchema);
+        utilService.checkAdditionalProperties(updateEmployeeDocumentValidationSchema, requestBody, 'Update Employee Document');
+        await utilService.validateRequestBody(updateEmployeeDocumentSchema, requestBody);
+        if (requestBody.fileObject) {
+            await utilService.requirePayload(requestBody.fileObject);
+            utilService.validateAndThrow(requestBody.fileObject, fileObjectValidationSchema);
+            utilService.checkAdditionalProperties(fileObjectValidationSchema, requestBody.fileObject, 'File Object');
+            await utilService.validateRequestBody(fileObjectSchema, requestBody.fileObject);
+        }
+
+        const { email } = securityContext.principal;
+
+        return await esignatureService.updateEmployeeDocument(
+            tenantId,
+            companyId,
+            employeeId,
+            documentId,
+            requestBody,
+            securityContext.roleMemberships,
+            email,
+        );
     }),
 );

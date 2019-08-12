@@ -104,10 +104,11 @@ stage("Build")
                     sh "git push origin ${env.BRANCH_NAME} ${nextVersion}"
                 }
                 deploymentNotification("${projectName}: successfully deployed version: ${nextVersion} to production!", teamEmail, true)
+
+                // TODO: Run integration tests in production when e-signatures is turned on for EvoNPD
+                // runIntegrationTests("production") 
+                sh "INTEGRATION_TEST_CONFIG_FILENAME=production.config.json node_modules/.bin/jest -c jest.integration.test.config.json -i -t direct deposit"
             }
-            // TODO: Run integration tests in production when e-signatures is turned on for EvoNPD
-            // runIntegrationTests("production") 
-            sh "INTEGRATION_TEST_CONFIG_FILENAME=production.config.json node_modules/.bin/jest -c jest.integration.test.config.json -i -t direct deposit"
         }
     }
 }

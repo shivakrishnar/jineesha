@@ -2,9 +2,11 @@ select
     Title,
     DocumentCategory,
     IsPublishedToEmployee,
+    IsPrivateDocument,
     UploadDate,
     Extension,
-    Filename
+    Filename,
+    UploadByUsername
 from
     dbo.Document
 where

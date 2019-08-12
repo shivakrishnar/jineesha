@@ -12,11 +12,19 @@ declare @tmp table
 (
     ID  bigint,
 	CompanyID int, 
+	CompanyName nvarchar(max),
 	Title nvarchar(max),
 	Filename nvarchar(max),
 	Category nvarchar(max),
 	UploadDate datetime2(3),
-	IsLegacyDocument bit
+	IsLegacyDocument bit,
+	IsPublishedToEmployee bit,
+	IsPrivateDocument bit,
+    EmployeeCode nvarchar(max),
+	EmployeeID int,
+    FirstName nvarchar(max),
+    LastName nvarchar(max),
+	UploadedBy nvarchar(max)
 )
 
 ;with Manager as 
@@ -35,7 +43,9 @@ ManagedEmployees as
 	select 
 		ee.ID,
 		ee.EmployeeCode,
-		ee.CompanyID
+		ee.CompanyID,
+        ee.FirstName,
+        ee.LastName
 	from
 		dbo.Employee ee,
 		Manager m
@@ -46,29 +56,47 @@ ManagedEmployees as
 LegacyDocuments as
 (
 	select 
-		 d.ID,
+		 ID = d.ID,
 		 d.CompanyID,
+		 c.CompanyName,
 		 Title = iif(d.Title is null, d.Filename, d.Title), 
 		 d.Filename,
 		 Category = d.DocumentCategory, 
-		 d.UploadDate
+		 d.UploadDate,
+		 d.IsPublishedToEmployee,
+		 d.IsPrivateDocument,
+		 EmployeeCode = null,
+		 EmployeeID = e.ID,
+         e.FirstName,
+         e.LastName,
+		 UploadedBy = d.UploadByUsername
 	from
 		dbo.Document d
-		inner join ManagedEmployees e on d.EmployeeID = e.ID 
+		inner join ManagedEmployees e on d.EmployeeID = e.ID
+		inner join dbo.Company c on c.ID = e.CompanyID
 	    
 ),
 LegacyDocumentPublishedToEmployee as
 (
  	select 
-		 d.ID,
+		 ID = d.ID,
 		 d.CompanyID,
+		 c.CompanyName,
 		 Title = iif(d.Title is NULL, d.Filename, d.Title),
 		 d.Filename,
 		 Category = d.DocumentCategory, 
-		 d.UploadDate
+		 d.UploadDate,
+		 d.IsPublishedToEmployee,
+		 d.IsPrivateDocument,
+		 EmployeeCode = null,
+		 EmployeeID = null,
+         FirstName = null,
+         LastName = null,
+		 UploadedBy = d.UploadByUsername
 	from
 		dbo.Document d
 		inner join ManagedEmployees e on d.CompanyID = e.CompanyID
+		inner join dbo.Company c on c.ID = e.CompanyID
 	where
 		d. IsPublishedToEmployee = 1
 ),
@@ -76,48 +104,67 @@ LegacyDocumentPublishedToEmployee as
 SignedDocuments as 
 (
 	select
-	  d.ID,
+	  ID = d.ID,
 	  d.CompanyID,
+	  c.CompanyName,
 	  d.Title, 
 	  Filename = right(d.Pointer, charindex('/', reverse(d.Pointer) + '/') - 1),
 	  d.Category, 
-	  d.UploadDate
+	  d.UploadDate,
+	  d.IsPublishedToEmployee,
+	  IsPrivateDocument = null,
+	  d.EmployeeCode,
+	  EmployeeID = e.ID,
+      e.FirstName,
+      e.LastName,
+	  d.UploadedBy
 	from
 		dbo.FileMetadata d
 		inner join ManagedEmployees e on 
 			d.CompanyID = e.CompanyID
 			and d.EmployeeCode = e.EmployeeCode
+		inner join dbo.Company c on
+			c.ID = e.CompanyID
     where
 		d.IsPublishedToEmployee <> 1 or d.IsPublishedToEmployee is null
-		
 ),
 
 NewDocumentPublishedToEmployee as 
 (
 	select
-		  d.ID,
+		  ID = d.ID,
 		  e.CompanyID,
+		  c.CompanyName,
 		  d.Title, 
 		  Filename = right(d.Pointer, charindex('/', reverse(d.Pointer) + '/') - 1),
 		  d.Category, 
-		  d.UploadDate
+		  d.UploadDate,
+		  d.IsPublishedToEmployee,
+		  IsPrivateDocument = null,
+		  EmployeeCode = null,
+		  EmployeeID = null,
+          FirstName = null,
+          LastName = null,
+		  d.UploadedBy
 	from
 		dbo.FileMetadata d
 		inner join ManagedEmployees e on 
 			d.CompanyID = e.CompanyID
+	    inner join dbo.Company c on
+			c.ID = e.CompanyID
 	where
-	d.IsPublishedToEmployee = 1
+		d.IsPublishedToEmployee = 1
 ),
 
 CollatedDocuments as
 (
-	select ID, CompanyID, Title, Filename, Category, UploadDate, IsLegacyDocument = 1 from LegacyDocumentPublishedToEmployee
+	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, IsLegacyDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from LegacyDocumentPublishedToEmployee
 	union
-	select ID, CompanyID, Title, Filename, Category, UploadDate, IsLegacyDocument = 1 from LegacyDocuments
+	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, IsLegacyDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from LegacyDocuments
 	union 
-	select ID, CompanyID, Title, Filename, Category, UploadDate, IsLegacyDocument = 0 from SignedDocuments
+	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, IsLegacyDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from SignedDocuments
     union
-	select ID, CompanyID, Title, Filename, Category, UploadDate, IsLegacyDocument = 0 from NewDocumentPublishedToEmployee
+	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, IsLegacyDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from NewDocumentPublishedToEmployee
 
 )
 
@@ -135,7 +182,16 @@ select
 	fileName = Filename,
 	category = Category, 
 	uploadDate = UploadDate, 
-	isLegacyDocument = IsLegacyDocument
+	isLegacyDocument = IsLegacyDocument,
+	isPublishedToEmployee = IsPublishedToEmployee,
+	isPrivateDocument = IsPrivateDocument,
+	employeeCode = EmployeeCode,
+	companyId = CompanyID,
+	employeeId = EmployeeID,
+    companyName = CompanyName,
+    firstName = FirstName,
+    lastName = LastName,
+	uploadedBy = UploadedBy
 from 
 	@tmp
 order by uploadDate desc
