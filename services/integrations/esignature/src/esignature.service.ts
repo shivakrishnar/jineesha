@@ -2537,12 +2537,9 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
 async function updateLegacyDocument(tenantId: string, documentId: number, request: any): Promise<any> {
     console.info('esignature.service.updateLegacyDocument');
 
-    const {
-        fileObject: { file, fileName },
-        title,
-        category,
-        isPublishedToEmployee,
-    } = request;
+    const { title, category, isPublishedToEmployee } = request;
+
+    const { file = '', fileName = '' } = request.fileObject || {};
 
     try {
         // get document metadata / make sure it exists in the database
