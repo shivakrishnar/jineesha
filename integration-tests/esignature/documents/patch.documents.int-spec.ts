@@ -223,7 +223,109 @@ describe('update company document', () => {
             });
     });
 
-    test('must return a 200 when a legacy company document is updated', (done) => {
+    test('must return a 200 when a legacy company document title is updated', (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${
+            configs.esignature.legacyCompanyDocumentId
+        }`;
+
+        const updatedDocument = {
+            title: 'Updated Document Title',
+        };
+
+        request(baseUri)
+            .patch(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .send(updatedDocument)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(200)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    const responsePayload = response.body;
+                    expect(responsePayload.title).toBe(updatedDocument.title);
+                    return utils.assertJson(schemas, schemaNames.CompanyDocument, responsePayload);
+                });
+            });
+    });
+
+    test(`must return a 200 when a legacy company document's category is updated`, (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${
+            configs.esignature.legacyCompanyDocumentId
+        }`;
+
+        const updatedDocument = {
+            category: 'Updated Document Category',
+        };
+
+        request(baseUri)
+            .patch(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .send(updatedDocument)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(200)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    const responsePayload = response.body;
+                    expect(responsePayload.category).toBe(updatedDocument.category);
+                    return utils.assertJson(schemas, schemaNames.CompanyDocument, responsePayload);
+                });
+            });
+    });
+
+    test(`must return a 200 when a legacy company document's employee published status is updated`, (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${
+            configs.esignature.legacyCompanyDocumentId
+        }`;
+
+        const updatedDocument = {
+            isPublishedToEmployee: !document.isPublishedToEmployee,
+        };
+
+        request(baseUri)
+            .patch(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .send(updatedDocument)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(200)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    const responsePayload = response.body;
+                    expect(responsePayload.isPublishedToEmployee).toBe(!document.isPublishedToEmployee);
+                    return utils.assertJson(schemas, schemaNames.CompanyDocument, responsePayload);
+                });
+            });
+    });
+
+    test(`must return a 200 when a legacy company document's file is updated`, (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${
+            configs.esignature.legacyCompanyDocumentId
+        }`;
+
+        const updatedDocument = Object.assign({}, document);
+        delete updatedDocument.title;
+        delete updatedDocument.category;
+        delete updatedDocument.isPublishedToEmployee;
+        updatedDocument.fileObject.fileName = 'Updated File name.png';
+
+        request(baseUri)
+            .patch(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .send(updatedDocument)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(200)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    const responsePayload = response.body;
+                    expect(responsePayload.fileName).toBe(updatedDocument.fileObject.fileName);
+                    return utils.assertJson(schemas, schemaNames.CompanyDocument, responsePayload);
+                });
+            });
+    });
+
+    test(`must return a 200 when all of a legacy company document's metadata updated`, (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${
             configs.esignature.legacyCompanyDocumentId
         }`;
