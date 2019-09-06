@@ -45,6 +45,10 @@ module.exports = {
                 from: '../queries/**/*.sql',
                 to: 'service/',
             },
+            {
+                from: 'iopipe-wrapper.js',
+                to: './',
+            },
         ]),
     ],
 };

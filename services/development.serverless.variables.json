@@ -35,7 +35,7 @@
     "hrServicesDomain": "https://hr-services.dev.evolution-software.com",
     "eSignatureCallbackPath": "integrations/tenants/0/companies/0/esignatures/callback",
     "hrApplicationId": "c254ec95-4c45-4eb2-9697-dc0c03dfed6a",
-    "lambdaPerfMonitorApiKey": "003d5b8a-2329-4a9c-8b0f-ed5febed6414",
+    "lambdaPerfMonitorApiKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjNWY3MGI3Yy0zYTM3LTQ3YjMtYWZhZS05Mjk2ZmU5ZWRmN2EiLCJqdGkiOiI2YzBjYjlkNi03MjdiLTRhYWYtYTUzOC0zYmNkMGQ3MzQzZGYiLCJpYXQiOjE1NjA3NzU5ODYsImlzcyI6Imh0dHBzOi8vaW9waXBlLmNvbSIsImF1ZCI6Imh0dHBzOi8vaW9waXBlLmNvbSxodHRwczovL21ldHJpY3MtYXBpLmlvcGlwZS5jb20vZXZlbnQvLGh0dHBzOi8vZ3JhcGhxbC5pb3BpcGUuY29tIn0.WP2ZygWUrqEENHjhdm7LWYT-SEZ1SmbQsInEI2F5i34",
     "AuditLogGroupName": "AdvancedHR-Audit-Log",
     "tenantAdminCredentialsId": "tenantAdminCredentials",
     "logRetentionInDays": 5

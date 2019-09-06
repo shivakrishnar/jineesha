@@ -31,6 +31,7 @@ provider:
     apiDomain: ${file(${self:custom.configFile}):apiDomain}
     fromEmail: ${file(${self:custom.configFile}):fromEmail}
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
+    IOPIPE_ENABLE_PROFILER: true
 
   iamRoleStatements:
     - Effect: Allow
@@ -133,6 +134,7 @@ plugins:
   - serverless-aws-documentation
   - serverless-cloudformation-resource-counter
   - serverless-domain-manager
+  - serverless-iopipe-layers
 
 package:
   individually: false
@@ -155,3 +157,5 @@ custom:
     domainName: hr-services.${file(${self:custom.configFile}):domain}
     certificateName: '*.${file(${self:custom.configFile}):domain}'
     createRoute53Record: false
+  iopipe:
+    token: ${file(${self:custom.configFile}):lambdaPerfMonitorApiKey}

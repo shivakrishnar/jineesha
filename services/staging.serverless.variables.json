@@ -35,7 +35,7 @@
     "fileBucketName": "staging.hr.files",
     "hrServicesDomain": "https://hr-services.staging.evolution-software.com",
     "eSignatureCallbackPath": "integrations/tenants/0/companies/0/esignatures/callback",
-    "lambdaPerfMonitorApiKey": "",
+    "lambdaPerfMonitorApiKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjNWY3MGI3Yy0zYTM3LTQ3YjMtYWZhZS05Mjk2ZmU5ZWRmN2EiLCJqdGkiOiI2YzBjYjlkNi03MjdiLTRhYWYtYTUzOC0zYmNkMGQ3MzQzZGYiLCJpYXQiOjE1NjA3NzU5ODYsImlzcyI6Imh0dHBzOi8vaW9waXBlLmNvbSIsImF1ZCI6Imh0dHBzOi8vaW9waXBlLmNvbSxodHRwczovL21ldHJpY3MtYXBpLmlvcGlwZS5jb20vZXZlbnQvLGh0dHBzOi8vZ3JhcGhxbC5pb3BpcGUuY29tIn0.WP2ZygWUrqEENHjhdm7LWYT-SEZ1SmbQsInEI2F5i34",
     "AuditLogGroupName": "AdvancedHR-Audit-Log",
     "tenantAdminCredentialsId": "tenantAdminCredentials",
     "logRetentionInDays": 5
