@@ -34,6 +34,7 @@ provider:
     lambdaPerfMonitorApiKey: ${file(${self:custom.configFile}):lambdaPerfMonitorApiKey}
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
     tenantAdminCredentialsId: ${file(${self:custom.configFile}):tenantAdminCredentialsId}
+    IOPIPE_ENABLE_PROFILER: true
 
   iamRoleStatements:
     - Effect: Allow
@@ -138,6 +139,7 @@ plugins:
   - serverless-webpack
   - serverless-aws-documentation
   - serverless-cloudformation-resource-counter
+  - serverless-iopipe-layers
 
 
 package:
@@ -153,3 +155,5 @@ custom:
     webpackConfig: ./webpack/${file(${self:custom.configFile}):webpackConfigurationFile}
     includeModules: true
     packager: 'npm'
+  iopipe:
+    token: ${file(${self:custom.configFile}):lambdaPerfMonitorApiKey}

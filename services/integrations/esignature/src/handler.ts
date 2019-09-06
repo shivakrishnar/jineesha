@@ -1,6 +1,5 @@
 import * as UUID from '@smallwins/validate/uuid';
 import * as Yup from 'yup';
-import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
 import * as esignatureService from './esignature.service';
@@ -9,12 +8,6 @@ import { Role } from '../../../api/models/Role';
 import { IGatewayEventInput } from '../../../util.service';
 import { Headers } from '../../models/headers';
 import { EsignatureConfiguration } from './esignature.service';
-
-import * as thundra from '@thundra/core';
-
-const thundraWrapper = thundra({
-    apiKey: configService.lambdaPerfMonitorApiKey(),
-});
 
 const headerSchema = {
     authorization: { required: true, type: String },
@@ -248,60 +241,56 @@ const fileObjectSchema = Yup.object().shape({
  * Creates a new template of a document to be e-signed
  */
 
-export const createTemplate = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.createTemplate');
+export const createTemplate = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.createTemplate');
 
-        const { tenantId, companyId } = event.pathParameters;
+    const { tenantId, companyId } = event.pathParameters;
 
-        // TODO: We will implement security/authorization in MJ-1815.
-        // await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeCompanyDocumentList', 'CanRead');
+    // TODO: We will implement security/authorization in MJ-1815.
+    // await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeCompanyDocumentList', 'CanRead');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
 
-        await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, createEmbeddedTemplateValidationSchema);
-        utilService.checkAdditionalProperties(createEmbeddedTemplateValidationSchema, requestBody, 'Create Embedded Template');
+    await utilService.requirePayload(requestBody);
+    utilService.validateAndThrow(requestBody, createEmbeddedTemplateValidationSchema);
+    utilService.checkAdditionalProperties(createEmbeddedTemplateValidationSchema, requestBody, 'Create Embedded Template');
 
-        await utilService.validateRequestBody(createEmbeddedTemplateSchema, requestBody);
-        if (requestBody.customFields) {
-            await utilService.validateCollection(customFieldsSchema, requestBody.customFields);
-        }
+    await utilService.validateRequestBody(createEmbeddedTemplateSchema, requestBody);
+    if (requestBody.customFields) {
+        await utilService.validateCollection(customFieldsSchema, requestBody.customFields);
+    }
 
-        const { email } = securityContext.principal;
+    const { email } = securityContext.principal;
 
-        return await esignatureService.createTemplate(tenantId, companyId, requestBody, email, securityContext.adminToken);
-    }),
-);
+    return await esignatureService.createTemplate(tenantId, companyId, requestBody, email, securityContext.adminToken);
+});
 
 /**
  * Saves a template's metadata
  */
-export const saveTemplateMetadata = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.saveTemplateMetadata');
+export const saveTemplateMetadata = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.saveTemplateMetadata');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, templateResourceUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, templateResourceUriSchema);
 
-        await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, saveTemplateMetadataValidationSchema);
-        utilService.checkAdditionalProperties(saveTemplateMetadataValidationSchema, requestBody, 'Save Template Metadata');
-        await utilService.validateRequestBody(saveTemplateMetadataSchema, requestBody);
+    await utilService.requirePayload(requestBody);
+    utilService.validateAndThrow(requestBody, saveTemplateMetadataValidationSchema);
+    utilService.checkAdditionalProperties(saveTemplateMetadataValidationSchema, requestBody, 'Save Template Metadata');
+    await utilService.validateRequestBody(saveTemplateMetadataSchema, requestBody);
 
-        const { tenantId, companyId, templateId } = event.pathParameters;
-        const { email } = securityContext.principal;
+    const { tenantId, companyId, templateId } = event.pathParameters;
+    const { email } = securityContext.principal;
 
-        return await esignatureService.saveTemplateMetadata(tenantId, companyId, templateId, email, requestBody);
-    }),
-);
+    return await esignatureService.saveTemplateMetadata(tenantId, companyId, templateId, email, requestBody);
+});
 
-export const createBulkSignatureRequest = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const createBulkSignatureRequest = utilService.gatewayEventHandler(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
         console.info('esignature.handler.createBulkSignatureRequest');
 
         utilService.normalizeHeaders(event);
@@ -331,11 +320,11 @@ export const createBulkSignatureRequest = thundraWrapper(
             securityContext.adminToken,
             configuration,
         );
-    }),
+    },
 );
 
-export const createSignatureRequest = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const createSignatureRequest = utilService.gatewayEventHandler(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
         console.info('esignature.handler.createSignatureRequest');
 
         utilService.normalizeHeaders(event);
@@ -350,366 +339,335 @@ export const createSignatureRequest = thundraWrapper(
         const { tenantId, companyId, employeeId } = event.pathParameters;
 
         return await esignatureService.createSignatureRequest(tenantId, companyId, employeeId, requestBody, securityContext.adminToken);
-    }),
+    },
 );
 
 /**
  * Lists all templates under a given company
  */
-export const listTemplates = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
-        console.info('esignature.handler.listTemplates');
+export const listTemplates = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listTemplates');
 
-        const { tenantId, companyId } = event.pathParameters;
+    const { tenantId, companyId } = event.pathParameters;
 
-        // TODO: We will implement security/authorization in MJ-1815.
-        // await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeCompanyDocumentList', 'CanRead');
+    // TODO: We will implement security/authorization in MJ-1815.
+    // await securityContext.checkSecurityRoles(tenantId, employeeId, email, 'EmployeeCompanyDocumentList', 'CanRead');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
 
-        const {
-            requestContext: { domainName, path },
-        } = event;
+    const {
+        requestContext: { domainName, path },
+    } = event;
 
-        return await esignatureService.listTemplates(
-            tenantId,
-            companyId,
-            event.queryStringParameters,
-            domainName,
-            path,
-            securityContext.adminToken,
-        );
-    }),
-);
+    return await esignatureService.listTemplates(
+        tenantId,
+        companyId,
+        event.queryStringParameters,
+        domainName,
+        path,
+        securityContext.adminToken,
+    );
+});
 
 /**
  * Generates a sign url for a specific employee
  */
-export const createSignUrl = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
-        console.info('esignature.handler.createSignUrl');
+export const createSignUrl = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.createSignUrl');
 
-        const {
-            headers: { origin = '' },
-            requestContext: { stage },
-        } = event;
-        if (stage === 'production' && !new RegExp(/.*\.evolutionadvancedhr.com$/g).test(origin)) {
-            console.log(`Not authorized on origin: ${origin}`);
-            throw errorService.getErrorResponse(11);
-        }
+    const {
+        headers: { origin = '' },
+        requestContext: { stage },
+    } = event;
+    if (stage === 'production' && !new RegExp(/.*\.evolutionadvancedhr.com$/g).test(origin)) {
+        console.log(`Not authorized on origin: ${origin}`);
+        throw errorService.getErrorResponse(11);
+    }
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.pathParameters, createSignUrlUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.pathParameters, createSignUrlUriSchema);
 
-        const { tenantId, companyId, employeeId, signatureId } = event.pathParameters;
+    const { tenantId, companyId, employeeId, signatureId } = event.pathParameters;
 
-        return await esignatureService.createSignUrl(tenantId, companyId, employeeId, signatureId);
-    }),
-);
+    return await esignatureService.createSignUrl(tenantId, companyId, employeeId, signatureId);
+});
 
 /**
  * Generates an edit url for a specific e-signature template
  */
-export const createEditUrl = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
-        console.info('esignature.handler.createEditUrl');
+export const createEditUrl = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.createEditUrl');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.pathParameters, createEditUrlUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.pathParameters, createEditUrlUriSchema);
 
-        const { tenantId, companyId, templateId } = event.pathParameters;
+    const { tenantId, companyId, templateId } = event.pathParameters;
 
-        return await esignatureService.createEditUrl(tenantId, companyId, templateId, securityContext.adminToken);
-    }),
-);
+    return await esignatureService.createEditUrl(tenantId, companyId, templateId, securityContext.adminToken);
+});
 
 /**
  *  List documents uploaded for E-Signing
  */
-export const listDocuments = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
-        console.info('esignature.handler.listDocuments');
+export const listDocuments = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listDocuments');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
 
-        const {
-            requestContext: { domainName, path },
-        } = event;
-        const { tenantId, companyId } = event.pathParameters;
+    const {
+        requestContext: { domainName, path },
+    } = event;
+    const { tenantId, companyId } = event.pathParameters;
 
-        const configuration: EsignatureConfiguration = await esignatureService.getConfigurationData(
-            tenantId,
-            companyId,
-            securityContext.adminToken,
-        );
+    const configuration: EsignatureConfiguration = await esignatureService.getConfigurationData(
+        tenantId,
+        companyId,
+        securityContext.adminToken,
+    );
 
-        return await esignatureService.listDocuments(
-            tenantId,
-            companyId,
-            event.queryStringParameters,
-            domainName,
-            path,
-            false,
-            securityContext.adminToken,
-            configuration,
-        );
-    }),
-);
+    return await esignatureService.listDocuments(
+        tenantId,
+        companyId,
+        event.queryStringParameters,
+        domainName,
+        path,
+        false,
+        securityContext.adminToken,
+        configuration,
+    );
+});
 
 /**
  *  List all signature requests under a specific company
  */
-export const listCompanySignatureRequests = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
-        console.info('esignature.handler.listCompanySignatureRequests');
+export const listCompanySignatureRequests = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listCompanySignatureRequests');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
 
-        const { tenantId, companyId } = event.pathParameters;
-        const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
-        const emailAddress: string = securityContext.principal.email;
-        const {
-            requestContext: { domainName, path },
-        } = event;
+    const { tenantId, companyId } = event.pathParameters;
+    const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
+    const emailAddress: string = securityContext.principal.email;
+    const {
+        requestContext: { domainName, path },
+    } = event;
 
-        return await esignatureService.listCompanySignatureRequests(
-            tenantId,
-            companyId,
-            emailAddress,
-            isManager,
-            event.queryStringParameters,
-            domainName,
-            path,
-            securityContext.adminToken,
-        );
-    }),
-);
+    return await esignatureService.listCompanySignatureRequests(
+        tenantId,
+        companyId,
+        emailAddress,
+        isManager,
+        event.queryStringParameters,
+        domainName,
+        path,
+        securityContext.adminToken,
+    );
+});
 
 /**
  * List each document category among a company's documents
  */
-export const listCompanyDocumentCategories = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
+export const listCompanyDocumentCategories = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
 
-        const { tenantId, companyId } = event.pathParameters;
-        const {
-            requestContext: { domainName, path },
-        } = event;
+    const { tenantId, companyId } = event.pathParameters;
+    const {
+        requestContext: { domainName, path },
+    } = event;
 
-        const results = await esignatureService.listCompanyDocumentCategories(
-            tenantId,
-            companyId,
-            event.queryStringParameters,
-            domainName,
-            path,
-        );
-        return results.count === 0 ? { statusCode: 204, headers: new Headers() } : results;
-    }),
-);
+    const results = await esignatureService.listCompanyDocumentCategories(
+        tenantId,
+        companyId,
+        event.queryStringParameters,
+        domainName,
+        path,
+    );
+    return results.count === 0 ? { statusCode: 204, headers: new Headers() } : results;
+});
 
 /**
  * Handles event callbacks from HelloSign
  */
-export const eventCallback = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.eventCallback');
+export const eventCallback = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.eventCallback');
 
-        const hellosignEvent = JSON.parse(new Buffer(event.body, 'base64').toString('ascii').match(/\{(.*)\}/g)[0]);
-        if (hellosignEvent) {
-            switch (hellosignEvent.event.event_type) {
-                case 'callback_test':
-                    console.info('callback test');
-                    return 'Hello API Event Received';
-                case 'signature_request_downloadable':
-                    console.info('signature request downloadable');
-                    await utilService.invokeInternalService('uploadSignedDocument', hellosignEvent, utilService.InvocationType.Event);
-                    return;
-                default:
-            }
+    const hellosignEvent = JSON.parse(new Buffer(event.body, 'base64').toString('ascii').match(/\{(.*)\}/g)[0]);
+    if (hellosignEvent) {
+        switch (hellosignEvent.event.event_type) {
+            case 'callback_test':
+                console.info('callback test');
+                return 'Hello API Event Received';
+            case 'signature_request_downloadable':
+                console.info('signature request downloadable');
+                await utilService.invokeInternalService('uploadSignedDocument', hellosignEvent, utilService.InvocationType.Event);
+                return;
+            default:
         }
-    }),
-);
+    }
+});
 
 /**
  * Performs the necessary steps for onboarding
  */
-export const onboarding = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.onboarding');
+export const onboarding = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.onboarding');
 
-        const {
-            headers: { origin = '' },
-            requestContext: { stage },
-        } = event;
-        if (stage === 'production' && !new RegExp(/.*\.evolutionadvancedhr.com$/g).test(origin)) {
-            console.log(`Not authorized on origin: ${origin}`);
-            throw errorService.getErrorResponse(11);
-        }
+    const {
+        headers: { origin = '' },
+        requestContext: { stage },
+    } = event;
+    if (stage === 'production' && !new RegExp(/.*\.evolutionadvancedhr.com$/g).test(origin)) {
+        console.log(`Not authorized on origin: ${origin}`);
+        throw errorService.getErrorResponse(11);
+    }
 
-        console.log(`request body: ${JSON.stringify(requestBody)}`);
-        console.log(`event: ${JSON.stringify(event)}`);
+    console.log(`request body: ${JSON.stringify(requestBody)}`);
+    console.log(`event: ${JSON.stringify(event)}`);
 
-        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
 
-        await utilService.requirePayload(requestBody);
+    await utilService.requirePayload(requestBody);
 
-        utilService.validateAndThrow(requestBody, onboardingSignatureRequestValidationSchema);
+    utilService.validateAndThrow(requestBody, onboardingSignatureRequestValidationSchema);
 
-        utilService.checkAdditionalProperties(onboardingSignatureRequestValidationSchema, requestBody, 'Onboarding Signature Request');
+    utilService.checkAdditionalProperties(onboardingSignatureRequestValidationSchema, requestBody, 'Onboarding Signature Request');
 
-        await utilService.validateRequestBody(onboardingSignatureRequestSchema, requestBody);
+    await utilService.validateRequestBody(onboardingSignatureRequestSchema, requestBody);
 
-        const { tenantId, companyId } = event.pathParameters;
+    const { tenantId, companyId } = event.pathParameters;
 
-        const result = await esignatureService.onboarding(tenantId, companyId, requestBody);
-        return result;
-    }),
-);
+    const result = await esignatureService.onboarding(tenantId, companyId, requestBody);
+    return result;
+});
 
 /**
  *  Adds/Remove e-signature functionality for a specified company within a tenant
  */
-export const configure = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.configure');
+export const configure = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.configure');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
-        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
 
-        // payload validation & checks:
-        await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, configurationValidationSchema);
-        utilService.checkAdditionalProperties(configurationValidationSchema, requestBody, 'E-Signature Configuration');
-        await utilService.validateRequestBody(configurationSchema, requestBody);
+    // payload validation & checks:
+    await utilService.requirePayload(requestBody);
+    utilService.validateAndThrow(requestBody, configurationValidationSchema);
+    utilService.checkAdditionalProperties(configurationValidationSchema, requestBody, 'E-Signature Configuration');
+    await utilService.validateRequestBody(configurationSchema, requestBody);
 
-        const { tenantId, companyId } = event.pathParameters;
-        const accessToken = event.headers.authorization.replace(/Bearer /i, '');
+    const { tenantId, companyId } = event.pathParameters;
+    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
-        return await esignatureService.configure(tenantId, companyId, accessToken, requestBody, securityContext.adminToken);
-    }),
-);
+    return await esignatureService.configure(tenantId, companyId, accessToken, requestBody, securityContext.adminToken);
+});
 
 /**
  *  List all legacy and Esigned documents for a given tenant
  */
-export const listEmployeeDocumentsByTenant = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
-        console.info('esignature.handler.listCompanySignatureRequests');
+export const listEmployeeDocumentsByTenant = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listCompanySignatureRequests');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, tenantResourceUriSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, tenantResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
 
-        const { tenantId } = event.pathParameters;
-        const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
-            return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin;
-        });
+    const { tenantId } = event.pathParameters;
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin;
+    });
 
-        if (!isAuthorized) {
-            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
-        }
+    if (!isAuthorized) {
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
 
-        const emailAddress: string = securityContext.principal.email;
+    const emailAddress: string = securityContext.principal.email;
 
-        const {
-            requestContext: { domainName, path },
-        } = event;
+    const {
+        requestContext: { domainName, path },
+    } = event;
 
-        return await esignatureService.listEmployeeDocumentsByTenant(tenantId, event.queryStringParameters, domainName, path, emailAddress);
-    }),
-);
+    return await esignatureService.listEmployeeDocumentsByTenant(tenantId, event.queryStringParameters, domainName, path, emailAddress);
+});
 
 /**
  *  List all legacy and Esigned documents for given company within a tenant
  */
-export const listEmployeeDocumentsByCompany = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
-        console.info('esignature.handler.listCompanySignatureRequests');
+export const listEmployeeDocumentsByCompany = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listCompanySignatureRequests');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
 
-        const { tenantId, companyId } = event.pathParameters;
-        const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
-            return (
-                role === Role.hrManager ||
-                role === Role.globalAdmin ||
-                role === Role.serviceBureauAdmin ||
-                role === Role.superAdmin ||
-                role === Role.hrAdmin ||
-                role === Role.hrRestrictedAdmin
-            );
-        });
-
-        if (!isAuthorized) {
-            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
-        }
-
-        const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
-        const emailAddress: string = securityContext.principal.email;
-        const {
-            requestContext: { domainName, path },
-        } = event;
-
-        return await esignatureService.listEmployeeDocumentsByCompany(
-            tenantId,
-            companyId,
-            event.queryStringParameters,
-            domainName,
-            path,
-            isManager,
-            emailAddress,
+    const { tenantId, companyId } = event.pathParameters;
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return (
+            role === Role.hrManager ||
+            role === Role.globalAdmin ||
+            role === Role.serviceBureauAdmin ||
+            role === Role.superAdmin ||
+            role === Role.hrAdmin ||
+            role === Role.hrRestrictedAdmin
         );
-    }),
-);
+    });
+
+    if (!isAuthorized) {
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
+    const emailAddress: string = securityContext.principal.email;
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    return await esignatureService.listEmployeeDocumentsByCompany(
+        tenantId,
+        companyId,
+        event.queryStringParameters,
+        domainName,
+        path,
+        isManager,
+        emailAddress,
+    );
+});
 
 /**
  *  List all legacy and Esigned documents for given employee
  */
-export const listEmployeeDocuments = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
-        console.info('esignature.handler.listCompanySignatureRequests');
+export const listEmployeeDocuments = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listCompanySignatureRequests');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
 
-        const { tenantId, companyId, employeeId } = event.pathParameters;
+    const { tenantId, companyId, employeeId } = event.pathParameters;
 
-        const {
-            requestContext: { domainName, path },
-        } = event;
+    const {
+        requestContext: { domainName, path },
+    } = event;
 
-        return await esignatureService.listEmployeeDocuments(
-            tenantId,
-            companyId,
-            employeeId,
-            event.queryStringParameters,
-            domainName,
-            path,
-        );
-    }),
-);
+    return await esignatureService.listEmployeeDocuments(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
+});
 
 /**
  * Generates a preview of an employee's saved document under a tenant
@@ -776,8 +734,8 @@ export const getDocumentPreview = utilService.gatewayEventHandler(async ({ secur
 /**
  * Creates a specified document record for an employee
  */
-export const createEmployeeDocument = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const createEmployeeDocument = utilService.gatewayEventHandler(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
         console.info('esignature.handler.createEmployeeDocument');
 
         const { tenantId, companyId, employeeId } = event.pathParameters;
@@ -798,14 +756,14 @@ export const createEmployeeDocument = thundraWrapper(
             statusCode: 201,
             body: await esignatureService.createEmployeeDocument(tenantId, companyId, employeeId, requestBody, givenName, surname),
         };
-    }),
+    },
 );
 
 /**
  * Creates a specified document record for a company
  */
-export const createCompanyDocument = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const createCompanyDocument = utilService.gatewayEventHandler(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
         console.info('esignature.handler.createCompanyDocument');
 
         const { tenantId, companyId } = event.pathParameters;
@@ -826,14 +784,14 @@ export const createCompanyDocument = thundraWrapper(
             statusCode: 201,
             body: await esignatureService.createCompanyDocument(tenantId, companyId, requestBody, givenName, surname),
         };
-    }),
+    },
 );
 
 /**
  * Updates a specified document record for a company
  */
-export const updateCompanyDocument = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const updateCompanyDocument = utilService.gatewayEventHandler(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
         console.info('esignature.handler.updateCompanyDocument');
 
         const { tenantId, companyId, documentId } = event.pathParameters;
@@ -854,14 +812,14 @@ export const updateCompanyDocument = thundraWrapper(
         }
 
         return await esignatureService.updateCompanyDocument(tenantId, companyId, documentId, requestBody);
-    }),
+    },
 );
 
 /**
  * Updates a specified document record for a company
  */
-export const updateEmployeeDocument = thundraWrapper(
-    utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const updateEmployeeDocument = utilService.gatewayEventHandler(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
         console.info('esignature.handler.updateEmployeeDocument');
 
         const { tenantId, companyId, employeeId, documentId } = event.pathParameters;
@@ -907,5 +865,5 @@ export const updateEmployeeDocument = thundraWrapper(
             securityContext.roleMemberships,
             email,
         );
-    }),
+    },
 );

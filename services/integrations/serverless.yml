@@ -48,6 +48,7 @@ provider:
     lambdaPerfMonitorApiKey: ${file(${self:custom.configFile}):lambdaPerfMonitorApiKey}
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
     tenantAdminCredentialsId: ${file(${self:custom.configFile}):tenantAdminCredentialsId}
+    IOPIPE_ENABLE_PROFILER: true
 
   iamRoleStatements:
     - Effect: Allow
@@ -355,6 +356,7 @@ plugins:
   - serverless-cloudformation-resource-counter
   - serverless-domain-manager
   - serverless-apigw-binary
+  - serverless-iopipe-layers
 
 package:
   individually: false
@@ -386,3 +388,5 @@ custom:
       - 'text/html'
       - 'application/octet-stream'
       - 'application/xhtml+xml'
+  iopipe:
+    token: ${file(${self:custom.configFile}):lambdaPerfMonitorApiKey}

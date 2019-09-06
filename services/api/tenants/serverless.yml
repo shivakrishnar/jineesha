@@ -26,6 +26,7 @@ provider:
     pageLimitDefault: 30
     pageLimitMax: 100
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
+    IOPIPE_ENABLE_PROFILER: true
 
   iamRoleStatements:
     - Effect: Allow
@@ -245,6 +246,7 @@ plugins:
   - serverless-domain-manager
   - serverless-pseudo-parameters
   - serverless-step-functions
+  - serverless-iopipe-layers
 
 package:
   individually: false
@@ -265,3 +267,5 @@ custom:
     domainName: hr-services.${file(${self:custom.configFile}):domain}
     certificateName: '*.${file(${self:custom.configFile}):domain}'
     createRoute53Record: false
+  iopipe:
+    token: ${file(${self:custom.configFile}):lambdaPerfMonitorApiKey}

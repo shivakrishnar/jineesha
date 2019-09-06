@@ -10,7 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "@smallwins/validate": "^4.3.0",
-    "@thundra/core": "^2.4.1",
     "@types/hashids": "^1.0.30",
     "@types/shortid": "0.0.29",
     "aws-auth-policy": "^0.1.0",
@@ -44,6 +43,7 @@
     "serverless-aws-documentation": "^1.1.0",
     "serverless-cloudformation-resource-counter": "^0.2.0",
     "serverless-domain-manager": "^2.6.6",
+    "serverless-iopipe-layers": "^0.4.0",
     "serverless-plugin-warmup": "^4.2.0-rc.1",
     "serverless-stack-output": "0.2.0",
     "serverless-webpack": "^5.2.0",

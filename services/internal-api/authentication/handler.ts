@@ -10,12 +10,6 @@ import * as utilService from '../../util.service';
 import { IPayrollApiCredentials } from '../../api/models/IPayrollApiCredentials';
 import { SecurityContext } from './securityContext';
 
-import * as thundra from '@thundra/core';
-
-const thundraWrapper = thundra({
-    apiKey: configService.lambdaPerfMonitorApiKey(),
-});
-
 /**
  * Lambda function that is used as the custom authorizer function for AWS API
  * Gateway. This function allows API Gateway to validate the JWT before passing
@@ -28,30 +22,24 @@ enum AuthorizerType {
     Golidlocks = 'Goldilocks',
 }
 
-export const tokenVerifier = thundraWrapper(
-    async (event: APIGatewayEvent, context: Context, callback: any): Promise<void> => {
-        console.info('authentication.tokenVerifier');
+export const tokenVerifier = async (event: APIGatewayEvent, context: Context, callback: any): Promise<void> => {
+    console.info('authentication.tokenVerifier');
 
-        const apiSecret = JSON.parse(await utilService.getSecret(configService.getApiSecretId())).apiSecret;
-        await verify(event, context, callback, apiSecret, AuthorizerType.Evolution);
-    },
-);
+    const apiSecret = JSON.parse(await utilService.getSecret(configService.getApiSecretId())).apiSecret;
+    await verify(event, context, callback, apiSecret, AuthorizerType.Evolution);
+};
 
-export const ssoTokenVerifier = thundraWrapper(
-    async (event: APIGatewayEvent, context: Context, callback: any): Promise<void> => {
-        console.info('authentication.SsoTokenVerifier');
-        const apiSecret = JSON.parse(await utilService.getSecret(configService.getSsoCredentialsId())).apiSecret;
-        await verify(event, context, callback, apiSecret, AuthorizerType.Golidlocks);
-    },
-);
+export const ssoTokenVerifier = async (event: APIGatewayEvent, context: Context, callback: any): Promise<void> => {
+    console.info('authentication.SsoTokenVerifier');
+    const apiSecret = JSON.parse(await utilService.getSecret(configService.getSsoCredentialsId())).apiSecret;
+    await verify(event, context, callback, apiSecret, AuthorizerType.Golidlocks);
+};
 
-export const hrTokenVerifier = thundraWrapper(
-    async (event: APIGatewayEvent, context: Context, callback: any): Promise<void> => {
-        console.info('authentication.hrTokenVerifier');
-        const apiSecret = JSON.parse(await utilService.getSecret(configService.getHrCredentialsId())).apiSecret;
-        await verify(event, context, callback, apiSecret, AuthorizerType.Evolution);
-    },
-);
+export const hrTokenVerifier = async (event: APIGatewayEvent, context: Context, callback: any): Promise<void> => {
+    console.info('authentication.hrTokenVerifier');
+    const apiSecret = JSON.parse(await utilService.getSecret(configService.getHrCredentialsId())).apiSecret;
+    await verify(event, context, callback, apiSecret, AuthorizerType.Evolution);
+};
 
 async function verify(event: APIGatewayEvent, context: Context, callback: any, apiSecret: string, authType: AuthorizerType): Promise<void> {
     console.info('authentication.verify');
