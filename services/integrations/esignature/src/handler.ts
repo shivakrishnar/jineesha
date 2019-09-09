@@ -685,6 +685,7 @@ export const listEmployeeDocuments = utilService.gatewayEventHandler(async ({ se
         domainName,
         path,
         includePrivateDocs,
+        securityContext.principal.email,
     );
 });
 

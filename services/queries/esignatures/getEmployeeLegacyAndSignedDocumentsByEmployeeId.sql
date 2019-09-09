@@ -6,6 +6,7 @@
 
 declare @_employeeId int = @employeeId
 declare @_includePrivateDocuments bit = @includePrivateDocuments
+declare @_invokerUsername varchar(max) = @invokerUsername
 declare @tmp table
 (
   	ID  bigint,
@@ -24,6 +25,16 @@ declare @tmp table
 	LastName nvarchar(max),
 	UploadedBy nvarchar(max)
 )
+
+-- Restriction to prevent users with administrative privileges from viewing their own Private documentation
+select 
+    @_includePrivateDocuments = @_includePrivateDocuments & iif(ue.EmployeeID = @_employeeId, 0, 1)
+from 
+    dbo.HRnextUser hru
+    inner join dbo.HRnextUserEmployee ue on hru.ID = ue.HRnextUserID
+where 
+    Username = @_invokerUsername
+    and ue.EmployeeID = @_employeeId
 
 ;with EmployeeInfo as 
 (
