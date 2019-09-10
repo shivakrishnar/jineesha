@@ -666,7 +666,27 @@ export const listEmployeeDocuments = utilService.gatewayEventHandler(async ({ se
         requestContext: { domainName, path },
     } = event;
 
-    return await esignatureService.listEmployeeDocuments(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
+    const includePrivateDocs: boolean = securityContext.roleMemberships.some((role) => {
+        return (
+            role === Role.hrManager ||
+            role === Role.globalAdmin ||
+            role === Role.serviceBureauAdmin ||
+            role === Role.superAdmin ||
+            role === Role.hrAdmin ||
+            role === Role.hrRestrictedAdmin
+        );
+    });
+
+    return await esignatureService.listEmployeeDocuments(
+        tenantId,
+        companyId,
+        employeeId,
+        event.queryStringParameters,
+        domainName,
+        path,
+        includePrivateDocs,
+        securityContext.principal.email,
+    );
 });
 
 /**

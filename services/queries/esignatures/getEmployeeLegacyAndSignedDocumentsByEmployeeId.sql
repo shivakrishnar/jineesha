@@ -5,6 +5,8 @@
 -------------------------------------------------------------------------------
 
 declare @_employeeId int = @employeeId
+declare @_includePrivateDocuments bit = @includePrivateDocuments
+declare @_invokerUsername varchar(max) = @invokerUsername
 declare @tmp table
 (
   	ID  bigint,
@@ -23,6 +25,16 @@ declare @tmp table
 	LastName nvarchar(max),
 	UploadedBy nvarchar(max)
 )
+
+-- Restriction to prevent users with administrative privileges from viewing their own Private documentation
+select 
+    @_includePrivateDocuments = @_includePrivateDocuments & iif(ue.EmployeeID = @_employeeId, 0, 1)
+from 
+    dbo.HRnextUser hru
+    inner join dbo.HRnextUserEmployee ue on hru.ID = ue.HRnextUserID
+where 
+    Username = @_invokerUsername
+    and ue.EmployeeID = @_employeeId
 
 ;with EmployeeInfo as 
 (
@@ -80,6 +92,7 @@ LegacyDocuments as
 		inner join dbo.Company c on c.ID = e.CompanyID
 	where
 		d.IsPrivateDocument = 1
+		and @_includePrivateDocuments <> 1
 ),
 LegacyDocumentPublishedToEmployee as
 (
@@ -104,6 +117,34 @@ LegacyDocumentPublishedToEmployee as
 		inner join dbo.Company c on c.ID = e.CompanyID
 	where
 		d.IsPublishedToEmployee = 1
+),
+UploadedPrivateDocuments as 
+(
+	select
+	  ID = d.ID,
+	  d.CompanyID,
+	  c.CompanyName,
+	  d.Title, 
+	  Filename = right(d.Pointer, charindex('/', reverse(d.Pointer) + '/') - 1),
+	  d.Category, 
+	  d.UploadDate,
+      d.IsPublishedToEmployee,
+	  IsPrivateDocument = null,
+	  d.EmployeeCode,
+	  EmployeeID = e.ID,
+	  e.FirstName,
+	  e.LastName,
+	  d.UploadedBy
+	from
+		dbo.FileMetadata d
+		inner join EmployeeInfo e on 
+			d.CompanyID = e.CompanyID
+			and d.EmployeeCode = e.EmployeeCode
+		inner join dbo.Company c on
+			c.ID = e.CompanyID
+	where
+		d.IsPublishedToEmployee = 0
+        and @_includePrivateDocuments <> 0
 ),
 SignedDocuments as 
 (
@@ -169,6 +210,8 @@ CollatedDocuments as
 	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, IsLegacyDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from SignedDocuments
 	union
 	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, IsLegacyDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from NewDocumentPublishedToEmployee
+    union 
+    select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, IsLegacyDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from UploadedPrivateDocuments
 )
 
 insert into @tmp

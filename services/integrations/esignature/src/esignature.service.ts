@@ -1532,6 +1532,8 @@ export async function listEmployeeDocumentsByCompany(
  * @param {any} queryParams: The query parameters that were specified by the user.
  * @param {string} domainName: The domain name of the request.
  * @param {string} path: The path of the endpoint.
+ * @param {boolean} includePrivateDocumentation: Indicates whether the results should include private documents
+ * @param {string} invokerUsername: The username of the account invoking this service
  * @returns {PaginatedResult}: A Promise of a paginated collection of employee e-signed and legacy documents.
  */
 export async function listEmployeeDocuments(
@@ -1541,6 +1543,8 @@ export async function listEmployeeDocuments(
     queryParams: any,
     domainName: string,
     path: string,
+    includePrivateDocumentation: boolean,
+    invokerUsername: string,
 ): Promise<PaginatedResult> {
     console.info('esignature.service.listEmployeeDocuments');
 
@@ -1557,6 +1561,8 @@ export async function listEmployeeDocuments(
             Queries.getEmployeeLegacyAndSignedDocumentsByEmployeeId,
         );
         query.setParameter('@employeeId', employeeId);
+        query.setParameter('@includePrivateDocuments', includePrivateDocumentation ? 1 : 0);
+        query.setParameter('@invokerUsername', `'${invokerUsername}'`);
         const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
         return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);
