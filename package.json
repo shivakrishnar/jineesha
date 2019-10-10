@@ -4,7 +4,7 @@
     "description": "Collection of HR-related services for Asure Software Evolution HCM suite",
     "main": "index.js",
     "scripts": {
-        "test": "node_modules/.bin/jest",
+        "test": "node_modules/.bin/jest --coverage",
         "lint": "node_modules/.bin/tslint -p tsconfig.json **/*.ts",
         "prettier": "prettier --write \"**/*.{js,ts,tsx,json,md}\"",
         "tslint:check": "tslint-config-prettier-check ./tslint.json",
@@ -63,7 +63,23 @@
             "jsx",
             "json",
             "node"
-        ]
+        ],
+        "coverageThreshold": {
+            "global": {
+                "branches": 55,
+                "functions": 40,
+                "lines": 60,
+                "statements": 60
+            }
+        },
+        "coveragePathIgnorePatterns": [
+            "/node_modules/",
+            "/test/",
+            "/unit-tests/",
+            "/queries/"
+        ],
+        "collectCoverage": true,
+        "coverageReporters": ["html"]
     },
     "dependencies": {
         "@smallwins/validate": "^4.3.0",

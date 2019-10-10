@@ -22,7 +22,7 @@ import { Queries } from '../../../queries/queries';
 import { Query } from '../../../queries/query';
 import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
 import { InvocationType } from '../../../util.service';
-import { DocumentCategory, DocumentMetadata, DocumentMetadataListResponse } from './documents/document';
+import { DocumentCategory, DocumentMetadata } from './documents/document';
 import { EditUrl, SignUrl } from './embedded/url';
 import { Onboarding } from './signature-requests/onboarding';
 import { Signatory } from './signature-requests/signatory';
@@ -416,7 +416,7 @@ export async function createSignatureRequest(
         });
 
         if (employeeRecord.length === 0 || !employeeRecord[0].emailAddress) {
-            throw new Error('Employee record not found');
+            throw errorService.getErrorResponse(50).setDeveloperMessage('Employee record not found');
         }
 
         const bulkSignRequest = new BulkSignatureRequest({
@@ -494,7 +494,7 @@ export async function listTemplates(
         // Get template IDs from the database
         if (queryParams && queryParams.consolidated === 'true') {
             query = new ParameterizedQuery('GetConslidatedDocumentsByCompanyId', Queries.getConsolidatedCompanyDocumentsByCompanyId);
-        } else if (queryParams.onboarding === 'true') {
+        } else if (queryParams && queryParams.onboarding === 'true') {
             query = new ParameterizedQuery('GetOnboardingDocumentsByCompanyId', Queries.getOnboardingDocumentsByCompanyId);
         } else {
             query = new ParameterizedQuery('GetEsignatureMetadataByCompanyId', Queries.getEsignatureMetadataByCompanyId);
@@ -805,11 +805,10 @@ export async function listDocuments(
 
         if (filterByOriginalDocuments) {
             const originalDocs = documents.filter((doc) => doc.filename.includes('.'));
-            const originalDocsResponse = new DocumentMetadataListResponse({ results: originalDocs });
             const paginatedResult =
                 originalDocs.length === 0
                     ? undefined
-                    : await paginationService.createPaginatedResult(originalDocsResponse, baseUrl, totalRecords, page);
+                    : await paginationService.createPaginatedResult(originalDocs, baseUrl, totalRecords, page);
             return paginatedResult;
         }
 
@@ -902,7 +901,7 @@ export async function listCompanySignatureRequests(
             const error: ErrorMessage = errorService.getErrorResponse(30);
             error
                 .setDeveloperMessage('Unsupported query parameter(s) supplied')
-                .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(',')}. See documentation for usage.`);
+                .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(', ')}. See documentation for usage.`);
             throw error;
         }
 
@@ -1118,6 +1117,9 @@ export async function listCompanyDocumentCategories(
             queryType: QueryType.Simple,
         } as DatabaseEvent;
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        if (result.recordsets[1].length === 0) {
+            return undefined;
+        }
         const categories: DocumentCategory[] = result.recordsets[1].map((entry) => ({ value: entry.Category, label: entry.Category }));
         const totalResults: number = result.recordsets[0][0].totalCount;
         return paginationService.createPaginatedResult(categories, baseUrl, totalResults, page);
@@ -2759,7 +2761,7 @@ async function validateEmployeeId(tenantId: string, companyId: string, employeeI
     console.info('esignature.service.validateEmployeeId');
 
     try {
-        // companyId value must be integral
+        // employeeId value must be integral
         if (Number.isNaN(Number(employeeId))) {
             const errorMessage = `${employeeId} is not a valid number`;
             throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);

@@ -16,10 +16,10 @@ export class TemplateRequest {
     fileName: string;
 
     /**
-     * @property {Role[]} signerRoles
+     * @property {string[]} signerRoles
      * The collection of roles that are required to sign the document
      */
-    signerRoles: Role[];
+    signerRoles: string[];
 
     /**
      * @property {string} category
