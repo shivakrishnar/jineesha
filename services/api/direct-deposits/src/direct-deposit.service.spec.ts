@@ -52,6 +52,10 @@ import * as mockData from './mock-data';
     return {};
 });
 
+(utilService as any).getPayrollApiCredentials = jest.fn((params: any) => {
+    return 'token';
+});
+
 (payrollService as any).getEvolutionEarningAndDeduction = jest.fn((params: any) => {
     return {};
 });
@@ -130,7 +134,6 @@ describe('directDepositService.create', () => {
                 mockData.companyId,
                 mockData.tenantId,
                 mockData.accessToken,
-                mockData.payrollApiCredentials,
                 new DirectDeposit(mockData.postObject),
                 mockData.userEmail,
             )
@@ -151,7 +154,6 @@ describe('directDepositService.create', () => {
                 mockData.companyId,
                 mockData.tenantId,
                 mockData.accessToken,
-                mockData.payrollApiCredentials,
                 new DirectDeposit(mockData.postObject),
                 mockData.userEmail,
             )
@@ -181,7 +183,6 @@ describe('directDepositService.create', () => {
                 mockData.companyId,
                 mockData.tenantId,
                 mockData.accessToken,
-                mockData.payrollApiCredentials,
                 new DirectDeposit(mockData.balanceRemainderPostObject),
                 mockData.userEmail,
             )
@@ -216,7 +217,6 @@ describe('directDepositService.update', () => {
                 new DirectDeposit(mockData.putObject),
                 mockData.directDepositId,
                 mockData.accessToken,
-                mockData.payrollApiCredentials,
                 mockData.userEmail,
                 mockData.companyId,
             )
@@ -235,7 +235,6 @@ describe('directDepositService.update', () => {
                 new DirectDeposit(mockData.putObject),
                 mockData.directDepositIdWithCharacter,
                 mockData.accessToken,
-                mockData.payrollApiCredentials,
                 mockData.userEmail,
                 mockData.companyId,
             )
@@ -257,7 +256,6 @@ describe('directDepositService.update', () => {
                 new DirectDeposit(mockData.putObject),
                 mockData.directDepositId,
                 mockData.accessToken,
-                mockData.payrollApiCredentials,
                 mockData.userEmail,
                 mockData.companyId,
             )
@@ -286,7 +284,6 @@ describe('directDepositService.update', () => {
                 new DirectDeposit(),
                 mockData.directDepositId,
                 mockData.accessToken,
-                mockData.payrollApiCredentials,
                 mockData.userEmail,
                 mockData.companyId,
             )
@@ -311,7 +308,6 @@ describe('directDepositService.update', () => {
                 new DirectDeposit(mockData.balanceRemainderPatchObject),
                 mockData.directDepositId,
                 mockData.accessToken,
-                mockData.payrollApiCredentials,
                 '',
                 mockData.companyId,
             )
@@ -334,7 +330,6 @@ describe('directDepositService.delete', () => {
                 mockData.tenantId,
                 mockData.directDepositIdWithCharacter,
                 mockData.accessToken,
-                mockData.payrollApiCredentials,
                 mockData.userEmail,
                 mockData.companyId,
             )
@@ -355,7 +350,6 @@ describe('directDepositService.delete', () => {
                 mockData.tenantId,
                 mockData.directDepositId,
                 mockData.accessToken,
-                mockData.payrollApiCredentials,
                 mockData.userEmail,
                 mockData.companyId,
             )
@@ -379,7 +373,6 @@ describe('directDepositService.delete', () => {
                 mockData.tenantId,
                 mockData.directDepositId,
                 mockData.accessToken,
-                mockData.payrollApiCredentials,
                 mockData.userEmail,
                 mockData.companyId,
             )

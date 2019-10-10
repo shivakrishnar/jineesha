@@ -1,6 +1,5 @@
 import { IAccount } from './account';
 
-import { IPayrollApiCredentials } from '../../api/models/IPayrollApiCredentials';
 import { Role } from '../../api/models/Role';
 import * as errorService from '../../errors/error.service';
 import { ErrorMessage } from '../../errors/errorMessage';
@@ -22,27 +21,19 @@ export class SecurityContext {
     principal: IAccount;
     roleMemberships: string[];
     accessToken: string;
-    payrollApiCredentials: IPayrollApiCredentials | undefined;
     adminToken: string | undefined;
     currentRoleLevel: ApplicationRoleLevel;
 
-    public constructor(
-        principal: IAccount,
-        roleMemberships: string[] = [],
-        accessToken: string,
-        payrollApiCredentials: any,
-        adminToken: string,
-    ) {
+    public constructor(principal: IAccount, roleMemberships: string[] = [], accessToken: string, adminToken: string) {
         this.principal = principal;
         this.roleMemberships = roleMemberships;
         this.accessToken = accessToken;
-        this.payrollApiCredentials = payrollApiCredentials;
         this.adminToken = adminToken;
     }
 
     public static fromJSON(json: string): SecurityContext {
         const data = JSON.parse(json);
-        return new SecurityContext(data.principal, data.roleMemberships, data.accessToken, data.payrollApiCredentials, data.adminToken);
+        return new SecurityContext(data.principal, data.roleMemberships, data.accessToken, data.adminToken);
     }
 
     /**

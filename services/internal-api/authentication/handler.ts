@@ -7,7 +7,6 @@ import * as errorService from '../../errors/error.service';
 import * as ssoService from '../../remote-services/sso.service';
 import * as utilService from '../../util.service';
 
-import { IPayrollApiCredentials } from '../../api/models/IPayrollApiCredentials';
 import { SecurityContext } from './securityContext';
 
 /**
@@ -66,7 +65,6 @@ async function buildPolicy(event: any, secret: string, authType: AuthorizerType)
     const decodedToken: any = jwt.decode(accessToken);
     const { account, scope } = decodedToken;
 
-    let payrollApiCredentials: IPayrollApiCredentials;
     let adminToken: string;
     let roleMemberships;
     if (authType === AuthorizerType.Golidlocks) {
@@ -74,7 +72,6 @@ async function buildPolicy(event: any, secret: string, authType: AuthorizerType)
     }
 
     if (authType === AuthorizerType.Evolution) {
-        payrollApiCredentials = await utilService.getPayrollApiCredentials(account.tenantId);
         const tokens = await Promise.all([
             utilService.generateAdminToken(),
             ssoService.exchangeToken(account.tenantId, accessToken, configService.getHrApplicationId()),
@@ -86,7 +83,7 @@ async function buildPolicy(event: any, secret: string, authType: AuthorizerType)
         roleMemberships = utilService.parseRoles(scope).concat(utilService.parseRoles(hrScope));
     }
 
-    const securityContext = new SecurityContext(account, roleMemberships, accessToken, payrollApiCredentials, adminToken);
+    const securityContext = new SecurityContext(account, roleMemberships, accessToken, adminToken);
 
     const tmp = event.methodArn.split(':');
     const region = tmp[3];

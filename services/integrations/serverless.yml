@@ -370,6 +370,7 @@ custom:
         - production
         - development
         - staging
+    concurrency: 3
   webpack:
     webpackConfig: ./webpack/${file(${self:custom.configFile}):webpackConfigurationFile}
     includeModules: true
