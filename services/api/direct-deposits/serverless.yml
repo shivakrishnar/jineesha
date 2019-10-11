@@ -135,7 +135,6 @@ plugins:
   - serverless-cloudformation-resource-counter
   - serverless-domain-manager
   - serverless-iopipe-layers
-
 package:
   individually: false
   excludeDevDependencies: true

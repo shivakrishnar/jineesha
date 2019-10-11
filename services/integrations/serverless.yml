@@ -357,7 +357,6 @@ plugins:
   - serverless-domain-manager
   - serverless-apigw-binary
   - serverless-iopipe-layers
-
 package:
   individually: false
   excludeDevDependencies: true

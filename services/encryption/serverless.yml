@@ -39,7 +39,6 @@ functions:
 
 plugins:
   - serverless-plugin-warmup
-
 custom:
   configFile: ../${opt:variables, 'local'}.serverless.variables.json
   warmup:
@@ -48,3 +47,4 @@ custom:
         - production
         - development
         - staging
+    concurrency: 3

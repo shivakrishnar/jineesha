@@ -247,7 +247,6 @@ plugins:
   - serverless-pseudo-parameters
   - serverless-step-functions
   - serverless-iopipe-layers
-
 package:
   individually: false
   excludeDevDependencies: true

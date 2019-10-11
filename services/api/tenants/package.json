@@ -56,7 +56,7 @@
         "serverless-cloudformation-resource-counter": "^0.1.1",
         "serverless-domain-manager": "^2.6.6",
         "serverless-iopipe-layers": "^0.4.0",
-        "serverless-plugin-warmup": "^4.2.0-rc.1",
+        "serverless-plugin-warmup": "^4.7.0-rc.1",
         "serverless-pseudo-parameters": "^2.4.0",
         "serverless-stack-output": "^0.2.3",
         "serverless-step-functions": "^1.17.0",
