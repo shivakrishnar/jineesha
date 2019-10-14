@@ -142,6 +142,7 @@ package:
 custom:
   configFile: ../../${opt:variables, 'local'}.serverless.variables.json
   warmup:
+    timeout: 60
     schedule: 'cron(0/5 * * * ? *)'    # Run every 5 minutes
     default:
         - production
