@@ -516,6 +516,9 @@ export async function listTemplates(
             return undefined;
         }
 
+        const salt = JSON.parse(await utilService.getSecret(configService.getSaltId())).salt;
+        const hashids = new Hashids(salt);
+
         const reducer = async (memoPromise, document) => {
             const memo = await memoPromise;
             if (document.Type === 'non-signature' || document.Type === 'legacy') {
@@ -527,7 +530,7 @@ export async function listTemplates(
                     document.Type === 'non-signature'
                         ? document.FirstName // Note: the query returns the full name as the FirstName field
                         : `${document.FirstName} ${document.LastName}`;
-                const id = await encodeId(document.ID, document.Type === 'non-signature' ? DocType.S3Document : DocType.LegacyDocument);
+                const id = hashids.encode(document.ID, document.Type === 'non-signature' ? DocType.S3Document : DocType.LegacyDocument);
                 memo.push({
                     id,
                     title: document.Title,
@@ -1652,9 +1655,12 @@ async function getEmployeeLegacyAndSignedDocuments(
             return undefined;
         }
 
+        const salt = JSON.parse(await utilService.getSecret(configService.getSaltId())).salt;
+        const hashids = new Hashids(salt);
+
         const updatedDocuments = [];
         for (const document of documents) {
-            const id = await encodeId(document.id, document.isLegacyDocument ? DocType.LegacyDocument : DocType.S3Document);
+            const id = hashids.encode(document.id, document.isLegacyDocument ? DocType.LegacyDocument : DocType.S3Document);
             // set defaults for legacy documents
             // note: default to false if value is null for isPublishedToEmployee and isPrivate flags
             let isPublishedToEmployee = document.isPublishedToEmployee !== null ? document.isPublishedToEmployee : false;
