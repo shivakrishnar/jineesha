@@ -207,15 +207,7 @@ export const create = utilService.gatewayEventHandler(async ({ securityContext, 
 
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
-    const directDeposit = await directDepositService.create(
-        employeeId,
-        companyId,
-        tenantId,
-        accessToken,
-        securityContext.payrollApiCredentials,
-        requestBody,
-        email,
-    );
+    const directDeposit = await directDepositService.create(employeeId, companyId, tenantId, accessToken, requestBody, email);
     if (securityContext.currentRoleLevel === ApplicationRoleLevel.Employee) {
         directDeposit.obfuscate();
     }
@@ -254,16 +246,7 @@ export const update = utilService.gatewayEventHandler(async ({ securityContext, 
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
     const id = event.pathParameters.id;
 
-    const directDeposit = await directDepositService.update(
-        employeeId,
-        tenantId,
-        requestBody,
-        id,
-        accessToken,
-        securityContext.payrollApiCredentials,
-        email,
-        companyId,
-    );
+    const directDeposit = await directDepositService.update(employeeId, tenantId, requestBody, id, accessToken, email, companyId);
     if (securityContext.currentRoleLevel === ApplicationRoleLevel.Employee) {
         directDeposit.obfuscate();
     }
@@ -289,15 +272,7 @@ export const remove = utilService.gatewayEventHandler(async ({ securityContext, 
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
     const directDepositId = event.pathParameters.id;
 
-    await directDepositService.remove(
-        employeeId,
-        tenantId,
-        directDepositId,
-        accessToken,
-        securityContext.payrollApiCredentials,
-        email,
-        companyId,
-    );
+    await directDepositService.remove(employeeId, tenantId, directDepositId, accessToken, email, companyId);
 
     return { statusCode: 204, headers: new Headers() };
 });

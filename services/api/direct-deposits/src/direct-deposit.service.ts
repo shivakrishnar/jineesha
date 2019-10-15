@@ -85,7 +85,6 @@ export async function create(
     companyId: string,
     tenantId: string,
     accessToken: string,
-    payrollApiCredentials: IPayrollApiCredentials,
     requestBody: DirectDeposit,
     userEmail: string,
 ): Promise<DirectDeposit> {
@@ -156,6 +155,7 @@ export async function create(
             employeeId,
         } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
 
+        const payrollApiCredentials = await utilService.getPayrollApiCredentials(tenantId);
         const payrollApiToken: string = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
         await utilService.clearCache(tenantId, payrollApiToken);
 
@@ -183,7 +183,6 @@ export async function update(
     requestBody: DirectDeposit,
     id: string,
     accessToken: string,
-    payrollApiCredentials: IPayrollApiCredentials,
     userEmail: string,
     companyId: string,
 ): Promise<DirectDeposit> {
@@ -227,6 +226,7 @@ export async function update(
             if (!utilService.hasAllKeysDefined(evolutionKeys)) {
                 throw errorService.getErrorResponse(0).setMoreInfo('Associated direct deposit missing in Evolution');
             }
+            const payrollApiCredentials = await utilService.getPayrollApiCredentials(tenantId);
             await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, amount, amountType, method);
             payrollApiToken = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
 
@@ -260,14 +260,12 @@ export async function update(
  * @param {string} tenantId: The unique identifier for the tenant the employee belongs to.
  * @param {string} id: The unique identifier of the direct deposit resource to update.
  * @param {string} accessToken: The access token for the user.
- * @param {IPayrollApiCredentials} payrollApiCredentials: The credentials of the HR global admin.
  */
 export async function remove(
     employeeId: string,
     tenantId: string,
     id: string,
     accessToken: string,
-    payrollApiCredentials: IPayrollApiCredentials,
     userEmail: string,
     companyId: string,
 ): Promise<void> {
@@ -297,6 +295,7 @@ export async function remove(
         }
 
         const directDeposit = directDeposits[0];
+        const payrollApiCredentials = await utilService.getPayrollApiCredentials(tenantId);
 
         if (directDeposit.status === 'Pending') {
             await deleteDirectDeposit(id, userEmail, companyId, tenantId, employeeId);

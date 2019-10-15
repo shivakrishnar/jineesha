@@ -9,6 +9,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "serverless-plugin-warmup": "^4.6.3-rc.1"
+    "serverless-plugin-warmup": "^4.7.0-rc.1"
   }
 }
