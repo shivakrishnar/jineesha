@@ -265,7 +265,7 @@ export const createTemplate = utilService.gatewayEventHandler(async ({ securityC
 
     const { email } = securityContext.principal;
 
-    return await esignatureService.createTemplate(tenantId, companyId, requestBody, email, securityContext.adminToken);
+    return await esignatureService.createTemplate(tenantId, companyId, requestBody, email);
 });
 
 /**
@@ -306,20 +306,9 @@ export const createBulkSignatureRequest = utilService.gatewayEventHandler(
 
         const { tenantId, companyId } = event.pathParameters;
 
-        const configuration: EsignatureConfiguration = await esignatureService.getConfigurationData(
-            tenantId,
-            companyId,
-            securityContext.adminToken,
-        );
+        const configuration: EsignatureConfiguration = await esignatureService.getConfigurationData(tenantId, companyId);
 
-        return await esignatureService.createBulkSignatureRequest(
-            tenantId,
-            companyId,
-            requestBody,
-            {},
-            securityContext.adminToken,
-            configuration,
-        );
+        return await esignatureService.createBulkSignatureRequest(tenantId, companyId, requestBody, {}, configuration);
     },
 );
 
@@ -338,7 +327,7 @@ export const createSignatureRequest = utilService.gatewayEventHandler(
 
         const { tenantId, companyId, employeeId } = event.pathParameters;
 
-        return await esignatureService.createSignatureRequest(tenantId, companyId, employeeId, requestBody, securityContext.adminToken);
+        return await esignatureService.createSignatureRequest(tenantId, companyId, employeeId, requestBody);
     },
 );
 
@@ -362,14 +351,7 @@ export const listTemplates = utilService.gatewayEventHandler(async ({ securityCo
         requestContext: { domainName, path },
     } = event;
 
-    return await esignatureService.listTemplates(
-        tenantId,
-        companyId,
-        event.queryStringParameters,
-        domainName,
-        path,
-        securityContext.adminToken,
-    );
+    return await esignatureService.listTemplates(tenantId, companyId, event.queryStringParameters, domainName, path);
 });
 
 /**
@@ -406,7 +388,7 @@ export const createEditUrl = utilService.gatewayEventHandler(async ({ securityCo
 
     const { tenantId, companyId, templateId } = event.pathParameters;
 
-    return await esignatureService.createEditUrl(tenantId, companyId, templateId, securityContext.adminToken);
+    return await esignatureService.createEditUrl(tenantId, companyId, templateId);
 });
 
 /**
@@ -425,22 +407,9 @@ export const listDocuments = utilService.gatewayEventHandler(async ({ securityCo
     } = event;
     const { tenantId, companyId } = event.pathParameters;
 
-    const configuration: EsignatureConfiguration = await esignatureService.getConfigurationData(
-        tenantId,
-        companyId,
-        securityContext.adminToken,
-    );
+    const configuration: EsignatureConfiguration = await esignatureService.getConfigurationData(tenantId, companyId);
 
-    return await esignatureService.listDocuments(
-        tenantId,
-        companyId,
-        event.queryStringParameters,
-        domainName,
-        path,
-        false,
-        securityContext.adminToken,
-        configuration,
-    );
+    return await esignatureService.listDocuments(tenantId, companyId, event.queryStringParameters, domainName, path, false, configuration);
 });
 
 /**
@@ -469,7 +438,6 @@ export const listCompanySignatureRequests = utilService.gatewayEventHandler(asyn
         event.queryStringParameters,
         domainName,
         path,
-        securityContext.adminToken,
     );
 });
 
@@ -573,7 +541,7 @@ export const configure = utilService.gatewayEventHandler(async ({ securityContex
     const { tenantId, companyId } = event.pathParameters;
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
-    return await esignatureService.configure(tenantId, companyId, accessToken, requestBody, securityContext.adminToken);
+    return await esignatureService.configure(tenantId, companyId, accessToken, requestBody);
 });
 
 /**

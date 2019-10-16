@@ -45,7 +45,6 @@ import { Template } from './template-list/templateListResponse';
  * @param {string} company: The unique identifier for the company the user belongs to.
  * @param {TemplateRequest} request: The template request.
  * @param {string} email: The email address associated with the user.
- * @param {string} adminToken: The token containing the tenant admin role.
  * @returns {Promise<TemplateResponse>}: Promise of the created template
  */
 export async function createTemplate(
@@ -53,7 +52,6 @@ export async function createTemplate(
     companyId: string,
     request: TemplateRequest,
     email: string,
-    adminToken: string,
 ): Promise<TemplateDraftResponse> {
     console.info('esignatureService.createTemplate');
 
@@ -93,7 +91,7 @@ export async function createTemplate(
     });
 
     try {
-        const { appDetails, eSigner: client } = await getConfigurationData(tenantId, companyId, adminToken);
+        const { appDetails, eSigner: client } = await getConfigurationData(tenantId, companyId);
         const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
 
         const options = {
@@ -254,7 +252,6 @@ export async function saveTemplateMetadata(
  * @param {string} companyId: The unique identifier for a company within a tenant
  * @param {BulkSignatureRequest} request: An e-signature request for employee(s) within the company
  * @param {any} suppliedMetadata: The metadata to be associated with the signature request
- * @param {string} adminToken: The token containing the tenant admin role
  * @param {EsignatureConfiguration} configuration: The e-signature configuration data
  * @returns {SignatureRequestResponse}: Promise of a completed e-signature request.
  */
@@ -263,14 +260,13 @@ export async function createBulkSignatureRequest(
     companyId: string,
     request: BulkSignatureRequest,
     suppliedMetadata: any,
-    adminToken: string,
     configuration: EsignatureConfiguration,
 ): Promise<SignatureRequestResponse> {
     console.info('esignature.handler.createBulkSignatureRequest');
 
     try {
         if (!configuration) {
-            configuration = await getConfigurationData(tenantId, companyId, adminToken);
+            configuration = await getConfigurationData(tenantId, companyId);
         }
         const { eSigner } = configuration;
 
@@ -385,7 +381,6 @@ export async function createBulkSignatureRequest(
  * @param {string} companyId: The unique identifier for a company within a tenant
  * @param {string} employeeId: The unique identifer for the employee
  * @param {SignatureRequest} request: An e-signature request for a specific employee
- * @param {string} adminToken: The token containing the tenant admin role
  * @returns {SignatureRequestResponse}: Promise of a completed e-signature request.
  */
 export async function createSignatureRequest(
@@ -393,7 +388,6 @@ export async function createSignatureRequest(
     companyId: string,
     employeeId: string,
     request: SignatureRequest,
-    adminToken: string,
 ): Promise<SignatureRequestResponse> {
     console.info('esignature.handler.createSignatureRequest');
 
@@ -439,8 +433,8 @@ export async function createSignatureRequest(
             bulkSignRequest.message = request.message;
         }
 
-        const configuration: EsignatureConfiguration = await getConfigurationData(tenantId, companyId, adminToken);
-        return await createBulkSignatureRequest(tenantId, companyId, bulkSignRequest, {}, adminToken, configuration);
+        const configuration: EsignatureConfiguration = await getConfigurationData(tenantId, companyId);
+        return await createBulkSignatureRequest(tenantId, companyId, bulkSignRequest, {}, configuration);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -458,7 +452,6 @@ export async function createSignatureRequest(
  * @param {any} queryParams: The query parameters that were specified by the user.
  * @param {string} domainName: The domain name of the request.
  * @param {string} path: The path of the endpoint.
- * @param {string} adminToken: The token containing the tenant admin role.
  * @returns {Promise<PaginatedResult>}: Promise of a paginated array of templates
  */
 export async function listTemplates(
@@ -467,7 +460,6 @@ export async function listTemplates(
     queryParams: any,
     domainName: string,
     path: string,
-    adminToken: string,
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listTemplates');
 
@@ -488,7 +480,7 @@ export async function listTemplates(
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-        const { eSigner: client } = await getConfigurationData(tenantId, companyId, adminToken);
+        const { eSigner: client } = await getConfigurationData(tenantId, companyId);
 
         let query: ParameterizedQuery;
         // Get template IDs from the database
@@ -626,8 +618,7 @@ export async function createSignUrl(tenantId: string, companyId: string, employe
     console.info('esignatureService.createSignUrl');
 
     try {
-        const adminToken: string = await utilService.generateAdminToken();
-        const { appDetails, eSigner } = await getConfigurationData(tenantId, companyId, adminToken);
+        const { appDetails, eSigner } = await getConfigurationData(tenantId, companyId);
         const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
 
         const response = await eSigner.embedded.getSignUrl(signatureId);
@@ -658,14 +649,13 @@ export async function createSignUrl(tenantId: string, companyId: string, employe
  * @param {string} tenantId: The unique identifier for  a tenant
  * @param {string} companyId: The unique identifier for a company within a tenant
  * @param {string} templateId: The unique identifer for the template
- * @param {string} adminToken: The token containing the tenant admin role
  * @returns {Promise<EditUrl>}: A Promise of an edit url
  */
-export async function createEditUrl(tenantId: string, companyId: string, templateId: string, adminToken: string): Promise<EditUrl> {
+export async function createEditUrl(tenantId: string, companyId: string, templateId: string): Promise<EditUrl> {
     console.info('esignatureService.createEditUrl');
 
     try {
-        const { appDetails } = await getConfigurationData(tenantId, companyId, adminToken);
+        const { appDetails } = await getConfigurationData(tenantId, companyId);
         const appClientId = appDetails.integrationDetails.eSignatureAppClientId;
 
         const response = JSON.parse(await hellosignService.getTemplateEditUrlById(templateId));
@@ -700,7 +690,6 @@ export async function createEditUrl(tenantId: string, companyId: string, templat
  * @param {string} domainName: The domain name of the request.
  * @param {string} path: The path of the endpoint.
  * @param {boolean} useMaxLimit: Determines whether or not to use the maximum limit for pagination.
- * @param {string} adminToken: The token containing the tenant admin role.
  * @param {EsignatureConfiguration} configuration: The e-signature configuration data.
  * @returns {PaginatedResult}: A Promise of a collection documents' metadata
  */
@@ -711,7 +700,6 @@ export async function listDocuments(
     domainName: string,
     path: string,
     useMaxLimit: boolean,
-    adminToken: string,
     configuration: EsignatureConfiguration,
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listDocuments');
@@ -780,7 +768,7 @@ export async function listDocuments(
 
     try {
         if (!configuration) {
-            configuration = await getConfigurationData(tenantId, companyId, adminToken);
+            configuration = await getConfigurationData(tenantId, companyId);
         }
         const { eSigner } = configuration;
 
@@ -880,7 +868,6 @@ export async function listDocuments(
  * @param {any} queryParams: The query parameters that were specified by the user.
  * @param {string} domainName: The domain name of the request.
  * @param {string} path: The path of the endpoint.
- * @param {string} adminToken: The token containing the tenant admin role.
  * @returns {PaginatedResult}: A promise of a paginated collection of signature requests'/legacy documents' metadata.
  */
 export async function listCompanySignatureRequests(
@@ -891,7 +878,6 @@ export async function listCompanySignatureRequests(
     queryParams: any,
     domainName: string,
     path: string,
-    adminToken: string,
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listCompanySignatureRequests');
 
@@ -940,7 +926,7 @@ export async function listCompanySignatureRequests(
         const subordinateEmails: string[] = [];
         const subordinateCodes: string[] = [];
 
-        const { eSigner: client } = await getConfigurationData(tenantId, companyId, adminToken);
+        const { eSigner: client } = await getConfigurationData(tenantId, companyId);
 
         if (isManager) {
             query = new ParameterizedQuery('GetEmployeeEmailsByManager', Queries.getEmployeeEmailsByManager);
@@ -1154,8 +1140,7 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
     }
 
     try {
-        const adminToken: string = await utilService.generateAdminToken();
-        const configuration: EsignatureConfiguration = await getConfigurationData(tenantId, companyId, adminToken);
+        const configuration: EsignatureConfiguration = await getConfigurationData(tenantId, companyId);
         const { eSigner } = configuration;
 
         const { signature_requests: existingSignatureRequests } = await eSigner.signatureRequest.list({
@@ -1213,7 +1198,6 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
             undefined,
             undefined,
             true,
-            adminToken,
             configuration,
         );
 
@@ -1239,9 +1223,7 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
                 ],
             };
 
-            invocations.push(
-                createBulkSignatureRequest(tenantId, companyId, signatureRequest, signatureRequestMetadata, adminToken, configuration),
-            );
+            invocations.push(createBulkSignatureRequest(tenantId, companyId, signatureRequest, signatureRequestMetadata, configuration));
         }
 
         const creations = await Promise.all(invocations);
@@ -1282,18 +1264,12 @@ enum Operation {
  * @param {string} companyId: The unique identifier for the company.
  * @param {string} token: The token authorizing the request.
  * @param {Configuration} config: The configuration to apply.
- * @param {string} adminToken: The token containing the tenant admin role.
  */
-export async function configure(
-    tenantId: string,
-    companyId: string,
-    token: string,
-    config: Configuration,
-    adminToken: string,
-): Promise<any> {
+export async function configure(tenantId: string, companyId: string, token: string, config: Configuration): Promise<any> {
     console.info('esignatureService.configure');
 
     const { clientId, name, domain } = await getCompanyDetails(tenantId, companyId);
+    const adminToken = await utilService.generateAdminToken();
     const eventCallbackUrl = `${configService.getHrServicesDomain()}/${configService.getEsignatureCallbackPath()}`;
 
     // Get configuration
@@ -2695,8 +2671,11 @@ export type EsignatureConfiguration = {
     eSigner: any;
 };
 
-export async function getConfigurationData(tenantId: string, companyId: string, adminToken: string): Promise<EsignatureConfiguration> {
-    const companyInfo: CompanyDetail = await getCompanyDetails(tenantId, companyId);
+export async function getConfigurationData(tenantId: string, companyId: string): Promise<EsignatureConfiguration> {
+    const [companyInfo, adminToken] = await Promise.all([
+        await getCompanyDetails(tenantId, companyId),
+        await utilService.generateAdminToken(),
+    ]);
     const appDetails: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
         tenantId,
         companyInfo.clientId,
