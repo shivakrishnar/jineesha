@@ -39,10 +39,10 @@ export async function listByTenant(
 ): Promise<PaginatedResult> {
     console.info('employeeService.listByTenant');
 
-    const validQueryStringParameters = ['pageToken', 'consolidated'];
+    const validQueryStringParameters = ['pageToken', 'consolidated', 'search'];
 
     // Pagination validation
-    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+    const { page = 1, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
         let isGAOrSuperAdmin = false;
@@ -61,8 +61,15 @@ export async function listByTenant(
             query.setParameter('@username', email);
         }
 
-        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+        if (queryParams && queryParams.search) {
+            const searchString = queryParams.search.replace(/[^a-zA-Z0-9]/g, '');
+            query.setParameter('@search', `'${searchString}'`);
+            return await getEmployees(tenantId, query, baseUrl, page);
+        } else {
+            query.setParameter('@search', '');
+        }
 
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
         return await getEmployees(tenantId, paginatedQuery, baseUrl, page);
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -95,10 +102,10 @@ export async function listByCompany(
 ): Promise<PaginatedResult> {
     console.info('employeeService.listByCompany');
 
-    const validQueryStringParameters = ['pageToken', 'consolidated'];
+    const validQueryStringParameters = ['pageToken', 'consolidated', 'search'];
 
     // Pagination validation
-    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+    const { page = 1, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
         await utilService.validateCompany(tenantId, companyId);
@@ -120,9 +127,14 @@ export async function listByCompany(
             query.setParameter('@companyId', companyId);
             query.setParameter('@username', email);
         }
-
+        if (queryParams && queryParams.search) {
+            const searchString = queryParams.search.replace(/[^a-zA-Z0-9]/g, '');
+            query.setParameter('@search', `'${searchString}'`);
+            return await getEmployees(tenantId, query, baseUrl, page);
+        } else {
+            query.setParameter('@search', '');
+        }
         const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
-
         return await getEmployees(tenantId, paginatedQuery, baseUrl, page);
     } catch (error) {
         if (error instanceof ErrorMessage) {

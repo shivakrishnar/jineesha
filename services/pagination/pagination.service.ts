@@ -19,7 +19,7 @@ export async function createPaginatedResult(
     console.info('paginationService.createPaginatedResult');
 
     const limit = configService.getPageLimitDefault();
-    const totalNumberOfPages = Math.ceil(totalResults / limit);
+    const totalNumberOfPages = results.length <= limit ? Math.ceil(totalResults / limit) : 1;
     let nextPageToken = { pageNumber: currentPage + 1 };
     let previousPageToken = { pageNumber: currentPage - 1 };
     let firstPageToken = { pageNumber: 1 };

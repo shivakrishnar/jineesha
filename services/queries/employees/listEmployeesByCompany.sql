@@ -1,4 +1,5 @@
 declare @_companyId as int = @companyId;
+declare @_search as nvarchar(max) = '%' + @search + '%';
 
 -- Get total count for pagination
 select
@@ -6,7 +7,8 @@ select
 from
     dbo.Employee
 where
-    CompanyID = @_companyId
+    CompanyID = @_companyId and
+    concat(FirstName, LastName, EmployeeCode) like @_search
 
 select
     ID,
@@ -17,5 +19,6 @@ select
 from
     dbo.Employee
 where
-    CompanyID = @_companyId
+    CompanyID = @_companyId and
+    concat(FirstName, LastName, EmployeeCode) like @_search
 order by ID
