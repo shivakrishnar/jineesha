@@ -1657,6 +1657,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 fileName: document.fileName,
                 category: document.category,
                 uploadDate: document.uploadDate,
+                esignDate: document.esignDate,
                 isPrivate,
                 isPublishedToEmployee,
                 employeeId: document.employeeId,
