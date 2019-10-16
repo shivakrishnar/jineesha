@@ -24,7 +24,7 @@ describe('esignatureService.template.list', () => {
         });
 
         return esignatureService
-            .listTemplates(mockData.tenantId, mockData.companyId, undefined, mockData.domainName, mockData.path, mockData.accessToken)
+            .listTemplates(mockData.tenantId, mockData.companyId, undefined, mockData.domainName, mockData.path)
             .then((templates) => {
                 expect(templates).toBeInstanceOf(PaginatedResult);
                 expect(templates.results.length).toBe(mockData.templateDBResponse.recordsets[1].length);
@@ -43,14 +43,7 @@ describe('esignatureService.template.list', () => {
         });
 
         return esignatureService
-            .listTemplates(
-                mockData.tenantId,
-                mockData.companyId,
-                mockData.consolidatedQueryParam,
-                mockData.domainName,
-                mockData.path,
-                mockData.accessToken,
-            )
+            .listTemplates(mockData.tenantId, mockData.companyId, mockData.consolidatedQueryParam, mockData.domainName, mockData.path)
             .then((templates) => {
                 expect(templates).toBeInstanceOf(PaginatedResult);
                 expect(templates.results.length).toBe(mockData.templateDBResponse.recordsets[1].length);
@@ -69,14 +62,7 @@ describe('esignatureService.template.list', () => {
         });
 
         return esignatureService
-            .listTemplates(
-                mockData.tenantId,
-                mockData.companyId,
-                mockData.onboardingQueryParam,
-                mockData.domainName,
-                mockData.path,
-                mockData.accessToken,
-            )
+            .listTemplates(mockData.tenantId, mockData.companyId, mockData.onboardingQueryParam, mockData.domainName, mockData.path)
             .then((templates) => {
                 expect(templates).toBeInstanceOf(PaginatedResult);
                 expect(templates.results.length).toBe(mockData.templateDBResponse.recordsets[1].length);
@@ -88,14 +74,7 @@ describe('esignatureService.template.list', () => {
 
     test('returns a 400 if both the consolidated and onboarding query params are provided', () => {
         return esignatureService
-            .listTemplates(
-                mockData.tenantId,
-                mockData.companyId,
-                mockData.queryParams,
-                mockData.domainName,
-                mockData.path,
-                mockData.accessToken,
-            )
+            .listTemplates(mockData.tenantId, mockData.companyId, mockData.queryParams, mockData.domainName, mockData.path)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(400);
@@ -114,7 +93,7 @@ describe('esignatureService.template.list', () => {
         });
 
         return esignatureService
-            .listTemplates(mockData.tenantId, mockData.companyId, undefined, mockData.domainName, mockData.path, mockData.accessToken)
+            .listTemplates(mockData.tenantId, mockData.companyId, undefined, mockData.domainName, mockData.path)
             .then((templates) => {
                 expect(templates).toBe(undefined);
             });
@@ -122,14 +101,7 @@ describe('esignatureService.template.list', () => {
 
     test('returns a 400 if companyId is not integral', async () => {
         return esignatureService
-            .listTemplates(
-                mockData.tenantId,
-                'abc123',
-                mockData.onboardingQueryParam,
-                mockData.domainName,
-                mockData.path,
-                mockData.accessToken,
-            )
+            .listTemplates(mockData.tenantId, 'abc123', mockData.onboardingQueryParam, mockData.domainName, mockData.path)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(400);
@@ -155,7 +127,7 @@ describe('esignatureService.template.create', () => {
         });
 
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail, mockData.accessToken)
+            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
             .then((templates) => {
                 expect(templates).toBeInstanceOf(TemplateDraftResponse);
             });
@@ -165,7 +137,7 @@ describe('esignatureService.template.create', () => {
         // tslint:disable-next-line:no-require-imports
         require('fs').__forceError('mkdir');
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail, mockData.accessToken)
+            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
@@ -179,7 +151,7 @@ describe('esignatureService.template.create', () => {
         // tslint:disable-next-line:no-require-imports
         require('fs').__forceError('writeFile');
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail, mockData.accessToken)
+            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
@@ -199,7 +171,7 @@ describe('esignatureService.template.create', () => {
         // tslint:disable-next-line:no-require-imports
         require('fs').__forceError('unlink');
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail, mockData.accessToken)
+            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
             .catch((error) => {
                 console.log(error);
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -220,7 +192,7 @@ describe('esignatureService.template.create', () => {
         // tslint:disable-next-line:no-require-imports
         require('fs').__forceError('rmdir');
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail, mockData.accessToken)
+            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
@@ -236,7 +208,7 @@ describe('esignatureService.template.create', () => {
         });
 
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail, mockData.accessToken)
+            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(403);
@@ -248,7 +220,7 @@ describe('esignatureService.template.create', () => {
 
     test('returns a 400 if companyId is not integral', async () => {
         return await esignatureService
-            .createTemplate(mockData.tenantId, 'abc123', mockData.templatePostRequest, mockData.userEmail, mockData.accessToken)
+            .createTemplate(mockData.tenantId, 'abc123', mockData.templatePostRequest, mockData.userEmail)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(400);
@@ -262,7 +234,7 @@ describe('esignatureService.template.create', () => {
         const invalidSignerRoles: any = { ...mockData.templatePostRequest };
         invalidSignerRoles.signerRoles = [{ name: 'Onboarding' }];
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, invalidSignerRoles, mockData.userEmail, mockData.accessToken)
+            .createTemplate(mockData.tenantId, mockData.companyId, invalidSignerRoles, mockData.userEmail)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(400);
@@ -276,7 +248,7 @@ describe('esignatureService.template.create', () => {
         const invalidCCRoles: any = { ...mockData.templatePostRequest };
         invalidCCRoles.ccRoles = [{ name: 'Onboarding' }];
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, invalidCCRoles, mockData.userEmail, mockData.accessToken)
+            .createTemplate(mockData.tenantId, mockData.companyId, invalidCCRoles, mockData.userEmail)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(400);
