@@ -17,11 +17,9 @@ describe('esignatureService.edit-url.create', () => {
             }
         });
 
-        return esignatureService
-            .createEditUrl(mockData.tenantId, mockData.companyId, mockData.templateId, mockData.accessToken)
-            .then((editUrl) => {
-                expect(editUrl).toEqual(mockData.editUrlResponse);
-            });
+        return esignatureService.createEditUrl(mockData.tenantId, mockData.companyId, mockData.templateId).then((editUrl) => {
+            expect(editUrl).toEqual(mockData.editUrlResponse);
+        });
     });
 
     test('returns a 404 if company is not found', async () => {
@@ -31,14 +29,12 @@ describe('esignatureService.edit-url.create', () => {
             }
         });
 
-        return await esignatureService
-            .createEditUrl(mockData.tenantId, mockData.companyId, mockData.templateId, mockData.accessToken)
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(404);
-                expect(error.code).toEqual(50);
-                expect(error.message).toEqual('The requested resource does not exist.');
-                expect(error.developerMessage).toEqual('The company id: 600013 not found');
-            });
+        return await esignatureService.createEditUrl(mockData.tenantId, mockData.companyId, mockData.templateId).catch((error) => {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error.statusCode).toEqual(404);
+            expect(error.code).toEqual(50);
+            expect(error.message).toEqual('The requested resource does not exist.');
+            expect(error.developerMessage).toEqual('The company id: 600013 not found');
+        });
     });
 });

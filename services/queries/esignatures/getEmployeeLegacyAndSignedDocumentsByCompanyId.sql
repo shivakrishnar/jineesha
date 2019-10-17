@@ -14,6 +14,7 @@ declare @tmp table
 	Filename nvarchar(max),
 	Category nvarchar(max),
 	UploadDate datetime2(3),
+    EsignDate datetime2(3),
 	IsLegacyDocument bit,
 	IsPublishedToEmployee bit,
 	IsPrivateDocument bit,
@@ -48,6 +49,7 @@ LegacyDocuments as
 		d.Filename,
 		Category = d.DocumentCategory, 
 		d.UploadDate,
+        EsignDate = d.ESignDate,
 		d.IsPublishedToEmployee,
 		d.IsPrivateDocument,
 		EmployeeCode = null,
@@ -71,6 +73,7 @@ LegacyDocumentPublishedToEmployee as
 		d.Filename,
 		Category = d.DocumentCategory, 
 		d.UploadDate,
+        EsignDate = d.ESignDate,
 		d.IsPublishedToEmployee,
 		d.IsPrivateDocument,
 		EmployeeCode = null,
@@ -96,6 +99,7 @@ SignedDocuments as
 	  Filename = right(f.Pointer, charindex('/', reverse(f.Pointer) + '/') - 1),
 	  f.Category, 
 	  f.UploadDate,
+      EsignDate = null,
 	  f.IsPublishedToEmployee,
 	  IsPrivateDocument = null,
 	  f.EmployeeCode,
@@ -121,6 +125,7 @@ SignedDocuments as
 	  Filename = right(f.Pointer, charindex('/', reverse(f.Pointer) + '/') - 1),
 	  f.Category, 
 	  f.UploadDate,
+      EsignDate = null,
 	  f.IsPublishedToEmployee,
 	  IsPrivateDocument = null,
 	  f.EmployeeCode,
@@ -149,6 +154,7 @@ NewDocumentPublishedToEmployee as
 		  Filename = right(d.Pointer, charindex('/', reverse(d.Pointer) + '/') - 1),
 		  d.Category, 
 		  d.UploadDate,
+          EsignDate = null,
 		  d.IsPublishedToEmployee,
 		  IsPrivateDocument = null,
 		  d.EmployeeCode,
@@ -169,13 +175,13 @@ NewDocumentPublishedToEmployee as
 
 CollatedDocuments as
 (
-	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, IsLegacyDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from LegacyDocumentPublishedToEmployee
+	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from LegacyDocumentPublishedToEmployee
 	union
-	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, IsLegacyDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from LegacyDocuments
+	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from LegacyDocuments
 	union 
-	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, IsLegacyDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from SignedDocuments
+	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from SignedDocuments
     union
-	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, IsLegacyDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from NewDocumentPublishedToEmployee
+	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy from NewDocumentPublishedToEmployee
 )
 
 insert into @tmp
@@ -189,7 +195,8 @@ select
 	title = Title, 
 	fileName = Filename,
 	category = Category, 
-	uploadDate = UploadDate, 
+	uploadDate = UploadDate,
+    esignDate = EsignDate, 
 	isLegacyDocument = IsLegacyDocument,
 	isPublishedToEmployee = IsPublishedToEmployee,
 	isPrivateDocument = IsPrivateDocument,

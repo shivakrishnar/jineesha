@@ -19,11 +19,9 @@ describe('esignatureService.configure.add', () => {
             }
         });
 
-        esignatureService
-            .configure(mockData.tenantId, mockData.companyId, 'token', mockData.addConfigurationRequest, 'adminToken')
-            .catch(() => {
-                done.fail(new Error('Test should not throw an exception.'));
-            });
+        esignatureService.configure(mockData.tenantId, mockData.companyId, 'token', mockData.addConfigurationRequest).catch(() => {
+            done.fail(new Error('Test should not throw an exception.'));
+        });
         done();
     });
 
@@ -38,11 +36,9 @@ describe('esignatureService.configure.add', () => {
             return undefined;
         });
 
-        esignatureService
-            .configure(mockData.tenantId, mockData.companyId, 'token', mockData.addConfigurationRequest, 'adminToken')
-            .catch(() => {
-                done.fail(new Error('Test should not throw an exception.'));
-            });
+        esignatureService.configure(mockData.tenantId, mockData.companyId, 'token', mockData.addConfigurationRequest).catch(() => {
+            done.fail(new Error('Test should not throw an exception.'));
+        });
         done();
     });
 
@@ -60,7 +56,7 @@ describe('esignatureService.configure.add', () => {
         });
 
         await esignatureService
-            .configure(mockData.tenantId, mockData.companyId, 'token', mockData.addConfigurationRequest, 'adminToken')
+            .configure(mockData.tenantId, mockData.companyId, 'token', mockData.addConfigurationRequest)
             .then(() => {
                 done.fail(new Error('Test should throw an exception.'));
             })
@@ -80,7 +76,7 @@ describe('esignatureService.configure.add', () => {
         });
 
         await esignatureService
-            .configure(mockData.tenantId, mockData.companyId, 'token', mockData.addConfigurationRequest, 'adminToken')
+            .configure(mockData.tenantId, mockData.companyId, 'token', mockData.addConfigurationRequest)
             .then(() => {
                 done.fail(new Error('Test should throw an exception.'));
             })
@@ -107,11 +103,9 @@ describe('esignatureService.configure.remove', () => {
             }
         });
 
-        esignatureService
-            .configure(mockData.tenantId, mockData.companyId, 'token', mockData.removeConfigurationRequest, 'adminToken')
-            .catch(() => {
-                done.fail(new Error('Test should not throw an exception.'));
-            });
+        esignatureService.configure(mockData.tenantId, mockData.companyId, 'token', mockData.removeConfigurationRequest).catch(() => {
+            done.fail(new Error('Test should not throw an exception.'));
+        });
         done();
     });
 
@@ -127,7 +121,7 @@ describe('esignatureService.configure.remove', () => {
         });
 
         return esignatureService
-            .configure(mockData.tenantId, mockData.companyId, 'token', mockData.removeConfigurationRequest, 'adminToken')
+            .configure(mockData.tenantId, mockData.companyId, 'token', mockData.removeConfigurationRequest)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -150,11 +144,9 @@ describe('esignatureService.configure.delete', () => {
             }
         });
 
-        esignatureService
-            .configure(mockData.tenantId, mockData.companyId, 'token', mockData.deleteConfigurationRequest, 'adminToken')
-            .catch(() => {
-                done.fail(new Error('Test should not throw an exception.'));
-            });
+        esignatureService.configure(mockData.tenantId, mockData.companyId, 'token', mockData.deleteConfigurationRequest).catch(() => {
+            done.fail(new Error('Test should not throw an exception.'));
+        });
         done();
     });
 
@@ -170,7 +162,7 @@ describe('esignatureService.configure.delete', () => {
         });
 
         return esignatureService
-            .configure(mockData.tenantId, mockData.companyId, 'token', mockData.deleteConfigurationRequest, 'adminToken')
+            .configure(mockData.tenantId, mockData.companyId, 'token', mockData.deleteConfigurationRequest)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);

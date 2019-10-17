@@ -20,14 +20,7 @@ describe('esignatureService.signature-request.create', () => {
         });
 
         return esignatureService
-            .createBulkSignatureRequest(
-                mockData.tenantId,
-                mockData.companyId,
-                mockData.bulkSignatureRequestRequestBody,
-                {},
-                mockData.accessToken,
-                undefined,
-            )
+            .createBulkSignatureRequest(mockData.tenantId, mockData.companyId, mockData.bulkSignatureRequestRequestBody, {}, undefined)
             .then((signatureRequest) => {
                 expect(signatureRequest).toBeInstanceOf(SignatureRequestResponse);
                 expect(signatureRequest).toEqual(mockData.signatureRequestResponse);
@@ -44,13 +37,7 @@ describe('esignatureService.signature-request.create', () => {
         });
 
         return esignatureService
-            .createSignatureRequest(
-                mockData.tenantId,
-                mockData.companyId,
-                mockData.employeeId,
-                mockData.signatureRequestRequestBody,
-                mockData.accessToken,
-            )
+            .createSignatureRequest(mockData.tenantId, mockData.companyId, mockData.employeeId, mockData.signatureRequestRequestBody)
             .then((signatureRequest) => {
                 expect(signatureRequest).toBeInstanceOf(SignatureRequestResponse);
                 expect(signatureRequest).toEqual(mockData.signatureRequestResponse);
@@ -67,13 +54,7 @@ describe('esignatureService.signature-request.create', () => {
         });
 
         return esignatureService
-            .createSignatureRequest(
-                mockData.tenantId,
-                mockData.companyId,
-                mockData.employeeId,
-                mockData.signatureRequestRequestBody,
-                mockData.accessToken,
-            )
+            .createSignatureRequest(mockData.tenantId, mockData.companyId, mockData.employeeId, mockData.signatureRequestRequestBody)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -106,7 +87,6 @@ describe('esignatureService.signature-request.list', () => {
                 mockData.signatureRequestQueryParams,
                 mockData.domainName,
                 mockData.path,
-                mockData.accessToken,
             )
             .then((signatureRequests) => {
                 expect(signatureRequests).toBeInstanceOf(PaginatedResult);
@@ -135,7 +115,6 @@ describe('esignatureService.signature-request.list', () => {
                 mockData.signatureRequestQueryParams,
                 mockData.domainName,
                 mockData.path,
-                mockData.accessToken,
             )
             .then((signatureRequests) => {
                 expect(signatureRequests).toBeInstanceOf(PaginatedResult);
@@ -165,7 +144,6 @@ describe('esignatureService.signature-request.list', () => {
                 queryParams,
                 mockData.domainName,
                 mockData.path,
-                mockData.accessToken,
             )
             .then((signatureRequests) => {
                 expect(signatureRequests).toBeInstanceOf(PaginatedResult);
@@ -195,7 +173,6 @@ describe('esignatureService.signature-request.list', () => {
                 queryParams,
                 mockData.domainName,
                 mockData.path,
-                mockData.accessToken,
             )
             .then((signatureRequests) => {
                 expect(signatureRequests).toBeInstanceOf(PaginatedResult);
@@ -225,7 +202,6 @@ describe('esignatureService.signature-request.list', () => {
                 queryParams,
                 mockData.domainName,
                 mockData.path,
-                mockData.accessToken,
             )
             .then((signatureRequests) => {
                 expect(signatureRequests).toBeInstanceOf(PaginatedResult);
@@ -244,7 +220,6 @@ describe('esignatureService.signature-request.list', () => {
                 mockData.signatureRequestQueryParams,
                 mockData.domainName,
                 mockData.path,
-                mockData.accessToken,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -266,7 +241,6 @@ describe('esignatureService.signature-request.list', () => {
                 queryParams,
                 mockData.domainName,
                 mockData.path,
-                mockData.accessToken,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -290,7 +264,6 @@ describe('esignatureService.signature-request.list', () => {
                 queryParams,
                 mockData.domainName,
                 mockData.path,
-                mockData.accessToken,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -314,7 +287,6 @@ describe('esignatureService.signature-request.list', () => {
                 queryParams,
                 mockData.domainName,
                 mockData.path,
-                mockData.accessToken,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -343,7 +315,6 @@ describe('esignatureService.signature-request.list', () => {
                 mockData.signatureRequestQueryParams,
                 mockData.domainName,
                 mockData.path,
-                mockData.accessToken,
             )
             .then((signatureRequests) => {
                 expect(signatureRequests).toEqual(undefined);

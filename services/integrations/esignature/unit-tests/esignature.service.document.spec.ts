@@ -31,7 +31,6 @@ describe('esignatureService.company-document.list', () => {
                 mockData.domainName,
                 mockData.path,
                 true,
-                mockData.accessToken,
                 undefined,
             )
             .then((documents) => {
@@ -55,16 +54,7 @@ describe('esignatureService.company-document.list', () => {
         queryParams.docType = 'hellosign';
 
         return esignatureService
-            .listDocuments(
-                mockData.tenantId,
-                mockData.companyId,
-                queryParams,
-                mockData.domainName,
-                mockData.path,
-                true,
-                mockData.accessToken,
-                undefined,
-            )
+            .listDocuments(mockData.tenantId, mockData.companyId, queryParams, mockData.domainName, mockData.path, true, undefined)
             .then((documents) => {
                 expect(documents).toBeInstanceOf(PaginatedResult);
                 expect(documents.results.length).toBe(mockData.companyHellosignDocumentListResponse.length);
@@ -89,7 +79,6 @@ describe('esignatureService.company-document.list', () => {
                 mockData.domainName,
                 mockData.path,
                 true,
-                mockData.accessToken,
                 undefined,
             )
             .catch((error) => {
@@ -103,16 +92,7 @@ describe('esignatureService.company-document.list', () => {
 
     test('returns a 400 if no query params are provided', async () => {
         return await esignatureService
-            .listDocuments(
-                mockData.tenantId,
-                mockData.companyId,
-                undefined,
-                mockData.domainName,
-                mockData.path,
-                true,
-                mockData.accessToken,
-                undefined,
-            )
+            .listDocuments(mockData.tenantId, mockData.companyId, undefined, mockData.domainName, mockData.path, true, undefined)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(400);
@@ -124,16 +104,7 @@ describe('esignatureService.company-document.list', () => {
 
     test('returns a 400 if unsupported query params are provided', async () => {
         return await esignatureService
-            .listDocuments(
-                mockData.tenantId,
-                mockData.companyId,
-                { test: 'test' },
-                mockData.domainName,
-                mockData.path,
-                true,
-                mockData.accessToken,
-                undefined,
-            )
+            .listDocuments(mockData.tenantId, mockData.companyId, { test: 'test' }, mockData.domainName, mockData.path, true, undefined)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(400);
@@ -147,16 +118,7 @@ describe('esignatureService.company-document.list', () => {
         const queryParams = { ...mockData.documentQueryParams };
         queryParams.category = 'test';
         return await esignatureService
-            .listDocuments(
-                mockData.tenantId,
-                mockData.companyId,
-                queryParams,
-                mockData.domainName,
-                mockData.path,
-                true,
-                mockData.accessToken,
-                undefined,
-            )
+            .listDocuments(mockData.tenantId, mockData.companyId, queryParams, mockData.domainName, mockData.path, true, undefined)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(400);
@@ -170,16 +132,7 @@ describe('esignatureService.company-document.list', () => {
         const queryParams = { ...mockData.documentQueryParams };
         queryParams.categoryId = -10;
         return await esignatureService
-            .listDocuments(
-                mockData.tenantId,
-                mockData.companyId,
-                queryParams,
-                mockData.domainName,
-                mockData.path,
-                true,
-                mockData.accessToken,
-                undefined,
-            )
+            .listDocuments(mockData.tenantId, mockData.companyId, queryParams, mockData.domainName, mockData.path, true, undefined)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(400);
@@ -193,16 +146,7 @@ describe('esignatureService.company-document.list', () => {
         const queryParams = { ...mockData.documentQueryParams };
         queryParams.docType = 'test';
         return await esignatureService
-            .listDocuments(
-                mockData.tenantId,
-                mockData.companyId,
-                queryParams,
-                mockData.domainName,
-                mockData.path,
-                true,
-                mockData.accessToken,
-                undefined,
-            )
+            .listDocuments(mockData.tenantId, mockData.companyId, queryParams, mockData.domainName, mockData.path, true, undefined)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(400);

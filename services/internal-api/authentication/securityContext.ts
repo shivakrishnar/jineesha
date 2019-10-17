@@ -21,19 +21,17 @@ export class SecurityContext {
     principal: IAccount;
     roleMemberships: string[];
     accessToken: string;
-    adminToken: string | undefined;
     currentRoleLevel: ApplicationRoleLevel;
 
-    public constructor(principal: IAccount, roleMemberships: string[] = [], accessToken: string, adminToken: string) {
+    public constructor(principal: IAccount, roleMemberships: string[] = [], accessToken: string) {
         this.principal = principal;
         this.roleMemberships = roleMemberships;
         this.accessToken = accessToken;
-        this.adminToken = adminToken;
     }
 
     public static fromJSON(json: string): SecurityContext {
         const data = JSON.parse(json);
-        return new SecurityContext(data.principal, data.roleMemberships, data.accessToken, data.adminToken);
+        return new SecurityContext(data.principal, data.roleMemberships, data.accessToken);
     }
 
     /**
