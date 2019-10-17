@@ -378,7 +378,7 @@ custom:
   customDomain:
     basePath: integrations
     domainName: hr-services.${file(${self:custom.configFile}):domain}
-    certificateName: '*.${file(${self:custom.configFile}):domain}'
+    certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
     createRoute53Record: false
   apigwBinary:
     types:
