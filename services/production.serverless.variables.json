@@ -22,6 +22,7 @@
     "scopeBaseDomain": "https://www.asuresoftware.com/iam/",
     "stage": "production",
     "domain": "evolutionadvancedhr.com",
+    "domainCertificateArn": "arn:aws:acm:us-east-1:863166285603:certificate/d435c3d3-bcf8-431c-9ce3-1f963ac613dc",
     "apiDomain": "https://evoapi.evolutionadvancedhr.com",
     "fromEmail": "AdvancedHR@evolutionadvancedhr.com",
     "integrationId": "759f5d50-bc2f-4c69-8b53-649c3ba9c703",
