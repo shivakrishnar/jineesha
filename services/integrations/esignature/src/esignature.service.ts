@@ -2701,7 +2701,7 @@ export async function deleteCompanyDocument(tenantId: string, companyId: string,
         );
 
         if (resultSet[0].length === 0) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${documentId} not found`);
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Document with ID ${documentId} not found.`);
         }
 
         const s3Key = resultSet[0][0].Pointer;
