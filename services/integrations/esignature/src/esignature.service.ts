@@ -2631,6 +2631,144 @@ async function updateLegacyDocument(tenantId: string, documentId: number, reques
 }
 
 /**
+ * Deletes a specified document record under a company
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {string} documentId: The unique identifier for the document to be deleted.
+ * @param {string} userEmail: The email address of the user.
+ */
+export async function deleteCompanyDocument(tenantId: string, companyId: string, documentId: string, userEmail: string): Promise<void> {
+    console.info('esignature.service.deleteCompanyDocument');
+
+    try {
+        let docType: DocType;
+        let docId: number | string;
+
+        // verify that the company exists
+        await utilService.validateCompany(tenantId, companyId);
+        const decoded = await decodeId(documentId);
+
+        // if id does not decode properly, assume it's a HelloSign document
+        if (decoded.length === 0) {
+            docType = DocType.EsignatureDocument;
+            docId = documentId;
+        } else {
+            const [decodedId, type] = decoded;
+
+            if (!decodedId) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(`Document with ID ${documentId} not found.`);
+            }
+
+            docType = type;
+            docId = decodedId;
+        }
+
+        let documentQuery: ParameterizedQuery;
+
+        switch (docType) {
+            case DocType.S3Document:
+                documentQuery = new ParameterizedQuery('getFileMetadataByIdAndCompanyId', Queries.getFileMetadataByIdAndCompanyId);
+                documentQuery.setParameter('@id', docId);
+                documentQuery.setParameter('@companyId', companyId);
+                break;
+            case DocType.EsignatureDocument:
+                documentQuery = new ParameterizedQuery(
+                    'getEsignatureMetadataByIdAndCompanyId',
+                    Queries.getEsignatureMetadataByIdAndCompanyId,
+                );
+                documentQuery.setParameter('@id', docId);
+                documentQuery.setParameter('@companyId', companyId);
+                break;
+            case DocType.LegacyDocument:
+                documentQuery = new ParameterizedQuery('getDocumentByIdAndCompanyId', Queries.getDocumentByIdAndCompanyId);
+                documentQuery.setParameter('@id', docId);
+                documentQuery.setParameter('@companyId', companyId);
+                break;
+            default:
+                throw new Error('Unknown document type');
+        }
+
+        const resultSet: any = await utilService.authorizeAndRunQuery(
+            tenantId,
+            utilService.Resources.Company,
+            companyId,
+            userEmail,
+            documentQuery,
+        );
+
+        if (resultSet[0].length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${documentId} not found`);
+        }
+
+        const s3Key = resultSet[0][0].Pointer;
+
+        return await deleteDocumentRecord(tenantId, docType, docId, s3Key);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+async function deleteDocumentRecord(tenantId: string, docType: DocType, recordId: number | string, s3Key?: string): Promise<void> {
+    console.info('esignature.service.deleteDocumentRecord');
+
+    try {
+        let query: ParameterizedQuery;
+        let taskListQuery: ParameterizedQuery;
+        switch (docType) {
+            case DocType.S3Document:
+                s3Client
+                    .deleteObject({
+                        Bucket: configService.getFileBucketName(),
+                        Key: s3Key,
+                    })
+                    .promise()
+                    .catch((e) => {
+                        throw new Error(e);
+                    });
+
+                query = new ParameterizedQuery('DeleteFileMetadataById', Queries.deleteFileMetadataById);
+                break;
+            case DocType.EsignatureDocument:
+                query = new ParameterizedQuery('DeleteEsignatureMetadataById', Queries.deleteEsignatureMetadataById);
+                taskListQuery = new ParameterizedQuery('RemoveDocumentFromTaskList', Queries.removeDocumentFromTaskList);
+                taskListQuery.setParameter('@documentId', recordId);
+                query.combineQueries(taskListQuery);
+                break;
+            case DocType.LegacyDocument:
+                query = new ParameterizedQuery('DeleteDocumentById', Queries.deleteDocumentById);
+                taskListQuery = new ParameterizedQuery('RemoveDocumentFromTaskList', Queries.removeDocumentFromTaskList);
+                taskListQuery.setParameter('@documentId', recordId);
+                query.combineQueries(taskListQuery);
+                break;
+            default:
+                throw errorService.getErrorResponse(0);
+        }
+
+        query.setParameter('@documentId', recordId);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Validates a given query string collection.
  * @param {string []} validInputs - Validate query string parameters
  * @param {any} queryParameters - The query string parameters

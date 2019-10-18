@@ -328,6 +328,16 @@ functions:
             cors:
               origin: '*'
 
+  deleteCompanyDocument:
+    handler: esignature/src/handler.deleteCompanyDocument
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/documents/{documentId}
+            method: delete
+            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

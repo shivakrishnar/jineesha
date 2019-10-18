@@ -11,6 +11,7 @@ const basePath = process.cwd() === '/var/task' ? path.join(process.cwd(), 'queri
 export const Queries = {
     // Security
     checkSecurityRoles: fs.readFileSync(path.join(basePath, 'security/checkSecurityRoles.sql')).toString(),
+    companyAccess: fs.readFileSync(path.join(basePath, 'security/companyAccess.sql')).toString(),
 
     // Direct Deposits
     directDepositList: fs.readFileSync(path.join(basePath, 'direct-deposits/listDirectDepositsByEmployeeId.sql')).toString(),
@@ -80,6 +81,15 @@ export const Queries = {
     updateDocumentMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/updateDocumentMetadataById.sql')).toString(),
     updateDocumentById: fs.readFileSync(path.join(basePath, 'esignatures/updateDocumentById.sql')).toString(),
     getDocumentMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentMetadataById.sql')).toString(),
+    deleteFileMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/deleteFileMetadataById.sql')).toString(),
+    deleteEsignatureMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/deleteEsignatureMetadataById.sql')).toString(),
+    deleteDocumentById: fs.readFileSync(path.join(basePath, 'esignatures/deleteDocumentById.sql')).toString(),
+    getFileMetadataByIdAndCompanyId: fs.readFileSync(path.join(basePath, 'esignatures/getFileMetadataByIdAndCompanyId.sql')).toString(),
+    getEsignatureMetadataByIdAndCompanyId: fs
+        .readFileSync(path.join(basePath, 'esignatures/getEsignatureMetadataByIdAndCompanyId.sql'))
+        .toString(),
+    getDocumentByIdAndCompanyId: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentByIdAndCompanyId.sql')).toString(),
+    removeDocumentFromTaskList: fs.readFileSync(path.join(basePath, 'esignatures/removeDocumentFromTaskList.sql')).toString(),
 
     // Companies
     getUserCompaniesById: fs.readFileSync(path.join(basePath, 'companies/getUserCompaniesById.sql')).toString(),

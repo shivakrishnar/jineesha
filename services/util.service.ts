@@ -697,6 +697,65 @@ export async function validateCompany(tenantId: string, companyId: string): Prom
     }
 }
 
+export enum Resources {
+    Company = 'company',
+}
+
+/**
+ * Ensures that the invoking user has access to the specified resource and runs the given query if authorized.
+ * @param {string} tenantId: The unique identifier for the tenant.
+ * @param {Resources} resourceType: The type of resource to be accessed.
+ * @param {string} resourceId: The unique identifier for the resource being accessed.
+ * @param {string} userEmail: The email address of the invoking user.
+ * @param {Query} query: The query to run.
+ * @returns: The result set of the executed query.
+ */
+export async function authorizeAndRunQuery(
+    tenantId: string,
+    resourceType: Resources,
+    resourceId: string,
+    userEmail: string,
+    query: Query,
+): Promise<any> {
+    console.info('utilService.authorizeAndRunQuery');
+
+    try {
+        let accessQuery: ParameterizedQuery;
+        switch (resourceType) {
+            case Resources.Company:
+                accessQuery = new ParameterizedQuery('CompanyAccess', Queries.companyAccess);
+                accessQuery.setParameter('@companyId', resourceId);
+                accessQuery.setParameter('@username', userEmail);
+                break;
+            default:
+                throw new Error('Invalid resource type');
+        }
+        accessQuery.combineQueries(query);
+        const payload = {
+            tenantId,
+            queryName: accessQuery.name,
+            query: accessQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const resourceAccess: any = result.recordsets.splice(0, 1)[0];
+        if (resourceAccess.length === 0) {
+            throw errorService
+                .getErrorResponse(20)
+                .setDeveloperMessage(`This user does not have access to the ${resourceType} with id ${resourceId}`);
+        }
+
+        return result.recordsets;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(`Unable to authorize. Reason: ${error}`);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
 /**
  * masks a given social security number
  * @param {string} ssn: Social Security Number in form "XXX-XX-XXXX"
