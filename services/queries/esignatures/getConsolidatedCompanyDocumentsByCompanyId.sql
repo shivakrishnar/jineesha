@@ -9,8 +9,9 @@ declare @tmp table
     Title nvarchar(max),
     Category nvarchar(max),
     Type nvarchar(max),
-    IsPublishedToEmployee bit
-)
+    IsPublishedToEmployee bit,
+    ExistsInTaskList bit
+);
 
 insert into @tmp
 select
@@ -22,7 +23,20 @@ select
     Title,
     DocumentCategory,
     'legacy',
-    IsPublishedToEmployee
+    IsPublishedToEmployee,
+    ExistsInTaskList = (
+        case
+            when (
+                select
+                    count(*)
+                from
+                    dbo.OnboardingTaskStep o
+                where
+                    o.CompanyDoc_CompanyDocKeys like '%' + cast(d.ID as varchar(max)) + '%'
+            ) > 0 then 1
+            else 0
+        end
+    )
 from 
     dbo.Document d
     inner join dbo.HRnextUser u
@@ -32,20 +46,33 @@ where
 
 insert into @tmp
 select
-    ID,
-    UploadDate,
+    e.ID,
+    e.UploadDate,
     null,
     null,
     null,
     null,
     null,
     'esignature',
-    null
+    null,
+    ExistsInTaskList = (
+        case
+            when (
+                select
+                    count(*)
+                from
+                    dbo.OnboardingTaskStep o
+                where
+                    o.CompanyDoc_CompanyDocKeys like '%' + e.ID + '%'
+            ) > 0 then 1
+            else 0
+        end
+    )
 from
-    dbo.EsignatureMetadata
+    dbo.EsignatureMetadata e
 where
-    CompanyID = @_companyId and
-    Type = '@type'
+    e.CompanyID = @_companyId and
+    e.Type = '@type'
 
 insert into @tmp
 select
@@ -57,7 +84,8 @@ select
     Title,
     Category,
     'non-signature',
-    IsPublishedToEmployee
+    IsPublishedToEmployee,
+    ExistsInTaskList = 0 -- documents in FileMetadata should never show up in a task list
 from
     dbo.FileMetadata
 where

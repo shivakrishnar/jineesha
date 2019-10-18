@@ -99,6 +99,12 @@ export class Template {
      */
     category: string;
 
+    /**
+     * @property {boolean} existsInTaskList
+     * Determines if the document is associated with an onboarding task list
+     */
+    existsInTaskList?: boolean;
+
     public constructor(init?: Partial<Template>) {
         Object.assign(this, init);
     }

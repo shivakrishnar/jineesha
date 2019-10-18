@@ -532,6 +532,7 @@ export async function listTemplates(
                     uploadedBy,
                     category: document.Category,
                     isPublishedToEmployee: document.IsPublishedToEmployee,
+                    existsInTaskList: document.ExistsInTaskList,
                 });
             }
             return memo;
@@ -583,6 +584,7 @@ export async function listTemplates(
                             uploadedBy,
                             isEsignatureDocument: true,
                             category,
+                            existsInTaskList: nonLegacyDocuments[index].ID === id ? nonLegacyDocuments[index].ExistsInTaskList : undefined,
                         }),
                     );
                 }
@@ -593,6 +595,8 @@ export async function listTemplates(
                 }
             }
         });
+
+        consolidatedDocuments.sort((a, b) => (new Date(a.uploadDate).getTime() > new Date(b.uploadDate).getTime() ? -1 : 1));
 
         const paginatedResult = await paginationService.createPaginatedResult(consolidatedDocuments, baseUrl, totalRecords, page);
         return consolidatedDocuments.length === 0 ? undefined : paginatedResult;
