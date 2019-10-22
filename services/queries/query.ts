@@ -40,4 +40,9 @@ export class Query implements IQuery {
     public appendFilter(condition: string, appendToExistingWhereClause: boolean = true): void {
         this._query = this._query.concat(`${appendToExistingWhereClause ? ' and ' : ' '}${condition}`);
     }
+
+    public combineQueries(queryToCombine: Query): void {
+        this._name = `${this._name} ${queryToCombine.name}`;
+        this._query = `${this._query}\n${queryToCombine.value}`;
+    }
 }

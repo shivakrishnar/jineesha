@@ -10,11 +10,24 @@ where
     Type = @_type
 
 select
-    ID,
-    UploadDate
+    e.ID,
+    e.UploadDate,
+    ExistsInTaskList = (
+        case
+            when (
+                select
+                    count(*)
+                from
+                    dbo.OnboardingTaskStep o
+                where
+                    o.CompanyDoc_CompanyDocKeys like '%' + e.ID + '%'
+            ) > 0 then 1
+            else 0
+        end
+    )
 from
-    dbo.EsignatureMetadata
+    dbo.EsignatureMetadata e
 where
-    CompanyID = @_companyId and
-    Type = @_type
-order by UploadDate desc
+    e.CompanyID = @_companyId and
+    e.Type = @_type
+order by e.UploadDate desc

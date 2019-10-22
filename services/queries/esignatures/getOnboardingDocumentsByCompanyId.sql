@@ -8,7 +8,8 @@ declare @tmp table
     Filename nvarchar(max),
     Title nvarchar(max),
     Category nvarchar(max),
-    Type nvarchar(max)
+    Type nvarchar(max),
+    ExistsInTaskList bit
 )
 
 insert into @tmp
@@ -20,7 +21,20 @@ select
     Filename,
     Title,
     DocumentCategory,
-    'legacy'
+    'legacy',
+    ExistsInTaskList = (
+        case
+            when (
+                select
+                    count(*)
+                from
+                    dbo.OnboardingTaskStep o
+                where
+                    o.CompanyDoc_CompanyDocKeys like '%' + cast(d.ID as varchar(max)) + '%'
+            ) > 0 then 1
+            else 0
+        end
+    )
 from 
     dbo.Document d
     inner join dbo.HRnextUser u
@@ -30,19 +44,32 @@ where
 
 insert into @tmp
 select
-    ID,
-    UploadDate,
+    e.ID,
+    e.UploadDate,
     null,
     null,
     null,
     null,
     null,
-    'esignature'
+    'esignature',
+    ExistsInTaskList = (
+        case
+            when (
+                select
+                    count(*)
+                from
+                    dbo.OnboardingTaskStep o
+                where
+                    o.CompanyDoc_CompanyDocKeys like '%' + e.ID + '%'
+            ) > 0 then 1
+            else 0
+        end
+    )
 from
-    dbo.EsignatureMetadata
+    dbo.EsignatureMetadata e
 where
-    CompanyID = @_companyId and
-    Type = '@type'
+    e.CompanyID = @_companyId and
+    e.Type = '@type'
 
 -- get total count for pagination
 select count(*) as totalCount from @tmp

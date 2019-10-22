@@ -61,6 +61,10 @@ export const setup = () => {
         return;
     });
 
+    (utilService as any).authorizeAndRunQuery = jest.fn((params: any) => {
+        return [[{}]];
+    });
+
     (paginationService as any).appendPaginationFilter = jest.fn((params: any) => {
         return Promise.resolve({ name: params.name, value: params.value });
     });

@@ -35,6 +35,11 @@ const companyResourceUriSchema = {
     companyId: { required: true, type: String },
 };
 
+const companyDocumentResourceUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+};
+
 const employeeResourceUriSchema = {
     tenantId: { required: true, type: UUID },
     companyId: { required: true, type: String },
@@ -855,3 +860,34 @@ export const updateEmployeeDocument = utilService.gatewayEventHandler(
         );
     },
 );
+
+/**
+ * Deletes a specified document record for a company
+ */
+export const deleteCompanyDocument = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.deleteCompanyDocument');
+
+    const { tenantId, companyId, documentId } = event.pathParameters;
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyDocumentResourceUriSchema);
+
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return (
+            role === Role.globalAdmin ||
+            role === Role.serviceBureauAdmin ||
+            role === Role.superAdmin ||
+            role === Role.hrAdmin ||
+            role === Role.hrRestrictedAdmin
+        );
+    });
+
+    if (!isAuthorized) {
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    const { email } = securityContext.principal;
+
+    return await esignatureService.deleteCompanyDocument(tenantId, companyId, documentId, email);
+});
