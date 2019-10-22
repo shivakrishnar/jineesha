@@ -7,6 +7,7 @@
 declare @_employeeId int = @employeeId
 declare @_includePrivateDocuments bit = @includePrivateDocuments
 declare @_invokerUsername varchar(max) = @invokerUsername
+declare @_search as nvarchar(max) = '%' + @search + '%';
 declare @tmp table
 (
   	ID  bigint,
@@ -223,7 +224,7 @@ CollatedDocuments as
 
 insert into @tmp
 select * from CollatedDocuments
-
+where lower(Category) like @_search or lower(Title) like @_search
 -- pagination count
 select totalCount = count(*) from @tmp
 
