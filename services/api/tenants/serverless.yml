@@ -87,6 +87,14 @@ provider:
         - sns:Publish
       Resource: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:mojojojo-status-notification
 
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:PutItem
+      Resource: "arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings"
+
 functions:
   addAdminAccount:
     handler: src/handler.addAdmin

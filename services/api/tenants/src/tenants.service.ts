@@ -192,8 +192,8 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
 
         const postDeploymentScript = data.Body.toString()
             .replace(/(NEW_HR_TENANT_ID)/g, dbInfo.id)
-            .replace(/(NEW_HR_TENANT_NAME)/g, dbInfo.name)
-            .replace(/(NEW_HR_TENANT_SUBDOMAIN)/g, dbInfo.subdomain)
+            .replace(/(NEW_HR_TENANT_NAME)/g, dbInfo.name.toLowerCase())
+            .replace(/(NEW_HR_TENANT_SUBDOMAIN)/g, dbInfo.subdomain.toLowerCase())
             .replace(/(API_DOMAIN)/g, configService.getApiDomain())
             .replace(/(DOMAIN)/g, configService.getDomain());
 
@@ -202,6 +202,7 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
 
         // Send notification of successful creation:
         const success = buildMessageAttachment(dbInfo, rdsEndpoint, 'RDS Database Creation', 'good');
+        await addConnectionString(dbInfo, rdsEndpoint);
         await publishMessage(success);
     } catch (error) {
         console.error(error);
@@ -315,4 +316,32 @@ export async function publishMessage(message: any): Promise<void> {
     };
 
     sns.publish(params).promise();
+}
+
+async function addConnectionString(dbInfo: TenantDatabase, rdsInstance: string): Promise<void> {
+    console.info('tenants.service.addConnectionString');
+
+    const connectionString = createConnectionString(dbInfo, rdsInstance);
+
+    const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+    const params = {
+        TableName: 'ConnectionStrings',
+        Item: connectionString,
+    };
+
+    await dynamoDbClient.put(params).promise();
+}
+
+function createConnectionString(dbInfo: TenantDatabase, rdsInstance: string): any {
+    console.info('tenants.service.createConnectionString');
+
+    const dbConnectionString = `data source=${rdsInstance};initial catalog=${dbInfo.id};`;
+    const domain = `${dbInfo.subdomain}.${configService.getDomain()}`;
+    const tenantId = `${dbInfo.id}`;
+
+    return {
+        ConnectionString: dbConnectionString,
+        Domain: domain,
+        TenantID: tenantId,
+    };
 }
