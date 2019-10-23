@@ -60,6 +60,7 @@ export class SecurityContext {
         try {
             const query = new ParameterizedQuery('CheckSecurityRoles', Queries.checkSecurityRoles);
             query.setParameter('@userEmail', email);
+            query.setParameter('@employeeId', employeeId);
 
             const payload = {
                 tenantId,
@@ -70,7 +71,7 @@ export class SecurityContext {
             const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
             const recordSet: any[] = result.recordset;
-            if (recordSet.length === 0 || recordSet[0].EmployeeID !== employeeId) {
+            if (recordSet.length === 0) {
                 throw errorService.getErrorResponse(11);
             }
 

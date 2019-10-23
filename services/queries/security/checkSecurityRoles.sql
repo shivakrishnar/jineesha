@@ -15,7 +15,7 @@
  
 -- SSO user
 declare @_username varchar(256) = '@userEmail'
- 
+declare @_employeeId int = '@employeeId'
  
 ;with SecurityRole as
 (
@@ -78,9 +78,11 @@ from
     left join dbo.SecPermissionRole spr  on sr.SecurityRoleID = spr.RoleID
     left join dbo.SecPermission sp on spr.PermissionID = sp.ID
     left join AccessibleResource rsx on sp.ResourceID = rsx.ID
+    inner join dbo.Employee ee on hrEmp.EmployeeID = ee.ID
      
 where
     Username = @_username
+    and ee.ID = @_employeeId
  
 order by
-    ResourceName
+    ApplicationRoleLevel , ResourceName 
