@@ -6,4 +6,5 @@ export enum Role {
     superAdmin = 'super.admin',
     hrAdmin = 'hr.persona.admin',
     hrRestrictedAdmin = 'hr.persona.restricted-admin',
+    asureOps = 'asure-ops',
 }
