@@ -208,7 +208,7 @@ export async function saveTemplateMetadata(
         query.setParameter('@uploadDate', uploadDate);
         query.setParameter('@uploadedBy', `'${uploadedBy}'`);
         query.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
-        query.setParameter('@fileName', `'${fileName}'`);
+        query.setParameter('@fileName', `'${fileName.replace(/'/g, "''")}'`);
         query.setParameter('@category', category ? `'${category}'` : 'NULL');
         query.setParameter('@employeeCode', 'NULL');
         payload = {
