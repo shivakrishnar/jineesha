@@ -53,6 +53,25 @@ describe('esignatureService.template.list', () => {
             });
     });
 
+    test('returns filtered templates', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            }
+            return Promise.resolve(mockData.templateDBResponse);
+        });
+
+        return esignatureService
+            .listTemplates(mockData.tenantId, mockData.companyId, mockData.searchQueryParam, mockData.domainName, mockData.path)
+            .then((templates) => {
+                expect(templates).toBeInstanceOf(PaginatedResult);
+                expect(templates.results.length).toBe(mockData.templateDBResponse.recordsets[1].length);
+                expect(templates.results[0]).toEqual(mockData.templateListResponse[0]);
+                expect(templates.results[1]).toEqual(mockData.templateListResponse[1]);
+                expect(templates.results[2]).toEqual(mockData.templateListResponse[2]);
+            });
+    });
+
     test('returns onboarding templates', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetCompanyInfo') {
