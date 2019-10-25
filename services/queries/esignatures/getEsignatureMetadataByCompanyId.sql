@@ -1,5 +1,6 @@
 declare @_companyId int = @companyId
 declare @_type nvarchar(max) = '@type'
+declare @_search nvarchar(max) = '%' + @search + '%';
 
 select
     count(*) as totalCount
@@ -7,7 +8,8 @@ from
     dbo.EsignatureMetadata
 where
     CompanyID = @_companyId and
-    Type = @_type
+    Type = @_type and
+    (lower(Category) like @_search or lower(Title) like @_search)
 
 select
     e.ID,
@@ -29,5 +31,6 @@ from
     dbo.EsignatureMetadata e
 where
     e.CompanyID = @_companyId and
-    e.Type = @_type
+    e.Type = @_type and
+    (lower(e.Category) like @_search or lower(e.Title) like @_search)
 order by e.UploadDate desc

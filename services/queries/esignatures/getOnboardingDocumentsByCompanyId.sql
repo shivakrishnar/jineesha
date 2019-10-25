@@ -10,7 +10,8 @@ declare @tmp table
     Category nvarchar(max),
     Type nvarchar(max),
     ExistsInTaskList bit
-)
+);
+declare @_search nvarchar(max) = '%' + @search + '%';
 
 insert into @tmp
 select
@@ -40,7 +41,8 @@ from
     inner join dbo.HRnextUser u
     on u.Username = d.UploadByUsername
 where
-    CompanyID = @_companyId
+    CompanyID = @_companyId and
+    (lower(d.DocumentCategory) like @_search or lower(d.Title) like @_search)
 
 insert into @tmp
 select
@@ -69,7 +71,8 @@ from
     dbo.EsignatureMetadata e
 where
     e.CompanyID = @_companyId and
-    e.Type = '@type'
+    e.Type = '@type' and
+    (lower(e.Category) like @_search or lower(e.Title) like @_search)
 
 -- get total count for pagination
 select count(*) as totalCount from @tmp

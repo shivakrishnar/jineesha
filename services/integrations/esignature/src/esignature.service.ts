@@ -463,7 +463,7 @@ export async function listTemplates(
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listTemplates');
 
-    const validQueryStringParameters = ['pageToken', 'consolidated', 'onboarding'];
+    const validQueryStringParameters = ['pageToken', 'consolidated', 'onboarding', 'search'];
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -493,13 +493,28 @@ export async function listTemplates(
         }
         query.setParameter('@companyId', companyId);
         query.setParameter('@type', EsignatureMetadataType.Template);
-        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
-        const payload = {
-            tenantId,
-            queryName: paginatedQuery.name,
-            query: paginatedQuery.value,
-            queryType: QueryType.Simple,
-        } as DatabaseEvent;
+
+        let payload: DatabaseEvent;
+        if (queryParams && queryParams.search) {
+            query.setStringParameter('@search', `'${queryParams.search}'`);
+            const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+            payload = {
+                tenantId,
+                queryName: paginatedQuery.name,
+                query: paginatedQuery.value,
+                queryType: QueryType.Simple,
+            };
+        } else {
+            query.setStringParameter('@search', '');
+            const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+            payload = {
+                tenantId,
+                queryName: paginatedQuery.name,
+                query: paginatedQuery.value,
+                queryType: QueryType.Simple,
+            };
+        }
+
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
         const documents: any[] = result.recordsets[1];
         const totalRecords: number = result.recordsets[0][0].totalCount;
