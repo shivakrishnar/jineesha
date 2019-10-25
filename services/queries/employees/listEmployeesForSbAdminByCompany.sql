@@ -7,6 +7,7 @@ declare @employeeList table (
     FirstName nvarchar(max),
     LastName nvarchar(max)
 )
+declare @_search as nvarchar(max) = '%' + @search + '%';
 
 declare @_userId as int = (select ID from dbo.HRnextUser where Username = @_username);
 declare @_excludedCompanyId as int = (
@@ -29,7 +30,8 @@ select
 from
     dbo.Employee ee
 where
-    ee.CompanyID = @_companyId
+    ee.CompanyID = @_companyId and
+    concat(FirstName, LastName, EmployeeCode) like @_search
 
 if @_companyId = @_excludedCompanyId 
     delete from @employeeList

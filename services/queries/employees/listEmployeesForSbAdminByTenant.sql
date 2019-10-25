@@ -4,8 +4,10 @@ declare @employeeList table (
     ID int,
     CompanyID int,
     FirstName nvarchar(max),
-    LastName nvarchar(max)
+    LastName nvarchar(max),
+    EmployeeCode nvarchar(max)
 )
+declare @_search as nvarchar(max) = '%' + @search + '%';
 
 set @_userId = (select ID from dbo.HRnextUser where Username = @_username);
 
@@ -38,7 +40,8 @@ select
 from
     dbo.Employee
 where
-    CompanyID in (select ID from CompanyList)
+    CompanyID in (select ID from CompanyList) and
+    concat(FirstName, LastName, EmployeeCode) like @_search
 
 -- Get total count for pagination
 select

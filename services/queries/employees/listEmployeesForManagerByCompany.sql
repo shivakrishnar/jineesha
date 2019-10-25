@@ -9,6 +9,7 @@ declare @employeeList table (
     FirstName nvarchar(max),
     LastName nvarchar(max)
 );
+declare @_search as nvarchar(max) = '%' + @search + '%';
 
 set @_userId = (select ID from dbo.HRnextUser where Username = @_username);
 
@@ -57,6 +58,7 @@ ManagedEmployees as
     and ee.CompanyID in (select CompanyID from AssignedCompanies)
     and ee.CompanyID in (select CompanyID from Roles)
     and ee.CompanyID = @_companyId
+    and concat(FirstName, LastName, EmployeeCode) like @_search
 )
 insert into @employeeList
 select
