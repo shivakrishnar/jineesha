@@ -1435,7 +1435,7 @@ export async function listEmployeeDocumentsByTenant(
 ): Promise<PaginatedResult> {
     console.info('esignature.service.listEmployeeDocumentsByTenant');
 
-    const validQueryStringParameters = ['pageToken'];
+    const validQueryStringParameters = ['pageToken', 'search'];
 
     validateQueryStringParameters(validQueryStringParameters, queryParams);
 
@@ -1444,6 +1444,10 @@ export async function listEmployeeDocumentsByTenant(
         query.setParameter('@user', emailAddress);
 
         const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+        queryParams && queryParams.search
+            ? query.setStringParameter('@search', queryParams.search)
+            : query.setStringParameter('@search', '');
 
         return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);
     } catch (error) {
@@ -1479,7 +1483,7 @@ export async function listEmployeeDocumentsByCompany(
 ): Promise<PaginatedResult> {
     console.info('esignature.service.listEmployeeDocumentsByCompany');
 
-    const validQueryStringParameters = ['pageToken'];
+    const validQueryStringParameters = ['pageToken', 'search'];
     let query: ParameterizedQuery;
 
     validateQueryStringParameters(validQueryStringParameters, queryParams);
@@ -1496,6 +1500,9 @@ export async function listEmployeeDocumentsByCompany(
             query.setParameter('@manager', emailAddress);
         }
         query.setParameter('@companyId', companyId);
+        queryParams && queryParams.search
+            ? query.setStringParameter('@search', queryParams.search)
+            : query.setStringParameter('@search', '');
         const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
         return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);
@@ -1533,7 +1540,7 @@ export async function listEmployeeDocuments(
 ): Promise<PaginatedResult> {
     console.info('esignature.service.listEmployeeDocuments');
 
-    const validQueryStringParameters = ['pageToken'];
+    const validQueryStringParameters = ['pageToken', 'search'];
 
     validateQueryStringParameters(validQueryStringParameters, queryParams);
 
@@ -1548,6 +1555,9 @@ export async function listEmployeeDocuments(
         query.setParameter('@employeeId', employeeId);
         query.setParameter('@includePrivateDocuments', includePrivateDocumentation ? 1 : 0);
         query.setParameter('@invokerUsername', `'${invokerUsername}'`);
+        queryParams && queryParams.search
+            ? query.setStringParameter('@search', queryParams.search)
+            : query.setStringParameter('@search', '');
         const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
         return await getEmployeeLegacyAndSignedDocuments(tenantId, query, baseUrl, page);

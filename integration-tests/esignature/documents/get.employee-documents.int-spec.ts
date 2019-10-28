@@ -274,7 +274,7 @@ describe('list employee documents by employee', () => {
             });
     });
 
-    test('must return a 200 when documents exist', (done) => {
+    test('must return a 204 when documents do not exist', (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyWithNoDocuments}/employees/${
             configs.esignature.employeeWithNoDocuments
         }/documents`;

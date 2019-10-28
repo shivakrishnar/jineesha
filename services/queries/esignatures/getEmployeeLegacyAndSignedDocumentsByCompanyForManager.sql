@@ -8,6 +8,7 @@
 
 declare @_managerEmail varchar(max) = '@manager'
 declare @_companyId int = @companyId
+declare @_search as nvarchar(max) = '%' + @search + '%';
 declare @tmp table
 (
     ID  bigint,
@@ -177,7 +178,7 @@ insert into @tmp
 select * 
 from 
 	CollatedDocuments
-
+where lower(Category) like @_search or lower(Title) like @_search
 -- pagination count
 select totalCount = count(*) from @tmp
 

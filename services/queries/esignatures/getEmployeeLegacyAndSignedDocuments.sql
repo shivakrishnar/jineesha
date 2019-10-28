@@ -5,6 +5,7 @@
 -------------------------------------------------------------------------------
 
 declare @_user nvarchar(max) = '@user'
+declare @_search as nvarchar(max) = '%' + @search + '%';
 
 declare @tmp table
 (
@@ -160,7 +161,7 @@ select *
 from 
     CollatedDocuments
 where
-    CompanyID not in (select ID from ExcludedCompanies)
+    CompanyID not in (select ID from ExcludedCompanies) and (lower(Category) like @_search or lower(Title) like @_search)
 
 -- pagination count
 select totalCount = count(*) from @tmp
