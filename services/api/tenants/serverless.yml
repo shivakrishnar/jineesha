@@ -90,10 +90,17 @@ provider:
     - Effect: Allow
       Action:
         - dynamodb:DescribeTable
+        - dynamodb:PutItem
         - dynamodb:Query
         - dynamodb:Scan
-        - dynamodb:PutItem
+        - dynamodb:GetItem
       Resource: "arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+      Resource: arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings/index/*
 
 functions:
   addAdminAccount:
@@ -183,6 +190,26 @@ functions:
             path: /tenants/{tenantId}/roles
             method: get
             authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
+            cors:
+              origin: '*'
+
+  listConnectionStrings:
+    handler: src/handler.listConnectionStrings
+    events:
+        - http:
+            path: /tenants/connection-strings
+            method: get
+            authorizer: ${file(../../internal-api/serverless-output.json):SsoTokenVerifierArn}
+            cors:
+              origin: '*'
+
+  getConnectionStringByTenant:
+    handler: src/handler.getConnectionStringByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/connection-strings
+            method: get
+            authorizer: ${file(../../internal-api/serverless-output.json):SsoTokenVerifierArn}
             cors:
               origin: '*'
 

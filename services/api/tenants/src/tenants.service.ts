@@ -345,3 +345,45 @@ function createConnectionString(dbInfo: TenantDatabase, rdsInstance: string): an
         TenantID: tenantId,
     };
 }
+
+/**
+ * Returns the connection string data for a given tenant
+ * @param {string} tenantId: The tenantId to find
+ * @returns {Promise}: Promise of the connection string data
+ */
+export async function getConnectionStringByTenant(tenantId: string): Promise<any> {
+    console.info('tenants.service.getConnectionStringByTenant: ', tenantId);
+    const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+    const params = {
+        TableName: 'ConnectionStrings',
+        IndexName: 'tenantId-index',
+        KeyConditionExpression: 'TenantID = :TenantID',
+        ExpressionAttributeValues: {
+            ':TenantID': tenantId,
+        },
+    };
+    try {
+        const { Items } = await dynamoDbClient.query(params).promise();
+        return Items.length > 0 ? Items : { statusCode: 204, headers: new Headers() };
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+/**
+ * Returns the connection string data for a given tenant
+ * @returns {Promise}: Promise of the connection string data
+ */
+export async function listConnectionStrings(): Promise<any> {
+    console.info('tenants.service.listConnectionStrings');
+    const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+    const params = {
+        TableName: 'ConnectionStrings',
+        IndexName: 'tenantId-index',
+    };
+    try {
+        return dynamoDbClient.scan(params).promise();
+    } catch (error) {
+        console.error(error);
+    }
+}

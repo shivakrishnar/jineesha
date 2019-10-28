@@ -263,3 +263,53 @@ export const listUserRoles = utilService.gatewayEventHandler(async ({ securityCo
     console.info('tenants.handler.listUserRoles');
     return { roles: securityContext.roleMemberships };
 });
+
+/**
+ * Returns the connection string for a given tenant stored in DynamoDB
+ */
+export const getConnectionStringByTenant = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('tenants.handler.getConnectionStringByTenant');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, adminsUriSchema);
+
+    const isAsureAdmin = securityContext.roleMemberships.some((role) => role === Role.asureAdmin);
+    const action = 'tenant:list-ahr-connection-strings';
+
+    if (!isAsureAdmin && !new SecurityPolicyAuthorizer(securityContext.policy).isAuthorizedTo({ action })) {
+        throw errorService
+            .getErrorResponse(20)
+            .setMoreInfo(
+                `This user does not have the required role - asure-admin or the required policy action ${action} - to use this endpoint.`,
+            );
+    }
+    try {
+        const { tenantId } = event.pathParameters;
+        return await tenantService.getConnectionStringByTenant(tenantId);
+    } catch (error) {
+        console.error(error);
+    }
+});
+
+/**
+ * Returns a listing of the connection strings stored in DynamoDB
+ */
+export const listConnectionStrings = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('tenants.handler.listConnectionStrings');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+
+    const isAsureAdmin = securityContext.roleMemberships.some((role) => role === Role.asureAdmin);
+    const action = 'tenant:list-ahr-connection-strings';
+
+    if (!isAsureAdmin && !new SecurityPolicyAuthorizer(securityContext.policy).isAuthorizedTo({ action })) {
+        throw errorService
+            .getErrorResponse(20)
+            .setMoreInfo(
+                `This user does not have the required role - asure-admin or the required policy action ${action} - to use this endpoint.`,
+            );
+    }
+    return await tenantService.listConnectionStrings();
+});
