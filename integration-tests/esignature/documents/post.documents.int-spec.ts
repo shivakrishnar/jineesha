@@ -204,6 +204,25 @@ describe('create company document', () => {
                 });
             });
     });
+
+    test('must return a 201 when a company onboarding document with special characters in filename is created', (done) => {
+        const testDocumentWithSpecialChars: any = Object.assign({}, document);
+        testDocumentWithSpecialChars.fileName = `_Interview &&#$@ Questions Do's & Dont's $%@(1).pdf`;
+        testDocumentWithSpecialChars.category = 'onboarding';
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
+        request(baseUri)
+            .post(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .send(testDocumentWithSpecialChars)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(201)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.CompanyDocument, response.body);
+                });
+            });
+    });
 });
 
 describe('create employee document', () => {
