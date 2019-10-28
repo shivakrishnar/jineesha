@@ -10,6 +10,7 @@ import { Headers } from '../../models/headers';
 
 import { Context, ProxyCallback } from 'aws-lambda';
 import { IAccount } from '../../../internal-api/authentication/account';
+import { SecurityPolicyAuthorizer } from '../../../internal-api/authentication/securityPolicyAuthorizer';
 import { Role } from '../../models/Role';
 
 const headerSchema = {
