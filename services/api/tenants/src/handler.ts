@@ -60,14 +60,15 @@ export const addTenantDb = utilService.gatewayEventHandler(async ({ securityCont
     console.info('tenants.handler.addTenantDb');
 
     // Note: this is the guards against at-will creation of databases in the Production tier
-    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
-        return role === Role.asureAdmin;
-    });
+    const isAsureAdmin = securityContext.roleMemberships.some((role) => role === Role.asureAdmin);
+    const action = 'tenant:add-ahr-database';
 
-    if (!isAuthorized) {
+    if (!isAsureAdmin && !new SecurityPolicyAuthorizer(securityContext.policy).isAuthorizedTo({ action })) {
         throw errorService
             .getErrorResponse(20)
-            .setMoreInfo('This user does not have the required roles - asure-admin - to use this endpoint.');
+            .setMoreInfo(
+                `This user does not have the required role - asure-admin or the required policy action ${action} - to use this endpoint.`,
+            );
     }
 
     utilService.normalizeHeaders(event);
