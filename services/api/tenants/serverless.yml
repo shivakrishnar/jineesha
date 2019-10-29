@@ -150,6 +150,15 @@ functions:
         - ${file(${self:custom.configFile}):privateSubnetId1}
         - ${file(${self:custom.configFile}):privateSubnetId2}
 
+  addGlobalAdminAccount:
+    handler: src/handler.addAdminAccount
+    vpc:
+      securityGroupIds:
+        - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}
+      subnetIds:
+        - ${file(${self:custom.configFile}):privateSubnetId1}
+        - ${file(${self:custom.configFile}):privateSubnetId2}
+
   errorHandler:
     handler: src/handler.errorHandler
 
@@ -249,6 +258,17 @@ stepFunctions:
             Type: Task
             Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-dbCreator
             ResultPath: $.creator
+            Next: GlobalAdminCreator
+            Catch:
+              - ErrorEquals:
+                  - States.ALL
+                Next: ErrorHandler
+                ResultPath: $.error
+
+          GlobalAdminCreator:
+            Type: Task
+            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-addGlobalAdminAccount
+            ResultPath: $.adminAccountCreator
             End: true
             Catch:
               - ErrorEquals:

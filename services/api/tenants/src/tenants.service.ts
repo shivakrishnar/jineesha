@@ -11,6 +11,7 @@ import { DBInstance } from 'aws-sdk/clients/rds';
 import { ConnectionPool } from 'mssql';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
+import { SecurityContext } from '../../../internal-api/authentication/securityContext';
 import * as databaseService from '../../../internal-api/database/database.service';
 import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
 
@@ -49,7 +50,7 @@ export async function addHrGlobalAdminAccount(tenantId: string, accountId: strin
     }
 }
 
-type TenantDatabase = {
+export type TenantDatabase = {
     id: string;
     name: string;
     subdomain: string;
@@ -59,15 +60,20 @@ type TenantDatabase = {
  * Creates a tenant database in RDS
  * @param {TenantDatabase} dbInfo: The details of the tenant database to create
  */
-export async function addRdsDatabase(dbInfo: TenantDatabase): Promise<void> {
+export async function addRdsDatabase(dbInfo: TenantDatabase, securityContext: SecurityContext): Promise<void> {
     console.info('tenants.service.addRdsDatabase');
 
     const stepFunctions = new AWS.StepFunctions();
-
+    const {
+        principal: { id: accountId },
+        accessToken,
+    } = securityContext;
     const params = {
         stateMachineArn: configService.getHrDatabaseCreatorStateMachineArn(),
         input: JSON.stringify({
             dbInfo,
+            accountId,
+            accessToken,
         }),
     };
 
@@ -152,7 +158,7 @@ const s3Client = new AWS.S3({
  * @param {string} rdsEndpoint: The url of the RDS instance that will host the database
  * @param {TenantDatase} dbInfo: The tenant database to be created
  */
-export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatabase): Promise<void> {
+export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatabase): Promise<TenantDatabase> {
     console.info('tenants.service.createRdsTenantDb');
 
     let pool: ConnectionPool;
@@ -204,6 +210,7 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
         const success = buildMessageAttachment(dbInfo, rdsEndpoint, 'RDS Database Creation', 'good');
         await addConnectionString(dbInfo, rdsEndpoint);
         await publishMessage(success);
+        return dbInfo;
     } catch (error) {
         console.error(error);
     } finally {

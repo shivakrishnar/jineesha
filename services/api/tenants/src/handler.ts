@@ -58,16 +58,21 @@ export const addAdmin = utilService.gatewayEventHandler(async ({ securityContext
  */
 export const addTenantDb = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('tenants.handler.addTenantDb');
-
+    const { id: tenantId } = requestBody;
     // Note: this is the guards against at-will creation of databases in the Production tier
     const isAsureAdmin = securityContext.roleMemberships.some((role) => role === Role.asureAdmin);
-    const action = 'tenant:add-ahr-database';
+    const requiredPolicy = {
+        action: 'tenant:add-ahr-database',
+        resource: `tenants/${tenantId}`,
+    };
 
-    if (!isAsureAdmin && !new SecurityPolicyAuthorizer(securityContext.policy).isAuthorizedTo({ action })) {
+    if (!isAsureAdmin && !new SecurityPolicyAuthorizer(securityContext.policy).isAuthorizedTo(requiredPolicy)) {
         throw errorService
             .getErrorResponse(20)
             .setMoreInfo(
-                `This user does not have the required role - asure-admin or the required policy action ${action} - to use this endpoint.`,
+                `This user does not have the required role - asure-admin or the required policy ${JSON.stringify(
+                    requiredPolicy,
+                )} - to use this endpoint.`,
             );
     }
 
@@ -76,7 +81,7 @@ export const addTenantDb = utilService.gatewayEventHandler(async ({ securityCont
     utilService.validateAndThrow(requestBody, createTenantDbSchema);
     utilService.checkAdditionalProperties(createTenantDbSchema, requestBody, 'Tenant DB');
 
-    await tenantService.addRdsDatabase(requestBody);
+    await tenantService.addRdsDatabase(requestBody, securityContext);
 
     return { statusCode: 204, headers: new Headers() };
 });
@@ -134,6 +139,30 @@ export async function createRdsTenantDb(event: any, context: Context, callback: 
             body: JSON.stringify('tenant db successfully created'),
         });
     } catch (error) {
+        return callback(error);
+    }
+}
+
+/**
+ * Invoked from the HrDatabaseCreator step function, Adds an SSO global admin account to a specified tenant
+ */
+
+export async function addAdminAccount(event: any, context: Context, callback: ProxyCallback): Promise<void> {
+    console.info('tenants.handler.addAdminAccount');
+
+    console.info(`received event: ${JSON.stringify(event)}`);
+
+    try {
+        const {
+            accountId,
+            accessToken,
+            dbInfo: { id: tenantId },
+        } = event;
+
+        await tenantService.addHrGlobalAdminAccount(tenantId, accountId, accessToken);
+        return callback(undefined, { statusCode: 200, body: JSON.stringify('Admin account created') });
+    } catch (error) {
+        console.error(`Unable to create admin account. Reason: ${JSON.stringify(error)}`);
         return callback(error);
     }
 }
