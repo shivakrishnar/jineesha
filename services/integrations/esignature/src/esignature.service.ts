@@ -1675,6 +1675,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 isPrivate,
                 isPublishedToEmployee,
                 employeeId: document.employeeId,
+                employeeCode: document.employeeCode,
                 employeeName: document.firstName && document.lastName ? `${document.firstName} ${document.lastName}` : undefined,
                 companyId: document.companyId,
                 companyName: document.companyName,
