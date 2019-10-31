@@ -81,7 +81,7 @@ LegacyDocuments as
 ),
 LegacyDocumentPublishedToEmployee as
 (
- 	select 
+ 	select distinct
 		 ID = d.ID,
 		 d.CompanyID,
 		 c.CompanyName,
@@ -102,12 +102,12 @@ LegacyDocumentPublishedToEmployee as
 		inner join ManagedEmployees e on d.CompanyID = e.CompanyID
 		inner join dbo.Company c on c.ID = e.CompanyID
 	where
-		d. IsPublishedToEmployee = 1
+		d.IsPublishedToManager = 1
 ),
 
 SignedDocuments as 
 (
-	select
+	select distinct
 	  ID = d.ID,
 	  d.CompanyID,
 	  c.CompanyName,
@@ -136,7 +136,35 @@ SignedDocuments as
 
 NewDocumentPublishedToEmployee as 
 (
-	select
+	select distinct
+		  ID = d.ID,
+		  e.CompanyID,
+		  c.CompanyName,
+		  d.Title, 
+		  Filename = right(d.Pointer, charindex('/', reverse(d.Pointer) + '/') - 1),
+		  d.Category, 
+		  d.UploadDate,
+          EsignDate = null,
+		  d.IsPublishedToEmployee,
+		  IsPrivateDocument = null,
+		  EmployeeCode = null,
+		  EmployeeID = null,
+          FirstName = null,
+          LastName = null,
+		  d.UploadedBy
+	from
+		dbo.FileMetadata d
+		inner join ManagedEmployees e on 
+			d.CompanyID = e.CompanyID
+            and d.EmployeeCode = e.EmployeeCode
+	    inner join dbo.Company c on
+			c.ID = e.CompanyID
+	where
+		d.IsPublishedToEmployee = 1
+
+    union
+
+    select distinct
 		  ID = d.ID,
 		  e.CompanyID,
 		  c.CompanyName,
@@ -159,7 +187,8 @@ NewDocumentPublishedToEmployee as
 	    inner join dbo.Company c on
 			c.ID = e.CompanyID
 	where
-		d.IsPublishedToEmployee = 1
+		d.IsPublishedToEmployee = 1 
+        and d.EmployeeCode is null
 ),
 
 CollatedDocuments as
