@@ -187,7 +187,14 @@ CollatedDocuments as
 
 insert into @tmp
 select * from CollatedDocuments
-where lower(Category) like @_search or lower(Title) like @_search
+where 
+	lower(Category) like @_search 
+	or lower(Title) like @_search 
+	or lower(CompanyName) like @_search 
+	or lower(EmployeeCode) like @_search
+	or @_search like '%' + lower(FirstName) + '%'
+    or @_search like '%' + lower(LastName) + '%'
+
 -- pagination count
 select totalCount = count(*) from @tmp
 
