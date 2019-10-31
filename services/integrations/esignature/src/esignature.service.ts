@@ -1665,22 +1665,37 @@ async function getEmployeeLegacyAndSignedDocuments(
                     isPrivate = false;
                 }
             }
+
+            const {
+                title,
+                fileName,
+                category,
+                uploadDate,
+                esignDate,
+                employeeId,
+                employeeCode,
+                firstName,
+                lastName,
+                companyId,
+                companyName,
+                uploadedBy,
+            } = document;
             updatedDocuments.push({
                 id,
-                title: document.title,
-                fileName: document.fileName,
-                category: document.category,
-                uploadDate: document.uploadDate,
-                esignDate: document.esignDate,
+                title,
+                fileName,
+                category,
+                uploadDate,
+                esignDate,
                 isPrivate,
                 isPublishedToEmployee,
-                employeeId: document.employeeId,
-                employeeCode: document.employeeCode,
-                employeeName: document.firstName && document.lastName ? `${document.firstName} ${document.lastName}` : undefined,
-                companyId: document.companyId,
-                companyName: document.companyName,
+                employeeId,
+                employeeCode,
+                employeeName: firstName && lastName ? `${firstName} ${lastName}` : undefined,
+                companyId,
+                companyName,
                 isSignedDocument,
-                uploadedBy: document.uploadedBy,
+                uploadedBy,
             });
         }
 
