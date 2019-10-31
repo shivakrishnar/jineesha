@@ -12,7 +12,7 @@ export const payrollApiCredentials: any = {
     evoApiPassword: 'test',
 };
 export const domainName: string = 'https://test.evolution-software.com';
-export const path: string = '/tenants/1234/companies/1/employees/123/direct-deposits';
+export const path: string = '/identity/tenants/1234/companies/1/employees/123/direct-deposits';
 
 export const paginationQueryParams: any = {
     pageToken: 'Mg==',

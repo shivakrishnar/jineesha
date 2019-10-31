@@ -5,7 +5,7 @@ const baseUrl = `${configService.getApiDomain()}`;
 
 export async function getAccessToken(tenantId: string, token: string, username: string, password: string): Promise<string> {
     console.info('ssoService.getAccessToken');
-    const apiUrl = `${baseUrl}/tenants/${tenantId}/oauth/token`;
+    const apiUrl = `${baseUrl}/identity/tenants/${tenantId}/oauth/token`;
     try {
         const result = await request.post({
             url: apiUrl,

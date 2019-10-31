@@ -9,6 +9,7 @@ import * as utilService from '../../util.service';
 import { InvocationType } from '../../util.service';
 import { DatabaseEvent, QueryType } from '../database/events';
 import { ApplicationRoleLevel } from './ApplicationRoleLevelEnum';
+import { ISecurityPolicy } from './securityPolicyAuthorizer';
 
 /**
  * SecurityContext represents data pulled from the token when it is verified. AWS requires the
@@ -22,16 +23,18 @@ export class SecurityContext {
     roleMemberships: string[];
     accessToken: string;
     currentRoleLevel: ApplicationRoleLevel;
+    policy: ISecurityPolicy;
 
-    public constructor(principal: IAccount, roleMemberships: string[] = [], accessToken: string) {
+    public constructor(principal: IAccount, roleMemberships: string[] = [], accessToken: string, policy: ISecurityPolicy) {
         this.principal = principal;
         this.roleMemberships = roleMemberships;
         this.accessToken = accessToken;
+        this.policy = policy;
     }
 
     public static fromJSON(json: string): SecurityContext {
         const data = JSON.parse(json);
-        return new SecurityContext(data.principal, data.roleMemberships, data.accessToken);
+        return new SecurityContext(data.principal, data.roleMemberships, data.accessToken, data.policy);
     }
 
     /**

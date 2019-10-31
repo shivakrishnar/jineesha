@@ -27,7 +27,7 @@ export async function getAccessToken(
 
 function _getAccessToken(domain: string, tenantId: string, username: string, password: string, ssoToken: string): Promise<string> {
     return request
-        .post(`${domain}/tenants/${tenantId}/oauth/token`)
+        .post(`${domain}/identity/tenants/${tenantId}/oauth/token`)
         .set('Content-Type', 'application/json')
         .set('Authorization', `Bearer ${ssoToken}`)
         .send(`{ "grant_type": "password", "username": "${username}", "password": "${password}" }`)

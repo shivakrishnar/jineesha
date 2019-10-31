@@ -63,7 +63,7 @@ async function buildPolicy(event: any, secret: string, authType: AuthorizerType)
     }
 
     const decodedToken: any = jwt.decode(accessToken);
-    const { account, scope } = decodedToken;
+    const { account, scope, policy: tokenPolicy } = decodedToken;
 
     let roleMemberships;
     if (authType === AuthorizerType.Golidlocks) {
@@ -78,7 +78,7 @@ async function buildPolicy(event: any, secret: string, authType: AuthorizerType)
         roleMemberships = utilService.parseRoles(scope).concat(utilService.parseRoles(hrScope));
     }
 
-    const securityContext = new SecurityContext(account, roleMemberships, accessToken);
+    const securityContext = new SecurityContext(account, roleMemberships, accessToken, tokenPolicy);
 
     const tmp = event.methodArn.split(':');
     const region = tmp[3];

@@ -11,6 +11,7 @@ import { DBInstance } from 'aws-sdk/clients/rds';
 import { ConnectionPool } from 'mssql';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
+import { SecurityContext } from '../../../internal-api/authentication/securityContext';
 import * as databaseService from '../../../internal-api/database/database.service';
 import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
 
@@ -49,7 +50,7 @@ export async function addHrGlobalAdminAccount(tenantId: string, accountId: strin
     }
 }
 
-type TenantDatabase = {
+export type TenantDatabase = {
     id: string;
     name: string;
     subdomain: string;
@@ -59,15 +60,20 @@ type TenantDatabase = {
  * Creates a tenant database in RDS
  * @param {TenantDatabase} dbInfo: The details of the tenant database to create
  */
-export async function addRdsDatabase(dbInfo: TenantDatabase): Promise<void> {
+export async function addRdsDatabase(dbInfo: TenantDatabase, securityContext: SecurityContext): Promise<void> {
     console.info('tenants.service.addRdsDatabase');
 
     const stepFunctions = new AWS.StepFunctions();
-
+    const {
+        principal: { id: accountId },
+        accessToken,
+    } = securityContext;
     const params = {
         stateMachineArn: configService.getHrDatabaseCreatorStateMachineArn(),
         input: JSON.stringify({
             dbInfo,
+            accountId,
+            accessToken,
         }),
     };
 
@@ -152,7 +158,7 @@ const s3Client = new AWS.S3({
  * @param {string} rdsEndpoint: The url of the RDS instance that will host the database
  * @param {TenantDatase} dbInfo: The tenant database to be created
  */
-export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatabase): Promise<void> {
+export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatabase): Promise<TenantDatabase> {
     console.info('tenants.service.createRdsTenantDb');
 
     let pool: ConnectionPool;
@@ -204,6 +210,7 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
         const success = buildMessageAttachment(dbInfo, rdsEndpoint, 'RDS Database Creation', 'good');
         await addConnectionString(dbInfo, rdsEndpoint);
         await publishMessage(success);
+        return dbInfo;
     } catch (error) {
         console.error(error);
     } finally {
@@ -344,4 +351,46 @@ function createConnectionString(dbInfo: TenantDatabase, rdsInstance: string): an
         Domain: domain,
         TenantID: tenantId,
     };
+}
+
+/**
+ * Returns the connection string data for a given tenant
+ * @param {string} tenantId: The tenantId to find
+ * @returns {Promise}: Promise of the connection string data
+ */
+export async function getConnectionStringByTenant(tenantId: string): Promise<any> {
+    console.info('tenants.service.getConnectionStringByTenant: ', tenantId);
+    const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+    const params = {
+        TableName: 'ConnectionStrings',
+        IndexName: 'tenantId-index',
+        KeyConditionExpression: 'TenantID = :TenantID',
+        ExpressionAttributeValues: {
+            ':TenantID': tenantId,
+        },
+    };
+    try {
+        const { Items } = await dynamoDbClient.query(params).promise();
+        return Items.length > 0 ? Items : { statusCode: 204, headers: new Headers() };
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+/**
+ * Returns the connection string data for a given tenant
+ * @returns {Promise}: Promise of the connection string data
+ */
+export async function listConnectionStrings(): Promise<any> {
+    console.info('tenants.service.listConnectionStrings');
+    const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+    const params = {
+        TableName: 'ConnectionStrings',
+        IndexName: 'tenantId-index',
+    };
+    try {
+        return dynamoDbClient.scan(params).promise();
+    } catch (error) {
+        console.error(error);
+    }
 }

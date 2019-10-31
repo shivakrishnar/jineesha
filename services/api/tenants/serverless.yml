@@ -90,10 +90,17 @@ provider:
     - Effect: Allow
       Action:
         - dynamodb:DescribeTable
+        - dynamodb:PutItem
         - dynamodb:Query
         - dynamodb:Scan
-        - dynamodb:PutItem
+        - dynamodb:GetItem
       Resource: "arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+      Resource: arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings/index/*
 
 functions:
   addAdminAccount:
@@ -136,6 +143,15 @@ functions:
 
   dbCreator:
     handler: src/handler.createRdsTenantDb
+    vpc:
+      securityGroupIds:
+        - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}
+      subnetIds:
+        - ${file(${self:custom.configFile}):privateSubnetId1}
+        - ${file(${self:custom.configFile}):privateSubnetId2}
+
+  addGlobalAdminAccount:
+    handler: src/handler.addAdminAccount
     vpc:
       securityGroupIds:
         - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}
@@ -186,6 +202,26 @@ functions:
             cors:
               origin: '*'
 
+  listConnectionStrings:
+    handler: src/handler.listConnectionStrings
+    events:
+        - http:
+            path: /tenants/connection-strings
+            method: get
+            authorizer: ${file(../../internal-api/serverless-output.json):SsoTokenVerifierArn}
+            cors:
+              origin: '*'
+
+  getConnectionStringByTenant:
+    handler: src/handler.getConnectionStringByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/connection-strings
+            method: get
+            authorizer: ${file(../../internal-api/serverless-output.json):SsoTokenVerifierArn}
+            cors:
+              origin: '*'
+
 stepFunctions:
   stateMachines:
      HrDatabaseCreator:
@@ -222,6 +258,17 @@ stepFunctions:
             Type: Task
             Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-dbCreator
             ResultPath: $.creator
+            Next: GlobalAdminCreator
+            Catch:
+              - ErrorEquals:
+                  - States.ALL
+                Next: ErrorHandler
+                ResultPath: $.error
+
+          GlobalAdminCreator:
+            Type: Task
+            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-addGlobalAdminAccount
+            ResultPath: $.adminAccountCreator
             End: true
             Catch:
               - ErrorEquals:
