@@ -66,7 +66,7 @@ LegacyDocuments as
 
 LegacyDocumentPublishedToEmployee as
 (
- 	select 
+ 	select distinct
 		ID = d.ID,
 		d.CompanyID,
 		c.CompanyName,

@@ -100,7 +100,7 @@ LegacyDocuments as
 ),
 LegacyDocumentPublishedToEmployee as
 (
- 	select 
+ 	select distinct
 		 ID = d.ID,
 		 d.CompanyID,
 		 c.CompanyName,
@@ -125,7 +125,7 @@ LegacyDocumentPublishedToEmployee as
 ),
 UploadedPrivateDocuments as 
 (
-	select
+	select distinct
 	  ID = d.ID,
 	  d.CompanyID,
 	  c.CompanyName,
@@ -154,7 +154,7 @@ UploadedPrivateDocuments as
 ),
 SignedDocuments as 
 (
-	select
+	select distinct
 	  ID = d.ID,
 	  d.CompanyID,
 	  c.CompanyName,
@@ -183,7 +183,7 @@ SignedDocuments as
 
 NewDocumentPublishedToEmployee as 
 (
-	select
+	select distinct
 		  ID = d.ID,
 		  d.CompanyID,
 		  c.CompanyName,
