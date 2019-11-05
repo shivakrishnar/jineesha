@@ -25,15 +25,6 @@ with Roles as (
         sru.UserID = @_userId and
         srl.Level = @_adminRoleLevel
 ),
-EmployeeCompanies as (
-    select
-        ee.CompanyID
-    from
-        dbo.Employee ee
-    left join dbo.HRnextUserEmployee ue on ue.EmployeeID = ee.ID
-    where
-        ue.HRnextUserID = @_userId
-),
 AssignedCompanies as
 (
     select
@@ -55,7 +46,6 @@ EmployeeList as
 		dbo.Employee ee
 	where 
         ee.CompanyID = @_companyId
-	and	ee.CompanyID in (select CompanyID from EmployeeCompanies)
     and ee.CompanyID in (select CompanyID from AssignedCompanies)
     and ee.CompanyID in (select CompanyID from Roles)
     and concat(FirstName, LastName, EmployeeCode) like @_search
