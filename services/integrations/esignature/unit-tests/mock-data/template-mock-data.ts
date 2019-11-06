@@ -123,6 +123,10 @@ export const templatePostRequest = {
     message: 'Message',
 };
 
+export const searchQueryParam = {
+    search: 'onboarding',
+};
+
 export const consolidatedQueryParam = {
     consolidated: 'true',
 };

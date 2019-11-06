@@ -139,4 +139,22 @@ describe('list templates', () => {
                 });
         });
     });
+
+    describe('list filtered templates', () => {
+        test('must return a 200 when templates that match the specified filter exist', (done) => {
+            const uri: string = `/tenants/${configs.tenantId}/companies/${
+                configs.companyId
+            }/esignatures/templates?consolidated=true&search=${configs.esignature.searchQueryParam}`;
+            request(baseUri)
+                .get(uri)
+                .set('Authorization', `Bearer ${accessToken}`)
+                .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+                .expect(200)
+                .end((error, response) => {
+                    utils.testResponse(error, response, done, () => {
+                        return utils.assertJson(schemas, schemaNames.PaginatedResult, response.body);
+                    });
+                });
+        });
+    });
 });

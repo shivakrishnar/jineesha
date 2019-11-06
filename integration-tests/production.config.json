@@ -26,6 +26,7 @@
         "employeeWithNoDocuments": 9097,
         "documentId": "47fk",
         "legacyCompanyDocumentId": "Nx6mI0",
-        "nonExistingDocumentId": "v7Xbv3hX"
+        "nonExistingDocumentId": "v7Xbv3hX",
+        "searchQueryParam": "onboarding"
     }
 }
