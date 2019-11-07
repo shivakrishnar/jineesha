@@ -8,7 +8,10 @@ const configs = utils.getConfig();
 const baseUri = `${configs.nonProxiedApiDomain}/integrations`;
 
 let accessToken: string;
+let deleteAccessToken: string;
 let document: any;
+const createdCompanyDocumentIds: string[] = [];
+const createdEmployeeDocumentIds: string[] = [];
 
 const errorMessageSchema = JSON.parse(fs.readFileSync('services/api/models/ErrorMessage.json').toString());
 const companyDocumentSchema = JSON.parse(fs.readFileSync('services/integrations/models/CompanyDocument.json').toString());
@@ -28,7 +31,20 @@ describe('create company document', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken();
+            deleteAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
             document = documentsService.getValidPostCompanyDocumentObject();
+
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    });
+
+    afterAll(async (done) => {
+        try {
+            createdCompanyDocumentIds.forEach(async (id) => {
+                await documentsService.deleteCompanyDocument(baseUri, deleteAccessToken, id);
+            });
 
             done();
         } catch (error) {
@@ -182,6 +198,7 @@ describe('create company document', () => {
             .expect(201)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
+                    createdCompanyDocumentIds.push(response.body.id);
                     return utils.assertJson(schemas, schemaNames.CompanyDocument, response.body);
                 });
             });
@@ -200,6 +217,7 @@ describe('create company document', () => {
             .expect(201)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
+                    createdCompanyDocumentIds.push(response.body.id);
                     return utils.assertJson(schemas, schemaNames.CompanyDocument, response.body);
                 });
             });
@@ -219,6 +237,7 @@ describe('create company document', () => {
             .expect(201)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
+                    createdCompanyDocumentIds.push(response.body.id);
                     return utils.assertJson(schemas, schemaNames.CompanyDocument, response.body);
                 });
             });
@@ -229,7 +248,20 @@ describe('create employee document', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken();
+            deleteAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
             document = documentsService.getValidPostEmployeeDocumentObject();
+
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    });
+
+    afterAll(async (done) => {
+        try {
+            createdEmployeeDocumentIds.forEach(async (id) => {
+                await documentsService.deleteEmployeeDocument(baseUri, deleteAccessToken, id);
+            });
 
             done();
         } catch (error) {
@@ -394,6 +426,7 @@ describe('create employee document', () => {
             .expect(201)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
+                    createdEmployeeDocumentIds.push(response.body.id);
                     return utils.assertJson(schemas, schemaNames.CreateEmployeeDocument, response.body);
                 });
             });
@@ -413,6 +446,7 @@ describe('create employee document', () => {
             .expect(201)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
+                    createdEmployeeDocumentIds.push(response.body.id);
                     return utils.assertJson(schemas, schemaNames.CreateEmployeeDocument, response.body);
                 });
             });

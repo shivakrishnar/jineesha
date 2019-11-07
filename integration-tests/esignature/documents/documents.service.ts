@@ -41,6 +41,40 @@ export function createEmployeeDocument(baseUri: string, accessToken: string): Pr
     });
 }
 
+export function deleteCompanyDocument(baseUri: string, accessToken: string, documentId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        const url = `${baseUri}/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${documentId}`;
+        request
+            .delete(url)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .end((error, response) => {
+                if (error) {
+                    reject(response.body);
+                } else {
+                    resolve(response.body);
+                }
+            });
+    });
+}
+
+export function deleteEmployeeDocument(baseUri: string, accessToken: string, documentId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        const url = `${baseUri}/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
+            configs.employeeId
+        }/documents/${documentId}`;
+        request
+            .delete(url)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .end((error, response) => {
+                if (error) {
+                    reject();
+                } else {
+                    resolve();
+                }
+            });
+    });
+}
+
 export function getValidPostEmployeeDocumentObject(): any {
     return {
         file: utils.uriEncodeTestFile('integration-tests/test-files/test.png'),
