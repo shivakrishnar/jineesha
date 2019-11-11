@@ -1026,3 +1026,96 @@ describe('esignatureService.company-document.delete', () => {
         done();
     });
 });
+
+describe('esignatureService.employee-document.delete', () => {
+    beforeEach(() => {
+        setup();
+    });
+
+    test('deletes an non-signature employee document', (done) => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            }
+        });
+
+        (utilService as any).authorizeAndRunQuery = jest.fn((params: any) => {
+            return [[{ Pointer: 'test' }]];
+        });
+
+        esignatureService
+            .deleteEmployeeDocument(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                mockData.s3DocumentEncodedId,
+                mockData.userEmail,
+                mockData.roles,
+            )
+            .then((document) => {
+                expect(document).toEqual(undefined);
+            })
+            .catch(() => {
+                done.fail(new Error('Test should not throw an exception.'));
+            });
+        done();
+    });
+
+    test('deletes a legacy employee document', (done) => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            }
+        });
+
+        esignatureService
+            .deleteEmployeeDocument(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                mockData.legacyDocumentEncodedId,
+                mockData.userEmail,
+                mockData.roles,
+            )
+            .then((document) => {
+                expect(document).toEqual(undefined);
+            })
+            .catch(() => {
+                done.fail(new Error('Test should not throw an exception.'));
+            });
+        done();
+    });
+
+    test('returns a 404 if no employee documents are found', (done) => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            }
+        });
+
+        (utilService as any).authorizeAndRunQuery = jest.fn((params: any) => {
+            return [];
+        });
+
+        esignatureService
+            .deleteEmployeeDocument(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                'abc123',
+                mockData.userEmail,
+                mockData.roles,
+            )
+            .then(() => {
+                done.fail(new Error('Test should throw an exception.'));
+            })
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toEqual('The document id: abc123 not found');
+            });
+        done();
+    });
+});

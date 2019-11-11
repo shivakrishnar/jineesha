@@ -38,6 +38,14 @@ const companyResourceUriSchema = {
 const companyDocumentResourceUriSchema = {
     tenantId: { required: true, type: UUID },
     companyId: { required: true, type: String },
+    documentId: { required: true, type: String },
+};
+
+const employeeDocumentResourceUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+    employeeId: { required: true, type: String },
+    documentId: { required: true, type: String },
 };
 
 const employeeResourceUriSchema = {
@@ -890,4 +898,42 @@ export const deleteCompanyDocument = utilService.gatewayEventHandler(async ({ se
     const { email } = securityContext.principal;
 
     return await esignatureService.deleteCompanyDocument(tenantId, companyId, documentId, email);
+});
+
+/**
+ * Deletes a specified document record for an employee
+ */
+export const deleteEmployeeDocument = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.deleteEmployeeDocument');
+
+    const { tenantId, companyId, employeeId, documentId } = event.pathParameters;
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeDocumentResourceUriSchema);
+
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return (
+            role === Role.globalAdmin ||
+            role === Role.serviceBureauAdmin ||
+            role === Role.superAdmin ||
+            role === Role.hrAdmin ||
+            role === Role.hrRestrictedAdmin
+        );
+    });
+
+    if (!isAuthorized) {
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    const { email } = securityContext.principal;
+
+    return await esignatureService.deleteEmployeeDocument(
+        tenantId,
+        companyId,
+        employeeId,
+        documentId,
+        email,
+        securityContext.roleMemberships,
+    );
 });

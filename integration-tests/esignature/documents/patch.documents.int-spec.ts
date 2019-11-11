@@ -8,6 +8,7 @@ const configs = utils.getConfig();
 const baseUri = `${configs.nonProxiedApiDomain}/integrations`;
 
 let accessToken: string;
+let deleteAccessToken: string;
 let document: any;
 let createdDocument: any;
 
@@ -29,8 +30,19 @@ describe('update company document', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken();
+            deleteAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
             createdDocument = await documentsService.createCompanyDocument(baseUri, accessToken);
             document = documentsService.getValidPatchCompanyDocumentObject();
+
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    });
+
+    afterAll(async (done) => {
+        try {
+            await documentsService.deleteCompanyDocument(baseUri, deleteAccessToken, createdDocument.id);
 
             done();
         } catch (error) {
@@ -348,8 +360,19 @@ describe('update employee document', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+            deleteAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
             createdDocument = await documentsService.createEmployeeDocument(baseUri, accessToken);
             document = documentsService.getValidPatchEmployeeDocumentObject();
+
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    });
+
+    afterAll(async (done) => {
+        try {
+            await documentsService.deleteEmployeeDocument(baseUri, deleteAccessToken, createdDocument.id);
 
             done();
         } catch (error) {
