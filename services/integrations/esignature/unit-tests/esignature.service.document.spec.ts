@@ -523,88 +523,6 @@ describe('esignatureService.company-document.create', () => {
     });
 });
 
-describe('esignatureService.employee-document.create', () => {
-    beforeEach(() => {
-        setup();
-    });
-
-    test('creates an employee document', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfo') {
-                return Promise.resolve(mockData.companyInfo);
-            } else if (payload.queryName === 'GetEmployeeInfoById') {
-                return Promise.resolve(mockData.employeeDBResponse);
-            }
-            return Promise.resolve(mockData.documentFileMetadataDBResponse);
-        });
-
-        return esignatureService
-            .createEmployeeDocument(
-                mockData.tenantId,
-                mockData.companyId,
-                mockData.employeeId,
-                mockData.employeeDocumentRequest,
-                'Test',
-                'User',
-            )
-            .then((document) => {
-                delete document.uploadDate;
-                expect(document).toEqual(mockData.employeeDocumentResponse);
-            });
-    });
-
-    test('returns a 400 if companyId is not integral', () => {
-        return esignatureService
-            .createEmployeeDocument(mockData.tenantId, 'abc123', mockData.employeeId, mockData.employeeDocumentRequest, 'Test', 'User')
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(400);
-                expect(error.code).toEqual(30);
-                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-                expect(error.developerMessage).toEqual('abc123 is not a valid number');
-            });
-    });
-
-    test('returns a 400 if employeeId is not integral', () => {
-        return esignatureService
-            .createEmployeeDocument(mockData.tenantId, mockData.companyId, 'abc123', mockData.employeeDocumentRequest, 'Test', 'User')
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(400);
-                expect(error.code).toEqual(30);
-                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-                expect(error.developerMessage).toEqual('abc123 is not a valid number');
-            });
-    });
-
-    test('returns a 404 if employee is not found', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfo') {
-                return Promise.resolve(mockData.companyInfo);
-            } else if (payload.queryName === 'GetEmployeeInfoById') {
-                return Promise.resolve(mockData.emptyDBResponse);
-            }
-        });
-
-        return esignatureService
-            .createEmployeeDocument(
-                mockData.tenantId,
-                mockData.companyId,
-                mockData.employeeId,
-                mockData.employeeDocumentRequest,
-                'Test',
-                'User',
-            )
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(404);
-                expect(error.code).toEqual(50);
-                expect(error.message).toEqual('The requested resource does not exist.');
-                expect(error.developerMessage).toEqual(`Employee with ID ${mockData.employeeId} not found.`);
-            });
-    });
-});
-
 describe('esignatureService.company-document.update', () => {
     beforeEach(() => {
         setup();
@@ -1115,6 +1033,53 @@ describe('esignatureService.employee-document.delete', () => {
                 expect(error.code).toEqual(50);
                 expect(error.message).toEqual('The requested resource does not exist.');
                 expect(error.developerMessage).toEqual('The document id: abc123 not found');
+            });
+        done();
+    });
+});
+
+describe('esignatureService.create-upload-url', () => {
+    beforeEach(() => {
+        setup();
+    });
+
+    test('with an invalid employee id returns an error message', (done) => {
+        const invalidPayload = {
+            employeeId: 'A',
+            isPrivate: true,
+            documentId: '83xx6',
+        };
+
+        esignatureService
+            .generateDocumentUploadUrl(mockData.tenantId, mockData.companyId, 'bigboss', invalidPayload)
+            .then(() => {
+                done.fail(new Error('Test should throw an exception.'));
+            })
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${invalidPayload.employeeId} is not a valid number`);
+            });
+
+        done();
+    });
+
+    test('with an invalid company id returns an error message', (done) => {
+        const invalidCompanyId = 'A';
+
+        esignatureService
+            .generateDocumentUploadUrl(mockData.tenantId, mockData.companyId, 'bigboss', mockData.uploadUrlGenerationRequest)
+            .then(() => {
+                done.fail(new Error('Test should throw an exception.'));
+            })
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${invalidCompanyId} is not a valid number`);
             });
         done();
     });
