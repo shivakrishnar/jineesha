@@ -1868,11 +1868,13 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
     }
 
-    let key = employeeId ? `${tenantId}/${companyId}/${employeeId}/${filename}` : `${tenantId}/${companyId}/${filename}`;
+    const uploadS3Filename = filename.replace(/[^a-zA-Z0-9.]/g, '');
+
+    let key = employeeId ? `${tenantId}/${companyId}/${employeeId}/${filename}` : `${tenantId}/${companyId}/${uploadS3Filename}`;
     key = utilService.sanitizeForS3(key);
 
     // Check for file existence to avoid overwritting - duplicates allowed.
-    const [updatedFilename, s3UploadKey] = await checkForFileExistence(key, filename, tenantId, companyId, employeeId);
+    const [updatedFilename, s3UploadKey] = await checkForFileExistence(key, uploadS3Filename, tenantId, companyId, employeeId);
 
     let employeeMetadata: any = {};
 
