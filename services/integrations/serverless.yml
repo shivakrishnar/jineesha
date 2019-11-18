@@ -288,15 +288,24 @@ functions:
             cors:
               origin: '*'
 
-  createEmployeeDocument:
-    handler: esignature/src/handler.createEmployeeDocument
+  generateDocumentUploadUrl:
+    handler: esignature/src/handler.generateDocumentUploadUrl
     events:
         - http:
-            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents
+            path: /tenants/{tenantId}/companies/{companyId}/documents/upload-url
             method: post
             authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
+
+  saveUploadedDocumentMetadata:
+    handler: esignature/src/handler.saveUploadedDocumentMetadata
+    memorySize: 1024
+    events:
+        - s3:
+            bucket: ${file(${self:custom.configFile}):fileBucketName}
+            event: s3:ObjectCreated:*
+            existing: true
 
   createCompanyDocument:
     handler: esignature/src/handler.createCompanyDocument
