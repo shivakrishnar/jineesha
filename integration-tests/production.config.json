@@ -28,5 +28,6 @@
         "legacyCompanyDocumentId": "Nx6mI0",
         "nonExistingDocumentId": "v7Xbv3hX",
         "searchQueryParam": "onboarding"
-    }
+    },
+    "documentsBucket": "production.hr.files"
 }

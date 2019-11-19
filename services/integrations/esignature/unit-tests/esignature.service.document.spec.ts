@@ -10,6 +10,8 @@ import { setup } from './mock';
 
 jest.mock('shortid');
 
+const decodedDocumentId = '101010';
+
 describe('esignatureService.company-document.list', () => {
     beforeEach(() => {
         setup();
@@ -1043,44 +1045,118 @@ describe('esignatureService.create-upload-url', () => {
         setup();
     });
 
-    test('with an invalid employee id returns an error message', (done) => {
+    test('with an invalid employee id returns an error message', async (done) => {
         const invalidPayload = {
             employeeId: 'A',
             isPrivate: true,
             documentId: '83xx6',
         };
 
-        esignatureService
-            .generateDocumentUploadUrl(mockData.tenantId, mockData.companyId, 'bigboss', invalidPayload)
-            .then(() => {
-                done.fail(new Error('Test should throw an exception.'));
-            })
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(400);
-                expect(error.code).toEqual(30);
-                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-                expect(error.developerMessage).toEqual(`${invalidPayload.employeeId} is not a valid number`);
-            });
-
-        done();
+        try {
+            await esignatureService.generateDocumentUploadUrl(mockData.tenantId, mockData.companyId, 'bigboss', invalidPayload);
+            done.fail(new Error('Test should throw an exception.'));
+        } catch (error) {
+            const errorMessage = `${invalidPayload.employeeId} is not a valid number`;
+            expect(error).toEqual(errorService.getErrorResponse(30).setDeveloperMessage(errorMessage));
+            done();
+        }
     });
 
-    test('with an invalid company id returns an error message', (done) => {
-        const invalidCompanyId = 'A';
+    test('with an invalid company id returns an error message', async (done) => {
+        const invalidCompanyId = 'A1234';
+        try {
+            await esignatureService.generateDocumentUploadUrl(
+                mockData.tenantId,
+                invalidCompanyId,
+                'bigboss',
+                mockData.uploadUrlGenerationRequest,
+            );
+            done.fail(new Error('Test should throw an exception.'));
+        } catch (error) {
+            const errorMessage = `${invalidCompanyId} is not a valid number`;
+            expect(error).toEqual(errorService.getErrorResponse(30).setDeveloperMessage(errorMessage));
+            done();
+        }
+    });
+});
 
-        esignatureService
-            .generateDocumentUploadUrl(mockData.tenantId, mockData.companyId, 'bigboss', mockData.uploadUrlGenerationRequest)
-            .then(() => {
-                done.fail(new Error('Test should throw an exception.'));
-            })
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(400);
-                expect(error.code).toEqual(30);
-                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-                expect(error.developerMessage).toEqual(`${invalidCompanyId} is not a valid number`);
-            });
-        done();
+describe('esignatureService.legacy-document.checks', () => {
+    beforeEach(() => {
+        setup();
+    });
+
+    test('with an invalid employee id returns an error message', async () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'getDocumentMetadataById') {
+                return Promise.resolve(mockData.emptyDBResponse);
+            }
+        });
+
+        try {
+            return await esignatureService.isEditableLegacyEmployeeDocument(decodedDocumentId, mockData.tenantId, mockData.employeeId);
+        } catch (error) {
+            const errorMessage = `The document id: ${decodedDocumentId} not found`;
+            expect(error).toEqual(errorService.getErrorResponse(50).setDeveloperMessage(errorMessage));
+        }
+    });
+
+    test('prevent editing of documents published to employee', async () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'getDocumentMetadataById') {
+                const docsInfo = { ...mockData.documentFileMetadataByIdDBResponse };
+                docsInfo.recordset[0].IsPublishedToEmployee = true;
+                return Promise.resolve(docsInfo);
+            }
+        });
+
+        try {
+            return await esignatureService.isEditableLegacyEmployeeDocument(decodedDocumentId, mockData.tenantId, mockData.employeeId);
+        } catch (error) {
+            const errorMessage = 'Documents that have been published to employees are not editable';
+            expect(error).toEqual(errorService.getErrorResponse(30).setDeveloperMessage(errorMessage));
+        }
+    });
+
+    test('prevent editing of documents generated during onboarding', async () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'getDocumentMetadataById') {
+                const docsInfo = { ...mockData.documentFileMetadataByIdDBResponse };
+                docsInfo.recordset[0].UploadedByUsername = 'Onboarding';
+                docsInfo.recordset[0].DocumentCategory = 'Onboarding-I9';
+                docsInfo.recordset[0].IsPublishedToEmployee = false;
+                return Promise.resolve(docsInfo);
+            }
+        });
+
+        try {
+            return await esignatureService.isEditableLegacyEmployeeDocument(decodedDocumentId, mockData.tenantId, mockData.employeeId);
+        } catch (error) {
+            const expectedError = errorService
+                .getErrorResponse(30)
+                .setDeveloperMessage('Documents generated by the system are not editable')
+                .setMoreInfo('These files are W4, I9, Direct Deposit, and Background Check Auth');
+            expect(error).toEqual(expectedError);
+        }
+    });
+
+    test('prevent editing of esigned I9 documents', async () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'getDocumentMetadataById') {
+                const docsInfo = { ...mockData.documentFileMetadataByIdDBResponse };
+                docsInfo.recordset[0].Title = 'FormI9';
+                docsInfo.recordset[0].DocumentCategory = 'I-9';
+                return Promise.resolve(docsInfo);
+            }
+        });
+
+        try {
+            return await esignatureService.isEditableLegacyEmployeeDocument(decodedDocumentId, mockData.tenantId, mockData.employeeId);
+        } catch (error) {
+            const expectedError = errorService
+                .getErrorResponse(30)
+                .setDeveloperMessage('Documents generated by the system are not editable')
+                .setMoreInfo('These files are W4, I9, Direct Deposit, and Background Check Auth');
+            expect(error).toEqual(expectedError);
+        }
     });
 });

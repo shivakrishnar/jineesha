@@ -11,18 +11,17 @@ let accessToken: string;
 let deleteAccessToken: string;
 let document: any;
 const createdCompanyDocumentIds: string[] = [];
-const createdEmployeeDocumentIds: string[] = [];
 
 const errorMessageSchema = JSON.parse(fs.readFileSync('services/api/models/ErrorMessage.json').toString());
 const companyDocumentSchema = JSON.parse(fs.readFileSync('services/integrations/models/CompanyDocument.json').toString());
-const createEmployeeDocumentSchema = JSON.parse(fs.readFileSync('services/integrations/models/CreateEmployeeDocument.json').toString());
+const uploadPresignedUrlSchema = JSON.parse(fs.readFileSync('services/integrations/models/UploadPresignedUrl.json').toString());
 
-const schemas = [errorMessageSchema, companyDocumentSchema, createEmployeeDocumentSchema];
+const schemas = [errorMessageSchema, companyDocumentSchema, uploadPresignedUrlSchema];
 
 const enum schemaNames {
     ErrorMessage = 'ErrorMessage',
     CompanyDocument = 'CompanyDocument',
-    CreateEmployeeDocument = 'CreateEmployeeDocument',
+    UploadPresignedUrl = 'UploadPresignedUrl',
 }
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
@@ -244,25 +243,11 @@ describe('create company document', () => {
     });
 });
 
-describe('create employee document', () => {
+describe('request upload url', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken();
-            deleteAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
             document = documentsService.getValidPostEmployeeDocumentObject();
-
-            done();
-        } catch (error) {
-            done.fail(error);
-        }
-    });
-
-    afterAll(async (done) => {
-        try {
-            createdEmployeeDocumentIds.forEach(async (id) => {
-                await documentsService.deleteEmployeeDocument(baseUri, deleteAccessToken, id);
-            });
-
             done();
         } catch (error) {
             done.fail(error);
@@ -270,7 +255,7 @@ describe('create employee document', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -286,7 +271,7 @@ describe('create employee document', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -303,7 +288,7 @@ describe('create employee document', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -318,33 +303,16 @@ describe('create employee document', () => {
             });
     });
 
-    test('must return a 404 if companyID is not found', (done) => {
-        const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/documents`;
+    test('must return a 400 if companyID is invalid', (done) => {
+        const invalidCompanyId = '9bcwsdg9999A9999';
+        const uri: string = `/tenants/${configs.tenantId}/companies/${invalidCompanyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
             .set('Content-Type', 'application/json')
             .send(document)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(404)
-            .end((error, response) => {
-                utils.testResponse(error, response, done, () => {
-                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
-                });
-            });
-    });
-
-    test('must return a 404 if employeeID is not found', (done) => {
-        const unknownEmployeeId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${unknownEmployeeId}/documents`;
-        request(baseUri)
-            .post(uri)
-            .set('Authorization', `Bearer ${accessToken}`)
-            .set('Content-Type', 'application/json')
-            .send(document)
-            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(404)
+            .expect(400)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
                     return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
@@ -353,17 +321,15 @@ describe('create employee document', () => {
     });
 
     test('must return a 400 if a supplied field is invalid', (done) => {
-        const invalidRequest = {
-            file: 'bobam',
-            fileName: 1234,
-            title: 'title',
-        };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const requestWithInvalidField: any = Object.assign({}, document);
+        requestWithInvalidField.title = 1234;
+
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
-            .post(uri)
+            .patch(uri)
             .set('Authorization', `Bearer ${accessToken}`)
             .set('Content-Type', 'application/json')
-            .send(invalidRequest)
+            .send(requestWithInvalidField)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
             .expect(400)
             .end((error, response) => {
@@ -374,16 +340,15 @@ describe('create employee document', () => {
     });
 
     test('must return a 400 if a required field is not provided', (done) => {
-        const invalidRequest = {
-            fileName: 'name.png',
-            title: 'title',
-        };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const requestMissingRequiredField: any = Object.assign({}, document);
+        delete requestMissingRequiredField.fileName;
+
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
-            .post(uri)
+            .patch(uri)
             .set('Authorization', `Bearer ${accessToken}`)
             .set('Content-Type', 'application/json')
-            .send(invalidRequest)
+            .send(requestMissingRequiredField)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
             .expect(400)
             .end((error, response) => {
@@ -393,19 +358,16 @@ describe('create employee document', () => {
             });
     });
 
-    test('must return a 400 if an additional field is provided', (done) => {
-        const invalidRequest = {
-            file: 'bobam',
-            fileName: 'name.png',
-            title: 'title',
-            extraField: 'man playing handball',
-        };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+    test('must return a 400 if filename does not have an extension', (done) => {
+        const requestMissingFileExtension: any = Object.assign({}, document);
+        requestMissingFileExtension.fileName = `filename`;
+
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
-            .post(uri)
+            .patch(uri)
             .set('Authorization', `Bearer ${accessToken}`)
             .set('Content-Type', 'application/json')
-            .send(invalidRequest)
+            .send(requestMissingFileExtension)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
             .expect(400)
             .end((error, response) => {
@@ -415,39 +377,37 @@ describe('create employee document', () => {
             });
     });
 
-    test('must return a 201 when an employee document is created', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+    test('must return 200 with a presigned url', (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
             .set('Content-Type', 'application/json')
             .send(document)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(201)
+            .expect(200)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
-                    createdEmployeeDocumentIds.push(response.body.id);
-                    return utils.assertJson(schemas, schemaNames.CreateEmployeeDocument, response.body);
+                    return utils.assertJson(schemas, schemaNames.UploadPresignedUrl, response.body);
                 });
             });
     });
 
-    test('must return a 201 when an employee document with special characters in filename is created', (done) => {
+    test('must return 200 with a presigned url for filename with special characters', (done) => {
         const testDocumentWithSpecialChars: any = Object.assign({}, document);
-        testDocumentWithSpecialChars.filename = `_Interview &&#$@ Questions Do's & Dont's $%@(1).pdf`;
+        testDocumentWithSpecialChars.fileName = `_Interview &&#$@ Questions Do's & Dont's $%@(1).pdf`;
 
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
             .set('Content-Type', 'application/json')
-            .send(document)
+            .send(testDocumentWithSpecialChars)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(201)
+            .expect(200)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
-                    createdEmployeeDocumentIds.push(response.body.id);
-                    return utils.assertJson(schemas, schemaNames.CreateEmployeeDocument, response.body);
+                    return utils.assertJson(schemas, schemaNames.UploadPresignedUrl, response.body);
                 });
             });
     });

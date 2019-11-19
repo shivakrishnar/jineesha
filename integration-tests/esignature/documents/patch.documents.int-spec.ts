@@ -554,33 +554,6 @@ describe('update employee document', () => {
                 });
             });
     });
-
-    test('must return a 400 if fileName does not have an extension', (done) => {
-        const invalidRequest = {
-            fileObject: {
-                file: 'test',
-                fileName: 'this is a name without an extension',
-            },
-            title: 'title',
-            isPrivate: true,
-        };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
-            createdDocument.id
-        }`;
-        request(baseUri)
-            .patch(uri)
-            .set('Authorization', `Bearer ${accessToken}`)
-            .set('Content-Type', 'application/json')
-            .send(invalidRequest)
-            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(400)
-            .end((error, response) => {
-                utils.testResponse(error, response, done, () => {
-                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
-                });
-            });
-    });
-
     test('must return a 200 when an employee document is updated', (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             createdDocument.id

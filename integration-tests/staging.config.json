@@ -32,5 +32,6 @@
         "legacyCompanyDocumentId": "DwGyC5",
         "nonExistingDocumentId": "v7Xbv3hX",
         "searchQueryParam": "onboarding"
-    }
+    },
+    "documentsBucket": "staging.hr.files"
 }

@@ -1958,7 +1958,7 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
  * @param {string} employeeId: The unique identifier for the employee document belongs to.
  * @return {Promise<any>}: A Promise of the document's metadata and editable status.
  */
-async function isEditableLegacyEmployeeDocument(decodedDocumentId: string, tenantId: string, employeeId: string): Promise<any> {
+export async function isEditableLegacyEmployeeDocument(decodedDocumentId: string, tenantId: string, employeeId: string): Promise<any> {
     console.info('esignature.service.isEditableLegacyDocument');
 
     // get document metadata / make sure it exists in the database and belongs to the employee
