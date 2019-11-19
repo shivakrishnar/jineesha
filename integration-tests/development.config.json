@@ -32,5 +32,6 @@
         "legacyCompanyDocumentId": "oExGcr",
         "nonExistingDocumentId": "v7Xbv3hX",
         "searchQueryParam": "onboarding"
-    }
+    },
+    "documentsBucket": "development.hr.files"
 }

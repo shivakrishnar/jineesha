@@ -1,3 +1,4 @@
+import * as AWS from 'aws-sdk';
 import * as request from 'superagent';
 import * as utils from '../../utils';
 
@@ -22,20 +23,50 @@ export function createCompanyDocument(baseUri: string, accessToken: string): Pro
     });
 }
 
-export function createEmployeeDocument(baseUri: string, accessToken: string): Promise<any> {
+async function uploadTestEmployeeDocument(): Promise<void> {
+    const s3Client = new AWS.S3({
+        region: 'us-east-1',
+
+        // Tidbit: Useful for running integration tests against under different
+        //         AWS profiles without fiddling with bash profile defaults.
+        //         Requires use of existing AWS Profiles.
+        // credentials: new AWS.SharedIniFileCredentials({
+        //     profile: 'default'
+        //  })
+    });
+
+    const keyPrefix = `${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}`;
+
+    await s3Client
+        .upload({
+            Bucket: configs.documentsBucket,
+            Key: `${keyPrefix}/filename.png`,
+            Body: utils.base64EncodeFile('integration-tests/test-files/test.png'),
+            Metadata: {
+                fileName: 'test.png',
+                employeeId: `${configs.employeeId}`,
+                title: `Create employee document integration test doc`,
+            },
+            ContentEncoding: 'base64',
+            ContentType: 'image/png',
+        })
+        .promise();
+}
+
+export async function createEmployeeDocument(baseUri: string, accessToken: string): Promise<any> {
+    await uploadTestEmployeeDocument();
+
     return new Promise((resolve, reject) => {
         const url = `${baseUri}/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
-        const document = getValidPostEmployeeDocumentObject();
         request
-            .post(url)
-            .send(document)
+            .get(url)
             .set('Authorization', `Bearer ${accessToken}`)
             .set('Content-Type', 'application/json')
             .end((error, response) => {
                 if (error) {
                     reject(response.body);
                 } else {
-                    resolve(response.body);
+                    resolve(response.body.results[0]); // return the latest item.
                 }
             });
     });
@@ -77,9 +108,9 @@ export function deleteEmployeeDocument(baseUri: string, accessToken: string, doc
 
 export function getValidPostEmployeeDocumentObject(): any {
     return {
-        file: utils.uriEncodeTestFile('integration-tests/test-files/test.png'),
-        fileName: 'Create employee document integration test.png',
+        fileName: 'filename.png',
         title: 'Create employee document integration test',
+        employeeId: configs.employeeId,
         isPrivate: false,
     };
 }
@@ -108,10 +139,6 @@ export function getValidPatchCompanyDocumentObject(): any {
 
 export function getValidPatchEmployeeDocumentObject(): any {
     return {
-        fileObject: {
-            file: utils.uriEncodeTestFile('integration-tests/test-files/test.png'),
-            fileName: 'Update employee document integration test.png',
-        },
         title: 'Update employee document integration test',
         isPrivate: false,
     };

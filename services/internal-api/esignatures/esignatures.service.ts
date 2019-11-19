@@ -11,6 +11,7 @@ import { InvocationType } from '../../util.service';
 
 const s3Client = new AWS.S3({
     region: configService.getAwsRegion(),
+    useAccelerateEndpoint: true,
 });
 
 /**
@@ -44,6 +45,9 @@ export async function uploadSignedDocument(request: any): Promise<boolean> {
                 Body: fileBuffer,
                 ContentEncoding: 'base64',
                 ContentType: contentType,
+                Metadata: {
+                    isESignedDocument: 'true',
+                },
             })
             .promise()
             .catch((e) => {

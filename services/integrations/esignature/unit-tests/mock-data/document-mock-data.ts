@@ -355,10 +355,6 @@ export const updateLegacyCompanyDocumentResponse = {
 };
 
 export const updateEmployeeDocumentRequest = {
-    fileObject: {
-        file: 'data:image/png;base64,file',
-        fileName: 'test.png',
-    },
     title: 'Title',
     isPrivate: false,
 };
@@ -366,7 +362,7 @@ export const updateEmployeeDocumentRequest = {
 export const updateNonLegacyEmployeeDocumentResponse = {
     id: 'wZiB',
     title: 'Title',
-    fileName: 'test.png',
+    fileName: 'file.png',
     extension: 'png',
     isPrivate: false,
 };
@@ -374,7 +370,7 @@ export const updateNonLegacyEmployeeDocumentResponse = {
 export const updateLegacyEmployeeDocumentResponse = {
     id: 'dxi1',
     title: 'Title',
-    fileName: 'test.png',
+    fileName: 'file',
     extension: 'png',
     isPrivate: false,
 };
@@ -388,4 +384,11 @@ export const documentDBResponse = {
     ],
     output: {},
     rowsAffected: [1],
+};
+
+export const uploadUrlGenerationRequest = {
+    employeeId: 12,
+    fileName: 'A17_FlightPlan.pdf',
+    title: 'Flight Of the Intruder',
+    isPrivate: false,
 };

@@ -1,0 +1,17 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Create Document Upload Presigned URL",
+    "$id": "UploadPresignedUrl",
+    "type": "object",
+    "properties": {
+        "url": {
+            "description": "The generated S3 presigned URL",
+            "type": ["string"]
+        },
+        "uploadFilename": {
+            "description": "The name of the file after upload",
+            "type": ["string"]
+        }
+    },
+    "required": ["url", "uploadFilename"]
+}

@@ -178,19 +178,21 @@ const configurationSchema = Yup.object().shape({
         .required(),
 });
 
-// Create Employee Document schemas
-const createEmployeeDocumentValidationSchema = {
-    file: { required: true, type: String },
+// Upload Urls Request schemas
+const generateDocumentUploadValidationSchema = {
     fileName: { required: true, type: String },
     title: { required: true, type: String },
-    isPrivate: { required: true, type: Boolean },
+    employeeId: { required: false, type: Number },
+    isPrivate: { required: false, type: Boolean },
+    documentId: { required: false, type: String },
 };
 
-const createEmployeeDocumentSchema = Yup.object().shape({
-    file: Yup.string().required(),
+const generateDocumentUploadSchema = Yup.object().shape({
     fileName: Yup.string().required(),
     title: Yup.string().required(),
-    isPrivate: Yup.string().required(),
+    employeeId: Yup.number(),
+    isPrivate: Yup.bool(),
+    documentId: Yup.string(),
 });
 
 // Create Company Document schemas
@@ -231,11 +233,11 @@ const updateCompanyDocumentSchema = Yup.object().shape({
     isPublishedToEmployee: Yup.bool(),
 });
 const updateEmployeeDocumentValidationSchema = {
-    ...updateDocumentValidationSchema,
+    title: { required: false, type: String },
     isPrivate: { required: false, type: Boolean },
 };
 const updateEmployeeDocumentSchema = Yup.object().shape({
-    ...updateDocumentSchema,
+    title: Yup.string(),
     isPrivate: Yup.bool(),
 });
 
@@ -733,30 +735,46 @@ export const getDocumentPreview = utilService.gatewayEventHandler(async ({ secur
 });
 
 /**
- * Creates a specified document record for an employee
+ * Persists an upload document metadata
  */
-export const createEmployeeDocument = utilService.gatewayEventHandler(
-    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.createEmployeeDocument');
+export const saveUploadedDocumentMetadata = async (event: any, context: any, callback: any) => {
+    console.info('esignature.handler.saveUploadedDocumentMetadata');
 
-        const { tenantId, companyId, employeeId } = event.pathParameters;
+    console.info(`Received Event: ${JSON.stringify(event)}`);
+
+    const eventRecord: any = event.Records[0];
+
+    const {
+        eventTime: uploadTime,
+        s3: {
+            object: { key: uploadedItemKey },
+        },
+    } = eventRecord;
+    await esignatureService.saveUploadedDocumentMetadata(decodeURI(uploadedItemKey), uploadTime);
+};
+
+/**
+ *  Generates an S3 presigned url for document uploads
+ */
+export const generateDocumentUploadUrl = utilService.gatewayEventHandler(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.generateDocumentUploadUrl');
+
+        const { tenantId, companyId } = event.pathParameters;
 
         utilService.normalizeHeaders(event);
         utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
+        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
 
         await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, createEmployeeDocumentValidationSchema);
-        utilService.checkAdditionalProperties(createEmployeeDocumentValidationSchema, requestBody, 'Create Employee Document');
-        await utilService.validateRequestBody(createEmployeeDocumentSchema, requestBody);
+        utilService.validateAndThrow(requestBody, generateDocumentUploadValidationSchema);
+        utilService.checkAdditionalProperties(generateDocumentUploadValidationSchema, requestBody, 'Generate Document Upload Url');
+        await utilService.validateRequestBody(generateDocumentUploadSchema, requestBody);
 
-        const { givenName, surname } = securityContext.principal;
+        const { givenName: firstname, surname } = securityContext.principal;
 
-        return {
-            statusCode: 201,
-            body: await esignatureService.createEmployeeDocument(tenantId, companyId, employeeId, requestBody, givenName, surname),
-        };
+        const invokingUser = `${firstname} ${surname}`;
+        return await esignatureService.generateDocumentUploadUrl(tenantId, companyId, invokingUser, requestBody);
     },
 );
 
@@ -848,12 +866,6 @@ export const updateEmployeeDocument = utilService.gatewayEventHandler(
         utilService.validateAndThrow(requestBody, updateEmployeeDocumentValidationSchema);
         utilService.checkAdditionalProperties(updateEmployeeDocumentValidationSchema, requestBody, 'Update Employee Document');
         await utilService.validateRequestBody(updateEmployeeDocumentSchema, requestBody);
-        if (requestBody.fileObject) {
-            await utilService.requirePayload(requestBody.fileObject);
-            utilService.validateAndThrow(requestBody.fileObject, fileObjectValidationSchema);
-            utilService.checkAdditionalProperties(fileObjectValidationSchema, requestBody.fileObject, 'File Object');
-            await utilService.validateRequestBody(fileObjectSchema, requestBody.fileObject);
-        }
 
         const { email } = securityContext.principal;
 
