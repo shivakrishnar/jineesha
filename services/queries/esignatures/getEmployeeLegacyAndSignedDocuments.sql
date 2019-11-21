@@ -164,12 +164,11 @@ where
     CompanyID not in (select ID from ExcludedCompanies) 
     and 
     (
-        lower(Category) like @_search 
-        or lower(Title) like @_search 
-        or lower(CompanyName) like @_search 
-        or lower(EmployeeCode) like @_search
-        or @_search like '%' + lower(FirstName) + '%'
-        or @_search like '%' + lower(LastName) + '%'
+        lower(isnull(Category, '')) like @_search 
+        or lower(isnull(Title, '')) like @_search 
+        or lower(isnull(CompanyName, '')) like @_search 
+        or lower(isnull(EmployeeCode, '')) like @_search
+        or lower(concat(FirstName, LastName, FirstName)) like @_search
     )
 
 -- pagination count

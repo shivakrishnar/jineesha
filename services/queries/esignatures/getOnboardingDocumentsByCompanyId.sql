@@ -42,7 +42,7 @@ from
     on u.Username = d.UploadByUsername
 where
     CompanyID = @_companyId and
-    (lower(d.DocumentCategory) like @_search or lower(d.Title) like @_search)
+    (lower(isnull(d.DocumentCategory, '')) like @_search or lower(isnull(d.Title, '')) like @_search)
 
 insert into @tmp
 select
@@ -72,7 +72,7 @@ from
 where
     e.CompanyID = @_companyId and
     e.Type = '@type' and
-    (lower(e.Category) like @_search or lower(e.Title) like @_search)
+    (lower(isnull(e.Category, '')) like @_search or lower(isnull(e.Title, '')) like @_search)
 
 -- get total count for pagination
 select count(*) as totalCount from @tmp

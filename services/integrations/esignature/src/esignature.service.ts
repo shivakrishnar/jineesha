@@ -1126,7 +1126,7 @@ export async function listCompanyDocumentCategories(
             queryType: QueryType.Simple,
         } as DatabaseEvent;
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-        if (result.recordsets[1].length === 0) {
+        if (result.recordsets[0][0].totalCount === 0) {
             return undefined;
         }
         const categories: DocumentCategory[] = result.recordsets[1].map((entry) => ({ value: entry.Category, label: entry.Category }));
