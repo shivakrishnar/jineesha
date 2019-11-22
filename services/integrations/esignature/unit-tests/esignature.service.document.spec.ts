@@ -952,39 +952,37 @@ describe('esignatureService.employee-document.delete', () => {
         setup();
     });
 
-    test('deletes an non-signature employee document', (done) => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfo') {
-                return Promise.resolve(mockData.companyInfo);
-            }
-        });
+    test('deletes an non-signature employee document', async (done) => {
+        try {
+            (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+                if (payload.queryName === 'GetEmployeeByCompanyIdAndId') {
+                    return Promise.resolve(mockData.employeeDBResponse);
+                }
+            });
 
-        (utilService as any).authorizeAndRunQuery = jest.fn((params: any) => {
-            return [[{ Pointer: 'test' }]];
-        });
-
-        esignatureService
-            .deleteEmployeeDocument(
+            (utilService as any).authorizeAndRunQuery = jest.fn((params: any) => {
+                return [[{ Pointer: 'test' }]];
+            });
+            const document = await esignatureService.deleteEmployeeDocument(
                 mockData.tenantId,
                 mockData.companyId,
                 mockData.employeeId,
                 mockData.s3DocumentEncodedId,
                 mockData.userEmail,
                 mockData.roles,
-            )
-            .then((document) => {
-                expect(document).toEqual(undefined);
-            })
-            .catch(() => {
-                done.fail(new Error('Test should not throw an exception.'));
-            });
-        done();
+            );
+
+            expect(document).toEqual(undefined);
+            done();
+        } catch (e) {
+            done.fail(new Error('Test should not throw an exception.'));
+        }
     });
 
     test('deletes a legacy employee document', (done) => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfo') {
-                return Promise.resolve(mockData.companyInfo);
+            if (payload.queryName === 'GetEmployeeByCompanyIdAndId') {
+                return Promise.resolve(mockData.employeeDBResponse);
             }
         });
 
@@ -1077,6 +1075,24 @@ describe('esignatureService.create-upload-url', () => {
             expect(error).toEqual(errorService.getErrorResponse(30).setDeveloperMessage(errorMessage));
             done();
         }
+    });
+
+    test('creates a document upload url', (done) => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetEmployeeInfoById') {
+                return Promise.resolve(mockData.employeeDBResponse);
+            }
+        });
+
+        esignatureService
+            .generateDocumentUploadUrl(mockData.tenantId, mockData.companyId, 'bigboss', mockData.uploadUrlGenerationRequest)
+            .then((document) => {
+                expect(document).toEqual(mockData.uploadUrlGenerationResponse);
+            })
+            .catch(() => {
+                done.fail(new Error('Test should not throw an exception.'));
+            });
+        done();
     });
 });
 

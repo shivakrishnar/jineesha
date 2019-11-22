@@ -9,7 +9,7 @@ from
 where
     CompanyID = @_companyId and
     Type = @_type and
-    (lower(Category) like @_search or lower(Title) like @_search)
+    (lower(isnull(Category, '')) like @_search or lower(isnull(Title, '')) like @_search)
 
 select
     e.ID,
@@ -32,5 +32,5 @@ from
 where
     e.CompanyID = @_companyId and
     e.Type = @_type and
-    (lower(e.Category) like @_search or lower(e.Title) like @_search)
+    (lower(isnull(e.Category, '')) like @_search or lower(isnull(e.Title, '')) like @_search)
 order by e.UploadDate desc

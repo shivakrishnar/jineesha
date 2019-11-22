@@ -392,3 +392,8 @@ export const uploadUrlGenerationRequest = {
     title: 'Flight Of the Intruder',
     isPrivate: false,
 };
+
+export const uploadUrlGenerationResponse = {
+    url: 'www.mysignedurl.com',
+    uploadFilename: 'A17FlightPlan.pdf',
+};
