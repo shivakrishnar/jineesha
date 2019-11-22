@@ -40,7 +40,7 @@ select
     )
 from 
     dbo.Document d
-    inner join dbo.HRnextUser u
+    left join dbo.HRnextUser u
     on u.Username = d.UploadByUsername
 where
     CompanyID = @_companyId and
