@@ -231,7 +231,7 @@ export const listEmployeesByTenant = utilService.gatewayEventHandler(async ({ se
     });
 
     if (!isAuthorized) {
-        return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
     }
 
     const {
@@ -267,7 +267,7 @@ export const listEmployeesByCompany = utilService.gatewayEventHandler(async ({ s
     });
 
     if (!isAuthorized) {
-        return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
     }
 
     const {
