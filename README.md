@@ -13,6 +13,10 @@ architecture uses AWS Lambda, API Gateway with a SQL Server-based RDS backend.
 -   IAM permissions to allow for the creation of the pertinent AWS resources needed for this project.
 -   An existing custom [VPC](https://aws.amazon.com/vpc/) within which these services are to be deployed.
 
+### How to Run Locally
+
+Currently, only the `tenants` service has been refactored to run locally with `serverless-offline`. See [/services/api/tenants/README.md](/services/api/tenants/README.md) for instructions.
+
 #### How to Deploy to AWS
 
 _Deployment order is important!: deploy services in `services/internal-api` first_
