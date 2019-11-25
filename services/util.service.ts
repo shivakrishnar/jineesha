@@ -9,11 +9,12 @@ import * as configService from './config.service';
 import * as errorService from './errors/error.service';
 import * as ssoService from './remote-services/sso.service';
 
-import { APIGatewayEvent, Context, ProxyCallback, ProxyResult, ScheduledEvent } from 'aws-lambda';
+import { APIGatewayEvent, APIGatewayProxyHandler, Context, ProxyCallback, ProxyResult, ScheduledEvent } from 'aws-lambda';
 import { Headers } from './api/models/headers';
 import { IPayrollApiCredentials } from './api/models/IPayrollApiCredentials';
 import { ErrorMessage } from './errors/errorMessage';
 import { SecurityContext } from './internal-api/authentication/securityContext';
+import { SecurityContextProvider } from './internal-api/authentication/securityContextProvider';
 import { DatabaseEvent, QueryType } from './internal-api/database/events';
 import { INotificationEvent } from './internal-api/notification/events';
 
@@ -68,11 +69,17 @@ export interface IGatewayEventInput {
     requestBody?: any;
 }
 
+export interface IGatewayEventOptions {
+    allowAnonymous?: boolean;
+}
+
 export interface IHttpResponse<T> {
     statusCode: number;
     headers?: Headers;
     body?: T;
 }
+
+export type GatewayEventDelegate<T> = (gatewayEventInput: IGatewayEventInput) => Promise<T | IHttpResponse<T>>;
 
 function isHttpResponse<T>(response: any): response is IHttpResponse<T> {
     return response && response.statusCode !== undefined && (response.headers !== undefined || response.body !== undefined);
@@ -80,6 +87,8 @@ function isHttpResponse<T>(response: any): response is IHttpResponse<T> {
 
 /**
  * Handle an API Gateway event and make the appropriate callback. Response from delegate can be a POJO or an IHttpResponse.
+ * 
+ * NOTE: For new endpoints, it's recommended to use gatewayEventHandlerV2 instead, as it allows the service to be run locally.
  */
 export function gatewayEventHandler<T>(
     delegate: (gatewayEventInput: IGatewayEventInput) => Promise<T | IHttpResponse<T>>,
@@ -115,6 +124,70 @@ export function gatewayEventHandler<T>(
                     callback(undefined, buildLambdaResponse(result ? 200 : 204, undefined, result, event.path));
                 }
             } catch (error) {
+                const statusCode = error.statusCode || 500;
+                callback(undefined, buildLambdaResponse(statusCode, undefined, error, event.path));
+            }
+        })();
+    };
+}
+
+/**
+ * Handle an API Gateway event and make the appropriate callback. Response from delegate can be a POJO or an IHttpResponse.
+ *
+ * This is an enhanced version of gatewayEventHander() (above), supporting V2 access tokens (in addition to V1 tokens).
+ * Note that it IGNORES the serverless "authorizer" attribute, instead building the SecurityContext object internally.
+ * This means any handler wrapped with gatewayEventHandlerV2, can be run locally with serverless-offline. A new options
+ * parameter is now supported, providing a mechanism for specifying an endpoint that allows anonymous access.
+ *
+ * Depending on whether you need to provide options, choose one of these two supported signatures for your handler:
+ *   myHandler = gatewayEventHandlerV2({ options: { allowAnonymous: true }, delegate: async ({ event }) => { ... }});
+ *   myHandler = gatewayEventHandlerV2(async ({ securityContext, event }) => { ... });
+ */
+export function gatewayEventHandlerV2<T>(parameter: GatewayEventDelegate<T> | { options: IGatewayEventOptions, delegate: GatewayEventDelegate<T> }): APIGatewayProxyHandler {
+
+    // determine which call signature is being used, and extract delegate and options accordingly
+    const unTypedParam = parameter as any;
+
+    let options: IGatewayEventOptions;
+    let delegate: GatewayEventDelegate<T>;
+
+    if (unTypedParam.options) {
+        options = unTypedParam.options as IGatewayEventOptions;
+        delegate = unTypedParam.delegate as GatewayEventDelegate<T>;
+    } else {
+        options = {};
+        delegate = unTypedParam as GatewayEventDelegate<T>;
+    }
+
+    return (event: APIGatewayEvent, context: Context, callback: ProxyCallback): void => {
+        // Below we are intentionally invoking an IIFE because the code inside is async, but the Lambda
+        // handler signature is a void function. The try/catch ensures that the callback is always invoked,
+        // so we can safely discard the returned Promise<void>.
+
+        if (isLambdaWarmupInvocation(event)) {
+            console.log('warm up invocation');
+            return callback(undefined, buildLambdaResponse(204, undefined, {}, 'warm-up-invocation'));
+        }
+
+        (async () => {
+            try {
+                const { allowAnonymous } = options;
+                const securityContext = await new SecurityContextProvider().getSecurityContext({ event, allowAnonymous });
+
+                let requestBody: any;
+                if (event.body && !event.isBase64Encoded) {
+                    requestBody = parseJson(event.body, true);
+                }
+
+                const result = await delegate({ securityContext, event, requestBody });
+
+                if (isHttpResponse(result)) {
+                    callback(undefined, buildLambdaResponse(result.statusCode, result.headers, result.body, event.path));
+                } else {
+                    callback(undefined, buildLambdaResponse(result ? 200 : 204, undefined, result, event.path));
+                }
+            } catch (error) {
+                console.log(error);
                 const statusCode = error.statusCode || 500;
                 callback(undefined, buildLambdaResponse(statusCode, undefined, error, event.path));
             }
@@ -317,6 +390,25 @@ export function makeSerializable(error: any): any {
         serializableError[key] = value;
     });
     return serializableError;
+}
+
+export async function getApplicationSecret(applicationId: string): Promise<string> {
+    console.info(`getApplicationSecret(applicationId: ${applicationId})`);
+    try {
+        let secretId: string;
+        if (applicationId === configService.getGoldilocksApplicationId()) {
+            secretId = configService.getSsoCredentialsId();
+        } else if (applicationId === configService.getHrApplicationId()) {
+            secretId = configService.getHrCredentialsId();
+        } else {
+            // assume evolution application
+            secretId = configService.getApiSecretId();
+        }
+        const secret = await getSecret(secretId);
+        return JSON.parse(secret).apiSecret
+    } catch (e) {
+        throw new Error(`Failed to get secret for applicationId ${applicationId}: ${e.message}`)
+    }
 }
 
 export async function getSecret(id: string): Promise<string> {
