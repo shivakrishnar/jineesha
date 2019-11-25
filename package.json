@@ -44,7 +44,7 @@
         "mime-types": "^2.1.24",
         "prettier": "1.15.0",
         "randomstring": "^1.1.5",
-        "serverless": "1.38.0",
+        "serverless": "1.58.0",
         "superagent": "~3.5.2",
         "supertest": "~3.0.0",
         "ts-jest": "^24.1.0",
