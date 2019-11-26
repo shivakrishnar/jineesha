@@ -69,10 +69,6 @@ export interface IGatewayEventInput {
     requestBody?: any;
 }
 
-export interface IGatewayEventOptions {
-    allowAnonymous?: boolean;
-}
-
 export interface IHttpResponse<T> {
     statusCode: number;
     headers?: Headers;
@@ -136,27 +132,27 @@ export function gatewayEventHandler<T>(
  *
  * This is an enhanced version of gatewayEventHander() (above), supporting V2 access tokens (in addition to V1 tokens).
  * Note that it IGNORES the serverless "authorizer" attribute, instead building the SecurityContext object internally.
- * This means any handler wrapped with gatewayEventHandlerV2, can be run locally with serverless-offline. A new options
- * parameter is now supported, providing a mechanism for specifying an endpoint that allows anonymous access.
+ * This means any handler wrapped with gatewayEventHandlerV2, can be run locally with serverless-offline. A new option
+ * "allowAnonymous" is now supported, providing a mechanism for specifying that an endpoint allows anonymous access.
  *
- * Depending on whether you need to provide options, choose one of these two supported signatures for your handler:
- *   myHandler = gatewayEventHandlerV2({ options: { allowAnonymous: true }, delegate: async ({ event }) => { ... }});
+ * Depending on whether you need to specify "allowAnonymous", choose one of these two supported signatures for your handler:
+ *   myHandler = gatewayEventHandlerV2({ allowAnonymous: true, delegate: async ({ event }) => { ... }});
  *   myHandler = gatewayEventHandlerV2(async ({ securityContext, event }) => { ... });
  */
-export function gatewayEventHandlerV2<T>(parameter: GatewayEventDelegate<T> | { options: IGatewayEventOptions, delegate: GatewayEventDelegate<T> }): APIGatewayProxyHandler {
+export function gatewayEventHandlerV2<T>(parameter: GatewayEventDelegate<T> | { allowAnonymous: boolean, delegate: GatewayEventDelegate<T> }): APIGatewayProxyHandler {
 
-    // determine which call signature is being used, and extract delegate and options accordingly
+    // determine which call signature is being used, and extract delegate and allowAnonymous accordingly
     const unTypedParam = parameter as any;
 
-    let options: IGatewayEventOptions;
     let delegate: GatewayEventDelegate<T>;
+    let allowAnonymous: boolean;
 
     if (unTypedParam.options) {
-        options = unTypedParam.options as IGatewayEventOptions;
-        delegate = unTypedParam.delegate as GatewayEventDelegate<T>;
+        delegate = unTypedParam.delegate;
+        allowAnonymous = unTypedParam.allowAnonymous;
     } else {
-        options = {};
-        delegate = unTypedParam as GatewayEventDelegate<T>;
+        delegate = unTypedParam;
+        allowAnonymous = false;
     }
 
     return (event: APIGatewayEvent, context: Context, callback: ProxyCallback): void => {
@@ -171,7 +167,6 @@ export function gatewayEventHandlerV2<T>(parameter: GatewayEventDelegate<T> | { 
 
         (async () => {
             try {
-                const { allowAnonymous } = options;
                 const securityContext = await new SecurityContextProvider().getSecurityContext({ event, allowAnonymous });
 
                 let requestBody: any;
