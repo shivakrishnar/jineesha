@@ -147,7 +147,7 @@ export function gatewayEventHandlerV2<T>(parameter: GatewayEventDelegate<T> | { 
     let delegate: GatewayEventDelegate<T>;
     let allowAnonymous: boolean;
 
-    if (unTypedParam.options) {
+    if (unTypedParam.delegate) {
         delegate = unTypedParam.delegate;
         allowAnonymous = unTypedParam.allowAnonymous;
     } else {
