@@ -182,8 +182,10 @@ export function gatewayEventHandlerV2<T>(parameter: GatewayEventDelegate<T> | { 
                     callback(undefined, buildLambdaResponse(result ? 200 : 204, undefined, result, event.path));
                 }
             } catch (error) {
-                console.log(error);
                 const statusCode = error.statusCode || 500;
+                if (statusCode === 500) {
+                    console.error(error);
+                }
                 callback(undefined, buildLambdaResponse(statusCode, undefined, error, event.path));
             }
         })();
