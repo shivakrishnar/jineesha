@@ -397,3 +397,16 @@ export const uploadUrlGenerationResponse = {
     url: 'www.mysignedurl.com',
     uploadFilename: 'A17FlightPlan.pdf',
 };
+
+export const documentMetadataS3Response = {
+    tenantid: '123',
+    companyid: '123',
+    employeeid: '123',
+    employeecode: '123',
+    uploadedby: 'test user',
+    title: 'title',
+    documentid: '123',
+    islegacydocument: true,
+    isprivate: false,
+    isesigneddocument: false,
+};

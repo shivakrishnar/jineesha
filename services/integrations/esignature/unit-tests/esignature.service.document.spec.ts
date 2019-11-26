@@ -1176,3 +1176,21 @@ describe('esignatureService.legacy-document.checks', () => {
         }
     });
 });
+
+describe('esignatureService.save-uploaded-document-metadata', () => {
+    beforeEach(() => {
+        setup();
+    });
+
+    test('saves the metadata of an uploaded document', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'getFileMetadataById') {
+                return Promise.resolve(mockData.documentFileMetadataByIdDBResponse);
+            }
+        });
+
+        return esignatureService.saveUploadedDocumentMetadata('test', 'uploadTime').then((categories) => {
+            expect(categories).toBe(undefined);
+        });
+    });
+});

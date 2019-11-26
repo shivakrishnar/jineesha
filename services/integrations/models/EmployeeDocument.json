@@ -42,7 +42,7 @@
         },
         "companyId": {
             "description": "The unique identifier for the company.",
-            "type": ["number"]
+            "type": ["number", "null"]
         },
         "companyName": {
             "description": "The name of the company.",
