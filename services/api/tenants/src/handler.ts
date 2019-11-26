@@ -30,6 +30,11 @@ const companyUriSchema = {
     companyId: { required: true, type: String },
 };
 
+const ssoUserUriSchema = {
+    tenantId: { required: true, type: UUID },
+    ssoAccountId: { required: true, type: UUID },
+};
+
 const createTenantDbSchema = {
     id: { required: true, type: UUID },
     name: { required: true, type: String },
@@ -375,3 +380,29 @@ export const getCompanyLogo = utilService.gatewayEventHandlerV2({ allowAnonymous
     };
 }});
 
+/**
+ * Return the list of companies a user has access to.
+ */
+export const listCompaniesBySsoAccount = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('tenants.handler.listCompaniesBySsoAccount');
+
+    utilService.validateAndThrow(event.pathParameters, ssoUserUriSchema);
+
+    const { tenantId, ssoAccountId } = event.pathParameters;
+
+    const isAdmin: boolean = securityContext.roleMemberships.some((role) => {
+        return role === Role.asureAdmin || role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin;
+    });
+
+    const { principal } = securityContext;
+
+    if (!isAdmin && (principal.tenantId !== tenantId || principal.id !== ssoAccountId)) {
+        throw errorService
+            .getErrorResponse(20)
+            .setMoreInfo(
+                `This endpoint can only be used by a user with an admin role, or to request the authenticated user's companies.`,
+            );
+    }
+
+    return await companyService.listCompaniesBySsoAccount(tenantId, ssoAccountId);
+});

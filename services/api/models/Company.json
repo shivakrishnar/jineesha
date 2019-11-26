@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Company Schema",
+    "$id": "Company",
+    "type": "object",
+    "properties": {
+        "companyId": {
+            "description": "Unique identifier of the company.",
+            "type": "number"
+        },
+        "companyName": {
+            "description": "Name of the company.",
+            "type": "string"
+        },
+        "evoClientId": {
+            "description": "Evo payroll integration client ID.",
+            "type": ["string", "null"]
+        },
+        "evoCompanyId": {
+            "description": "Evo payroll integration company ID.",
+            "type": ["string", "null"]
+        },
+        "evoCompanyCode": {
+            "description": "Evo payroll integration company code.",
+            "type": ["string", "null"]
+        },
+        "logoUrl": {
+            "description": "Full url of logo image, if company has uploaded a logo.",
+            "type": ["string", "null"]
+        }
+    },
+    "required": ["companyId", "companyName"]
+}

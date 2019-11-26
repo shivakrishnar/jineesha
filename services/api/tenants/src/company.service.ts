@@ -11,6 +11,7 @@ import * as errorService from '../../../errors/error.service';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
 import * as paginationService from '../../../pagination/pagination.service';
 import * as utilService from '../../../util.service';
+import { ICompany } from './ICompany';
 
 /**
  * Returns a listing of companies for a specific user within a tenant
@@ -145,6 +146,61 @@ export async function getLogoDocument(tenantId: string, companyId: string): Prom
         if (error instanceof ErrorMessage) {
             if (error.statusCode === 404) {
                 return undefined;
+            }
+            throw error;
+        }
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Retrieves a list of companies a user has access to. Note that the resultset is not paginated, because the
+ * caller is expected to be another back-end service which will need the entire list and not want to make
+ * multiple requests, and because the list cannot be longer than the maximum number of companies in a tenant.
+ * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
+ * @param {string} ssoAccountId: The unique identifier (SSO accountId GUID) for the user
+ * @returns {Promise<ICompany[]>}: A Promise of a list of companies, or an empty list if tenant or user not found
+ */
+export async function listCompaniesBySsoAccount(tenantId: string, ssoAccountId: string): Promise<ICompany[]> {
+    console.info('companyService.listCompaniesBySsoAccount');
+
+    try {
+        const query = new ParameterizedQuery('ListCompaniesBySsoAccount', Queries.listCompaniesBySsoAccount);
+        query.setParameter('@ssoAccountId', ssoAccountId);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        // This endpoint should return an empty list (not 404) if tenant or account not found in AHR.
+        // This makes it easier for the caller to handle users that exist only in another app (i.e. Evo).
+        if (!result || !result.recordset.length) {
+            return [];
+        }
+
+        const buildLogoUrl = (companyId: string) => `${configService.getHrServicesDomain()}/internal/tenants/${tenantId}/companies/${companyId}/logo`;
+
+        return result.recordset.map((record: any) => {
+            const { companyId, companyName, evoClientId, evoCompanyId, evoCompanyCode, hasLogo } = record;
+            return {
+                companyId: Number(companyId),
+                companyName,
+                evoClientId: evoClientId || undefined,
+                evoCompanyId: evoCompanyId || undefined,
+                evoCompanyCode: evoCompanyCode || undefined,
+                logoUrl: hasLogo ? buildLogoUrl(companyId) : undefined
+            };
+        });
+
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            if (error.statusCode === 404) {
+                return [];
             }
             throw error;
         }
