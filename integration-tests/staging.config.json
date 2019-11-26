@@ -33,5 +33,9 @@
         "nonExistingDocumentId": "v7Xbv3hX",
         "searchQueryParam": "onboarding"
     },
-    "documentsBucket": "staging.hr.files"
+    "documentsBucket": "staging.hr.files",
+    "logo": {
+        "companyWithNoLogo": 600259,
+        "companyWithLogo": 600012
+    }
 }

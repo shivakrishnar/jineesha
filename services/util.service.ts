@@ -73,6 +73,7 @@ export interface IHttpResponse<T> {
     statusCode: number;
     headers?: Headers;
     body?: T;
+    isBase64Encoded?: boolean;
 }
 
 export type GatewayEventDelegate<T> = (gatewayEventInput: IGatewayEventInput) => Promise<T | IHttpResponse<T>>;
@@ -177,7 +178,7 @@ export function gatewayEventHandlerV2<T>(parameter: GatewayEventDelegate<T> | { 
                 const result = await delegate({ securityContext, event, requestBody });
 
                 if (isHttpResponse(result)) {
-                    callback(undefined, buildLambdaResponse(result.statusCode, result.headers, result.body, event.path));
+                    callback(undefined, buildLambdaResponse(result.statusCode, result.headers, result.body, event.path, result.isBase64Encoded));
                 } else {
                     callback(undefined, buildLambdaResponse(result ? 200 : 204, undefined, result, event.path));
                 }
@@ -195,7 +196,7 @@ export function gatewayEventHandlerV2<T>(parameter: GatewayEventDelegate<T> | { 
 /**
  * Builds a Lambda response object which can be returned to API Gateway.
  */
-export function buildLambdaResponse(statusCode: number, headers: Headers, input: any, uri: string): ProxyResult {
+export function buildLambdaResponse(statusCode: number, headers: Headers, input: any, uri: string, isBase64Encoded?: boolean): ProxyResult {
     console.info(`utilService.buildLambdaResponse (httpStatusCode : ${statusCode}; uri : ${uri})`);
     if (headers) {
         headers.accessControlHeader();
@@ -203,7 +204,8 @@ export function buildLambdaResponse(statusCode: number, headers: Headers, input:
         headers = new Headers().accessControlHeader();
     }
 
-    const response: ProxyResult = { statusCode, headers: headers.toJSON(), body: JSON.stringify(input) };
+    const body = isBase64Encoded ? input : JSON.stringify(input);
+    const response: ProxyResult = { statusCode, headers: headers.toJSON(), body, isBase64Encoded };
 
     return response;
 }

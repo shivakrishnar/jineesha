@@ -6,6 +6,7 @@ import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Query } from '../../../queries/query';
 import { Company } from './company';
 
+import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
 import * as paginationService from '../../../pagination/pagination.service';
@@ -96,6 +97,57 @@ export async function list(tenantId: string, email: string, domainName: string, 
             throw error;
         }
         console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Retrieves a company logo document.
+ * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
+ * @param {string} companyId: The unique (numeric) identifier for the company
+ * @returns {Promise<any>}: A Promise of a document, or undefined if company not found or has no logo
+ */
+export async function getLogoDocument(tenantId: string, companyId: string): Promise<any> {
+    console.info('companyService.getLogoDocument');
+
+    try {
+        // if companyId not an integer, it doesn't exist, so don't waste time executing a query
+        if (!companyId || !String(companyId).match(/^\d+$/)) {
+            return undefined;
+        }
+
+        const query = new ParameterizedQuery('GetCompanyLogo', Queries.getCompanyLogo);
+        query.setParameter('@companyId', companyId);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        if (!result || !result.recordset.length) {
+            return undefined;
+        }
+
+        const base64String = result.recordset[0].FSDocument;
+        const extension = result.recordset[0].Extension;
+
+        if (!base64String) {
+            return undefined;
+        }
+
+        return { base64String, extension };
+
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            if (error.statusCode === 404) {
+                return undefined;
+            }
+            throw error;
+        }
         throw errorService.getErrorResponse(0);
     }
 }

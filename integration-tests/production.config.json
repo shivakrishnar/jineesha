@@ -29,5 +29,9 @@
         "nonExistingDocumentId": "v7Xbv3hX",
         "searchQueryParam": "onboarding"
     },
-    "documentsBucket": "production.hr.files"
+    "documentsBucket": "production.hr.files",
+    "logo": {
+        "companyWithNoLogo": 600030,
+        "companyWithLogo": 600052
+    }
 }

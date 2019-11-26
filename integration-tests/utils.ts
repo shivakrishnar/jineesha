@@ -55,6 +55,13 @@ export function getConfig(): any {
     }
 }
 
+export function assertJsonOrThrow(schemas: any, schemaName: string, body: object): void {
+    const result = assertJson(schemas, schemaName, body);
+    if (result) {
+      throw result;
+    }
+}
+
 export function assertJson(schemas: any, schemaName: string, body: object): any {
     const ajv = new Ajv();
     ajv.addSchema(schemas);
