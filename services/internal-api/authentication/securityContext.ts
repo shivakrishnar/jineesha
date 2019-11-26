@@ -12,11 +12,18 @@ import { ApplicationRoleLevel } from './ApplicationRoleLevelEnum';
 import { ISecurityPolicy } from './securityPolicyAuthorizer';
 
 /**
- * SecurityContext represents data pulled from the token when it is verified. AWS requires the
- * data to be a string when it is passed on to Lambda via an event, so we JSON stringify
- * this object to return a serialized string from the tokenVerifier lambda. Later, this is
- * parsed from requestContext.authorizer.principalId, and then provided to each lambda handler
- * by the utilService.gatewayEventHandler helper.
+ * SecurityContext represents data pulled from the token when it is verified.
+ * 
+ * If an endpoint has an "authorizer" defined in serverless.yml, the securityContext is
+ * returned as a serialized string from the tokenVerifier lambda, then later parsed from
+ * requestContext.authorizer.principalId, and by the utilService.gatewayEventHandler helper.
+ * 
+ * If an endpoint instead uses the enhanced helper utilService.gatewayEventHandlerV2, the
+ * securityContext is constructed entirely inside the helper using SecurityContextProvider,
+ * and does not need to be serialized/deserialized. This approach is recommended, as it
+ * keeps our authorization logic in once place, and allows the service to be run locally.
+ * 
+ * In either case, the same SecurityContext object is passed to the lambda handler code.
  */
 export class SecurityContext {
     principal: IAccount;

@@ -35,7 +35,7 @@ const createTenantDbSchema = {
 /**
  * Adds an SSO global admin account to a specified tenant
  */
-export const addAdmin = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const addAdmin = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('tenants.handler.addAdmin');
 
     securityContext.requireRole(Role.asureAdmin);
@@ -56,7 +56,7 @@ export const addAdmin = utilService.gatewayEventHandler(async ({ securityContext
 /**
  * Creates a tenant in an available RDS instance
  */
-export const addTenantDb = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const addTenantDb = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('tenants.handler.addTenantDb');
     const { id: tenantId } = requestBody;
     // Note: this is the guards against at-will creation of databases in the Production tier
@@ -194,7 +194,7 @@ export async function errorHandler(event: any, context: Context, callback: Proxy
 /**
  * Returns a listing of the companies a user has access to.
  */
-export const companyList = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+export const companyList = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
     console.info('tenants.handler.companyList');
 
     const { tenantId } = event.pathParameters;
@@ -216,7 +216,7 @@ export const companyList = utilService.gatewayEventHandler(async ({ securityCont
 /**
  * Returns a listing of the employees a user has access to under a tenant.
  */
-export const listEmployeesByTenant = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+export const listEmployeesByTenant = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
     console.info('tenants.handler.listEmployeesByTenant');
 
     const { tenantId } = event.pathParameters;
@@ -231,7 +231,7 @@ export const listEmployeesByTenant = utilService.gatewayEventHandler(async ({ se
     });
 
     if (!isAuthorized) {
-        return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
     }
 
     const {
@@ -245,7 +245,7 @@ export const listEmployeesByTenant = utilService.gatewayEventHandler(async ({ se
 /**
  * Returns a listing of the employees a user has access to under a company.
  */
-export const listEmployeesByCompany = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+export const listEmployeesByCompany = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
     console.info('tenants.handler.listEmployeesByCompany');
 
     const { tenantId, companyId } = event.pathParameters;
@@ -267,7 +267,7 @@ export const listEmployeesByCompany = utilService.gatewayEventHandler(async ({ s
     });
 
     if (!isAuthorized) {
-        return errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
     }
 
     const {
@@ -289,7 +289,7 @@ export const listEmployeesByCompany = utilService.gatewayEventHandler(async ({ s
 /**
  * Returns a listing of the roles that the user belongs to
  */
-export const listUserRoles = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+export const listUserRoles = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
     console.info('tenants.handler.listUserRoles');
     return { roles: securityContext.roleMemberships };
 });
@@ -297,7 +297,7 @@ export const listUserRoles = utilService.gatewayEventHandler(async ({ securityCo
 /**
  * Returns the connection string for a given tenant stored in DynamoDB
  */
-export const getConnectionStringByTenant = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+export const getConnectionStringByTenant = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
     console.info('tenants.handler.getConnectionStringByTenant');
 
     utilService.normalizeHeaders(event);
@@ -325,7 +325,7 @@ export const getConnectionStringByTenant = utilService.gatewayEventHandler(async
 /**
  * Returns a listing of the connection strings stored in DynamoDB
  */
-export const listConnectionStrings = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+export const listConnectionStrings = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
     console.info('tenants.handler.listConnectionStrings');
 
     utilService.normalizeHeaders(event);
