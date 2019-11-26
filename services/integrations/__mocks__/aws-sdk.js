@@ -1,6 +1,7 @@
 'use strict';
 
 let AWS = jest.genMockFromModule('aws-sdk');
+const mockData = require('../esignature/unit-tests/mock-data');
 
 AWS = {
     S3: class {
@@ -24,7 +25,9 @@ AWS = {
         }
 
         headObject() {
-            console.log('headObject');
+            return {
+                Metadata: mockData.documentMetadataS3Response,
+            };
         }
     },
 };
