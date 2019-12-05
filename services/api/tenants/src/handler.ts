@@ -5,6 +5,7 @@ import * as employeeService from './employee.service';
 import * as tenantService from './tenants.service';
 
 import * as UUID from '@smallwins/validate/uuid';
+import * as mime from 'mime-types';
 import { IGatewayEventInput } from '../../../util.service';
 import { Headers } from '../../models/headers';
 
@@ -12,6 +13,9 @@ import { Context, ProxyCallback } from 'aws-lambda';
 import { IAccount } from '../../../internal-api/authentication/account';
 import { SecurityPolicyAuthorizer } from '../../../internal-api/authentication/securityPolicyAuthorizer';
 import { Role } from '../../models/Role';
+
+const twoDaysInSeconds = 172800;
+const logoCacheHeaderValue = `public, max-age=${twoDaysInSeconds}`;
 
 const headerSchema = {
     authorization: { required: true, type: String },
@@ -24,6 +28,11 @@ const adminsUriSchema = {
 const companyUriSchema = {
     tenantId: { required: true, type: UUID },
     companyId: { required: true, type: String },
+};
+
+const ssoUserUriSchema = {
+    tenantId: { required: true, type: UUID },
+    ssoAccountId: { required: true, type: UUID },
 };
 
 const createTenantDbSchema = {
@@ -342,4 +351,58 @@ export const listConnectionStrings = utilService.gatewayEventHandlerV2(async ({ 
             );
     }
     return await tenantService.listConnectionStrings();
+});
+
+/**
+ * Return company logo as binary image response.
+ */
+export const getCompanyLogo = utilService.gatewayEventHandlerV2({ allowAnonymous: true, delegate: async ({ event }: IGatewayEventInput) => {
+    console.info('tenants.handler.getCompanyLogo');
+
+    utilService.validateAndThrow(event.pathParameters, companyUriSchema);
+
+    const { tenantId, companyId } = event.pathParameters;
+
+    const companyLogo = await companyService.getLogoDocument(tenantId, companyId);
+    if (!companyLogo) {
+        throw errorService.notFound();
+    }
+
+    const headers = new Headers()
+        .append('Content-Type', mime.contentType(companyLogo.extension))
+        .append('Cache-Control', logoCacheHeaderValue);
+
+    return {
+        statusCode: 200,
+        body: companyLogo.base64String,
+        headers,
+        isBase64Encoded: true
+    };
+}});
+
+/**
+ * Return the list of companies a user has access to.
+ */
+export const listCompaniesBySsoAccount = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('tenants.handler.listCompaniesBySsoAccount');
+
+    utilService.validateAndThrow(event.pathParameters, ssoUserUriSchema);
+
+    const { tenantId, ssoAccountId } = event.pathParameters;
+
+    const isAdmin: boolean = securityContext.roleMemberships.some((role) => {
+        return role === Role.asureAdmin || role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin;
+    });
+
+    const { principal } = securityContext;
+
+    if (!isAdmin && (principal.tenantId !== tenantId || principal.id !== ssoAccountId)) {
+        throw errorService
+            .getErrorResponse(20)
+            .setMoreInfo(
+                `This endpoint can only be used by a user with an admin role, or to request the authenticated user's companies.`,
+            );
+    }
+
+    return await companyService.listCompaniesBySsoAccount(tenantId, ssoAccountId);
 });

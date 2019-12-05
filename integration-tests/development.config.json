@@ -3,6 +3,7 @@
     "nonProxiedApiDomain": "https://hr-services.dev.evolution-software.com",
     "tokenUrl": "https://api.staging.evolution-software.com",
     "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
+    "ssoAccountId": "d2e01f76-638c-44b8-89b5-44e06535214f",
     "companyId": 600351,
     "employeeId": 24666,
     "user": {
@@ -33,5 +34,10 @@
         "nonExistingDocumentId": "v7Xbv3hX",
         "searchQueryParam": "onboarding"
     },
-    "documentsBucket": "development.hr.files"
+    "documentsBucket": "development.hr.files",
+    "logo": {
+        "companyWithNoLogo": 600259,
+        "companyWithLogo": 600012,
+        "ssoAccountId": "b190939d-30a8-40e4-b502-5f642de686b6"
+    }
 }

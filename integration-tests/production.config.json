@@ -3,6 +3,7 @@
     "nonProxiedApiDomain": "https://hr-services.evolutionadvancedhr.com",
     "tokenUrl": "https://evoapi.evolutionadvancedhr.com",
     "tenantId": "4aa76830-94c5-4190-a404-7253342afba9",
+    "ssoAccountId": "fc6026e1-be04-4f85-a912-5ff2c338d3d1",
     "companyId": 600036,
     "employeeId": 1435,
     "user": {
@@ -29,5 +30,10 @@
         "nonExistingDocumentId": "v7Xbv3hX",
         "searchQueryParam": "onboarding"
     },
-    "documentsBucket": "production.hr.files"
+    "documentsBucket": "production.hr.files",
+    "logo": {
+        "companyWithNoLogo": 600030,
+        "companyWithLogo": 600052,
+        "ssoAccountId": "17ed02c5-dacb-42ec-a1e3-172c0c44ec5e"
+    }
 }

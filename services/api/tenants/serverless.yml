@@ -21,6 +21,7 @@ provider:
     stage: ${file(${self:custom.configFile}):stage}
     apiDomain: ${file(${self:custom.configFile}):apiDomain}
     domain: ${file(${self:custom.configFile}):domain}
+    hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
     hrDatabaseCreatorStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}
     teamNotificationTopicArn: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:mojojojo-status-notification
     scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
@@ -107,6 +108,10 @@ provider:
         - dynamodb:GetItem
       Resource: arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings/index/*
 
+  apiGateway:
+    binaryMediaTypes:
+      - '*/*'
+
 functions:
   addAdminAccount:
     handler: src/handler.addAdmin
@@ -173,6 +178,24 @@ functions:
             method: get
             cors:
               origin: '*'
+
+  getCompanyLogo:
+    handler: src/handler.getCompanyLogo
+    events:
+      - http:
+          path: /tenants/{tenantId}/companies/{companyId}/logo
+          method: get
+          cors:
+            origin: '*'
+
+  listCompaniesBySsoAccount:
+    handler: src/handler.listCompaniesBySsoAccount
+    events:
+      - http:
+          path: /tenants/{tenantId}/accounts/{ssoAccountId}/companies
+          method: get
+          cors:
+            origin: '*'
 
   listEmployeesByTenant:
     handler: src/handler.listEmployeesByTenant

@@ -21,6 +21,10 @@ export function notAuthorized(role: string): ErrorMessage {
     return errorMessage;
 }
 
+export function notFound(): ErrorMessage {
+    return findErrorMessage(50);
+}
+
 /**
  * Private function which locates an error message based on the code that is
  * passed in. If a message with the code is not found then the default message
