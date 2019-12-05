@@ -36,10 +36,14 @@ provider:
     evoHrGroupCompany: ${file(${self:custom.configFile}):evoHrGroupCompany}
     evoHrGroupEmployee: ${file(${self:custom.configFile}):evoHrGroupEmployee}
     evoHrGlobalAdmin: ${file(${self:custom.configFile}):evoHrGlobalAdmin}
+    hrApplicationId: ${file(${self:custom.configFile}):hrApplicationId}
+    scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
     apiDomain: ${file(${self:custom.configFile}):apiDomain}
     fromEmail: ${file(${self:custom.configFile}):fromEmail}
     integrationId: ${file(${self:custom.configFile}):integrationId}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
+    goldilocksPublicKey1: ${file(${self:custom.configFile}):goldilocksPublicKey1}
+    goldilocksPublicKey2: ${file(${self:custom.configFile}):goldilocksPublicKey2}
     goldilocksTenantId: ${file(${self:custom.configFile}):goldilocksTenantId}
     hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
     eSignatureCallbackPath: ${file(${self:custom.configFile}):eSignatureCallbackPath}
@@ -107,7 +111,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/templates
             method: post
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -117,7 +120,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/templates/{templateId}/save-metadata
             method: post
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -127,7 +129,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/requests
             method: post
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
   
@@ -137,7 +138,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/esignatures/requests
             method: post
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -156,7 +156,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/templates/{templateId}/edit-url
             method: get
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -166,7 +165,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/templates
             method: get
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -176,7 +174,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/documents
             method: get
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -186,7 +183,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/requests
             method: get
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -196,7 +192,6 @@ functions:
       - http:
           path: /tenants/{tenantId}/companies/{companyId}/esignatures/categories
           method: get
-          authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
           cors:
             origin: '*'
 
@@ -224,7 +219,6 @@ functions:
       - http:
           path: /tenants/{tenantId}/companies/{companyId}/esignatures
           method: patch
-          authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
           cors:
             origin: '*'
 
@@ -234,7 +228,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/documents
             method: get
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -244,7 +237,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/documents
             method: get
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -254,7 +246,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents
             method: get
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -264,7 +255,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/documents/{documentId}/preview
             method: get
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -274,7 +264,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/documents/{documentId}/preview
             method: get
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -284,7 +273,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents/{documentId}/preview
             method: get
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -294,7 +282,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/documents/upload-url
             method: post
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -313,7 +300,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/documents
             method: post
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -323,7 +309,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/documents/{documentId}
             method: patch
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -333,7 +318,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents/{documentId}
             method: patch
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -343,7 +327,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/documents/{documentId}
             method: delete
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -353,7 +336,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents/{documentId}
             method: delete
-            authorizer: ${file(../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
