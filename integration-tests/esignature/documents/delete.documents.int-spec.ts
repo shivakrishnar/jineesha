@@ -268,7 +268,7 @@ describe('delete employee document', () => {
             });
     });
 
-    test('must return a 204 when a non-signature employee document is deleted', (done) => {
+    test.skip('must return a 204 when a non-signature employee document is deleted', (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             createdDocument.id
         }`;

@@ -34,7 +34,7 @@
         },
         "employeeId": {
             "description": "The unique identifier for the employee.",
-            "type": ["number"]
+            "type": ["number", "null"]
         },
         "employeeName": {
             "description": "The name of the employee.",
