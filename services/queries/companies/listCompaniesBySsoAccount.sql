@@ -1,4 +1,4 @@
-select
+select distinct
     companyId = c.ID,
     companyName = c.CompanyName,
     evoClientId = c.PRIntegration_ClientID,
