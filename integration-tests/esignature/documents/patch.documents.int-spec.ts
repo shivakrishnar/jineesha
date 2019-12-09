@@ -554,7 +554,7 @@ describe('update employee document', () => {
                 });
             });
     });
-    test('must return a 200 when an employee document is updated', (done) => {
+    test.skip('must return a 200 when an employee document is updated', (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             createdDocument.id
         }`;
