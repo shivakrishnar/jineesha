@@ -8,9 +8,9 @@ select distinct
 from
     dbo.HRnextUser u
 inner join
-    dbo.HRnextUserEmployee uc on uc.HRnextUserID = u.ID
+    dbo.HRnextUserEmployee ue on ue.HRnextUserID = u.ID
 inner join
-    dbo.Employee e on e.ID = uc.EmployeeID
+    dbo.Employee e on e.ID = ue.EmployeeID
 inner join
     dbo.Company c on c.ID = e.CompanyID
 left join
