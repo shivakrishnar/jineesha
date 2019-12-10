@@ -381,10 +381,10 @@ export const getCompanyLogo = utilService.gatewayEventHandlerV2({ allowAnonymous
 }});
 
 /**
- * Return the list of companies a user has access to.
+ * Return the list of companies for the employees a user is mapped to.
  */
-export const listCompaniesBySsoAccount = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
-    console.info('tenants.handler.listCompaniesBySsoAccount');
+export const listEmployeeCompaniesBySsoAccount = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('tenants.handler.listEmployeeCompaniesBySsoAccount');
 
     utilService.validateAndThrow(event.pathParameters, ssoUserUriSchema);
 
@@ -404,5 +404,5 @@ export const listCompaniesBySsoAccount = utilService.gatewayEventHandlerV2(async
             );
     }
 
-    return await companyService.listCompaniesBySsoAccount(tenantId, ssoAccountId);
+    return await companyService.listEmployeeCompaniesBySsoAccount(tenantId, ssoAccountId);
 });

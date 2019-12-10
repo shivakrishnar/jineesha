@@ -188,8 +188,8 @@ functions:
           cors:
             origin: '*'
 
-  listCompaniesBySsoAccount:
-    handler: src/handler.listCompaniesBySsoAccount
+  listEmployeeCompaniesBySsoAccount:
+    handler: src/handler.listEmployeeCompaniesBySsoAccount
     events:
       - http:
           path: /tenants/{tenantId}/accounts/{ssoAccountId}/companies

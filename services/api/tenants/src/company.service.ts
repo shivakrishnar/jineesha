@@ -141,7 +141,6 @@ export async function getLogoDocument(tenantId: string, companyId: string): Prom
         }
 
         return { base64String, extension };
-
     } catch (error) {
         if (error instanceof ErrorMessage) {
             if (error.statusCode === 404) {
@@ -154,18 +153,19 @@ export async function getLogoDocument(tenantId: string, companyId: string): Prom
 }
 
 /**
- * Retrieves a list of companies a user has access to. Note that the resultset is not paginated, because the
+ * Retrieves a list of companies for the employees a user is mapped to. (Does not include companies a user is
+ * mapped to directly, without being an employee.) Note that the resultset is not paginated, because the
  * caller is expected to be another back-end service which will need the entire list and not want to make
  * multiple requests, and because the list cannot be longer than the maximum number of companies in a tenant.
  * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
  * @param {string} ssoAccountId: The unique identifier (SSO accountId GUID) for the user
  * @returns {Promise<ICompany[]>}: A Promise of a list of companies, or an empty list if tenant or user not found
  */
-export async function listCompaniesBySsoAccount(tenantId: string, ssoAccountId: string): Promise<ICompany[]> {
-    console.info('companyService.listCompaniesBySsoAccount');
+export async function listEmployeeCompaniesBySsoAccount(tenantId: string, ssoAccountId: string): Promise<ICompany[]> {
+    console.info('companyService.listEmployeeCompaniesBySsoAccount');
 
     try {
-        const query = new ParameterizedQuery('ListCompaniesBySsoAccount', Queries.listCompaniesBySsoAccount);
+        const query = new ParameterizedQuery('ListEmployeeCompaniesBySsoAccount', Queries.listEmployeeCompaniesBySsoAccount);
         query.setParameter('@ssoAccountId', ssoAccountId);
 
         const payload = {
@@ -196,7 +196,6 @@ export async function listCompaniesBySsoAccount(tenantId: string, ssoAccountId: 
                 logoUrl: hasLogo ? buildLogoUrl(companyId) : undefined
             };
         });
-
     } catch (error) {
         if (error instanceof ErrorMessage) {
             if (error.statusCode === 404) {
