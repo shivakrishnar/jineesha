@@ -28,9 +28,15 @@ provider:
     evoHrGroupCompany: ${file(${self:custom.configFile}):evoHrGroupCompany}
     evoHrGroupEmployee: ${file(${self:custom.configFile}):evoHrGroupEmployee}
     evoHrGlobalAdmin: ${file(${self:custom.configFile}):evoHrGlobalAdmin}
+    goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
+    goldilocksPublicKey1: ${file(${self:custom.configFile}):goldilocksPublicKey1}
+    goldilocksPublicKey2: ${file(${self:custom.configFile}):goldilocksPublicKey2}
+    hrApplicationId: ${file(${self:custom.configFile}):hrApplicationId}
+    hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
     apiDomain: ${file(${self:custom.configFile}):apiDomain}
     fromEmail: ${file(${self:custom.configFile}):fromEmail}
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
+    scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
     IOPIPE_ENABLE_PROFILER: true
 
   iamRoleStatements:
@@ -82,7 +88,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits
             method: get
-            authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -92,7 +97,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits
             method: post
-            authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 
@@ -102,7 +106,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits/{id}
             method: patch
-            authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
   
@@ -112,7 +115,6 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/direct-deposits/{id}
             method: delete
-            authorizer: ${file(../../internal-api/serverless-output.json):TokenVerifierArn}
             cors:
               origin: '*'
 

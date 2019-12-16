@@ -149,7 +149,7 @@ const directDepositPatchSchema = Yup.object().shape({
 /**
  * Returns a listing of an employee's direct deposits.
  */
-export const list = utilService.gatewayEventHandler(async ({ securityContext, event }: IGatewayEventInput) => {
+export const list = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
     console.info('directDeposits.handler.list');
 
     const { tenantId, employeeId } = event.pathParameters;
@@ -187,7 +187,7 @@ export const list = utilService.gatewayEventHandler(async ({ securityContext, ev
 /**
  * Creates a direct deposit for an employee.
  */
-export const create = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const create = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('directDeposits.handler.post');
 
     const { tenantId, employeeId, companyId } = event.pathParameters;
@@ -226,7 +226,7 @@ export const create = utilService.gatewayEventHandler(async ({ securityContext, 
 /**
  * Updates a direct deposit for an employee.
  */
-export const update = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const update = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('directDeposits.handler.patch');
 
     const { tenantId, employeeId, companyId } = event.pathParameters;
@@ -256,7 +256,7 @@ export const update = utilService.gatewayEventHandler(async ({ securityContext, 
 /**
  * Deletes a direct deposit for an employee.
  */
-export const remove = utilService.gatewayEventHandler(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const remove = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('directDeposits.handler.delete');
 
     const { tenantId, employeeId, companyId } = event.pathParameters;
