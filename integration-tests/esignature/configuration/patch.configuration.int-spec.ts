@@ -22,7 +22,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 describe('esignature configuration', () => {
     beforeAll(async (done) => {
         try {
-            accessToken = await utils.getAccessToken();
+            accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
             done();
         } catch (error) {
             done.fail(error);
