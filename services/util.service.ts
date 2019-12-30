@@ -84,7 +84,7 @@ function isHttpResponse<T>(response: any): response is IHttpResponse<T> {
 
 /**
  * Handle an API Gateway event and make the appropriate callback. Response from delegate can be a POJO or an IHttpResponse.
- * 
+ *
  * NOTE: For new endpoints, it's recommended to use gatewayEventHandlerV2 instead, as it allows the service to be run locally.
  */
 export function gatewayEventHandler<T>(
@@ -140,8 +140,9 @@ export function gatewayEventHandler<T>(
  *   myHandler = gatewayEventHandlerV2({ allowAnonymous: true, delegate: async ({ event }) => { ... }});
  *   myHandler = gatewayEventHandlerV2(async ({ securityContext, event }) => { ... });
  */
-export function gatewayEventHandlerV2<T>(parameter: GatewayEventDelegate<T> | { allowAnonymous: boolean, delegate: GatewayEventDelegate<T> }): APIGatewayProxyHandler {
-
+export function gatewayEventHandlerV2<T>(
+    parameter: GatewayEventDelegate<T> | { allowAnonymous: boolean; delegate: GatewayEventDelegate<T> },
+): APIGatewayProxyHandler {
     // determine which call signature is being used, and extract delegate and allowAnonymous accordingly
     const unTypedParam = parameter as any;
 
@@ -171,14 +172,22 @@ export function gatewayEventHandlerV2<T>(parameter: GatewayEventDelegate<T> | { 
                 const securityContext = await new SecurityContextProvider().getSecurityContext({ event, allowAnonymous });
 
                 let requestBody: any;
-                if (event.body && !event.isBase64Encoded) {
-                    requestBody = parseJson(event.body, true);
+
+                if (event.body) {
+                    requestBody = event.body;
+                    if (event.isBase64Encoded) {
+                        requestBody = Buffer.from(requestBody, 'base64');
+                    }
+                    requestBody = parseJson(requestBody, true);
                 }
 
                 const result = await delegate({ securityContext, event, requestBody });
 
                 if (isHttpResponse(result)) {
-                    callback(undefined, buildLambdaResponse(result.statusCode, result.headers, result.body, event.path, result.isBase64Encoded));
+                    callback(
+                        undefined,
+                        buildLambdaResponse(result.statusCode, result.headers, result.body, event.path, result.isBase64Encoded),
+                    );
                 } else {
                     callback(undefined, buildLambdaResponse(result ? 200 : 204, undefined, result, event.path));
                 }
@@ -404,9 +413,9 @@ export async function getApplicationSecret(applicationId: string): Promise<strin
             secretId = configService.getApiSecretId();
         }
         const secret = await getSecret(secretId);
-        return JSON.parse(secret).apiSecret
+        return JSON.parse(secret).apiSecret;
     } catch (e) {
-        throw new Error(`Failed to get secret for applicationId ${applicationId}: ${e.message}`)
+        throw new Error(`Failed to get secret for applicationId ${applicationId}: ${e.message}`);
     }
 }
 

@@ -32,7 +32,7 @@ describe('esignatureService.categories.list', () => {
             });
     });
 
-    test('returns undefined if no categories are found', () => {
+    test('returns a paginated count of zero if no categories are found', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetCompanyInfo') {
                 return Promise.resolve(mockData.companyInfo);
@@ -43,7 +43,7 @@ describe('esignatureService.categories.list', () => {
         return esignatureService
             .listCompanyDocumentCategories(mockData.tenantId, mockData.companyId, undefined, mockData.domainName, mockData.path)
             .then((categories) => {
-                expect(categories).toEqual(undefined);
+                expect(categories.count).toEqual(0);
             });
     });
 
