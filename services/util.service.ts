@@ -170,7 +170,6 @@ export function gatewayEventHandlerV2<T>(
         (async () => {
             try {
                 const securityContext = await new SecurityContextProvider().getSecurityContext({ event, allowAnonymous });
-
                 let requestBody: any;
 
                 if (event.body) {
@@ -178,9 +177,12 @@ export function gatewayEventHandlerV2<T>(
                     if (event.isBase64Encoded) {
                         requestBody = Buffer.from(requestBody, 'base64');
                     }
-                    requestBody = parseJson(requestBody, true);
+                    try {
+                        requestBody = parseJson(requestBody, true);
+                    } catch (e) {
+                        console.log('Base64 event body is not a JSON');
+                    }
                 }
-
                 const result = await delegate({ securityContext, event, requestBody });
 
                 if (isHttpResponse(result)) {
