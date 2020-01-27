@@ -180,7 +180,8 @@ export function gatewayEventHandlerV2<T>(
                     try {
                         requestBody = parseJson(requestBody, true);
                     } catch (e) {
-                        console.log('Base64 event body is not a JSON');
+                        console.log('Event body is not a JSON');
+                        requestBody = event.body;
                     }
                 }
                 const result = await delegate({ securityContext, event, requestBody });
