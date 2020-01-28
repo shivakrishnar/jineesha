@@ -3,7 +3,7 @@ service: asure-tenants
 provider:
   stage: ${file(${self:custom.configFile}):stage}
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs12.x
   timeout: 900   # AWS API Gateway timeout limit (30s)
   versionFunctions: false
   memorySize: 1024
