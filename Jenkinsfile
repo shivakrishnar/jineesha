@@ -16,7 +16,7 @@ String semanticVersion
 
 // Project Name - this value is set by the name of the Jenkins job which should also be the name of the repo
 @Field final String projectName
-@Field final String nodeVersion = "v8.11"
+@Field final String nodeVersion = "v12.14.0"
 
 String commit_id
 Map deploymentOutput
