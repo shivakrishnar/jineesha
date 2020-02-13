@@ -26,7 +26,7 @@ export class ParameterizedQuery extends Query {
     public setStringParameter(name: any, value: string): void {
         if (this._query.search(`'${name}'`) >= 0) {
             // If the string is quoted in the query we'll assume all quotes are intentional
-            value.replace(/'/g, "''");
+            value = value.replace(/'/g, "''");
         } else {
             // If it's not, we assume a pair of starting and ending quotes are syntax not data and avoid escaping them
             const quotedString: RegExp = /^'.*'$/;

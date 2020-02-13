@@ -58,7 +58,7 @@ export function getConfig(): any {
 export function assertJsonOrThrow(schemas: any, schemaName: string, body: object): void {
     const result = assertJson(schemas, schemaName, body);
     if (result) {
-      throw result;
+        throw result;
     }
 }
 
@@ -117,7 +117,7 @@ export function testResponse(error: any, response: any, done: any, asserts: any)
         }
 
         if (error) {
-            done.fail(JSON.stringify(errorMessage, undefined, 2));
+            done.fail(JSON.stringify(maskTestFiles(errorMessage), undefined, 2));
         }
 
         error = asserts();
@@ -129,7 +129,7 @@ export function testResponse(error: any, response: any, done: any, asserts: any)
             errorMessage.errorDetails = {
                 message: error,
             };
-            done.fail(JSON.stringify(errorMessage));
+            done.fail(JSON.stringify(maskTestFiles(errorMessage)));
         } else {
             done();
         }
@@ -199,3 +199,26 @@ export const uriEncodeTestFile = (filePath: string): string => {
     const encoding = base64EncodeFile(filePath);
     return `data:${mimeType};base64,${encoding}`;
 };
+
+function maskTestFiles(errorMessage: DebuggingInfo): DebuggingInfo {
+    errorMessage = JSON.parse(JSON.stringify(errorMessage)); // errorMessage is partially a stream, this reads the stream and gives us an object
+    if (
+        !(
+            errorMessage.response &&
+            errorMessage.response.req &&
+            errorMessage.response.req.data &&
+            errorMessage.response.req.data.fileObject &&
+            errorMessage.response.req.data.fileObject.file
+        )
+    ) {
+        return errorMessage;
+    }
+    const fileString: string = errorMessage.response.req.data.fileObject.file;
+    const [fileType, fileData] = fileString.substr(4).split(/;base64/);
+    if (fileData) {
+        // If this fileString matches the data:{mimeType};base64,{data} template then we're going to mask the data
+        errorMessage.response.req.data.fileObject.file = `${fileType} [Masking ${fileData.length} Bytes of Data]`;
+    }
+
+    return errorMessage;
+}
