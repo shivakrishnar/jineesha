@@ -44,7 +44,10 @@ LegacyDocuments as
 (
 	select 
 		ID = d.ID,
-		d.CompanyID,
+		CompanyID = case
+                        when d.CompanyID is NULL then c.ID
+                        else d.CompanyID
+                    end,
 		c.CompanyName,
 		Title = iif(d.Title is null, d.Filename, d.Title), 
 		d.Filename,
@@ -68,7 +71,10 @@ LegacyDocumentPublishedToEmployee as
 (
  	select distinct
 		ID = d.ID,
-		d.CompanyID,
+		CompanyID = case
+                        when d.CompanyID is NULL then c.ID
+                        else d.CompanyID
+                    end,
 		c.CompanyName,
 		Title = iif(d.Title is NULL, d.Filename, d.Title), 
 		d.Filename,

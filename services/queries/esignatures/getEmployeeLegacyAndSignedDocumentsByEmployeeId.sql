@@ -54,49 +54,55 @@ where
 LegacyDocuments as
 (
 	select 
-		 ID = d.ID,
-		 d.CompanyID,
-		 c.CompanyName,
-		 Title = iif(d.Title is NULL, d.Filename, d.Title), 
-		 d.Filename,
-		 Category = d.DocumentCategory, 
-		 d.UploadDate,
-         EsignDate = d.ESignDate,
-		 d.IsPublishedToEmployee,
-		 d.IsPrivateDocument,
-		 EmployeeCode = null,
-		 EmployeeID = d.EmployeeID,
-		 e.FirstName,
-		 e.LastName,
-		 UploadedBy = d.UploadByUsername
+		ID = d.ID,
+		CompanyID = case
+						when d.CompanyID is null then c.ID
+						else d.CompanyID
+					end,
+		c.CompanyName,
+		Title = iif(d.Title is NULL, d.Filename, d.Title), 
+		d.Filename,
+		Category = d.DocumentCategory, 
+		d.UploadDate,
+		EsignDate = d.ESignDate,
+		d.IsPublishedToEmployee,
+		d.IsPrivateDocument,
+		EmployeeCode = null,
+		EmployeeID = d.EmployeeID,
+		e.FirstName,
+		e.LastName,
+		UploadedBy = d.UploadByUsername
 	from
 		dbo.Document d
 		inner join EmployeeInfo e on d.EmployeeID = e.ID
 		inner join dbo.Company c on c.ID = e.CompanyID
 	except
 		select 
-		 ID = d.ID,
-		 d.CompanyID,
-		 c.CompanyName,
-		 Title = iif(d.Title is NULL, d.Filename, d.Title), 
-		 d.Filename,
-		 Category = d.DocumentCategory, 
-		 d.UploadDate,
-         EsignDate = d.ESignDate,
-		 d.IsPublishedToEmployee,
-		 d.IsPrivateDocument,
-		 EmployeeCode = null,
-		 EmployeeID = d.EmployeeID,
-		 e.FirstName,
-		 e.LastName,
-		 UploadedBy = d.UploadByUsername
-	from
-		dbo.Document d
-		inner join EmployeeInfo e on d.EmployeeID = e.ID
-		inner join dbo.Company c on c.ID = e.CompanyID
-	where
-		d.IsPrivateDocument = 1
-		and @_includePrivateDocuments <> 1
+			ID = d.ID,
+			CompanyID = case
+							when d.CompanyID is null then c.ID
+							else d.CompanyID
+						end,
+			c.CompanyName,
+			Title = iif(d.Title is NULL, d.Filename, d.Title), 
+			d.Filename,
+			Category = d.DocumentCategory, 
+			d.UploadDate,
+			EsignDate = d.ESignDate,
+			d.IsPublishedToEmployee,
+			d.IsPrivateDocument,
+			EmployeeCode = null,
+			EmployeeID = d.EmployeeID,
+			e.FirstName,
+			e.LastName,
+			UploadedBy = d.UploadByUsername
+		from
+			dbo.Document d
+			inner join EmployeeInfo e on d.EmployeeID = e.ID
+			inner join dbo.Company c on c.ID = e.CompanyID
+		where
+			d.IsPrivateDocument = 1
+			and @_includePrivateDocuments <> 1
 ),
 LegacyDocumentPublishedToEmployee as
 (

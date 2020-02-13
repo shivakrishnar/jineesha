@@ -185,6 +185,7 @@ const generateDocumentUploadValidationSchema = {
     employeeId: { required: false, type: Number },
     isPrivate: { required: false, type: Boolean },
     documentId: { required: false, type: String },
+    category: { required: false, type: String },
 };
 
 const generateDocumentUploadSchema = Yup.object().shape({
@@ -193,6 +194,7 @@ const generateDocumentUploadSchema = Yup.object().shape({
     employeeId: Yup.number(),
     isPrivate: Yup.bool(),
     documentId: Yup.string(),
+    category: Yup.string(),
 });
 
 // Create Company Document schemas
@@ -235,10 +237,12 @@ const updateCompanyDocumentSchema = Yup.object().shape({
 const updateEmployeeDocumentValidationSchema = {
     title: { required: false, type: String },
     isPrivate: { required: false, type: Boolean },
+    category: { required: false, type: String },
 };
 const updateEmployeeDocumentSchema = Yup.object().shape({
     title: Yup.string(),
     isPrivate: Yup.bool(),
+    category: Yup.string(),
 });
 
 const fileObjectValidationSchema = {

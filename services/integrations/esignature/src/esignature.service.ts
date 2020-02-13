@@ -1851,7 +1851,7 @@ export async function getTemplateFiles(templateId: any): Promise<any> {
 export async function generateDocumentUploadUrl(tenantId: string, companyId: string, invoker: string, requestPayload: any): Promise<any> {
     console.info('esignature.service.generateDocumentUploadUrl');
 
-    const { employeeId, fileName: filename, title, isPrivate = false, documentId } = requestPayload;
+    const { employeeId, fileName: filename, title, isPrivate = false, documentId, category } = requestPayload;
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -1863,6 +1863,10 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
     if (employeeId && Number.isNaN(Number(employeeId))) {
         const errorMessage = `${employeeId} is not a valid number`;
         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    if (filename.lastIndexOf('.') === -1) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage('fileName should have an extension');
     }
 
     const uploadS3Filename = filename.replace(/[^a-zA-Z0-9.]/g, '');
@@ -1912,7 +1916,7 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
         }
     }
 
-    let documentMetadata = {};
+    let documentMetadata: any = {};
     if (documentId) {
         const [decodedId, type] = await decodeId(documentId);
         const isLegacyDocument = type === DocType.LegacyDocument;
@@ -1923,7 +1927,50 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
 
         if (employeeId && isLegacyDocument) {
             await isEditableLegacyEmployeeDocument(String(decodedId), tenantId, employeeId);
+        } else {
+            // In order to preserve the old category if the user did not supply a new one,
+            // we need to retrieve file metadata record from the database and use the
+            // existing category.
+            const query = new ParameterizedQuery('getFileMetadataById', Queries.getFileMetadataById);
+            query.setParameter('@id', decodedId);
+            const fileMetadataPayload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+
+            const fileMetadataResult: any = await utilService.invokeInternalService(
+                'queryExecutor',
+                fileMetadataPayload,
+                InvocationType.RequestResponse,
+            );
+
+            if (fileMetadataResult.recordset.length === 0) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${decodedId} not found`);
+            }
+
+            const { Category: oldCategory } = fileMetadataResult.recordset[0];
+
+            if (oldCategory) {
+                documentMetadata.category = oldCategory;
+            }
         }
+    }
+
+    const metadata = {
+        fileName: updatedFilename,
+        title,
+        isPrivate: isPrivate.toString(),
+        uploadedBy: invoker,
+        tenantId,
+        companyId,
+        ...employeeMetadata,
+        ...documentMetadata,
+    };
+
+    if (category) {
+        metadata.category = category;
     }
 
     const url = s3Client.getSignedUrl('putObject', {
@@ -1933,16 +1980,7 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
         ContentEncoding: 'base64',
         ACL: 'bucket-owner-full-control',
         Expires: 90, // 90 seconds TTL,
-        Metadata: {
-            fileName: updatedFilename,
-            title,
-            isPrivate: isPrivate.toString(),
-            uploadedBy: invoker,
-            tenantId,
-            companyId,
-            ...employeeMetadata,
-            ...documentMetadata,
-        },
+        Metadata: metadata,
     });
 
     return { url, uploadFilename: updatedFilename };
@@ -2046,6 +2084,7 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
             islegacydocument,
             isprivate,
             isesigneddocument,
+            category,
         } = metadata;
 
         // Don't handle documents generated when e-signed. Their metadata has already been persisted to the database
@@ -2062,7 +2101,7 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
             query.setParameter('@companyId', companyid);
             query.setParameter('@employeeCode', `'${employeecode}'`);
             query.setParameter('@title', `${title.replace(/'/g, "''")}`);
-            query.setParameter('@category', 'NULL');
+            query.setStringParameter('@category', category || '');
             query.setParameter('@uploadDate', uploadTime);
             query.setParameter('@pointer', uploadedItemS3Key.replace(/'/g, "''"));
             query.setParameter('@uploadedBy', `'${uploadedby}'`);
@@ -2095,7 +2134,6 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
                     Title: oldTitle,
                     Pointer: oldPointer,
                     IsPublishedToEmployee: oldIsPublishedToEmployee,
-                    Category: oldCategory,
                 } = fileMetadataResult.recordset[0];
 
                 // update record in database
@@ -2110,7 +2148,7 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
                 query.setParameter('@title', title ? title.replace(/'/g, "''") : oldTitle.replace(/'/g, "''"));
                 query.setParameter('@pointer', (uploadedItemS3Key && uploadedItemS3Key.replace(/'/g, "''")) || oldPointer);
                 query.setParameter('@isPublishedToEmployee', published);
-                query.setParameter('@category', oldCategory !== null ? `'${oldCategory}'` : 'NULL');
+                query.setStringParameter('@category', category || '');
 
                 // delete existing item from S3
                 s3Client
@@ -2150,6 +2188,7 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
                 if (title) {
                     query.setParameter('@title', title);
                 }
+                query.setStringParameter('@category', category || '');
             }
         }
 
@@ -2379,7 +2418,7 @@ async function updateEmployeeS3Document(
 ): Promise<any> {
     console.info('esignature.service.updateEmployeeS3Document');
 
-    const { title, isPrivate } = request;
+    const { title, isPrivate, category } = request;
 
     try {
         // get file metadata / make sure it exists in the database & belongs to the employee
@@ -2423,12 +2462,16 @@ async function updateEmployeeS3Document(
         if (isPrivate !== undefined) {
             published = isPrivate ? '0' : '1';
         }
+
+        let categoryToUse = oldCategory !== null || oldCategory !== '' ? oldCategory : '';
+        categoryToUse = category || categoryToUse;
+
         query = new ParameterizedQuery('UpdateFileMetadataById', Queries.updateFileMetadataById);
         query.setParameter('@id', documentId);
         query.setParameter('@title', title ? title.replace(/'/g, "''") : oldTitle.replace(/'/g, "''"));
         query.setParameter('@pointer', oldPointer);
         query.setParameter('@isPublishedToEmployee', published);
-        query.setParameter('@category', oldCategory !== null ? `'${oldCategory}'` : 'NULL');
+        query.setStringParameter('@category', categoryToUse);
         payload = {
             tenantId,
             queryName: query.name,
@@ -2446,6 +2489,7 @@ async function updateEmployeeS3Document(
             extension: oldExtension,
             uploadDate: oldUploadDate,
             isPrivate: published === '0',
+            category: categoryToUse,
         };
 
         return response;
@@ -2470,13 +2514,21 @@ async function updateEmployeeS3Document(
 async function updateEmployeeLegacyDocument(tenantId: string, employeeId: string, documentId: number, request: any): Promise<any> {
     console.info('esignature.service.updateEmployeeLegacyDocument');
 
-    const { title, isPrivate } = request;
+    const { title, isPrivate, category } = request;
 
     try {
         const documentMetadata = await isEditableLegacyEmployeeDocument(String(documentId), tenantId, employeeId);
 
         const {
-            metadata: { isPrivate: currentPrivacy, title: currentTitle, category, isPublishedToEmployee, uploadDate, extension, fileName },
+            metadata: {
+                isPrivate: currentPrivacy,
+                title: currentTitle,
+                category: currentCategory,
+                isPublishedToEmployee,
+                uploadDate,
+                extension,
+                fileName,
+            },
         } = documentMetadata;
 
         // update record in database
@@ -2489,10 +2541,13 @@ async function updateEmployeeLegacyDocument(tenantId: string, employeeId: string
         let titleToUse = currentTitle !== null ? `'${currentTitle.replace(/'/g, "''")}'` : 'NULL';
         titleToUse = title ? `'${title.replace(/'/g, "''")}'` : titleToUse;
 
+        let categoryToUse = currentCategory !== null || currentCategory !== '' ? currentCategory : '';
+        categoryToUse = category || categoryToUse;
+
         const query = new ParameterizedQuery('UpdateDocumentMetadataById', Queries.updateDocumentMetadataById);
         query.setParameter('@id', documentId);
         query.setParameter('@title', titleToUse);
-        query.setParameter('@category', category !== null ? `'${category}'` : 'NULL');
+        query.setStringParameter('@category', categoryToUse);
         query.setParameter('@isPublishedToEmployee', isPublishedToEmployee !== null ? isPublishedToEmployee : 'NULL');
         query.setParameter('@isPrivateDocument', documentPrivacy);
         const payload = {
@@ -2514,6 +2569,7 @@ async function updateEmployeeLegacyDocument(tenantId: string, employeeId: string
             extension,
             uploadDate,
             isPrivate: documentPrivacy === '1',
+            category: categoryToUse,
         };
 
         return response;
@@ -2707,6 +2763,7 @@ async function updateLegacyDocument(tenantId: string, documentId: number, reques
             query.setParameter('@fileName', fileName);
             query.setParameter('@extension', `.${newExtension}`);
             query.setParameter('@contentType', contentType);
+            query.setStringParameter('@category', category || '');
             payload = {
                 tenantId,
                 queryName: query.name,
