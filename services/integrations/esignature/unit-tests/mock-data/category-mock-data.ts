@@ -1,4 +1,4 @@
-export const companyDocumentCategoriesDBResponse = {
+export const documentCategoriesDBResponse = {
     recordsets: [
         [
             [
@@ -31,7 +31,7 @@ export const companyDocumentCategoriesDBResponse = {
     rowsAffected: [4],
 };
 
-export const companyDocumentCategoriesResponse = [
+export const documentCategoriesResponse = [
     {
         value: 'onboarding',
         label: 'onboarding',
