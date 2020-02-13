@@ -1081,6 +1081,148 @@ export async function listCompanySignatureRequests(
 }
 
 /**
+ * This returns a paginated list of all unique document categories among a company's employee documents
+ * @param {string} tenantId: The unique identifier for the tenant
+ * @param {string} companyId: The unique identifier for the company
+ * @param {any} queryParams: The query parameters generated for paged results.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @param {boolean} isManager: whether the user is a manager
+ * @param {string} emailAddress: user email address.
+ * @returns {Promise<PaginatedResult>}: A promise of a paginated list of document categories
+ */
+export async function listEmployeeDocumentCategoriesByCompany(
+    tenantId: string,
+    companyId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+    isManager: boolean,
+    emailAddress: string,
+): Promise<PaginatedResult> {
+    console.info('esignatureService.listEmployeeDocumentCategoriesByCompany');
+
+    const validQueryStringParameters: string[] = ['pageToken'];
+
+    if (queryParams) {
+        // Check for unsupported query params
+        if (!Object.keys(queryParams).every((param) => validQueryStringParameters.includes(param))) {
+            const error: ErrorMessage = errorService.getErrorResponse(30);
+            error
+                .setDeveloperMessage('Unsupported query parameter(s) supplied')
+                .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(',')}. See documentation for usage.`);
+            throw error;
+        }
+    }
+
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    try {
+        await getCompanyDetails(tenantId, companyId);
+
+        let query = new ParameterizedQuery(
+            'GetEmployeeLegacyAndSignedDocumentCategoriesByCompanyId',
+            Queries.getEmployeeLegacyAndSignedDocumentCategoriesByCompanyId,
+        );
+        if (isManager) {
+            query = new ParameterizedQuery(
+                'GetEmployeeLegacyAndSignedDocumentCategoriesByCompanyIdForManager',
+                Queries.getEmployeeLegacyAndSignedDocumentCategoriesByCompanyForManager,
+            );
+            query.setParameter('@manager', emailAddress);
+        }
+        query.setParameter('@companyId', companyId);
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+        const payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const categories: DocumentCategory[] = result.recordsets[1].map((entry) => ({ value: entry.Category, label: entry.Category }));
+        const totalResults: number = result.recordsets[0][0].totalCount;
+        return paginationService.createPaginatedResult(categories, baseUrl, totalResults, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(`Failed to get employee document category list by company, reason: ${JSON.stringify(error)}`);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * This returns a paginated list of all unique document categories among an employee's documents
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the specified company.
+ * @param {string} employeeId: The unique identifier employee.
+ * @param {any} queryParams: The query parameters that were specified by the user.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @param {boolean} includePrivateDocumentation: Indicates whether the results should include private documents
+ * @param {string} invokerUsername: The username of the account invoking this service
+ * @returns {Promise<PaginatedResult>}: A promise of a paginated list of document categories
+ */
+export async function listEmployeeDocumentCategories(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+    includePrivateDocumentation: boolean,
+    invokerUsername: string,
+): Promise<PaginatedResult> {
+    console.info('esignatureService.listEmployeeDocumentCategories');
+
+    const validQueryStringParameters: string[] = ['pageToken'];
+
+    if (queryParams) {
+        // Check for unsupported query params
+        if (!Object.keys(queryParams).every((param) => validQueryStringParameters.includes(param))) {
+            const error: ErrorMessage = errorService.getErrorResponse(30);
+            error
+                .setDeveloperMessage('Unsupported query parameter(s) supplied')
+                .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(',')}. See documentation for usage.`);
+            throw error;
+        }
+    }
+
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    try {
+        // validate company and employee id
+        await Promise.all([validateEmployeeId(tenantId, companyId, employeeId), getCompanyDetails(tenantId, companyId)]);
+
+        const query = new ParameterizedQuery(
+            'GetEmployeeLegacyAndSignedDocumentCategoriesByEmployeeId',
+            Queries.getEmployeeLegacyAndSignedDocumentCategoriesByEmployeeId,
+        );
+        query.setParameter('@employeeId', employeeId);
+        query.setParameter('@includePrivateDocuments', includePrivateDocumentation ? 1 : 0);
+        query.setStringParameter('@invokerUsername', invokerUsername);
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+        const payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const categories: DocumentCategory[] = result.recordsets[1].map((entry) => ({ value: entry.Category, label: entry.Category }));
+        const totalResults: number = result.recordsets[0][0].totalCount;
+        return paginationService.createPaginatedResult(categories, baseUrl, totalResults, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(`Failed to get employee document category list by employee, reason: ${JSON.stringify(error)}`);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * This returns a paginated list of all unique document categories among all of a company's documents
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for a company within a tenant

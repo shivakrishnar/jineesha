@@ -83,7 +83,7 @@ where
 -- pagination count
 select totalCount = count(*) from @tmp
 
-select 
+select distinct
     Category
 from 
     @tmp

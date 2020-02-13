@@ -185,6 +185,24 @@ functions:
             cors:
               origin: '*'
 
+  listEmployeeCategoriesByCompany:
+    handler: esignature/src/handler.listEmployeeDocumentCategoriesByCompany
+    events:
+      - http:
+          path: /tenants/{tenantId}/companies/{companyId}/documents/categories
+          method: get
+          cors:
+            origin: '*'
+
+  listEmployeeCategories:
+    handler: esignature/src/handler.listEmployeeDocumentCategories
+    events:
+      - http:
+          path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents/categories
+          method: get
+          cors:
+            origin: '*'
+
   listCompanyDocumentCategories:
     handler: esignature/src/handler.listCompanyDocumentCategories
     events:
