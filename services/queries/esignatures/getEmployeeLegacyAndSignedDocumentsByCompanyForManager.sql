@@ -113,38 +113,64 @@ LegacyDocumentPublishedToEmployee as
 
 SignedDocuments as 
 (
-	select distinct
-	  ID = d.ID,
-	  d.CompanyID,
+    select
+	  ID = f.ID,
+	  f.CompanyID,
 	  c.CompanyName,
-	  d.Title, 
-	  Filename = right(d.Pointer, charindex('/', reverse(d.Pointer) + '/') - 1),
-	  d.Category, 
-	  d.UploadDate,
+	  f.Title, 
+	  Filename = right(f.Pointer, charindex('/', reverse(f.Pointer) + '/') - 1),
+	  f.Category, 
+	  f.UploadDate,
       EsignDate = null,
-	  d.IsPublishedToEmployee,
+	  f.IsPublishedToEmployee,
 	  IsPrivateDocument = null,
-	  d.EmployeeCode,
+	  f.EmployeeCode,
 	  EmployeeID = e.ID,
-      e.FirstName,
-      e.LastName,
-	  d.UploadedBy
+	  e.FirstName,
+	  e.LastName,
+	  f.UploadedBy
 	from
-		dbo.FileMetadata d
-		inner join ManagedEmployees e on 
-			d.CompanyID = e.CompanyID
-			and d.EmployeeCode = e.EmployeeCode
+		dbo.FileMetadata f
+        inner join ManagedEmployees e on 
+            f.CompanyID = e.CompanyID 
+            and f.EmployeeCode = e.EmployeeCode
 		inner join dbo.Company c on
 			c.ID = e.CompanyID
     where
-		d.IsPublishedToEmployee <> 1 or d.IsPublishedToEmployee is null
+		f.IsPublishedToEmployee <> 1 or f.IsPublishedToEmployee is null	
+    union
+    select
+	  ID = f.ID,
+	  f.CompanyID,
+	  c.CompanyName,
+	  f.Title, 
+	  Filename = right(f.Pointer, charindex('/', reverse(f.Pointer) + '/') - 1),
+	  f.Category, 
+	  f.UploadDate,
+      EsignDate = null,
+	  f.IsPublishedToEmployee,
+	  IsPrivateDocument = null,
+	  f.EmployeeCode,
+	  EmployeeID = e.ID,
+	  e.FirstName,
+	  e.LastName,
+	  f.UploadedBy
+	from
+		dbo.FileMetadata f
+        inner join ManagedEmployees e on 
+            f.CompanyID = e.CompanyID 
+            and f.EmployeeCode = e.EmployeeCode
+		inner join dbo.Company c on
+			c.ID = e.CompanyID
+    where
+		f.IsPublishedToEmployee = 1
 ),
 
 NewDocumentPublishedToEmployee as 
 (
-	select distinct
+    select
 		  ID = d.ID,
-		  e.CompanyID,
+		  d.CompanyID,
 		  c.CompanyName,
 		  d.Title, 
 		  Filename = right(d.Pointer, charindex('/', reverse(d.Pointer) + '/') - 1),
@@ -153,48 +179,20 @@ NewDocumentPublishedToEmployee as
           EsignDate = null,
 		  d.IsPublishedToEmployee,
 		  IsPrivateDocument = null,
-		  EmployeeCode = null,
+		  d.EmployeeCode,
 		  EmployeeID = null,
-          FirstName = null,
-          LastName = null,
+		  FirstName = null,
+		  LastName = null,
 		  d.UploadedBy
 	from
 		dbo.FileMetadata d
 		inner join ManagedEmployees e on 
 			d.CompanyID = e.CompanyID
-            and d.EmployeeCode = e.EmployeeCode
-	    inner join dbo.Company c on
+		inner join dbo.Company c on
 			c.ID = e.CompanyID
 	where
-		d.IsPublishedToEmployee = 1
-
-    union
-
-    select distinct
-		  ID = d.ID,
-		  e.CompanyID,
-		  c.CompanyName,
-		  d.Title, 
-		  Filename = right(d.Pointer, charindex('/', reverse(d.Pointer) + '/') - 1),
-		  d.Category, 
-		  d.UploadDate,
-          EsignDate = null,
-		  d.IsPublishedToEmployee,
-		  IsPrivateDocument = null,
-		  EmployeeCode = null,
-		  EmployeeID = null,
-          FirstName = null,
-          LastName = null,
-		  d.UploadedBy
-	from
-		dbo.FileMetadata d
-		inner join ManagedEmployees e on 
-			d.CompanyID = e.CompanyID
-	    inner join dbo.Company c on
-			c.ID = e.CompanyID
-	where
-		d.IsPublishedToEmployee = 1 
-        and d.EmployeeCode is null
+		d.IsPublishedToEmployee = 1 and
+        d.EmployeeCode is null
 ),
 
 CollatedDocuments as
