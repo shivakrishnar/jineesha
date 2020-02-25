@@ -357,6 +357,7 @@ export const updateLegacyCompanyDocumentResponse = {
 export const updateEmployeeDocumentRequest = {
     title: 'Title',
     isPrivate: false,
+    category: 'test',
 };
 
 export const updateNonLegacyEmployeeDocumentResponse = {
@@ -365,6 +366,7 @@ export const updateNonLegacyEmployeeDocumentResponse = {
     fileName: 'file.png',
     extension: 'png',
     isPrivate: false,
+    category: 'test',
 };
 
 export const updateLegacyEmployeeDocumentResponse = {
@@ -373,6 +375,7 @@ export const updateLegacyEmployeeDocumentResponse = {
     fileName: 'file',
     extension: 'png',
     isPrivate: false,
+    category: 'test',
 };
 
 export const documentDBResponse = {
@@ -391,6 +394,7 @@ export const uploadUrlGenerationRequest = {
     fileName: 'A17_FlightPlan.pdf',
     title: 'Flight Of the Intruder',
     isPrivate: false,
+    documentId: 'XGia',
 };
 
 export const uploadUrlGenerationResponse = {

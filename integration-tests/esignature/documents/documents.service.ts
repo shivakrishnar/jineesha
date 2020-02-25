@@ -112,6 +112,7 @@ export function getValidPostEmployeeDocumentObject(): any {
         title: 'Create employee document integration test',
         employeeId: configs.employeeId,
         isPrivate: false,
+        category: 'Integration test document',
     };
 }
 

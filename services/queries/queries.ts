@@ -75,6 +75,18 @@ export const Queries = {
         .toString(),
     getFileMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/getFileMetadataById.sql')).toString(),
     getDocumentById: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentById.sql')).toString(),
+    getEmployeeLegacyAndSignedDocumentCategories: fs
+        .readFileSync(path.join(basePath, 'esignatures/getEmployeeLegacyAndSignedDocumentCategories.sql'))
+        .toString(),
+    getEmployeeLegacyAndSignedDocumentCategoriesByCompanyId: fs
+        .readFileSync(path.join(basePath, 'esignatures/getEmployeeLegacyAndSignedDocumentCategoriesByCompanyId.sql'))
+        .toString(),
+    getEmployeeLegacyAndSignedDocumentCategoriesByCompanyForManager: fs
+        .readFileSync(path.join(basePath, 'esignatures/getEmployeeLegacyAndSignedDocumentCategoriesByCompanyForManager.sql'))
+        .toString(),
+    getEmployeeLegacyAndSignedDocumentCategoriesByEmployeeId: fs
+        .readFileSync(path.join(basePath, 'esignatures/getEmployeeLegacyAndSignedDocumentCategoriesByEmployeeId.sql'))
+        .toString(),
     getDocumentCategoriesByCompany: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentCategoryByCompany.sql')).toString(),
     getOnboardingDocumentsByCompanyId: fs.readFileSync(path.join(basePath, 'esignatures/getOnboardingDocumentsByCompanyId.sql')).toString(),
     updateFileMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/updateFileMetadataById.sql')).toString(),

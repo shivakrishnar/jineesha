@@ -185,6 +185,7 @@ const generateDocumentUploadValidationSchema = {
     employeeId: { required: false, type: Number },
     isPrivate: { required: false, type: Boolean },
     documentId: { required: false, type: String },
+    category: { required: false, type: String },
 };
 
 const generateDocumentUploadSchema = Yup.object().shape({
@@ -193,6 +194,7 @@ const generateDocumentUploadSchema = Yup.object().shape({
     employeeId: Yup.number(),
     isPrivate: Yup.bool(),
     documentId: Yup.string(),
+    category: Yup.string(),
 });
 
 // Create Company Document schemas
@@ -235,10 +237,12 @@ const updateCompanyDocumentSchema = Yup.object().shape({
 const updateEmployeeDocumentValidationSchema = {
     title: { required: false, type: String },
     isPrivate: { required: false, type: Boolean },
+    category: { required: false, type: String },
 };
 const updateEmployeeDocumentSchema = Yup.object().shape({
     title: Yup.string(),
     isPrivate: Yup.bool(),
+    category: Yup.string(),
 });
 
 const fileObjectValidationSchema = {
@@ -462,9 +466,114 @@ export const listCompanySignatureRequests = utilService.gatewayEventHandlerV2(as
 });
 
 /**
+ * List each document category among an employee's documents by company
+ */
+export const listEmployeeDocumentCategoriesByCompany = utilService.gatewayEventHandlerV2(
+    async ({ securityContext, event }: IGatewayEventInput) => {
+        console.info('esignature.handler.listEmployeeDocumentCategoriesByCompany');
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+        utilService.checkBoundedIntegralValues(event.pathParameters);
+
+        const { tenantId, companyId } = event.pathParameters;
+        const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+            return (
+                role === Role.hrManager ||
+                role === Role.globalAdmin ||
+                role === Role.serviceBureauAdmin ||
+                role === Role.superAdmin ||
+                role === Role.hrAdmin ||
+                role === Role.hrRestrictedAdmin
+            );
+        });
+
+        if (!isAuthorized) {
+            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        }
+
+        const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
+        const emailAddress: string = securityContext.principal.email;
+        const {
+            requestContext: { domainName, path },
+        } = event;
+
+        const results = await esignatureService.listEmployeeDocumentCategoriesByCompany(
+            tenantId,
+            companyId,
+            event.queryStringParameters,
+            domainName,
+            path,
+            isManager,
+            emailAddress,
+        );
+        return results.count === 0 ? { statusCode: 204, headers: new Headers() } : results;
+    },
+);
+
+/**
+ * List each document category among an employee's documents by employee
+ */
+export const listEmployeeDocumentCategories = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listEmployeeDocumentCategories');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId, companyId, employeeId } = event.pathParameters;
+
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    const isManagerOrAbove: boolean = securityContext.roleMemberships.some((role) => {
+        return (
+            role === Role.hrManager ||
+            role === Role.globalAdmin ||
+            role === Role.serviceBureauAdmin ||
+            role === Role.superAdmin ||
+            role === Role.hrAdmin ||
+            role === Role.hrRestrictedAdmin
+        );
+    });
+
+    let results: any;
+    if (isManagerOrAbove) {
+        const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
+        const emailAddress: string = securityContext.principal.email;
+        results = await esignatureService.listEmployeeDocumentCategoriesByCompany(
+            tenantId,
+            companyId,
+            event.queryStringParameters,
+            domainName,
+            path,
+            isManager,
+            emailAddress,
+        );
+    } else {
+        results = await esignatureService.listEmployeeDocumentCategories(
+            tenantId,
+            companyId,
+            employeeId,
+            event.queryStringParameters,
+            domainName,
+            path,
+            isManagerOrAbove,
+            securityContext.principal.email,
+        );
+    }
+    return results.count === 0 ? { statusCode: 204, headers: new Headers() } : results;
+});
+
+/**
  * List each document category among a company's documents
  */
 export const listCompanyDocumentCategories = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.listCompanyDocumentCategories');
+
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);

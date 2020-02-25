@@ -326,7 +326,7 @@ describe('request upload url', () => {
 
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
-            .patch(uri)
+            .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
             .set('Content-Type', 'application/json')
             .send(requestWithInvalidField)
@@ -345,7 +345,7 @@ describe('request upload url', () => {
 
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
-            .patch(uri)
+            .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
             .set('Content-Type', 'application/json')
             .send(requestMissingRequiredField)
@@ -360,11 +360,11 @@ describe('request upload url', () => {
 
     test('must return a 400 if filename does not have an extension', (done) => {
         const requestMissingFileExtension: any = Object.assign({}, document);
-        requestMissingFileExtension.fileName = `filename`;
+        requestMissingFileExtension.fileName = 'filename';
 
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
-            .patch(uri)
+            .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
             .set('Content-Type', 'application/json')
             .send(requestMissingFileExtension)
@@ -373,6 +373,44 @@ describe('request upload url', () => {
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
                     return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 400 if category is not a string', (done) => {
+        const requestWithIncorrectCategory: any = Object.assign({}, document);
+        requestWithIncorrectCategory.category = 123;
+
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
+        request(baseUri)
+            .post(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .send(requestWithIncorrectCategory)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(400)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 200 if category is not supplied', (done) => {
+        const requestWithoutCategory: any = Object.assign({}, document);
+        delete requestWithoutCategory.category;
+
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
+        request(baseUri)
+            .post(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .send(requestWithoutCategory)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(200)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.UploadPresignedUrl, response.body);
                 });
             });
     });

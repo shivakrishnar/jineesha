@@ -1081,6 +1081,8 @@ describe('esignatureService.create-upload-url', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetEmployeeInfoById') {
                 return Promise.resolve(mockData.employeeDBResponse);
+            } else if (payload.queryName === 'getFileMetadataById') {
+                return Promise.resolve(mockData.documentFileMetadataByIdDBResponse);
             }
         });
 
