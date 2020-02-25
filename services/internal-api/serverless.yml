@@ -95,15 +95,6 @@ provider:
       Resource: "arn:aws:s3:::*"
 
 functions:
-  tokenVerifier:
-    handler: authentication/handler.tokenVerifier
-  
-  ssoTokenVerifier:
-    handler: authentication/handler.ssoTokenVerifier
-
-  hrTokenVerifier:
-    handler: authentication/handler.hrTokenVerifier
-
   eventNotifier:
     handler: notification/handler.send
 
@@ -125,16 +116,10 @@ functions:
 
 resources:
   Outputs:
-    TokenVerifierArn:
-      Value: { "Fn::GetAtt": ["TokenVerifierLambdaFunction", "Arn" ] }
     EventNotifierArn:
       Value: { "Fn::GetAtt": ["EventNotifierLambdaFunction", "Arn" ] }
     AuditLoggerArn:
       Value: { "Fn::GetAtt": ["AuditLoggerLambdaFunction", "Arn" ] }
-    SsoTokenVerifierArn:
-      Value: { "Fn::GetAtt": ["SsoTokenVerifierLambdaFunction", "Arn" ] }
-    HrTokenVerifierArn:
-      Value: { "Fn::GetAtt": ["HrTokenVerifierLambdaFunction", "Arn" ] }
 
 plugins:
   - serverless-stack-output
