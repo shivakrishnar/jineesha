@@ -18,7 +18,7 @@ describe('SecurityContextProvider', () => {
         jest.clearAllMocks();
 
         (configService.getHrApplicationId as jest.Mock).mockReturnValue('ahr-id');
-        (configService.getGoldilocksPublicKeys as jest.Mock).mockReturnValue([ { keyId: 'key-id', publicKey: 'the-secret' }]);
+        (configService.getSsoPublicKeys as jest.Mock).mockReturnValue([ { keyId: 'key-id', publicKey: 'the-secret' }]);
 
         (ssoService.exchangeToken as jest.Mock).mockResolvedValue({ access_token: 'ahr-token' });
 

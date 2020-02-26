@@ -27,8 +27,8 @@ provider:
     scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
     hrApplicationId: ${file(${self:custom.configFile}):hrApplicationId}
-    goldilocksPublicKey1: ${file(${self:custom.configFile}):goldilocksPublicKey1}
-    goldilocksPublicKey2: ${file(${self:custom.configFile}):goldilocksPublicKey2}
+    ssoPublicKey1: ${file(${self:custom.configFile}):ssoPublicKey1}
+    ssoPublicKey2: ${file(${self:custom.configFile}):ssoPublicKey2}
     pageLimitDefault: 30
     pageLimitMax: 100
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}

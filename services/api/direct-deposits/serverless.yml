@@ -29,8 +29,8 @@ provider:
     evoHrGroupEmployee: ${file(${self:custom.configFile}):evoHrGroupEmployee}
     evoHrGlobalAdmin: ${file(${self:custom.configFile}):evoHrGlobalAdmin}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
-    goldilocksPublicKey1: ${file(${self:custom.configFile}):goldilocksPublicKey1}
-    goldilocksPublicKey2: ${file(${self:custom.configFile}):goldilocksPublicKey2}
+    ssoPublicKey1: ${file(${self:custom.configFile}):ssoPublicKey1}
+    ssoPublicKey2: ${file(${self:custom.configFile}):ssoPublicKey2}
     hrApplicationId: ${file(${self:custom.configFile}):hrApplicationId}
     hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
     apiDomain: ${file(${self:custom.configFile}):apiDomain}

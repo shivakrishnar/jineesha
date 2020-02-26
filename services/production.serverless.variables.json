@@ -40,6 +40,6 @@
     "AuditLogGroupName": "AdvancedHR-Audit-Log",
     "tenantAdminCredentialsId": "tenantAdminCredentials",
     "logRetentionInDays": 365,
-    "goldilocksPublicKey1": "1572373273|-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvnwVWObHZotD9GElFz4D\nrQh48G14cL0eo90lUDXkAmjsHJDXpvOfdbAwbRYTnpg/joyp4xDPjvX9H5gKf8YS\ntUpMP+XRX2rGWi+kbvEaegaK/ak+1zJTruZ9Ked+/VqdP+kUVzWIRY5uIhMmqLIL\ngynonqTEHt5OcTWRrvsF9P5PXVjYxj5HopPV813wiw3ktGV72SXesQSht554iJe9\niOPXIDDhpRzYG3FMT3UA9DunbPuI8AjIzQ621Q0n5Xo+vCtLlMeBIVgxOtgfr4iv\nqTUTyxIzpTbQtoIb8OHo50E25dlU6dsIN0zUt+fAnItxS8QwR2IPjTfr3xrhTkaM\nbwIDAQAB\n-----END PUBLIC KEY-----",
-    "goldilocksPublicKey2": "NOT_YET_USED"
+    "ssoPublicKey1": "1572373273|-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvnwVWObHZotD9GElFz4D\nrQh48G14cL0eo90lUDXkAmjsHJDXpvOfdbAwbRYTnpg/joyp4xDPjvX9H5gKf8YS\ntUpMP+XRX2rGWi+kbvEaegaK/ak+1zJTruZ9Ked+/VqdP+kUVzWIRY5uIhMmqLIL\ngynonqTEHt5OcTWRrvsF9P5PXVjYxj5HopPV813wiw3ktGV72SXesQSht554iJe9\niOPXIDDhpRzYG3FMT3UA9DunbPuI8AjIzQ621Q0n5Xo+vCtLlMeBIVgxOtgfr4iv\nqTUTyxIzpTbQtoIb8OHo50E25dlU6dsIN0zUt+fAnItxS8QwR2IPjTfr3xrhTkaM\nbwIDAQAB\n-----END PUBLIC KEY-----",
+    "ssoPublicKey2": "NOT_YET_USED"
 }

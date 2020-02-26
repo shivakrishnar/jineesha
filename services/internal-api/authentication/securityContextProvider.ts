@@ -51,7 +51,7 @@ export class SecurityContextProvider {
                 // V2 access token
                 console.log('Verifying a V2 access token');
                 algorithm = 'RS256';
-                const keys = configService.getGoldilocksPublicKeys().find((key) => key.keyId === header.kid);
+                const keys = configService.getSsoPublicKeys().find((key) => key.keyId === header.kid);
                 secret = keys ? keys.publicKey : undefined;
                 if (!secret) {
                     throw new Error(`Could not find a key to verify V2 access token with kid ${header.kid}.`);

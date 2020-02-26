@@ -25,8 +25,8 @@ provider:
     fromEmail: ${file(${self:custom.configFile}):fromEmail}
     hrCredentialsId: ${file(${self:custom.configFile}):hrCredentialsId}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
-    goldilocksPublicKey1: ${file(${self:custom.configFile}):goldilocksPublicKey1}
-    goldilocksPublicKey2: ${file(${self:custom.configFile}):goldilocksPublicKey2}
+    ssoPublicKey1: ${file(${self:custom.configFile}):ssoPublicKey1}
+    ssoPublicKey2: ${file(${self:custom.configFile}):ssoPublicKey2}
     hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
     goldilocksTenantId: ${file(${self:custom.configFile}):goldilocksTenantId}
     fileBucketName: ${file(${self:custom.configFile}):fileBucketName}
