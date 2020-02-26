@@ -1,5 +1,4 @@
-import { IAccount } from './account';
-
+import { IAccount, ISecurityPolicy, ISecurityRequest, SecurityContext as BaseSecurityContext } from '@asuresoftware/asure.auth';
 import { Role } from '../../api/models/Role';
 import * as errorService from '../../errors/error.service';
 import { ErrorMessage } from '../../errors/errorMessage';
@@ -9,39 +8,49 @@ import * as utilService from '../../util.service';
 import { InvocationType } from '../../util.service';
 import { DatabaseEvent, QueryType } from '../database/events';
 import { ApplicationRoleLevel } from './ApplicationRoleLevelEnum';
-import { ISecurityPolicy } from './securityPolicyAuthorizer';
 
 /**
- * SecurityContext represents data pulled from the token when it is verified.
+ * SecurityContext represents data pulled from the token when it is verified,
+ * and is passed to the lambda handler code.
  * 
- * If an endpoint has an "authorizer" defined in serverless.yml, the securityContext is
- * returned as a serialized string from the tokenVerifier lambda, then later parsed from
- * requestContext.authorizer.principalId, and by the utilService.gatewayEventHandler helper.
- * 
- * If an endpoint instead uses the enhanced helper utilService.gatewayEventHandlerV2, the
- * securityContext is constructed entirely inside the helper using SecurityContextProvider,
- * and does not need to be serialized/deserialized. This approach is recommended, as it
- * keeps our authorization logic in once place, and allows the service to be run locally.
- * 
- * In either case, the same SecurityContext object is passed to the lambda handler code.
+ * This class extends SecurityContext from the asure.auth package, adding
+ * functionality specific to hr-services.
  */
-export class SecurityContext {
-    principal: IAccount;
+export class SecurityContext extends BaseSecurityContext {
     roleMemberships: string[];
-    accessToken: string;
     currentRoleLevel: ApplicationRoleLevel;
-    policy: ISecurityPolicy;
 
     public constructor(principal: IAccount, roleMemberships: string[] = [], accessToken: string, policy: ISecurityPolicy) {
-        this.principal = principal;
+        super(principal, accessToken, policy);
         this.roleMemberships = roleMemberships;
-        this.accessToken = accessToken;
-        this.policy = policy;
     }
 
-    public static fromJSON(json: string): SecurityContext {
-        const data = JSON.parse(json);
-        return new SecurityContext(data.principal, data.roleMemberships, data.accessToken, data.policy);
+    /**
+     * Invoked in any handler where the user must be restricted to their "own" data; throws a 403 if not.
+     * We override the base implementation here so we can throw an exception with the expected hr-services code.
+     * @param {string} tenantId: the sso tenantId from the endpoint path.
+     * @param {string} accountId: the sso accountId from the endpoint path.
+     */
+    requireSelf = ({ tenantId, accountId }: { tenantId: string, accountId: string }) => {
+      try {
+          super.requireSelf({ tenantId, accountId });
+      } catch (e) {
+          throw errorService.getErrorResponse(20).setMoreInfo(`This endpoint can only be used by a user with an admin role, or to request the authenticated user's data.`);
+      }
+    }
+
+    /**
+     * Invoked in any handler that must be restricted to users with a specific policy rule; throws a 403 if not.
+     * We override the base implementation here so we can throw an exception with the expected hr-services code.
+     * @param {ISecurityRequest} request: the action/resource the user requires in order to be granted access.
+     * @param {ISecurityRequest[]} deprecatedRequests: for backward compatability, will not throw if any match.
+     */
+    requireAuthorizedTo = (request: ISecurityRequest, ...deprecatedRequests: ISecurityRequest[]) => {
+        try {
+            super.requireAuthorizedTo(request, ...deprecatedRequests);
+        } catch (e) {
+            throw errorService.getErrorResponse(20).setMoreInfo(e.moreInfo);
+        }
     }
 
     /**
@@ -49,7 +58,6 @@ export class SecurityContext {
      * an hr employee role. It will throw a "403" exception if the authenticated user does not
      * meet this requirement.
      */
-
     public requireRole(role: Role): void {
         if (!role || !this.roleMemberships || !this.roleMemberships.some((r) => r === role)) {
             throw errorService.notAuthorized(role || 'undefined');

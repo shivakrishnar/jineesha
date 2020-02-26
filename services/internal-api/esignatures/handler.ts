@@ -1,3 +1,5 @@
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import { Context, ProxyCallback } from 'aws-lambda';
 import * as esignatureService from './esignatures.service';
 

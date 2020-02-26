@@ -1,3 +1,5 @@
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import { Context, ProxyCallback } from 'aws-lambda';
 import { logAudit } from './audit.service';
 

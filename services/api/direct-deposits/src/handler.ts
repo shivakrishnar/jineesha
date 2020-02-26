@@ -1,3 +1,5 @@
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import * as brnv from 'bank-routing-number-validator';
 import * as Yup from 'yup';
 import * as utilService from '../../../util.service';
