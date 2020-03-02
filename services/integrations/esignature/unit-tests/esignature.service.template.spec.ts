@@ -5,8 +5,8 @@ import * as mockData from './mock-data';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
+import { setup } from '../../../unit-test-mocks/mock';
 import { TemplateDraftResponse } from '../src/template-draft/templateDraftResponse';
-import { setup } from './mock';
 
 jest.mock('fs');
 

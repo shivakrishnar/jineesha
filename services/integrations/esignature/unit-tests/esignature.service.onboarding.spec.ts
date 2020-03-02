@@ -4,9 +4,9 @@ import * as esignatureService from '../src/esignature.service';
 import * as mockData from './mock-data';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
+import { setup } from '../../../unit-test-mocks/mock';
 import { SignatureRequestListResponse } from '../../esignature/src/signature-requests/signatureRequestListResponse';
 import { SignatureRequestResponse } from '../../esignature/src/signature-requests/signatureRequestResponse';
-import { setup } from './mock';
 
 describe('esignatureService.onboarding', () => {
     beforeEach(() => {

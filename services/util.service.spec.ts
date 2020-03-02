@@ -1,6 +1,9 @@
 import { APIGatewayEvent, Context, ProxyCallback } from 'aws-lambda';
+import * as configService from './config.service';
 import { SecurityContextProvider } from './internal-api/authentication/securityContextProvider';
-import * as mockData from './mock-data/gateway-event-mock-data';
+import { setup } from './unit-test-mocks/mock';
+import * as mockData from './unit-test-mocks/mock-data/mock-data';
+import * as utilServiceMockData from './unit-test-mocks/mock-data/util-service-mock-data';
 import * as utilService from './util.service';
 jest.mock('./internal-api/authentication/securityContextProvider');
 
@@ -9,8 +12,8 @@ describe('utilService.gatewayEventHandlerV2', () => {
     let context: Context;
 
     beforeEach(() => {
-        apiGatewayEvent = mockData.apiGatewayEvent;
-        context = mockData.context;
+        apiGatewayEvent = utilServiceMockData.apiGatewayEvent;
+        context = utilServiceMockData.context;
     });
 
     test('correctly parses a valid JSON body', async (done) => {
@@ -138,5 +141,46 @@ describe('utilService.gatewayEventHandlerV2', () => {
         };
 
         return await handler(apiGatewayEvent, context, callback);
+    });
+});
+
+describe('utilService.checkForFileExistence', () => {
+    beforeEach(() => {
+        setup();
+    });
+
+    test('appends a unique identifier to the file name if a file with the same name exists in S3', async () => {
+        return await utilService
+            .checkForFileExistence(
+                utilServiceMockData.s3Key,
+                utilServiceMockData.fileName,
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+            )
+            .then((updatedObjectData) => {
+                expect(updatedObjectData[0]).toEqual(utilServiceMockData.updatedObjectData[0]);
+                expect(updatedObjectData[1]).toEqual(utilServiceMockData.updatedObjectData[1]);
+            });
+    });
+
+    test('preserves the original file name if a file with the same name does not exist in S3', async () => {
+        (configService as any).getFileBucketName = jest.fn(() => {
+            // This will tell the aws-sdk mock to return undefined for headObject
+            return undefined;
+        });
+
+        return await utilService
+            .checkForFileExistence(
+                utilServiceMockData.s3Key,
+                utilServiceMockData.fileName,
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+            )
+            .then((updatedObjectData) => {
+                expect(updatedObjectData[0]).toEqual(utilServiceMockData.fileName);
+                expect(updatedObjectData[1]).toEqual(utilServiceMockData.s3Key);
+            });
     });
 });

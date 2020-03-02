@@ -4,8 +4,8 @@ import * as mockData from './mock-data';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
+import { setup } from '../../../unit-test-mocks/mock';
 import { SignatureRequestResponse } from '../src/signature-requests/signatureRequestResponse';
-import { setup } from './mock';
 
 describe('esignatureService.signature-request.create', () => {
     beforeEach(() => {

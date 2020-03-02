@@ -5,7 +5,7 @@ import * as mockData from './mock-data';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
-import { setup } from './mock';
+import { setup } from '../../../unit-test-mocks/mock';
 
 describe('esignatureService.company-categories.list', () => {
     beforeEach(() => {

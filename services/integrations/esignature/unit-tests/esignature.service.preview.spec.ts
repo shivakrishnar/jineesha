@@ -5,20 +5,59 @@ import * as esignatureService from '../src/esignature.service';
 import * as mockData from './mock-data';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
-import { setup } from './mock';
+import { setup } from '../../../unit-test-mocks/mock';
 
 describe('esignatureService.preview.get', () => {
     beforeEach(() => {
         setup();
     });
 
-    test('returns a legacy document preview url', () => {
+    test('returns a legacy document preview url if S3 object exists', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            return Promise.resolve(mockData.documentDBResponse);
+            if (payload.queryName === 'GetDocumentMetadataById') {
+                return Promise.resolve(mockData.documentMetadataDBResponse);
+            }
         });
 
         return esignatureService.getDocumentPreview(mockData.tenantId, mockData.legacyDocumentEncodedId).then((previewUrl) => {
             expect(previewUrl).toEqual(mockData.legacyDocumentPreviewUrlResponse);
+        });
+    });
+
+    test('returns a legacy document preview url if S3 object does not exist', () => {
+        (utilService as any).invokeInternalService = jest.fn(async (transaction, payload) => {
+            if (payload.queryName === 'GetDocumentMetadataById') {
+                const dbResponse = { ...(await Promise.resolve(mockData.documentMetadataDBResponse)) };
+                dbResponse.recordset[0].Pointer = undefined;
+                return dbResponse;
+            } else if (payload.queryName === 'GetDocumentById') {
+                return Promise.resolve(mockData.documentSavedToS3Response);
+            }
+        });
+
+        return esignatureService.getDocumentPreview(mockData.tenantId, mockData.legacyDocumentEncodedId).then((previewUrl) => {
+            expect(previewUrl).toEqual(mockData.legacyDocumentPreviewUrlResponse);
+        });
+    });
+
+    test('returns a 500 if the document failed to upload to S3', () => {
+        (utilService as any).invokeInternalService = jest.fn(async (transaction, payload) => {
+            if (payload.queryName === 'GetDocumentMetadataById') {
+                const dbResponse = { ...(await Promise.resolve(mockData.documentMetadataDBResponse)) };
+                dbResponse.recordset[0].Pointer = undefined;
+                return dbResponse;
+            } else if (payload.queryName === 'GetDocumentById') {
+                return {};
+            }
+        });
+
+        return esignatureService.getDocumentPreview(mockData.tenantId, mockData.legacyDocumentEncodedId).catch((error) => {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error.statusCode).toEqual(500);
+            expect(error.code).toEqual(0);
+            expect(error.message).toEqual('Unexpected error occurred.');
+            expect(error.developerMessage).toEqual('Something happened on the server and we have no idea what. Blame the architect.');
+            expect(error.moreInfo).toEqual('The file could not be uploaded to S3.');
         });
     });
 

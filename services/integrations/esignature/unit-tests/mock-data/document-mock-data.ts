@@ -272,6 +272,8 @@ export const companyDocumentResponse = {
     isPublishedToEmployee: false,
 };
 
+export const fileExistenceResponseArray = ['test.png', 'path/to/object'];
+
 export const employeeDocumentRequest = {
     file: 'data:image/png;base64,file',
     fileName: 'test.png',
@@ -389,6 +391,29 @@ export const documentDBResponse = {
     rowsAffected: [1],
 };
 
+export const documentSavedToS3Response = {
+    s3Key: 'path/to/object.pdf',
+    extension: '.pdf',
+};
+
+export const documentMetadataDBResponse = {
+    recordset: [
+        {
+            Title: 'vim',
+            DocumentCategory: 'vim',
+            IsPublishedToEmployee: true,
+            IsPrivateDocument: false,
+            UploadDate: '10/01/2019',
+            Extension: '.pdf',
+            Filename: 'vim.pdf',
+            UploadByUsername: 'Test',
+            Pointer: 'path/to/object',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
 export const uploadUrlGenerationRequest = {
     employeeId: 12,
     fileName: 'A17_FlightPlan.pdf',
@@ -399,7 +424,7 @@ export const uploadUrlGenerationRequest = {
 
 export const uploadUrlGenerationResponse = {
     url: 'www.mysignedurl.com',
-    uploadFilename: 'A17FlightPlan.pdf',
+    uploadFilename: 'test.png',
 };
 
 export const documentMetadataS3Response = {

@@ -6,7 +6,7 @@ import * as mockData from './mock-data';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
-import { setup } from './mock';
+import { setup } from '../../../unit-test-mocks/mock';
 
 jest.mock('shortid');
 
@@ -493,9 +493,13 @@ describe('esignatureService.employee-document.list', () => {
 describe('esignatureService.company-document.create', () => {
     beforeEach(() => {
         setup();
+
+        (utilService as any).checkForFileExistence = jest.fn((params: any) => {
+            return mockData.fileExistenceResponseArray;
+        });
     });
 
-    test('creates an company document', () => {
+    test('creates a company document', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             return Promise.resolve(mockData.documentFileMetadataDBResponse);
         });
@@ -528,6 +532,10 @@ describe('esignatureService.company-document.create', () => {
 describe('esignatureService.company-document.update', () => {
     beforeEach(() => {
         setup();
+
+        (utilService as any).checkForFileExistence = jest.fn((params: any) => {
+            return mockData.fileExistenceResponseArray;
+        });
     });
 
     test('updates a non-legacy company document', () => {
@@ -1041,6 +1049,10 @@ describe('esignatureService.employee-document.delete', () => {
 describe('esignatureService.create-upload-url', () => {
     beforeEach(() => {
         setup();
+
+        (utilService as any).checkForFileExistence = jest.fn((params: any) => {
+            return mockData.fileExistenceResponseArray;
+        });
     });
 
     test('with an invalid employee id returns an error message', async (done) => {
@@ -1077,7 +1089,7 @@ describe('esignatureService.create-upload-url', () => {
         }
     });
 
-    test('creates a document upload url', (done) => {
+    test('creates a document upload url', async (done) => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetEmployeeInfoById') {
                 return Promise.resolve(mockData.employeeDBResponse);
@@ -1086,15 +1098,15 @@ describe('esignatureService.create-upload-url', () => {
             }
         });
 
-        esignatureService
+        await esignatureService
             .generateDocumentUploadUrl(mockData.tenantId, mockData.companyId, 'bigboss', mockData.uploadUrlGenerationRequest)
             .then((document) => {
                 expect(document).toEqual(mockData.uploadUrlGenerationResponse);
+                done();
             })
             .catch(() => {
                 done.fail(new Error('Test should not throw an exception.'));
             });
-        done();
     });
 });
 

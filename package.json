@@ -66,10 +66,10 @@
         ],
         "coverageThreshold": {
             "global": {
-                "branches": 53,
-                "functions": 40,
-                "lines": 60,
-                "statements": 60
+                "branches": 50,
+                "functions": 44,
+                "lines": 55,
+                "statements": 54
             }
         },
         "coveragePathIgnorePatterns": [
@@ -80,7 +80,13 @@
         ],
         "collectCoverage": true,
         "coverageReporters": [
-            "html"
+            "html",
+            "json"
+        ],
+        "collectCoverageFrom": [
+            "./services/**/*.ts",
+            "!./services/**/handler.ts",
+            "!./services/**/mock.*"
         ]
     },
     "dependencies": {
