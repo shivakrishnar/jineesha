@@ -1,6 +1,7 @@
 import * as validate from '@smallwins/validate';
 import * as AWS from 'aws-sdk';
 import * as nJwt from 'njwt';
+import * as shortid from 'shortid';
 import * as request from 'superagent';
 import * as util from 'util';
 import * as uniqueifier from 'uuid/v4';
@@ -886,4 +887,52 @@ export function sanitizeForS3(key: string): string {
     console.info('utilService.sanitizeForS3');
     const charactersToReplace = /[\\{^}%`\]">\[~<#\| ]/g;
     return key.replace(charactersToReplace, '');
+}
+
+const s3Client = new AWS.S3({
+    region: configService.getAwsRegion(),
+    useAccelerateEndpoint: true,
+});
+
+export async function checkForFileExistence(
+    key: string,
+    fileName: string,
+    tenantId: string,
+    companyId: string,
+    employeeId?: string,
+): Promise<string[]> {
+    console.info('util.service.checkForFileExistence');
+
+    try {
+        const objectMetadata = await s3Client
+            .headObject({
+                Bucket: configService.getFileBucketName(),
+                Key: key,
+            })
+            .promise();
+
+        if (objectMetadata) {
+            const newFileName = appendDuplicationSuffix(fileName);
+            let newKey = `${tenantId}/${companyId}`;
+            newKey += employeeId ? `/${employeeId}` : '';
+            return [newFileName, `${newKey}/${newFileName}`];
+        }
+    } catch (missingError) {
+        // We really don't mind since we expect it to be missing
+        return [fileName, key];
+    }
+}
+
+/**
+ * Appends a guid suffix to a filename to indicate duplication
+ * @example
+ *  // returns duplicate-PPBqWA9.pdf
+ *  letappendDuplicationSuffix('duplicate.pdf');
+ * @param {string} filenameWithExtension
+ * @returns {string}: The file name with a duplication suffix
+ */
+export function appendDuplicationSuffix(filenameWithExtension: string): string {
+    console.info('util.service.appendDuplicationSuffix');
+    const [filename, extension] = splitFilename(filenameWithExtension);
+    return `${filename}-${shortid.generate()}${extension}`;
 }

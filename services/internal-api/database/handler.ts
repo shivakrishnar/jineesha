@@ -3,7 +3,7 @@ import { IResult } from 'mssql';
 import * as configService from '../../config.service';
 import { ErrorMessage } from '../../errors/errorMessage';
 import * as utilService from '../../util.service';
-import { createConnectionPool, executeBatch, executeQuery, findConnectionString } from './database.service';
+import { createConnectionPool, executeBatch, executeQuery, findConnectionString, saveDocumentToS3 } from './database.service';
 import { DatabaseEvent, QueryType } from './events';
 
 /**
@@ -17,7 +17,7 @@ export const execute = async (event: DatabaseEvent, context: Context, callback: 
 
     console.info(`received event: ${JSON.stringify(event)}`);
 
-    const { tenantId, queryName, query, queryType } = event;
+    const { tenantId, queryName, query, queryType, saveToS3 } = event;
 
     let pool;
     try {
@@ -36,6 +36,19 @@ export const execute = async (event: DatabaseEvent, context: Context, callback: 
 
         if (queryType === QueryType.Simple) {
             const result: IResult<any> = await executeQuery(pool.transaction(), queryName, query);
+            // Note: if the query that is being executed retrieves a file binary from the database,
+            // the result may be too large to return to the invoking service. In these cases, we
+            // will first save the document to S3 before returning an S3 pointer to the invoking service.
+            if (saveToS3) {
+                const { key, extension } = await saveDocumentToS3(result, tenantId);
+                return callback(undefined, {
+                    statusCode: 200,
+                    body: JSON.stringify({
+                        s3Key: key,
+                        extension,
+                    }),
+                });
+            }
             return callback(undefined, {
                 statusCode: 200,
                 body: JSON.stringify(result),

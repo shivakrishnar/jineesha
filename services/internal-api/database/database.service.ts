@@ -194,3 +194,101 @@ export async function listAvailableDatabases(rdsInstanceEndpoint: string): Promi
 
     return databaseList;
 }
+
+const s3Client = new AWS.S3({
+    region: configService.getAwsRegion(),
+    useAccelerateEndpoint: true,
+});
+
+/**
+ * Uploads a file to S3 along with the document's metadata.
+ * @param {IResult<any>} databaseRecord: The document record that was retrieved from the database
+ * @param {string} tenantId: The unique identifier of the tenant
+ * @returns {Promise<any>}: Promise of an object that contains the key that points to the file in S3 and the file extension.
+ */
+export async function saveDocumentToS3(databaseRecord: IResult<any>, tenantId: string): Promise<any> {
+    console.info('database.service.saveDocumentToS3');
+
+    try {
+        if (databaseRecord.recordset.length > 0) {
+            const {
+                ID: documentId,
+                CompanyID: companyId,
+                EmployeeID: employeeId,
+                EmployeeName: employeeName,
+                EmployeeCode: employeeCode,
+                Filename: fileName,
+                FSDocument: file,
+                ContentType: contentType,
+                Extension: extension,
+                Title: title,
+                IsPrivateDocument: isPrivate,
+                UploadByUsername: uploadedBy,
+                IsPublishedToEmployee: isPublishedToEmployee,
+            } = databaseRecord.recordset[0];
+            const uploadS3Filename = fileName.replace(/[^a-zA-Z0-9.]/g, '');
+
+            let key;
+            let employeeMetadata;
+            if (companyId) {
+                key = `${tenantId}/${companyId}`;
+                if (employeeId) {
+                    key = key + `/${employeeId}`;
+                    if (isPublishedToEmployee) {
+                        employeeMetadata = {
+                            employeeId: employeeId.toString(),
+                            employeeName,
+                            employeeCode,
+                        };
+                    }
+                }
+                key = key + `/${uploadS3Filename}`;
+                key = utilService.sanitizeForS3(key);
+            }
+
+            if (key) {
+                // Check for file existence to avoid overwritting - duplicates allowed.
+                const [updatedFilename, s3UploadKey] = await utilService.checkForFileExistence(
+                    key,
+                    uploadS3Filename,
+                    tenantId,
+                    companyId,
+                    employeeId,
+                );
+
+                const fileBuffer = new Buffer(file, 'base64');
+                const metadata = {
+                    fileName: updatedFilename,
+                    title: title || '',
+                    isPrivate: isPrivate.toString(),
+                    uploadedBy,
+                    tenantId,
+                    companyId: companyId.toString(),
+                    documentId: documentId.toString(),
+                    isLegacyDocument: 'true',
+                    ...employeeMetadata,
+                };
+                s3Client
+                    .upload({
+                        Bucket: configService.getFileBucketName(),
+                        Key: s3UploadKey,
+                        Body: fileBuffer,
+                        Metadata: metadata,
+                        ContentEncoding: 'base64',
+                        ContentType: contentType,
+                    })
+                    .promise()
+                    .catch((e) => {
+                        throw new Error(e);
+                    });
+                key = s3UploadKey;
+            }
+            return { key, extension };
+        } else {
+            throw new Error('Not found');
+        }
+    } catch (e) {
+        console.log(e);
+        throw e;
+    }
+}
