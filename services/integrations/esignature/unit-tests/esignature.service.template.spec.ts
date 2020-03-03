@@ -72,7 +72,7 @@ describe('esignatureService.template.list', () => {
             });
     });
 
-    test('returns onboarding templates', () => {
+    test('returns undefined if no onboarding templates are found', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetCompanyInfo') {
                 return Promise.resolve(mockData.companyInfo);
@@ -83,11 +83,24 @@ describe('esignatureService.template.list', () => {
         return esignatureService
             .listTemplates(mockData.tenantId, mockData.companyId, mockData.onboardingQueryParam, mockData.domainName, mockData.path)
             .then((templates) => {
+                expect(templates).toBe(undefined);
+            });
+    });
+
+    test('returns onboarding templates are found', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            }
+            return Promise.resolve(mockData.templateOnboardingDBResponse);
+        });
+
+        return esignatureService
+            .listTemplates(mockData.tenantId, mockData.companyId, mockData.onboardingQueryParam, mockData.domainName, mockData.path)
+            .then((templates) => {
                 expect(templates).toBeInstanceOf(PaginatedResult);
-                expect(templates.results.length).toBe(mockData.templateDBResponse.recordsets[1].length);
-                expect(templates.results[0]).toEqual(mockData.templateListResponse[0]);
-                expect(templates.results[1]).toEqual(mockData.templateListResponse[1]);
-                expect(templates.results[2]).toEqual(mockData.templateListResponse[2]);
+                expect(templates.results.length).toBe(mockData.templateOnboardingDBResponse.recordsets[1].length);
+                expect(templates.results[0]).toEqual(mockData.templateOnboardingListResponse[0]);
             });
     });
 
