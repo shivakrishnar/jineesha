@@ -87,7 +87,7 @@ describe('esignatureService.template.list', () => {
             });
     });
 
-    test('returns onboarding templates are found', () => {
+    test('returns onboarding templates when found', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetCompanyInfo') {
                 return Promise.resolve(mockData.companyInfo);
@@ -99,7 +99,7 @@ describe('esignatureService.template.list', () => {
             .listTemplates(mockData.tenantId, mockData.companyId, mockData.onboardingQueryParam, mockData.domainName, mockData.path)
             .then((templates) => {
                 expect(templates).toBeInstanceOf(PaginatedResult);
-                expect(templates.results.length).toBe(mockData.templateOnboardingDBResponse.recordsets[1].length);
+                expect(templates.results.length).toBe(mockData.templateOnboardingListResponse.length);
                 expect(templates.results[0]).toEqual(mockData.templateOnboardingListResponse[0]);
             });
     });
