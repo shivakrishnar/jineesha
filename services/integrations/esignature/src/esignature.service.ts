@@ -616,10 +616,7 @@ export async function listTemplates(
 
         if (queryParams && queryParams.onboarding) {
             consolidatedDocuments = consolidatedDocuments.filter((doc) => {
-                if (!doc.category) {
-                    return false;
-                }
-                return doc.category.toLowerCase() === 'onboarding' && doc.isEsignatureDocument;
+                return doc.category && doc.category.toLowerCase() === 'onboarding' && doc.isEsignatureDocument;
             });
         }
 
