@@ -615,9 +615,9 @@ export async function listTemplates(
         consolidatedDocuments.sort((a, b) => (new Date(a.uploadDate).getTime() > new Date(b.uploadDate).getTime() ? -1 : 1));
 
         if (queryParams && queryParams.onboarding) {
-            consolidatedDocuments = consolidatedDocuments.filter((doc) => {
-                return doc.category && doc.category.toLowerCase() === 'onboarding' && doc.isEsignatureDocument;
-            });
+            consolidatedDocuments = consolidatedDocuments.filter(
+                (doc) => doc.category && doc.category.toLowerCase() === 'onboarding' && doc.isEsignatureDocument,
+            );
         }
 
         const paginatedResult = await paginationService.createPaginatedResult(consolidatedDocuments, baseUrl, totalRecords, page);
