@@ -553,7 +553,7 @@ export async function listTemplates(
             }
             return memo;
         };
-        const consolidatedDocuments: any[] = await documents.reduce(reducer, []);
+        let consolidatedDocuments: any[] = await documents.reduce(reducer, []);
 
         const invocations: Array<Promise<any>> = [];
 
@@ -613,6 +613,12 @@ export async function listTemplates(
         });
 
         consolidatedDocuments.sort((a, b) => (new Date(a.uploadDate).getTime() > new Date(b.uploadDate).getTime() ? -1 : 1));
+
+        if (queryParams && queryParams.onboarding) {
+            consolidatedDocuments = consolidatedDocuments.filter(
+                (doc) => doc.category && doc.category.toLowerCase() === 'onboarding' && doc.isEsignatureDocument,
+            );
+        }
 
         const paginatedResult = await paginationService.createPaginatedResult(consolidatedDocuments, baseUrl, totalRecords, page);
         return consolidatedDocuments.length === 0 ? undefined : paginatedResult;

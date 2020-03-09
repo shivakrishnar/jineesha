@@ -48,6 +48,32 @@ export const templateDBResponse = {
     output: {},
     rowsAffected: [3],
 };
+
+export const templateOnboardingDBResponse = {
+    recordsets: [
+        [
+            [
+                {
+                    totalCount: 1,
+                },
+            ],
+        ],
+        [
+            {
+                Type: 'esignature',
+                ID: 1000,
+                ExistsInTaskList: true,
+            },
+        ],
+    ],
+    recordset: [
+        {
+            totalCount: 1,
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
 export const helloSignTemplate = {
     template_id: 1,
     title: 'hi',
@@ -60,6 +86,20 @@ export const helloSignTemplate = {
     documents: [{ name: 'test.pdf' }],
     metadata: { uploadDate: '12/31/2019', uploadedBy: 'Hugh', category: 'test' },
 };
+
+export const helloSignOnboardingTemplate = {
+    template_id: 1000,
+    title: 'hi',
+    message: 'template',
+    can_edit: true,
+    is_locked: true,
+    signer_roles: [{ name: 'Andover' }],
+    cc_roles: [{ name: 'Philips' }],
+    custom_fields: [{ name: 'test', type: 'texter' }],
+    documents: [{ name: 'test.pdf' }],
+    metadata: { uploadDate: '1/31/2019', uploadedBy: 'Maxwell', category: 'onboarding' },
+};
+
 export const helloSignTemplateDraft = {
     template_id: 1,
     edit_url: 'editurl.com',
@@ -102,6 +142,25 @@ export const templateListResponse = [
         uploadedBy: 'Hugh Jass',
         category: 'tests',
         isPublishedToEmployee: true,
+        existsInTaskList: true,
+    },
+];
+
+export const templateOnboardingListResponse = [
+    {
+        id: 1000,
+        title: 'hi',
+        message: 'template',
+        editable: true,
+        isLocked: true,
+        signerRoles: [{ name: 'Andover' }],
+        ccRoles: [{ name: 'Philips' }],
+        customFields: [{ name: 'test', type: 'texter' }],
+        filename: 'test.pdf',
+        uploadDate: '1/31/2019',
+        uploadedBy: 'Maxwell',
+        isEsignatureDocument: true,
+        category: 'onboarding',
         existsInTaskList: true,
     },
 ];

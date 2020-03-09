@@ -6,7 +6,12 @@ const mockData = require('../esignature/unit-tests/mock-data');
 hellosign = (params) => {
     return {
         template: {
-            get: () => {
+            get: (id) => {
+                if (id == 1000) {
+                    return {
+                        template: mockData.helloSignOnboardingTemplate,
+                    };
+                }
                 return {
                     template: mockData.helloSignTemplate,
                 };
