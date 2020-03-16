@@ -217,6 +217,7 @@ export const employeeDocumentListResponse = [
         companyName: 'Test Company',
         isSignedDocument: true,
         uploadedBy: 'Test User',
+        isLegacyDocument: true,
     },
     {
         id: 'nMua',
@@ -234,6 +235,7 @@ export const employeeDocumentListResponse = [
         companyName: 'Test Company',
         isSignedDocument: false,
         uploadedBy: 'Test User',
+        isLegacyDocument: false,
     },
     {
         id: 'qOUd',
@@ -251,6 +253,7 @@ export const employeeDocumentListResponse = [
         companyName: 'Other Test Company',
         isSignedDocument: false,
         uploadedBy: 'Manager User',
+        isLegacyDocument: false,
     },
 ];
 
@@ -271,6 +274,8 @@ export const companyDocumentResponse = {
     category: 'onboarding',
     isPublishedToEmployee: false,
 };
+
+export const fileExistenceResponseArray = ['test.png', 'path/to/object'];
 
 export const employeeDocumentRequest = {
     file: 'data:image/png;base64,file',
@@ -347,7 +352,7 @@ export const updateNonLegacyCompanyDocumentResponse = {
 export const updateLegacyCompanyDocumentResponse = {
     id: 'dxi1',
     title: 'Title',
-    fileName: 'test.png',
+    fileName: 'file',
     extension: 'png',
     isEsignatureDocument: false,
     category: 'other',
@@ -389,6 +394,29 @@ export const documentDBResponse = {
     rowsAffected: [1],
 };
 
+export const documentSavedToS3Response = {
+    s3Key: 'path/to/object.pdf',
+    extension: '.pdf',
+};
+
+export const documentMetadataDBResponse = {
+    recordset: [
+        {
+            Title: 'vim',
+            DocumentCategory: 'vim',
+            IsPublishedToEmployee: true,
+            IsPrivateDocument: false,
+            UploadDate: '10/01/2019',
+            Extension: '.pdf',
+            Filename: 'vim.pdf',
+            UploadByUsername: 'Test',
+            Pointer: 'path/to/object',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
 export const uploadUrlGenerationRequest = {
     employeeId: 12,
     fileName: 'A17_FlightPlan.pdf',
@@ -399,7 +427,7 @@ export const uploadUrlGenerationRequest = {
 
 export const uploadUrlGenerationResponse = {
     url: 'www.mysignedurl.com',
-    uploadFilename: 'A17FlightPlan.pdf',
+    uploadFilename: 'test.png',
 };
 
 export const documentMetadataS3Response = {

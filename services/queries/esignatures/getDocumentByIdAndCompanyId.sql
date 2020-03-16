@@ -1,5 +1,6 @@
 select
-    *
+    ID,
+    Pointer
 from
     dbo.Document
 where

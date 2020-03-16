@@ -6,7 +6,8 @@ select
     UploadDate,
     Extension,
     Filename,
-    UploadByUsername
+    UploadByUsername,
+    Pointer
 from
     dbo.Document
 where

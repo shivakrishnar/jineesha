@@ -1,9 +1,9 @@
-import * as employeeService from '../../../api/tenants/src/employee.service';
-import * as configService from '../../../config.service';
-import * as paginationService from '../../../pagination/pagination.service';
-import * as hellosignService from '../../../remote-services/hellosign.service';
-import * as integrationsService from '../../../remote-services/integrations.service';
-import * as utilService from '../../../util.service';
+import * as employeeService from '../api/tenants/src/employee.service';
+import * as configService from '../config.service';
+import * as paginationService from '../pagination/pagination.service';
+import * as hellosignService from '../remote-services/hellosign.service';
+import * as integrationsService from '../remote-services/integrations.service';
+import * as utilService from '../util.service';
 
 export const setup = () => {
     (configService as any).getSecretsAwsEndpoint = jest.fn(() => {
@@ -24,6 +24,10 @@ export const setup = () => {
 
     (configService as any).getEsignatureApiCredentials = jest.fn(() => {
         return 'credentialId';
+    });
+
+    (configService as any).getFileBucketName = jest.fn(() => {
+        return 'FileBucketName';
     });
 
     (utilService as any).getSecret = jest.fn((params: any) => {

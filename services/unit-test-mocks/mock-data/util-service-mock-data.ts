@@ -1,4 +1,5 @@
 import { APIGatewayEvent, Context } from 'aws-lambda';
+import * as mockData from './mock-data';
 
 export const apiGatewayEvent: APIGatewayEvent = {
     body: '{ "property": "Hello" }',
@@ -63,3 +64,9 @@ export const context: Context = {
         console.log(messageOrObject);
     },
 };
+
+export const fileName: string = 'object.pdf';
+export const s3Key: string = `${mockData.tenantId}/${mockData.companyId}/${mockData.employeeId}`;
+export const updatedFileName: string = 'object-123.pdf';
+export const updatedS3Key: string = `${s3Key}/object-123.pdf`;
+export const updatedObjectData: string[] = [updatedFileName, updatedS3Key];

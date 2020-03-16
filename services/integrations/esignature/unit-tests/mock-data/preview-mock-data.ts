@@ -1,6 +1,6 @@
 export const legacyDocumentPreviewUrlResponse = {
-    data: 'data:application/pdf;base64,abcd',
-    mimeType: 'pdf',
+    data: 'www.mysignedurl.com',
+    mimeType: '.pdf',
 };
 
 export const hellosignDocumentPreviewUrlResponse = {

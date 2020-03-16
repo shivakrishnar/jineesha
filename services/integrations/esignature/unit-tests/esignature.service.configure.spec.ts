@@ -5,7 +5,7 @@ import * as esignatureService from '../src/esignature.service';
 import * as mockData from './mock-data';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
-import { setup } from './mock';
+import { setup } from '../../../unit-test-mocks/mock';
 
 describe('esignatureService.configure.add', () => {
     beforeEach(() => {

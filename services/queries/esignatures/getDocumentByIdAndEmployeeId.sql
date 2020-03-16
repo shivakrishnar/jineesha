@@ -1,5 +1,11 @@
 select
-    *
+    ID,
+    ESignDate,
+    IsPublishedToEmployee,
+    UploadByUsername,
+    DocumentCategory,
+    Title,
+    Pointer
 from
     dbo.Document
 where

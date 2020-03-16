@@ -6,7 +6,7 @@ declare @_contentType varchar(max) = '@contentType'
 declare @_title varchar(max) = '@title';
 declare @_category varchar(max) = @category;
 declare @_fsDocument varbinary(max) = cast(N'' as xml).value('xs:base64Binary(sql:variable("@_file"))', 'varbinary(max)');
-
+declare @_pointer nvarchar(max) = @pointer
 
 if @_title = '@title'
     begin
@@ -17,7 +17,8 @@ if @_title = '@title'
             Filename = @_filename,
             Extension = @_extension,
             ContentType = @_contentType,
-            DocumentCategory = @_category
+            DocumentCategory = @_category,
+            Pointer = @_pointer
         where
             ID = @_id
     end
@@ -31,7 +32,8 @@ else
             Extension = @_extension,
             ContentType = @_contentType,
             Title = @_title,
-            DocumentCategory = @_category
+            DocumentCategory = @_category,
+            Pointer = @_pointer
         where
             ID = @_id 
     end

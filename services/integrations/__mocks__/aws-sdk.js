@@ -24,10 +24,17 @@ AWS = {
             return { promise };
         }
 
-        headObject() {
-            return {
-                Metadata: mockData.documentMetadataS3Response,
-            };
+        headObject(objectInfo) {
+            return objectInfo.Bucket
+                ? {
+                      promise: () => {
+                          return {
+                              catch: catchMethod,
+                              Metadata: mockData.documentMetadataS3Response,
+                          };
+                      },
+                  }
+                : undefined;
         }
     },
 };

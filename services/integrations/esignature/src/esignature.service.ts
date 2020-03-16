@@ -6,7 +6,6 @@ import * as mime from 'mime-types';
 import * as uuidV4 from 'uuid/v4';
 
 import * as pSettle from 'p-settle';
-import * as shortid from 'shortid';
 import * as employeeService from '../../../api/tenants/src/employee.service';
 import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
@@ -549,6 +548,7 @@ export async function listTemplates(
                     category: document.Category,
                     isPublishedToEmployee: document.IsPublishedToEmployee,
                     existsInTaskList: document.ExistsInTaskList,
+                    isLegacyDocument: document.Type === 'legacy',
                 });
             }
             return memo;
@@ -1842,6 +1842,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 companyId,
                 companyName,
                 uploadedBy,
+                isLegacyDocument,
             } = document;
             updatedDocuments.push({
                 id,
@@ -1859,6 +1860,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 companyName,
                 isSignedDocument,
                 uploadedBy,
+                isLegacyDocument,
             });
         }
 
@@ -1924,7 +1926,8 @@ async function getNonLegacyDocument(tenantId: string, documentId: number): Promi
 }
 
 /**
- * Retrieves an HR legacy document
+ * Retrieves an HR legacy document. All legacy documents are now being stored and
+ * retrieved from S3.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {number} documentId: The unique identifier of the specified document
  * @returns {any}: A Promise of a document
@@ -1933,24 +1936,74 @@ async function getLegacyDocument(tenantId: string, documentId: number): Promise<
     console.info('esignature.service.getLegacyDocument');
 
     try {
-        const query = new ParameterizedQuery('GetDocumentById', Queries.getDocumentById);
-        query.setParameter('@id', documentId);
-        const payload = {
+        // Check if document exists & get S3 pointer
+        const documentMetadataQuery = new ParameterizedQuery('GetDocumentMetadataById', Queries.getDocumentMetadataById);
+        documentMetadataQuery.setParameter('@id', documentId);
+        const documentMetadataPayload = {
             tenantId,
-            queryName: query.name,
-            query: query.value,
+            queryName: documentMetadataQuery.name,
+            query: documentMetadataQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const documentMetadataResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            documentMetadataPayload,
+            InvocationType.RequestResponse,
+        );
 
-        if (result.recordset.length === 0) {
+        if (documentMetadataResult.recordset.length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${documentId} not found`);
         }
 
-        const base64String = result.recordset[0].FSDocument;
-        const extension = result.recordset[0].Extension;
+        let key = documentMetadataResult.recordset[0].Pointer;
+        let extension = documentMetadataResult.recordset[0].Extension;
 
-        return result ? { data: `data:application/${extension};base64,${base64String}`, mimeType: extension } : undefined;
+        // Note: If the document doesn't have a pointer (which means it doesn't exist in S3),
+        // invoke the queryExecutor while passing the saveToS3 flag in order to save
+        // the queried document to S3, bypassing the payload size limitations.
+        if (!key) {
+            console.info('Not found in S3, retrieving from the database');
+            const getDocumentQuery = new ParameterizedQuery('GetDocumentById', Queries.getDocumentById);
+            getDocumentQuery.setParameter('@documentId', documentId);
+            const getDocumentPayload = {
+                tenantId,
+                queryName: getDocumentQuery.name,
+                query: getDocumentQuery.value,
+                queryType: QueryType.Simple,
+                saveToS3: true,
+            } as DatabaseEvent;
+            const getDocumentResult: any = await utilService.invokeInternalService(
+                'queryExecutor',
+                getDocumentPayload,
+                InvocationType.RequestResponse,
+            );
+
+            if (!getDocumentResult.s3Key) {
+                throw errorService.getErrorResponse(0).setMoreInfo('The file could not be uploaded to S3.');
+            }
+
+            key = getDocumentResult.s3Key;
+            extension = getDocumentResult.extension;
+
+            const updateDocumentPointerQuery = new ParameterizedQuery('UpdateDocumentPointerById', Queries.updateDocumentPointerById);
+            updateDocumentPointerQuery.setParameter('@id', documentId);
+            updateDocumentPointerQuery.setParameter('@key', key);
+            const updateDocumentPointerPayload = {
+                tenantId,
+                queryName: updateDocumentPointerQuery.name,
+                query: updateDocumentPointerQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            await utilService.invokeInternalService('queryExecutor', updateDocumentPointerPayload, InvocationType.RequestResponse);
+        }
+
+        const params = {
+            Bucket: configService.getFileBucketName(),
+            Key: key,
+        };
+        const url = s3Client.getSignedUrl('getObject', params);
+
+        return { data: url, mimeType: extension };
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -2023,7 +2076,7 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
     key = utilService.sanitizeForS3(key);
 
     // Check for file existence to avoid overwritting - duplicates allowed.
-    const [updatedFilename, s3UploadKey] = await checkForFileExistence(key, uploadS3Filename, tenantId, companyId, employeeId);
+    const [updatedFilename, s3UploadKey] = await utilService.checkForFileExistence(key, uploadS3Filename, tenantId, companyId, employeeId);
 
     let employeeMetadata: any = {};
 
@@ -2073,8 +2126,36 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
             isLegacyDocument: String(isLegacyDocument), // S3 object metadata must be strings.
         };
 
-        if (employeeId && isLegacyDocument) {
-            await isEditableLegacyEmployeeDocument(String(decodedId), tenantId, employeeId);
+        if (isLegacyDocument) {
+            let legacyDocOldCategory;
+            if (employeeId) {
+                const { metadata: oldLegacyDocMetadata } = await isEditableLegacyEmployeeDocument(String(decodedId), tenantId, employeeId);
+                legacyDocOldCategory = oldLegacyDocMetadata.category;
+            } else {
+                const query = new ParameterizedQuery('getDocumentMetadataById', Queries.getDocumentMetadataById);
+                query.setParameter('@id', decodedId);
+                const payload = {
+                    tenantId,
+                    queryName: query.name,
+                    query: query.value,
+                    queryType: QueryType.Simple,
+                } as DatabaseEvent;
+                const documentMetadataResult: any = await utilService.invokeInternalService(
+                    'queryExecutor',
+                    payload,
+                    InvocationType.RequestResponse,
+                );
+
+                if (documentMetadataResult.recordset.length === 0) {
+                    throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${decodedId} not found`);
+                }
+
+                const { DocumentCategory: legacyDocCategory } = documentMetadataResult.recordset[0];
+                legacyDocOldCategory = legacyDocCategory;
+            }
+            if (legacyDocOldCategory) {
+                documentMetadata.category = legacyDocOldCategory;
+            }
         } else {
             // In order to preserve the old category if the user did not supply a new one,
             // we need to retrieve file metadata record from the database and use the
@@ -2170,6 +2251,7 @@ export async function isEditableLegacyEmployeeDocument(decodedDocumentId: string
         Extension: prevExtension,
         Filename: prevFileName,
         UploadByUsername: uploadByUsername,
+        Pointer: pointer,
     } = fileMetadataResult.recordset[0];
 
     if (prevIsPublishedToEmployee) {
@@ -2196,6 +2278,7 @@ export async function isEditableLegacyEmployeeDocument(decodedDocumentId: string
             uploadDate: prevUploadDate,
             extension: prevExtension,
             fileName: prevFileName,
+            pointer,
         },
     };
 }
@@ -2309,35 +2392,6 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
                         throw new Error(e);
                     });
             }
-
-            // Legacy documents, download &  persist the metadata to database
-            if (islegacydocument === 'true') {
-                const s3Document = await s3Client
-                    .getObject({
-                        Bucket: configService.getFileBucketName(),
-                        Key: uploadedItemS3Key,
-                    })
-                    .promise();
-
-                const contentType = s3Document.ContentType;
-                const extension = contentType.match(/(.[^.]+)$/i)[0];
-                const fileName = uploadedItemS3Key.match(/\/[^\/]+$/gi)[0].replace('/', '');
-
-                const data = Buffer.from(s3Document.Body as any, 'binary');
-                const fileContent = data.toString('base64');
-                console.log(`downloaded file: ${fileContent}`);
-
-                query = new ParameterizedQuery('UpdateDocumentById', Queries.updateDocumentById);
-                query.setParameter('@id', decodedId);
-                query.setParameter('@file', fileContent);
-                query.setParameter('@fileName', fileName);
-                query.setParameter('@extension', extension);
-                query.setParameter('@contentType', contentType);
-                if (title) {
-                    query.setParameter('@title', title);
-                }
-                query.setStringParameter('@category', category || '');
-            }
         }
 
         if (!query) {
@@ -2390,7 +2444,7 @@ export async function createCompanyDocument(
         let key = `${tenantId}/${companyId}/${fileName}`;
         let updatedFilename: string = fileName;
 
-        [updatedFilename, key] = await checkForFileExistence(key, fileName, tenantId, companyId);
+        [updatedFilename, key] = await utilService.checkForFileExistence(key, fileName, tenantId, companyId);
 
         key = utilService.sanitizeForS3(key);
 
@@ -2611,7 +2665,7 @@ async function updateEmployeeS3Document(
             published = isPrivate ? '0' : '1';
         }
 
-        let categoryToUse = oldCategory !== null || oldCategory !== '' ? oldCategory : '';
+        let categoryToUse = oldCategory !== null && oldCategory !== '' ? oldCategory : '';
         categoryToUse = category || categoryToUse;
 
         query = new ParameterizedQuery('UpdateFileMetadataById', Queries.updateFileMetadataById);
@@ -2689,7 +2743,7 @@ async function updateEmployeeLegacyDocument(tenantId: string, employeeId: string
         let titleToUse = currentTitle !== null ? `'${currentTitle.replace(/'/g, "''")}'` : 'NULL';
         titleToUse = title ? `'${title.replace(/'/g, "''")}'` : titleToUse;
 
-        let categoryToUse = currentCategory !== null || currentCategory !== '' ? currentCategory : '';
+        let categoryToUse = currentCategory !== null && currentCategory !== '' ? currentCategory : '';
         categoryToUse = category || categoryToUse;
 
         const query = new ParameterizedQuery('UpdateDocumentMetadataById', Queries.updateDocumentMetadataById);
@@ -2783,7 +2837,7 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
             newFileName = fileName;
             newKey = `${tenantId}/${companyId}/${newFileName}`;
 
-            [newFileName, newKey] = await checkForFileExistence(newKey, newFileName, tenantId, companyId);
+            [newFileName, newKey] = await utilService.checkForFileExistence(newKey, newFileName, tenantId, companyId);
 
             newKey = utilService.sanitizeForS3(newKey);
 
@@ -2870,8 +2924,6 @@ async function updateLegacyDocument(tenantId: string, documentId: number, reques
 
     const { title, category, isPublishedToEmployee } = request;
 
-    const { file = '', fileName = '' } = request.fileObject || {};
-
     try {
         // get document metadata / make sure it exists in the database
         let query = new ParameterizedQuery('getDocumentMetadataById', Queries.getDocumentMetadataById);
@@ -2897,29 +2949,6 @@ async function updateLegacyDocument(tenantId: string, documentId: number, reques
             Extension: prevExtension,
             Filename: prevFileName,
         } = fileMetadataResult.recordset[0];
-
-        let newExtension;
-        if (file && fileName) {
-            // get file data
-            const [fileData, fileContent] = file.split(',');
-            const contentType = fileData.split(':')[1].split(';')[0];
-            newExtension = fileName.split('.').pop();
-
-            query = new ParameterizedQuery('UpdateDocumentById', Queries.updateDocumentById);
-            query.setParameter('@id', documentId);
-            query.setParameter('@file', fileContent);
-            query.setParameter('@fileName', fileName);
-            query.setParameter('@extension', `.${newExtension}`);
-            query.setParameter('@contentType', contentType);
-            query.setStringParameter('@category', category || '');
-            payload = {
-                tenantId,
-                queryName: query.name,
-                query: query.value,
-                queryType: QueryType.Simple,
-            } as DatabaseEvent;
-            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-        }
 
         // update record in database
         let published = prevIsPublishedToEmployee ? '1' : '0';
@@ -2952,8 +2981,8 @@ async function updateLegacyDocument(tenantId: string, documentId: number, reques
         const response = {
             id: encodedId,
             title: title || prevTitle,
-            fileName: fileName || prevFileName,
-            extension: newExtension || prevExtension,
+            fileName: prevFileName,
+            extension: prevExtension,
             uploadDate: prevUploadDate,
             isEsignatureDocument: false,
             category: category !== undefined ? category : prevCategory,
@@ -3200,6 +3229,18 @@ async function deleteCompanyDocumentRecord(tenantId: string, docType: DocType, r
                 query.combineQueries(taskListQuery);
                 break;
             case DocType.LegacyDocument:
+                if (s3Key) {
+                    s3Client
+                        .deleteObject({
+                            Bucket: configService.getFileBucketName(),
+                            Key: s3Key,
+                        })
+                        .promise()
+                        .catch((e) => {
+                            throw new Error(e);
+                        });
+                }
+
                 query = new ParameterizedQuery('DeleteDocumentById', Queries.deleteDocumentById);
                 taskListQuery = new ParameterizedQuery('RemoveDocumentFromTaskList', Queries.removeDocumentFromTaskList);
                 taskListQuery.setParameter('@documentId', recordId);
@@ -3231,20 +3272,22 @@ async function deleteCompanyDocumentRecord(tenantId: string, docType: DocType, r
 async function deleteEmployeeDocumentRecord(tenantId: string, docType: DocType, recordId: number | string, s3Key?: string): Promise<void> {
     console.info('esignature.service.deleteEmployeeDocumentRecord');
 
+    if (s3Key) {
+        s3Client
+            .deleteObject({
+                Bucket: configService.getFileBucketName(),
+                Key: s3Key,
+            })
+            .promise()
+            .catch((e) => {
+                throw new Error(e);
+            });
+    }
+
     try {
         let query: ParameterizedQuery;
         switch (docType) {
             case DocType.S3Document:
-                s3Client
-                    .deleteObject({
-                        Bucket: configService.getFileBucketName(),
-                        Key: s3Key,
-                    })
-                    .promise()
-                    .catch((e) => {
-                        throw new Error(e);
-                    });
-
                 query = new ParameterizedQuery('DeleteFileMetadataById', Queries.deleteFileMetadataById);
                 break;
             case DocType.LegacyDocument:
@@ -3337,49 +3380,6 @@ export async function getConfigurationData(tenantId: string, companyId: string):
         appDetails,
         eSigner,
     };
-}
-
-/**
- * Appends a guid suffix to a filename to indicate duplication
- * @example
- *  // returns duplicate-PPBqWA9.pdf
- *  letappendDuplicationSuffix('duplicate.pdf');
- * @param {string} filenameWithExtension
- * @returns {string}: The file name with a duplication suffix
- */
-function appendDuplicationSuffix(filenameWithExtension: string): string {
-    console.info('esignature.service.appendDuplicationSuffix');
-    const [filename, extension] = utilService.splitFilename(filenameWithExtension);
-    return `${filename}-${shortid.generate()}${extension}`;
-}
-
-async function checkForFileExistence(
-    key: string,
-    fileName: string,
-    tenantId: string,
-    companyId: string,
-    employeeId?: string,
-): Promise<string[]> {
-    console.info('esignature.service.checkForFileExistence');
-
-    try {
-        const objectMetadata = await s3Client
-            .headObject({
-                Bucket: configService.getFileBucketName(),
-                Key: key,
-            })
-            .promise();
-
-        if (objectMetadata) {
-            const newFileName = appendDuplicationSuffix(fileName);
-            let newKey = `${tenantId}/${companyId}`;
-            newKey += employeeId ? `/${employeeId}` : '';
-            return [newFileName, `${newKey}/${newFileName}`];
-        }
-    } catch (missingError) {
-        // We really don't mind since we expect it to be missing
-        return [fileName, key];
-    }
 }
 
 /**

@@ -607,13 +607,14 @@ export const eventCallback = utilService.gatewayEventHandlerV2({
             switch (hellosignEvent.event.event_type) {
                 case 'callback_test':
                     console.info('callback test');
-                    return 'Hello API Event Received';
+                    break;
                 case 'signature_request_downloadable':
                     console.info('signature request downloadable');
                     await utilService.invokeInternalService('uploadSignedDocument', hellosignEvent, utilService.InvocationType.Event);
-                    return;
+                    break;
                 default:
             }
+            return 'Hello API Event Received';
         }
     },
 });

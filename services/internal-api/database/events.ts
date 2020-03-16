@@ -8,6 +8,7 @@ export type DatabaseEvent = {
     queryName: string;
     query: string;
     queryType: QueryType;
+    saveToS3?: boolean;
 };
 
 export enum QueryType {

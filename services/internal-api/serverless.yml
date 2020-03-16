@@ -112,7 +112,7 @@ functions:
 
   queryExecutor:
     handler: database/handler.execute
-    memorySize: 1024
+    memorySize: 2048
     vpc:
       securityGroupIds:
         - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}
