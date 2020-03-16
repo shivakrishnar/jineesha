@@ -105,7 +105,7 @@ export const helloSignTemplateDraft = {
     edit_url: 'editurl.com',
     expires_at: 12345,
 };
-export const templateListResponse = [
+export const templateListResponse: any[] = [
     {
         id: 1,
         title: 'hi',
@@ -132,6 +132,7 @@ export const templateListResponse = [
         category: 'tests',
         isPublishedToEmployee: false,
         existsInTaskList: false,
+        isLegacyDocument: true,
     },
     {
         id: 'N57UV',
@@ -143,6 +144,7 @@ export const templateListResponse = [
         category: 'tests',
         isPublishedToEmployee: true,
         existsInTaskList: true,
+        isLegacyDocument: false,
     },
 ];
 

@@ -548,6 +548,7 @@ export async function listTemplates(
                     category: document.Category,
                     isPublishedToEmployee: document.IsPublishedToEmployee,
                     existsInTaskList: document.ExistsInTaskList,
+                    isLegacyDocument: document.Type === 'legacy',
                 });
             }
             return memo;
@@ -1841,6 +1842,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 companyId,
                 companyName,
                 uploadedBy,
+                isLegacyDocument,
             } = document;
             updatedDocuments.push({
                 id,
@@ -1858,6 +1860,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 companyName,
                 isSignedDocument,
                 uploadedBy,
+                isLegacyDocument,
             });
         }
 
@@ -2388,63 +2391,6 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
                     .catch((e) => {
                         throw new Error(e);
                     });
-            }
-
-            // Legacy documents, download &  persist the metadata to database
-            if (islegacydocument === 'true') {
-                // get the current S3 pointer and remove the original file from the S3 bucket
-                const legacyDocMetadataQuery = new ParameterizedQuery('getDocumentMetadataById', Queries.getDocumentMetadataById);
-                legacyDocMetadataQuery.setParameter('@id', decodedId);
-                const legacyDocMetadataPayload = {
-                    tenantId: tenantid,
-                    queryName: legacyDocMetadataQuery.name,
-                    query: legacyDocMetadataQuery.value,
-                    queryType: QueryType.Simple,
-                } as DatabaseEvent;
-                const documentMetadataResult: any = await utilService.invokeInternalService(
-                    'queryExecutor',
-                    legacyDocMetadataPayload,
-                    InvocationType.RequestResponse,
-                );
-
-                if (documentMetadataResult.recordset.length === 0) {
-                    throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${decodedId} not found`);
-                }
-
-                const { Pointer: pointer } = documentMetadataResult.recordset[0];
-
-                await s3Client
-                    .deleteObject({
-                        Bucket: configService.getFileBucketName(),
-                        Key: pointer,
-                    })
-                    .promise();
-
-                const s3Document = await s3Client
-                    .getObject({
-                        Bucket: configService.getFileBucketName(),
-                        Key: uploadedItemS3Key,
-                    })
-                    .promise();
-
-                const contentType = s3Document.ContentType;
-                const extension = contentType.match(/(.[^.]+)$/i)[0];
-                const fileName = uploadedItemS3Key.match(/\/[^\/]+$/gi)[0].replace('/', '');
-
-                const data = Buffer.from(s3Document.Body as any, 'binary');
-                const fileContent = data.toString('base64');
-                console.log(`downloaded file: ${fileContent}`);
-
-                query = new ParameterizedQuery('UpdateDocumentById', Queries.updateDocumentById);
-                query.setParameter('@id', decodedId);
-                query.setParameter('@file', fileContent);
-                query.setParameter('@fileName', fileName);
-                query.setParameter('@extension', extension);
-                query.setParameter('@contentType', contentType);
-                if (title) {
-                    query.setParameter('@title', title);
-                }
-                query.setStringParameter('@category', category || '');
             }
         }
 
@@ -2978,8 +2924,6 @@ async function updateLegacyDocument(tenantId: string, documentId: number, reques
 
     const { title, category, isPublishedToEmployee } = request;
 
-    const { file = '', fileName = '' } = request.fileObject || {};
-
     try {
         // get document metadata / make sure it exists in the database
         let query = new ParameterizedQuery('getDocumentMetadataById', Queries.getDocumentMetadataById);
@@ -3005,29 +2949,6 @@ async function updateLegacyDocument(tenantId: string, documentId: number, reques
             Extension: prevExtension,
             Filename: prevFileName,
         } = fileMetadataResult.recordset[0];
-
-        let newExtension;
-        if (file && fileName) {
-            // get file data
-            const [fileData, fileContent] = file.split(',');
-            const contentType = fileData.split(':')[1].split(';')[0];
-            newExtension = fileName.split('.').pop();
-
-            query = new ParameterizedQuery('UpdateDocumentById', Queries.updateDocumentById);
-            query.setParameter('@id', documentId);
-            query.setParameter('@file', fileContent);
-            query.setParameter('@fileName', fileName);
-            query.setParameter('@extension', `.${newExtension}`);
-            query.setParameter('@contentType', contentType);
-            query.setStringParameter('@category', category || '');
-            payload = {
-                tenantId,
-                queryName: query.name,
-                query: query.value,
-                queryType: QueryType.Simple,
-            } as DatabaseEvent;
-            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-        }
 
         // update record in database
         let published = prevIsPublishedToEmployee ? '1' : '0';
@@ -3060,8 +2981,8 @@ async function updateLegacyDocument(tenantId: string, documentId: number, reques
         const response = {
             id: encodedId,
             title: title || prevTitle,
-            fileName: fileName || prevFileName,
-            extension: newExtension || prevExtension,
+            fileName: prevFileName,
+            extension: prevExtension,
             uploadDate: prevUploadDate,
             isEsignatureDocument: false,
             category: category !== undefined ? category : prevCategory,

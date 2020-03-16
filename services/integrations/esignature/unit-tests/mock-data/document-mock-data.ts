@@ -217,6 +217,7 @@ export const employeeDocumentListResponse = [
         companyName: 'Test Company',
         isSignedDocument: true,
         uploadedBy: 'Test User',
+        isLegacyDocument: true,
     },
     {
         id: 'nMua',
@@ -234,6 +235,7 @@ export const employeeDocumentListResponse = [
         companyName: 'Test Company',
         isSignedDocument: false,
         uploadedBy: 'Test User',
+        isLegacyDocument: false,
     },
     {
         id: 'qOUd',
@@ -251,6 +253,7 @@ export const employeeDocumentListResponse = [
         companyName: 'Other Test Company',
         isSignedDocument: false,
         uploadedBy: 'Manager User',
+        isLegacyDocument: false,
     },
 ];
 
@@ -349,7 +352,7 @@ export const updateNonLegacyCompanyDocumentResponse = {
 export const updateLegacyCompanyDocumentResponse = {
     id: 'dxi1',
     title: 'Title',
-    fileName: 'test.png',
+    fileName: 'file',
     extension: 'png',
     isEsignatureDocument: false,
     category: 'other',
