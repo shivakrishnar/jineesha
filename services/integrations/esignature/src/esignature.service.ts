@@ -1644,7 +1644,7 @@ export async function listEmployeeDocumentsByCompany(
 ): Promise<PaginatedResult> {
     console.info('esignature.service.listEmployeeDocumentsByCompany');
 
-    const validQueryStringParameters = ['pageToken', 'search'];
+    const validQueryStringParameters = ['pageToken', 'search', 'role'];
     let query: ParameterizedQuery;
 
     validateQueryStringParameters(validQueryStringParameters, queryParams);

@@ -256,6 +256,10 @@ const fileObjectSchema = Yup.object().shape({
         .test('file-name-has-extension', 'fileName must include a file extension.', (value) => value.includes('.')),
 });
 
+const roleQueryParameterSchema = Yup.object().shape({
+    role: Yup.string().oneOf(['manager'], "The role query parameter must be one of the following values: ['manager']"),
+});
+
 /**
  * Creates a new template of a document to be e-signed
  */
@@ -736,7 +740,13 @@ export const listEmployeeDocumentsByCompany = utilService.gatewayEventHandlerV2(
         throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
     }
 
-    const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager);
+    let specifiedRole;
+    if (event.queryStringParameters) {
+        await utilService.validateRequestBody(roleQueryParameterSchema, event.queryStringParameters);
+        specifiedRole = event.queryStringParameters.role;
+    }
+
+    const isManager: boolean = securityContext.roleMemberships.some((role) => role === Role.hrManager) && specifiedRole === 'manager';
     const emailAddress: string = securityContext.principal.email;
     const {
         requestContext: { domainName, path },
