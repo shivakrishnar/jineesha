@@ -14,6 +14,10 @@
         "username": "bdyer@sharklasers.com",
         "password": "demo"
     },
+    "managerUser": {
+        "username": "pre-prod-manager@sharklasers.com",
+        "password": "Demo123!"
+    },
     "secretsManager": {
         "region": "us-east-1",
         "endpoint": "https://secretsmanager.us-east-1.amazonaws.com",

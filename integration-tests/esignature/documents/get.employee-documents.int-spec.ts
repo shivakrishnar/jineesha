@@ -306,3 +306,116 @@ describe('list employee documents by employee', () => {
             });
     });
 });
+
+describe('list employee documents by company as a manager', () => {
+    beforeAll(async (done) => {
+        try {
+            accessToken = await utils.getAccessToken(configs.managerUser.username, configs.managerUser.password);
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    });
+
+    test('must return a 401 if a token is not provided', (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents?role=manager`;
+        request(baseUri)
+            .get(uri)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(401)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return undefined;
+                });
+            });
+    });
+
+    test('must return a 400 if tenantID is invalid', (done) => {
+        const invalidTenantId = '99999999';
+        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents?role=manager`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(400)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 404 if tenantID is not found', (done) => {
+        const unknownTenantId = uuidV4();
+        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents?role=manager`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(404)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 404 if companyID is not found', (done) => {
+        const unknownCompanyId = 999999999;
+        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/documents?role=manager`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(404)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 400 if manager is not provided as the role', (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents?role=admin`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(400)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 400 if supplied role is capitalized', (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents?role=Manager`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(400)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 200 when documents exist', (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents?role=manager`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(200)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    let message = utils.assertJson(schemas, schemaNames.PaginatedResult, response.body);
+                    message = utils.assertJson(schemas, schemaNames.EmployeeDocument, response.body.results[0]);
+                    return message;
+                });
+            });
+    });
+});
