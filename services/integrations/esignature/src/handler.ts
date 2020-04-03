@@ -601,26 +601,28 @@ export const listCompanyDocumentCategories = utilService.gatewayEventHandlerV2(a
 /**
  * Handles event callbacks from HelloSign
  */
+export const eventCallbackDelegate = async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.eventCallback');
+
+    const hellosignEvent = JSON.parse(new Buffer(event.body, 'base64').toString('ascii').match(/\{(.*)\}/g)[0]);
+    if (hellosignEvent) {
+        switch (hellosignEvent.event.event_type) {
+            case 'callback_test':
+                console.info('callback test');
+                break;
+            case 'signature_request_downloadable':
+                console.info('signature request downloadable');
+                await utilService.invokeInternalService('uploadSignedDocument', hellosignEvent, utilService.InvocationType.Event);
+                break;
+            default:
+        }
+        return 'Hello API Event Received';
+    }
+};
+
 export const eventCallback = utilService.gatewayEventHandlerV2({
     allowAnonymous: true,
-    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.eventCallback');
-
-        const hellosignEvent = JSON.parse(new Buffer(event.body, 'base64').toString('ascii').match(/\{(.*)\}/g)[0]);
-        if (hellosignEvent) {
-            switch (hellosignEvent.event.event_type) {
-                case 'callback_test':
-                    console.info('callback test');
-                    break;
-                case 'signature_request_downloadable':
-                    console.info('signature request downloadable');
-                    await utilService.invokeInternalService('uploadSignedDocument', hellosignEvent, utilService.InvocationType.Event);
-                    break;
-                default:
-            }
-            return 'Hello API Event Received';
-        }
-    },
+    delegate: eventCallbackDelegate,
 });
 
 /**
