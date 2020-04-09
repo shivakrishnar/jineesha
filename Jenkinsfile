@@ -37,30 +37,25 @@ stage("Build")
             bitbucketStatusNotify(buildState: "INPROGRESS")
             // Make sure we have a clean workspace before we get started
             cleanUpWorkspace()
-            withCredentials([[$class: "UsernamePasswordMultiBinding", credentialsId: "e0860691-2bc8-45eb-900a-a5583dad5747", usernameVariable: "GIT_USERNAME", passwordVariable: "GIT_PASSWORD"]]) {
-                sh "git clone https://${env.GIT_USERNAME}:${env.GIT_PASSWORD}@bitbucket.org/iSystemsTeam/${projectName}.git"
+            checkout scm
+
+            configData = readJSON file: './jenkins.config.json'
+            teamEmail = configData.teamEmail
+            slackRoomName = configData.slackRoomName
+            slackCredentials = configData.slackCredentials
+
+            sh "git checkout -b temp-${env.BRANCH_NAME}"
+
+            nvm(nodeVersion) {
+                sh "npm install"
+                installServiceApiDependencies()
+                sh "npm test"
             }
-            dir(projectName) {
-                sh "git checkout ${env.BRANCH_NAME}"
 
-                configData = readJSON file: './jenkins.config.json'
-                teamEmail = configData.teamEmail
-                slackRoomName = configData.slackRoomName
-                slackCredentials = configData.slackCredentials
-
-                sh "git checkout -b temp-${env.BRANCH_NAME}"
-
-                nvm(nodeVersion) {
-                    sh "npm install"
-                    installServiceApiDependencies()
-                    sh "npm test"
-                }
-
-                // Bump the build version
-                currentVersion = getVersion()
-                sh "npm --no-git-tag-version version ${semanticVersion}"
-                nextVersion = getVersion()
-            }
+            // Bump the build version
+            currentVersion = getVersion()
+            sh "npm --no-git-tag-version version ${semanticVersion}"
+            nextVersion = getVersion()
         }
         catch (Exception e) {
             cleanUpWorkspace()
@@ -88,21 +83,19 @@ stage("Build")
             deploymentNotification("${projectName}: ready to deploy version: ${nextVersion} to production.", teamEmail, false)
             deployStage("production")
             node("linux") {
-                dir(projectName) {
-                    sh "git add package.json package-lock.json"
-                    sh "git commit -m 'version bump to ${nextVersion}'"
+                sh "git add package.json package-lock.json"
+                sh "git commit -m 'version bump to ${nextVersion}'"
 
-                    sh "git checkout ${env.BRANCH_NAME}" // This should always be 'master'
-                    sh "git merge temp-${env.BRANCH_NAME}" // This should always be 'temp-master'
-                    //Get commit id:
-                    commit_id = sh(
-                            script: "git rev-parse --short HEAD",
-                            returnStdout: true
-                    ).trim()
+                sh "git checkout ${env.BRANCH_NAME}" // This should always be 'master'
+                sh "git merge temp-${env.BRANCH_NAME}" // This should always be 'temp-master'
+                //Get commit id:
+                commit_id = sh(
+                        script: "git rev-parse --short HEAD",
+                        returnStdout: true
+                ).trim()
 
-                    sh "git tag -m \"Built by Jenkins\" -a ${nextVersion} ${commit_id}"
-                    sh "git push origin ${env.BRANCH_NAME} ${nextVersion}"
-                }
+                sh "git tag -m \"Built by Jenkins\" -a ${nextVersion} ${commit_id}"
+                sh "git push origin ${env.BRANCH_NAME} ${nextVersion}"
                 deploymentNotification("${projectName}: successfully deployed version: ${nextVersion} to production!", teamEmail, true)
 
                 // TODO: Run integration tests in production when e-signatures is turned on for EvoNPD
@@ -163,14 +156,12 @@ void runWithAwsCredentials(String awsCredentialsId, String command) {
 }
 
 void deploy(String environment) {
-    dir(projectName) {
-        sh "ls -lah"
-        String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
-        deployInternalServices(awsCredentialsId, environment)
-        deployService('services/api/direct-deposits', awsCredentialsId, environment)  
-        deployService('services/api/tenants', awsCredentialsId, environment)      
-        deployService('services/integrations', awsCredentialsId, environment)      
-    }
+    sh "ls -lah"
+    String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
+    deployInternalServices(awsCredentialsId, environment)
+    deployService('services/api/direct-deposits', awsCredentialsId, environment)  
+    deployService('services/api/tenants', awsCredentialsId, environment)      
+    deployService('services/integrations', awsCredentialsId, environment)      
 }
 
 void deployInternalServices(String awsCredentialsId, String environment) {
@@ -220,19 +211,17 @@ void installServiceApiDependencies() {
 
 void runIntegrationTests(String environment) {
     node("linux") {
-        dir(projectName) {
-            String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
-            try 
-            {
-                runWithAwsCredentials(awsCredentialsId, "INTEGRATION_TEST_CONFIG_FILENAME=${environment}.config.json npm run test:base")
-            }
-            catch (Exception e) {
-                cleanUpWorkspace()
-                notifyTeam(e)
-                //Notify build breaking culprit and team of regressions on critical branches
-                bitbucketStatusNotify(buildState: "FAILED")
-                throw e
-            }
+        String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
+        try 
+        {
+            runWithAwsCredentials(awsCredentialsId, "INTEGRATION_TEST_CONFIG_FILENAME=${environment}.config.json npm run test:base")
+        }
+        catch (Exception e) {
+            cleanUpWorkspace()
+            notifyTeam(e)
+            //Notify build breaking culprit and team of regressions on critical branches
+            bitbucketStatusNotify(buildState: "FAILED")
+            throw e
         }
     }
 }
@@ -258,8 +247,6 @@ void deployStage(String environment) {
 }
 
 void cleanUpWorkspace() {
-    dir(projectName) {
-        sh "sudo rm -rf *"
-        deleteDir()
-    }
+    sh "sudo rm -rf *"
+    deleteDir()
 }
