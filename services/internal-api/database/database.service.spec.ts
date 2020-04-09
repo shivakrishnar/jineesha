@@ -1,3 +1,5 @@
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import { setup } from '../../unit-test-mocks/mock';
 import * as dbServiceMockData from '../../unit-test-mocks/mock-data/database-service-mock-data';
 import * as mockData from '../../unit-test-mocks/mock-data/mock-data';
