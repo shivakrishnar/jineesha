@@ -86,52 +86,6 @@ function isHttpResponse<T>(response: any): response is IHttpResponse<T> {
 /**
  * Handle an API Gateway event and make the appropriate callback. Response from delegate can be a POJO or an IHttpResponse.
  *
- * NOTE: For new endpoints, it's recommended to use gatewayEventHandlerV2 instead, as it allows the service to be run locally.
- */
-export function gatewayEventHandler<T>(
-    delegate: (gatewayEventInput: IGatewayEventInput) => Promise<T | IHttpResponse<T>>,
-): (event: ApiInvocationEvent, context: Context, callback: ProxyCallback) => void {
-    return (event: ApiInvocationEvent, context: Context, callback: ProxyCallback): void => {
-        // Below we are intentionally invoking an IIFE because the code inside is async, but the Lambda
-        // handler signature is a void function. The try/catch ensures that the callback is always invoked,
-        // so we can safely discard the returned Promise<void>.
-
-        if (isLambdaWarmupInvocation(event)) {
-            console.log('warm up invocation');
-            return callback(undefined, buildLambdaResponse(204, undefined, {}, 'warm-up-invocation'));
-        }
-
-        event = event as APIGatewayEvent;
-
-        (async () => {
-            try {
-                const requestContext: any = event.requestContext;
-                const json = requestContext.authorizer ? requestContext.authorizer.principalId : undefined;
-                const securityContext = json ? SecurityContext.fromJSON(json) : undefined;
-
-                let requestBody: any;
-                if (event.body && !event.isBase64Encoded) {
-                    requestBody = parseJson(event.body, true);
-                }
-
-                const result = await delegate({ securityContext, event, requestBody });
-
-                if (isHttpResponse(result)) {
-                    callback(undefined, buildLambdaResponse(result.statusCode, result.headers, result.body, event.path));
-                } else {
-                    callback(undefined, buildLambdaResponse(result ? 200 : 204, undefined, result, event.path));
-                }
-            } catch (error) {
-                const statusCode = error.statusCode || 500;
-                callback(undefined, buildLambdaResponse(statusCode, undefined, error, event.path));
-            }
-        })();
-    };
-}
-
-/**
- * Handle an API Gateway event and make the appropriate callback. Response from delegate can be a POJO or an IHttpResponse.
- *
  * This is an enhanced version of gatewayEventHander() (above), supporting V2 access tokens (in addition to V1 tokens).
  * Note that it IGNORES the serverless "authorizer" attribute, instead building the SecurityContext object internally.
  * This means any handler wrapped with gatewayEventHandlerV2, can be run locally with serverless-offline. A new option

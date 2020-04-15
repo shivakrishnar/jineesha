@@ -1,19 +1,21 @@
-import { eventCallbackDelegate } from '../src/handler';
+import 'reflect-metadata'; // required by asure.auth dependency
+
+import { setup } from '../../../unit-test-mocks/mock';
 import * as utilService from '../../../util.service';
 import { IGatewayEventInput } from '../../../util.service';
-import { setup } from '../../../unit-test-mocks/mock';
+import { eventCallbackDelegate } from '../src/handler';
 
 import {
-    hsTestCallback,
-    hsTestDecodedBody,
     hsSignatureRequestDownloadableCallback,
     hsSignatureRequestDownloadableDecodedBody,
     hsSignatureRequestSentCallback,
     hsSignatureRequestSentDecodedBody,
-    nonHsCallback,
-    nonHsDecodedBody,
+    hsTestCallback,
+    hsTestDecodedBody,
     invalidCallback,
     invalidCallbackDecodedBody,
+    nonHsCallback,
+    nonHsDecodedBody,
 } from './mock-data/hellosignCallback-mock-data';
 
 const actualConsoleInfo = global.console.info;

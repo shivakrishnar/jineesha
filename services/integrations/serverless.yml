@@ -42,8 +42,8 @@ provider:
     fromEmail: ${file(${self:custom.configFile}):fromEmail}
     integrationId: ${file(${self:custom.configFile}):integrationId}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
-    goldilocksPublicKey1: ${file(${self:custom.configFile}):goldilocksPublicKey1}
-    goldilocksPublicKey2: ${file(${self:custom.configFile}):goldilocksPublicKey2}
+    ssoPublicKey1: ${file(${self:custom.configFile}):ssoPublicKey1}
+    ssoPublicKey2: ${file(${self:custom.configFile}):ssoPublicKey2}
     goldilocksTenantId: ${file(${self:custom.configFile}):goldilocksTenantId}
     hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
     eSignatureCallbackPath: ${file(${self:custom.configFile}):eSignatureCallbackPath}

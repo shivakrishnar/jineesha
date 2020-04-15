@@ -1,16 +1,18 @@
-import * as utilService from '../../../util.service';
-import * as hellosignService from '../../../remote-services/hellosign.service';
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import * as AWS from 'aws-sdk';
 import { getFileBucketName } from '../../../config.service';
-import { uploadSignedDocument } from '../../../internal-api/esignatures/esignatures.service';
-import { setup } from '../../../unit-test-mocks/mock';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
+import { uploadSignedDocument } from '../../../internal-api/esignatures/esignatures.service';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
+import * as hellosignService from '../../../remote-services/hellosign.service';
+import { setup } from '../../../unit-test-mocks/mock';
+import * as utilService from '../../../util.service';
 
 const tenantId = 'c807d7f9-b319-4525-ae0e-31cbd0cf202b';
 const companyId = '600990';
-let employeeCodes = ['abcde'];
+const employeeCodes = ['abcde'];
 const category = 'onboarding';
 const requestId = '57fdf37cf3388e2c446e43f4d4e00d0f618dca64';
 const title = 'test document';

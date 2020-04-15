@@ -1,3 +1,5 @@
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import * as employeeService from '../../../api/tenants/src/employee.service';
 import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';

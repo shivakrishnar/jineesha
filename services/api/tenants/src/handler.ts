@@ -1,3 +1,5 @@
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
 import * as companyService from './company.service';
@@ -9,9 +11,8 @@ import * as mime from 'mime-types';
 import { IGatewayEventInput } from '../../../util.service';
 import { Headers } from '../../models/headers';
 
+import { IAccount } from '@asuresoftware/asure.auth';
 import { Context, ProxyCallback } from 'aws-lambda';
-import { IAccount } from '../../../internal-api/authentication/account';
-import { SecurityPolicyAuthorizer } from '../../../internal-api/authentication/securityPolicyAuthorizer';
 import { Role } from '../../models/Role';
 
 const twoDaysInSeconds = 172800;
@@ -47,13 +48,19 @@ const createTenantDbSchema = {
 export const addAdmin = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('tenants.handler.addAdmin');
 
-    securityContext.requireRole(Role.asureAdmin);
-
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, adminsUriSchema);
 
     const { tenantId } = event.pathParameters;
+
+    const requiredPolicy = {
+        action: 'tenant:add-admin-user',
+        resource: `tenants/${tenantId}`,
+    };
+
+    securityContext.requireAuthorizedTo(requiredPolicy);
+
     const account: IAccount = securityContext.principal;
     const accessToken = event.headers.authorization.replace(/Bearer /i, '');
 
@@ -68,22 +75,14 @@ export const addAdmin = utilService.gatewayEventHandlerV2(async ({ securityConte
 export const addTenantDb = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('tenants.handler.addTenantDb');
     const { id: tenantId } = requestBody;
+
     // Note: this is the guards against at-will creation of databases in the Production tier
-    const isAsureAdmin = securityContext.roleMemberships.some((role) => role === Role.asureAdmin);
     const requiredPolicy = {
         action: 'tenant:add-ahr-database',
         resource: `tenants/${tenantId}`,
     };
 
-    if (!isAsureAdmin && !new SecurityPolicyAuthorizer(securityContext.policy).isAuthorizedTo(requiredPolicy)) {
-        throw errorService
-            .getErrorResponse(20)
-            .setMoreInfo(
-                `This user does not have the required role - asure-admin or the required policy ${JSON.stringify(
-                    requiredPolicy,
-                )} - to use this endpoint.`,
-            );
-    }
+    securityContext.requireAuthorizedTo(requiredPolicy);
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
@@ -313,16 +312,9 @@ export const getConnectionStringByTenant = utilService.gatewayEventHandlerV2(asy
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, adminsUriSchema);
 
-    const isAsureAdmin = securityContext.roleMemberships.some((role) => role === Role.asureAdmin);
     const action = 'tenant:list-ahr-connection-strings';
+    securityContext.requireAuthorizedTo({ action });
 
-    if (!isAsureAdmin && !new SecurityPolicyAuthorizer(securityContext.policy).isAuthorizedTo({ action })) {
-        throw errorService
-            .getErrorResponse(20)
-            .setMoreInfo(
-                `This user does not have the required role - asure-admin or the required policy action ${action} - to use this endpoint.`,
-            );
-    }
     try {
         const { tenantId } = event.pathParameters;
         return await tenantService.getConnectionStringByTenant(tenantId);
@@ -340,16 +332,9 @@ export const listConnectionStrings = utilService.gatewayEventHandlerV2(async ({ 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
 
-    const isAsureAdmin = securityContext.roleMemberships.some((role) => role === Role.asureAdmin);
     const action = 'tenant:list-ahr-connection-strings';
+    securityContext.requireAuthorizedTo({ action });
 
-    if (!isAsureAdmin && !new SecurityPolicyAuthorizer(securityContext.policy).isAuthorizedTo({ action })) {
-        throw errorService
-            .getErrorResponse(20)
-            .setMoreInfo(
-                `This user does not have the required role - asure-admin or the required policy action ${action} - to use this endpoint.`,
-            );
-    }
     return await tenantService.listConnectionStrings();
 });
 
@@ -376,7 +361,7 @@ export const getCompanyLogo = utilService.gatewayEventHandlerV2({ allowAnonymous
         statusCode: 200,
         body: companyLogo.base64String,
         headers,
-        isBase64Encoded: true
+        isBase64Encoded: true,
     };
 }});
 
@@ -394,14 +379,8 @@ export const listEmployeeCompaniesBySsoAccount = utilService.gatewayEventHandler
         return role === Role.asureAdmin || role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin;
     });
 
-    const { principal } = securityContext;
-
-    if (!isAdmin && (principal.tenantId !== tenantId || principal.id !== ssoAccountId)) {
-        throw errorService
-            .getErrorResponse(20)
-            .setMoreInfo(
-                `This endpoint can only be used by a user with an admin role, or to request the authenticated user's companies.`,
-            );
+    if (!isAdmin) {
+        securityContext.requireSelf({ tenantId, accountId: ssoAccountId });
     }
 
     return await companyService.listEmployeeCompaniesBySsoAccount(tenantId, ssoAccountId);

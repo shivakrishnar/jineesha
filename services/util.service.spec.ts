@@ -1,3 +1,5 @@
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import { APIGatewayEvent, Context, ProxyCallback } from 'aws-lambda';
 import * as configService from './config.service';
 import { SecurityContextProvider } from './internal-api/authentication/securityContextProvider';

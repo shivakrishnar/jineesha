@@ -1,3 +1,5 @@
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import * as errorService from '../../../errors/error.service';
 import * as hellosignService from '../../../remote-services/hellosign.service';
 import * as utilService from '../../../util.service';

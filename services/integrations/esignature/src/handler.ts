@@ -1,3 +1,5 @@
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import * as UUID from '@smallwins/validate/uuid';
 import * as Yup from 'yup';
 import * as errorService from '../../../errors/error.service';

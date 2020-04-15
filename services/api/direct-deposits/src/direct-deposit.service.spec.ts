@@ -1,3 +1,5 @@
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import * as configService from '../../../config.service';
 import * as databaseService from '../../../internal-api/database/database.service';
 import * as paginationService from '../../../pagination/pagination.service';

@@ -1,3 +1,5 @@
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import * as jwt from 'jsonwebtoken';
 import * as configService from '../../config.service';
 import * as ssoService from '../../remote-services/sso.service';
@@ -18,7 +20,7 @@ describe('SecurityContextProvider', () => {
         jest.clearAllMocks();
 
         (configService.getHrApplicationId as jest.Mock).mockReturnValue('ahr-id');
-        (configService.getGoldilocksPublicKeys as jest.Mock).mockReturnValue([ { keyId: 'key-id', publicKey: 'the-secret' }]);
+        (configService.getSsoPublicKeys as jest.Mock).mockReturnValue([ { keyId: 'key-id', publicKey: 'the-secret' }]);
 
         (ssoService.exchangeToken as jest.Mock).mockResolvedValue({ access_token: 'ahr-token' });
 
@@ -58,7 +60,7 @@ describe('SecurityContextProvider', () => {
 
             test('returns full security context', async () => {
                 const sc = await sut.getSecurityContext({ event: { headers: { authorization: 'Bearer ahr-token' }} });
-                expect(sc).toEqual({
+                expect(sc).toMatchObject({
                     accessToken: 'ahr-token',
                     principal: { id: 'acct-id' },
                     roleMemberships: [ 'ahr-role' ],
@@ -68,7 +70,7 @@ describe('SecurityContextProvider', () => {
 
             test('appends ahr roles if not ahr token', async () => {
                 const sc = await sut.getSecurityContext({ event: { headers: { authorization: 'Bearer other-token' }} });
-                expect(sc).toEqual({
+                expect(sc).toMatchObject({
                     accessToken: 'other-token',
                     principal: { id: 'acct-id' },
                     roleMemberships: [ 'other-role', 'ahr-role' ],
@@ -91,7 +93,7 @@ describe('SecurityContextProvider', () => {
 
             test('returns full security context', async () => {
                 const sc = await sut.getSecurityContext({ event: { headers: { authorization: 'Bearer v2-token' }} });
-                expect(sc).toEqual({
+                expect(sc).toMatchObject({
                     accessToken: 'v2-token',
                     principal: { id: 'acct-id' },
                     roleMemberships: [ 'ahr-role', 'other-role' ],
