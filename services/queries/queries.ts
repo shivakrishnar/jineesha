@@ -137,4 +137,7 @@ export const Queries = {
 
     // Users
     getUserById: fs.readFileSync(path.join(basePath, 'users/getUserById.sql')).toString(),
+
+    // Applicant Tracking
+    applicantCreate: fs.readFileSync(path.join(basePath, 'applicant-tracking/createApplicant.sql')).toString(),
 };

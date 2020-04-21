@@ -1,0 +1,136 @@
+import * as errorService from '../../../errors/error.service';
+import { ErrorMessage } from '../../../errors/errorMessage';
+import * as utilService from '../../../util.service';
+import { Queries } from '../../../queries/queries';
+import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
+import { Applicant } from './Applicant';
+import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
+import { InvocationType } from '../../../util.service';
+import { plainToClass } from 'class-transformer';
+
+/**
+ * Create Applicant Hired Data from JazzHR into ADHR
+ *
+ * @returns {Promise<void>} 
+ */
+export async function createApplicantData(tenantId: string, companyId: string, requestBody: any): Promise<void> {
+    //  console.info('applicantTrackingService.createApplicantData');
+
+    //  console.info(JSON.stringify(requestBody));
+
+    try {
+        const applicant = plainToClass(Applicant, requestBody);
+
+        const createQuery = new ParameterizedQuery('ApplicantCreate', Queries.applicantCreate);
+
+        createQuery.setParameter('@givenName', applicant.candidate.person.name.given);
+        createQuery.setParameter('@familyName', applicant.candidate.person.name.family);
+        createQuery.setParameter('@schemeId', applicant.candidate.person.id.schemeId);
+        createQuery.setParameter('@schemeAgencyId', applicant.candidate.person.id.schemeAgencyId);
+        createQuery.setParameter('@externalCandidateID', applicant.candidate.person.id.value);
+        createQuery.setParameter('@gender', applicant.candidate.person.gender);
+
+        //Check if citizenship array has value
+        if (applicant.candidate.person.citizenship == undefined || applicant.candidate.person.citizenship.length == 0) {
+            createQuery.setParameter('@citizenship', '');
+        } else {
+            createQuery.setParameter('@citizenship', applicant.candidate.person.citizenship[0]);
+        }
+
+        createQuery.setParameter('@applyDate', applicant.candidate.person.applyDate);
+
+        if (applicant.candidate.person.communication.address == undefined || applicant.candidate.person.communication.address.length == 0) {
+            createQuery.setParameter('@city', '');
+            createQuery.setParameter('@state', '');
+            createQuery.setParameter('@formattedAddress', '');
+            createQuery.setParameter('@postalCode', '');
+        } else {
+            const address = applicant.candidate.person.communication.address[0];
+
+            //city
+            createQuery.setParameter('@city', address.city == undefined ? '' : address.city);
+
+            //State
+            const countrySubdivisions = address.countrySubdivisions;
+            createQuery.setParameter('@state', countrySubdivisions == undefined || countrySubdivisions.length == 0 ? '' : countrySubdivisions[0].value);
+
+            //formattedAddress
+            createQuery.setParameter('@formattedAddress', address.formattedAddress == undefined ? '' : address.formattedAddress);
+
+            //postal code
+            createQuery.setParameter('@postalCode', address.postalCode == undefined ? '' : address.postalCode);
+        }
+        //Phone
+        const phone = applicant.candidate.person.communication.phone;
+        createQuery.setParameter('@phone', phone == undefined || phone.length == 0 ? '' : phone[0].formattedNumber);
+
+        //email
+        const email = applicant.candidate.person.communication.email;
+        createQuery.setParameter('@email', email == undefined || email.length == 0 ? '' : email[0].address);
+    
+
+        //Profiles 
+        if (applicant.candidate.profiles == undefined || applicant.candidate.profiles.length == 0) {
+          createQuery.setParameter('@profileID', '');
+          createQuery.setParameter('@profileSchemeId', '');
+          createQuery.setParameter('@profileSchemeAgencyId', '');
+          createQuery.setParameter('@positionOpeningID', '');
+          createQuery.setParameter('@positionSchemeID', '');
+          createQuery.setParameter('@positionAgencyID', '');
+          createQuery.setParameter('@positionUri', '');
+          createQuery.setParameter('@positionTitle', '');
+          createQuery.setParameter('@status', '');
+          createQuery.setParameter('@statusCategory', '');
+          createQuery.setParameter('@statusTransitionDateTime', '');
+          createQuery.setParameter('@educationLevelCode', '');
+         
+        }
+        else {
+          const profile = applicant.candidate.profiles[0];
+
+          createQuery.setParameter('@profileID', profile.profileId.value);
+          createQuery.setParameter('@profileSchemeId', profile.profileId.schemeId);
+          createQuery.setParameter('@profileSchemeAgencyId', profile.profileId.schemeAgencyId);
+          createQuery.setParameter('@positionOpeningID', profile.associatedPositionOpenings[0].positionOpeningId.value);
+          createQuery.setParameter('@positionSchemeID', profile.associatedPositionOpenings[0].positionOpeningId.schemeId);
+          createQuery.setParameter('@positionAgencyID', profile.associatedPositionOpenings[0].positionOpeningId.schemeAgencyId);
+          createQuery.setParameter('@positionUri', profile.associatedPositionOpenings[0].positionUri);
+          createQuery.setParameter('@positionTitle', profile.associatedPositionOpenings[0].positionTitle);
+          createQuery.setParameter('@status', profile.associatedPositionOpenings[0].candidateStatus.name);
+          createQuery.setParameter('@statusCategory', profile.associatedPositionOpenings[0].candidateStatus.category);
+          createQuery.setParameter('@statusTransitionDateTime', profile.associatedPositionOpenings[0].candidateStatus.transitionDateTime);
+
+          //educationLevelCodes
+          if (profile.education == undefined || profile.education.length == 0) {
+            createQuery.setParameter('@educationLevelCode','');
+          } else {
+            const educationLevelCodes = profile.education[0].educationLevelCodes;
+            createQuery.setParameter('@educationLevelCode', 
+            (educationLevelCodes == undefined 
+              || educationLevelCodes.length == 0)
+              ? '' 
+              : educationLevelCodes[0].name);
+          }
+       }
+
+       createQuery.setParameter('@companyId', companyId);
+
+       const payload = {
+            tenantId,
+            queryName: createQuery.name,
+            query: createQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        //return applicant;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
