@@ -140,4 +140,5 @@ export const Queries = {
 
     // Applicant Tracking
     applicantCreate: fs.readFileSync(path.join(basePath, 'applicant-tracking/createApplicant.sql')).toString(),
+    documentCreate: fs.readFileSync(path.join(basePath, 'applicant-tracking/createDocument.sql')).toString(),
 };

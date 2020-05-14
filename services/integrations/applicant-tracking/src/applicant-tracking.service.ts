@@ -7,6 +7,7 @@ import { Applicant } from './Applicant';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { InvocationType } from '../../../util.service';
 import { plainToClass } from 'class-transformer';
+import * as request from 'request-promise-native';
 
 /**
  * Create Applicant Hired Data from JazzHR into ADHR
@@ -21,7 +22,9 @@ export async function createApplicantData(tenantId: string, companyId: string, r
     try {
         const applicant = plainToClass(Applicant, requestBody);
 
-        const createQuery = new ParameterizedQuery('ApplicantCreate', Queries.applicantCreate);
+        let createQuery = new ParameterizedQuery('ApplicantCreate', Queries.applicantCreate);
+        
+        
 
         createQuery.setParameter('@givenName', applicant.candidate.person.name.given);
         createQuery.setParameter('@familyName', applicant.candidate.person.name.family);
@@ -54,8 +57,8 @@ export async function createApplicantData(tenantId: string, companyId: string, r
             const countrySubdivisions = address.countrySubdivisions;
             createQuery.setParameter('@state', countrySubdivisions == undefined || countrySubdivisions.length == 0 ? '' : countrySubdivisions[0].value);
 
-            //formattedAddress
-            createQuery.setParameter('@formattedAddress', address.formattedAddress == undefined ? '' : address.formattedAddress);
+            //Address Line
+            createQuery.setParameter('@addressLine', address.line == undefined ? '' : address.line);
 
             //postal code
             createQuery.setParameter('@postalCode', address.postalCode == undefined ? '' : address.postalCode);
@@ -68,9 +71,9 @@ export async function createApplicantData(tenantId: string, companyId: string, r
         const email = applicant.candidate.person.communication.email;
         createQuery.setParameter('@email', email == undefined || email.length == 0 ? '' : email[0].address);
     
-
+        var profileCollection = applicant.candidate.profiles;
         //Profiles 
-        if (applicant.candidate.profiles == undefined || applicant.candidate.profiles.length == 0) {
+        if (profileCollection == undefined || profileCollection.length == 0) {
           createQuery.setParameter('@profileID', '');
           createQuery.setParameter('@profileSchemeId', '');
           createQuery.setParameter('@profileSchemeAgencyId', '');
@@ -111,18 +114,72 @@ export async function createApplicantData(tenantId: string, companyId: string, r
               ? '' 
               : educationLevelCodes[0].name);
           }
+
+         
+
        }
 
        createQuery.setParameter('@companyId', companyId);
+       createQuery.setParameter('@requestJson', JSON.stringify(requestBody));
 
-       const payload = {
+
+       let payload = {
             tenantId,
             queryName: createQuery.name,
             query: createQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        //TODO:get the atapplicationid
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+       
+        if (result.recordset.length != 0) {
+            const createdId: number = result.recordset[0].ATApplicationID;
+            //console.log(createdId.toString());
+            
+            //Check if profiles are available
+            if (!(profileCollection == undefined || profileCollection.length == 0)) {
+            
+                //check if profile has attachments
+                if (!(profileCollection[0].attachments == undefined || profileCollection[0].attachments.length == 0)) {
+            
+                    for (let attachment of profileCollection[0].attachments) {
+            
+                        //fetch attachment from url
+                        const url = attachment.url;
+                        const response = JSON.parse(await request.get({ url }));
+
+                        const { fileName, mimeType , content} = response;
+                        const extension = '.' + fileName.split('.')[1];
+
+                        let fileSize : number;
+                        fileSize =calculateFileSize(content);
+                        
+                        createQuery = new ParameterizedQuery('DocumentCreate', Queries.documentCreate);
+
+                        createQuery.setParameter('@fileName', fileName);
+                        createQuery.setParameter('@extension', extension);
+                        createQuery.setParameter('@contentType', mimeType);
+                        createQuery.setParameter('@applicationID', createdId);
+                        createQuery.setParameter('@content', content);
+                        createQuery.setParameter('@externalDocumentID', attachment.id.value);
+                        createQuery.setParameter('@fileSize', fileSize);
+                        
+                        payload = {
+                            tenantId,
+                            queryName: createQuery.name,
+                            query: createQuery.value,
+                            queryType: QueryType.Simple,
+                        } as DatabaseEvent;
+
+                        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+                    }
+                }
+            }
+        }
+
+
+         
 
         //return applicant;
     } catch (error) {
@@ -133,4 +190,19 @@ export async function createApplicantData(tenantId: string, companyId: string, r
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
     }
+
+
+
+
 }
+
+function calculateFileSize(base64String : any){
+    let padding, inBytes, base64StringLength;
+    if(base64String.endsWith("==")) padding = 2;
+    else if (base64String.endsWith("=")) padding = 1;
+    else padding = 0;
+
+    base64StringLength = base64String.length;
+    inBytes =(base64StringLength / 4 ) * 3 - padding;
+    return Math.ceil((inBytes / 1024));
+  }

@@ -11,7 +11,7 @@ declare @_applyDate as nvarchar(max) = '@applyDate';
 declare @_city as nvarchar(150) = '@city';
 declare @_state as nvarchar(200) = '@state'; 
 declare @_countrystatetypeid as bigint;
-declare @_formattedAddress as nvarchar(150) = '@formattedAddress';
+declare @_addressLine as nvarchar(150) = '@addressLine';
 declare @_postalCode as nvarchar(15) = '@postalCode' ;
 declare @_phone as nvarchar(25) ='@phone';
 declare @_email as nvarchar(200) = '@email';
@@ -35,6 +35,10 @@ declare @_applicationVersionID as bigint;
 
 --Job Posting Fields
 declare @_jobPostingID as bigint;
+
+declare @_requestJson as nvarchar(max) ='@requestJson';
+
+
 
 INSERT INTO
     dbo.ATApplicationVersion 
@@ -120,14 +124,15 @@ INSERT INTO
     StatusTransitionDateTime,
     EducationLevelCode,
     Citizenship,
-    DateAdded
+    DateAdded,
+    RequestJSON
 
 ) values (
     @_jobPostingID,
     @_givenName, -- can get all of the below personal/address information from the JazzHR JSON
     @_familyName,
     @_email,
-    @_formattedAddress,
+    @_addressLine,
     @_city,
     @_countrystatetypeid, 
     @_postalCode,
@@ -155,8 +160,11 @@ INSERT INTO
     CONVERT(datetime2(3),@_statusTransitionDateTime),
     @_educationLevelCode, 
     @_citizenship,
-    GETDATE()
+    GETDATE(),
+    @_requestJson
 )
+
+SELECT SCOPE_IDENTITY()  as ATApplicationID;
 
 
 

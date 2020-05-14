@@ -27,5 +27,7 @@ export const applicantDataImport = utilService.gatewayEventHandlerV2({
         await applicantTrackingService.createApplicantData(tenantId, companyId, requestBody);
 
         return { statusCode: 204, headers: new Headers() };
+
+        
     },
 });
