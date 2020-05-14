@@ -8,6 +8,7 @@ import { DatabaseEvent, QueryType } from '../../../internal-api/database/events'
 import { InvocationType } from '../../../util.service';
 import { plainToClass } from 'class-transformer';
 import * as request from 'request-promise-native';
+import * as configService from '../../../config.service';
 
 /**
  * Create Applicant Hired Data from JazzHR into ADHR
@@ -176,6 +177,13 @@ export async function createApplicantData(tenantId: string, companyId: string, r
                     }
                 }
             }
+
+            let secretId: string;
+            secretId = configService.getApiSecretId();
+            const secret = await utilService.getSecret(secretId);
+            const applicationId = JSON.parse(secret).applicationId;
+            const ssoToken = await utilService.getSSOToken(tenantId, applicationId);
+            await utilService.clearCache(tenantId, ssoToken);
         }
 
 
