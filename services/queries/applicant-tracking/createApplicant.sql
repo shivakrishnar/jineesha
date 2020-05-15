@@ -73,20 +73,23 @@ values (
     @_positionTitle, 
     'Job Posting Created Automatically By JazzHR', -- Should be present on every Job Posting that is created through the webhook
     NEWID(), 
-    1 -- should always be 1
+    1 
 )
 SELECT @_jobPostingID = SCOPE_IDENTITY() 
 
 
 SELECT TOP 1 @_countrystatetypeid=ID
 FROM dbo.CountryStateType 
-WHERE Statename = UPPER(TRIM(@_state))
+WHERE 
+(Statename = UPPER(TRIM(@_state))) 
+OR
+(StateCode = UPPER(TRIM(@_state)))
 
 SELECT TOP 1 @_softStatusTypeID=ID  
 FROM dbo.ATSoftStatusType 
 WHERE CompanyID =  CAST(@_companyId as bigint)
 and Title = 'Application Completed'
---and Title = 'Prep for Onboarding'
+
 
 
 INSERT INTO
@@ -129,7 +132,7 @@ INSERT INTO
 
 ) values (
     @_jobPostingID,
-    @_givenName, -- can get all of the below personal/address information from the JazzHR JSON
+    @_givenName, 
     @_familyName,
     @_email,
     @_addressLine,
@@ -137,7 +140,7 @@ INSERT INTO
     @_countrystatetypeid, 
     @_postalCode,
     @_phone,
-    0, -- Hard code these values
+    0, 
     0,
     'Declined to disclose - N/A',
     'Declined to disclose - N/A',

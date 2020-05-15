@@ -21,12 +21,11 @@ export async function createApplicantData(tenantId: string, companyId: string, r
     //  console.info(JSON.stringify(requestBody));
 
     try {
+        
         const applicant = plainToClass(Applicant, requestBody);
 
         let createQuery = new ParameterizedQuery('ApplicantCreate', Queries.applicantCreate);
-        
-        
-
+    
         createQuery.setParameter('@givenName', applicant.candidate.person.name.given);
         createQuery.setParameter('@familyName', applicant.candidate.person.name.family);
         createQuery.setParameter('@schemeId', applicant.candidate.person.id.schemeId);
@@ -34,6 +33,7 @@ export async function createApplicantData(tenantId: string, companyId: string, r
         createQuery.setParameter('@externalCandidateID', applicant.candidate.person.id.value);
         createQuery.setParameter('@gender', applicant.candidate.person.gender);
 
+        
         //Check if citizenship array has value
         if (applicant.candidate.person.citizenship == undefined || applicant.candidate.person.citizenship.length == 0) {
             createQuery.setParameter('@citizenship', '');
@@ -46,7 +46,7 @@ export async function createApplicantData(tenantId: string, companyId: string, r
         if (applicant.candidate.person.communication.address == undefined || applicant.candidate.person.communication.address.length == 0) {
             createQuery.setParameter('@city', '');
             createQuery.setParameter('@state', '');
-            createQuery.setParameter('@formattedAddress', '');
+            createQuery.setParameter('@addressLine', '');
             createQuery.setParameter('@postalCode', '');
         } else {
             const address = applicant.candidate.person.communication.address[0];
@@ -115,9 +115,6 @@ export async function createApplicantData(tenantId: string, companyId: string, r
               ? '' 
               : educationLevelCodes[0].name);
           }
-
-         
-
        }
 
        createQuery.setParameter('@companyId', companyId);
@@ -165,7 +162,7 @@ export async function createApplicantData(tenantId: string, companyId: string, r
                         createQuery.setParameter('@content', content);
                         createQuery.setParameter('@externalDocumentID', attachment.id.value);
                         createQuery.setParameter('@fileSize', fileSize);
-                        
+ 
                         payload = {
                             tenantId,
                             queryName: createQuery.name,
@@ -178,18 +175,9 @@ export async function createApplicantData(tenantId: string, companyId: string, r
                 }
             }
 
-            let secretId: string;
-            secretId = configService.getApiSecretId();
-            const secret = await utilService.getSecret(secretId);
-            const applicationId = JSON.parse(secret).applicationId;
-            const ssoToken = await utilService.getSSOToken(tenantId, applicationId);
-            await utilService.clearCache(tenantId, ssoToken);
+            await clearCache(tenantId);
         }
-
-
-         
-
-        //return applicant;
+       
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -198,9 +186,6 @@ export async function createApplicantData(tenantId: string, companyId: string, r
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
     }
-
-
-
 
 }
 
@@ -214,3 +199,19 @@ function calculateFileSize(base64String : any){
     inBytes =(base64StringLength / 4 ) * 3 - padding;
     return Math.ceil((inBytes / 1024));
   }
+
+
+ /**
+ * Clear Cache with only tenantId available. ssoToken need to be determined
+ *
+ * 
+ */
+async function clearCache(tenantId: string){
+    let secretId: string;
+    secretId = configService.getApiSecretId();
+    const secret = await utilService.getSecret(secretId);
+    const applicationId = JSON.parse(secret).applicationId;
+    const ssoToken = await utilService.getSSOToken(tenantId, applicationId);
+    await utilService.clearCache(tenantId, ssoToken);
+    
+}

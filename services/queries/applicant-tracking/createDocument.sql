@@ -9,7 +9,6 @@ declare @_externalDocumentID as nvarchar(max) = '@externalDocumentID';
 
 declare @_fileSize as int = @fileSize;
 
-
 declare @_xml XML;
 SET @_xml = @_content;
 
@@ -69,8 +68,9 @@ VALUES
            ,CAST(@_externalDocumentID as bigint)
            
            )
-                 
-                 
+
+
+      
                  
                  
                  
