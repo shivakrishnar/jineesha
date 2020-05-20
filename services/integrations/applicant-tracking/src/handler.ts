@@ -11,18 +11,18 @@ const companyResourceUriSchema = {
     companyId: { required: true, type: String },
 };
 
-export const applicantDataImport = utilService.gatewayEventHandlerV2({
-    allowAnonymous: true,
-    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        // console.info('applicant-tracking.handler.applicantDataImport');
 
-        // console.log(`request body: ${JSON.stringify(requestBody)}`);
-        // console.log(`event: ${JSON.stringify(event)}`);
+ /**
+  * 
+  * Handles event callbacks from JazzHR
+  */
+export const eventCallbackDelegate = async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('applicant-tracking.handler.eventCallback');
+
         utilService.normalizeHeaders(event);
         
         //check if source is JazzHR
-        if (!(event.headers && event.headers['x-jazzhr-event'] )) 
-        {
+        if (!(event.headers && event.headers['x-jazzhr-event'])) {
             //not authorized
             throw errorService.getErrorResponse(11);
         }
@@ -30,22 +30,27 @@ export const applicantDataImport = utilService.gatewayEventHandlerV2({
         utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
         utilService.checkBoundedIntegralValues(event.pathParameters);
 
-        if(event.headers['x-jazzhr-event'] == 'VERIFY')
-        {
-            return { statusCode: 200, headers: new Headers()};
+        if (event.headers['x-jazzhr-event'] == 'VERIFY') {
+            return { statusCode: 200, headers: new Headers() };
         }
 
 
-        if(event.headers['x-jazzhr-event'] == 'CANDIDATE-EXPORT')
-        {
+        if (event.headers['x-jazzhr-event'] == 'CANDIDATE-EXPORT') {
             await utilService.requirePayload(requestBody);
 
             const { tenantId, companyId } = event.pathParameters;
-    
+
             await applicantTrackingService.createApplicantData(tenantId, companyId, requestBody);
-    
-            return { statusCode: 204, headers: new Headers() };  
+
+            return { statusCode: 204, headers: new Headers() };
         }
-    },
+};
+
+/**
+ * Handles the Candidate Export Event From JazzHR
+ */
+export const applicantDataImport = utilService.gatewayEventHandlerV2({
+    allowAnonymous: true,
+    delegate: eventCallbackDelegate,
 });
 
