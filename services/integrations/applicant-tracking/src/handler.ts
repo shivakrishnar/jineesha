@@ -11,35 +11,39 @@ const companyResourceUriSchema = {
     companyId: { required: true, type: String },
 };
 
-
- /**
-  * 
-  * Handles event callbacks from JazzHR
-  */
+/**
+ * 
+ * Handles event callbacks from JazzHR 
+ */ 
 export const eventCallbackDelegate = async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
         console.info('applicant-tracking.handler.eventCallback');
 
+        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+        utilService.checkBoundedIntegralValues(event.pathParameters);
+        
+        const { tenantId, companyId } = event.pathParameters;
+        await utilService.requirePayload(requestBody);
+
         utilService.normalizeHeaders(event);
         
-        //check if source is JazzHR
+        //check for JazzHR Special Header 
         if (!(event.headers && event.headers['x-jazzhr-event'])) {
             //not authorized
             throw errorService.getErrorResponse(11);
         }
-
-        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
-
+        
+        //Verifying the JazzHR webhook configuration with Company Secret
         if (event.headers['x-jazzhr-event'] == 'VERIFY') {
+            const signature = event.headers['x-jazzhr-signature'];
+            
+            //check if incoming signature is valid
+            await applicantTrackingService.validateCompanySecret(tenantId, companyId, event.body, signature);    
+
             return { statusCode: 200, headers: new Headers() };
         }
 
-
         if (event.headers['x-jazzhr-event'] == 'CANDIDATE-EXPORT') {
-            await utilService.requirePayload(requestBody);
-
-            const { tenantId, companyId } = event.pathParameters;
-
+      
             await applicantTrackingService.createApplicantData(tenantId, companyId, requestBody);
 
             return { statusCode: 204, headers: new Headers() };

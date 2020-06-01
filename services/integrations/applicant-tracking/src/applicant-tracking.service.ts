@@ -203,3 +203,57 @@ async function clearCache(tenantId: string) {
     const ssoToken = await utilService.getSSOToken(tenantId, applicationId);
     await utilService.clearCache(tenantId, ssoToken);
 }
+
+/**
+ * Validate the incoming signature with Company Secret
+ * @param {string} tenantId: The unique identifier for a tenant
+ * @param {string} companyId: The unique identifier for a company within a tenant
+ * @param requestBody: The request body
+ * @param incomingSignature: Signature present in the header
+ */
+export async function validateCompanySecret(tenantId: string, companyId: string, requestBody: any, incomingSignature: any ): Promise<void> {
+    console.info('applicantTrackingService.validateCompanySecret');
+    
+    try {
+        const getQuery = new ParameterizedQuery('GetJazzhrSecretKeyByCompanyId', Queries.getJazzhrSecretKeyByCompanyId);
+        getQuery.setParameter('@companyId', companyId);
+        
+        const payload = {
+            tenantId,
+            queryName: getQuery.name,
+            query: getQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        
+        let authorized : Boolean = false;
+
+        if (result.recordset.length != 0) {
+            const jzhrSecretKey = result.recordset[0].JazzhrSecretKey;
+
+            const crypto = require('crypto');
+            const message =  requestBody;
+            //create HMAC hex digest using Hash sha256 and secret
+            const hash = crypto.createHmac('sha256', jzhrSecretKey).update(message).digest('hex');
+
+            //hash check with received signature
+            if (hash == incomingSignature) {
+                authorized = true;
+            }
+        }
+
+        if (!authorized) {
+            //not authorized
+            throw errorService.getErrorResponse(11);
+        }
+
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}

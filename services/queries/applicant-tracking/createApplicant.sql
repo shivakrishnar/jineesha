@@ -38,44 +38,73 @@ declare @_jobPostingID as bigint;
 
 declare @_requestJson as nvarchar(max) ='@requestJson';
 
+--Check if already application version exists in AHR using Company ID from request path parameters 
+--and position opening id from JazzHR payload. 
+--If Application Version exists then it denotes Job Posting also exists on the same.
+IF EXISTS(SELECT 'true' 
+	  	  FROM ATApplicationVersion(NOLOCK)
+		  WHERE JazzHrPositionOpeningID =CAST(@_positionOpeningID as bigint) 
+          AND CompanyID = CAST(@_companyId as bigint)
+         )
+BEGIN
+    --Use the existing application version id
+    SELECT @_applicationVersionID = ID
+	FROM   ATApplicationVersion(NOLOCK)
+	WHERE  JazzHrPositionOpeningID=CAST(@_positionOpeningID as bigint)
+    AND CompanyID = CAST(@_companyId as bigint)
 
+    --use the existing job posting id 
+    SELECT @_jobPostingID = ID
+	FROM   ATJobPosting(NOLOCK)
+	WHERE  JazzHrPositionOpeningID=CAST(@_positionOpeningID as bigint)
+    AND CompanyID = CAST(@_companyId as bigint)
+END
+ELSE
+BEGIN
+    --Create new Application Version
+    INSERT INTO
+        dbo.ATApplicationVersion 
+    (
+        CompanyID,
+        Title,
+        ATApplicationVersionDate,
+        Description,
+        JazzHrPositionOpeningID
+    ) 
+    values (
+        CAST(@_companyId as bigint), 
+        @_positionTitle, 
+        GETDATE(),
+        'Application Version Created Automatically By JazzHR',
+        CAST(@_positionOpeningID as bigint)
 
-INSERT INTO
-    dbo.ATApplicationVersion 
-(
-    CompanyID,
-    Title,
-    ATApplicationVersionDate,
-    Description
-) 
-values (
-    CAST(@_companyId as bigint), -- company id retrieved based on the secret key that we get from JazzHR integration details
-    @_positionTitle, 
-    GETDATE(),
-    'Application Version Created Automatically By JazzHR' 
-)
+    )
 
-SELECT  @_applicationVersionID = SCOPE_IDENTITY() 
+    SELECT  @_applicationVersionID = SCOPE_IDENTITY() 
 
-
-INSERT INTO dbo.ATJobPosting
-(
-    CompanyID,
-    ATApplicationVersionID, 
-    Title,
-    Description,
-    LinkKey,
-    IsOpen
-) 
-values (
-    CAST(@_companyId as bigint),
-    @_applicationVersionID, 
-    @_positionTitle, 
-    'Job Posting Created Automatically By JazzHR', -- Should be present on every Job Posting that is created through the webhook
-    NEWID(), 
-    1 
-)
-SELECT @_jobPostingID = SCOPE_IDENTITY() 
+    --Create new Job Posting
+    INSERT INTO dbo.ATJobPosting
+    (
+        CompanyID,
+        ATApplicationVersionID, 
+        Title,
+        Description,
+        LinkKey,
+        IsOpen,
+        JazzHrPositionOpeningID
+    ) 
+    values (
+        CAST(@_companyId as bigint),
+        @_applicationVersionID, 
+        @_positionTitle, 
+        'Job Posting Created Automatically By JazzHR', -- Should be present on every Job Posting that is created through the webhook
+        NEWID(), 
+        1,
+        CAST(@_positionOpeningID as bigint) 
+    )
+    
+    SELECT @_jobPostingID = SCOPE_IDENTITY() 
+END
 
 
 SELECT TOP 1 @_countrystatetypeid=ID
