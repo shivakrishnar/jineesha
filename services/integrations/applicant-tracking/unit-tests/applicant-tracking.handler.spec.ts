@@ -1,27 +1,33 @@
+import 'reflect-metadata'; // required by asure.auth dependency
+
 import { IGatewayEventInput } from '../../../util.service';
-import * as mockData from './mock-data/jazzhrCallback-mock-data';
 import { eventCallbackDelegate } from '../src/handler';
 import { ErrorMessage } from '../../../errors/errorMessage';
-
+import * as applicantTrackingService from '../src/applicant-tracking.service';
+import * as jzMockCallbackData from './mock-data/jazzhrCallback-mock-data';
 
 describe('Configuring Webhook in JazzHR', () => {
     test('returns response 200 verifying JazzHR special header', () => {
         const handlerInput: IGatewayEventInput = {
             securityContext: null,
-            event: mockData.jzVerifyCallback,
-            requestBody: mockData.jzRequestBody,
+            event: jzMockCallbackData.jzVerifyCallback,
+            requestBody: jzMockCallbackData.jzRequestBody,
         };
+
+        (applicantTrackingService as any).validateCompanySecret = jest.fn((params: any) => {
+            return {};
+        });
 
         return eventCallbackDelegate(handlerInput).then((response) => {
             expect(response.statusCode).toEqual(200);
         });
     });
 
-    test('returns 401 error.Not authorized when request is without JazzHR special header X-JazzHR-Event', () => {
+    test('returns 401 error.Not authorized when request is without JazzHR special header', () => {
         const handlerInput: IGatewayEventInput = {
             securityContext: null,
-            event: mockData.jzNoSpecialHeader,
-            requestBody: mockData.jzRequestBody,
+            event: jzMockCallbackData.jzNoSpecialHeader,
+            requestBody: jzMockCallbackData.jzRequestBody,
         };
 
         return eventCallbackDelegate(handlerInput)
@@ -38,8 +44,8 @@ describe('Configuring Webhook in JazzHR', () => {
     test('returns 401 error.Not authorized when tenantId missing in event path parameters', () => {
         const handlerInput: IGatewayEventInput = {
             securityContext: null,
-            event: mockData.jzNoTenantId,
-            requestBody: mockData.jzRequestBody,
+            event: jzMockCallbackData.jzNoTenantId,
+            requestBody: jzMockCallbackData.jzRequestBody,
         };
 
         return eventCallbackDelegate(handlerInput)
@@ -56,8 +62,8 @@ describe('Configuring Webhook in JazzHR', () => {
     test('returns 401 error.Not authorized when companyId missing in event path parameters', () => {
         const handlerInput: IGatewayEventInput = {
             securityContext: null,
-            event: mockData.jzNoCompanyId,
-            requestBody: mockData.jzRequestBody,
+            event: jzMockCallbackData.jzNoCompanyId,
+            requestBody: jzMockCallbackData.jzRequestBody,
         };
 
         return eventCallbackDelegate(handlerInput)

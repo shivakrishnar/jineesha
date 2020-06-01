@@ -1,5 +1,8 @@
 export const tenantId: string = 'c807d7f9-b391-4525-ac0e-31dbc0cf202b';
 export const companyId: string = '600351';
+export const verifyContent: string = '{"data": "JazzHR Verify Event"}';
+export const incomingInvalidSignature: string = '4ebcb8b94ef47410646419057df2381b75c763463d87b96c6249db3122d6eb9a';
+export const incomingValidSignature: string = '62cd9aabc89922c65951d9cd4a6e4ede184e736d9e1092c0334bafa1e336c297';
 
 export const postObject = { 
 
@@ -89,6 +92,8 @@ export const outputResponseObject = {
             ATApplicationID: 12,
         },
     ],
+    output: {},
+    rowsAffected: [1],
 };
 
 export const emptyDBResponse = {
@@ -103,3 +108,14 @@ export const documentResponse =
     "mimeType": "application/pdf",
     "content": "",
 }
+
+export const jazzhrSecretKeyDBResponse = {
+  recordset: [
+      {
+        JazzhrSecretKey: 'B0D78206-964C-47D4-BE1F-E06409791ED5' ,
+      },
+  ],
+  output: {},
+  rowsAffected: [1],
+};
+
