@@ -5,6 +5,9 @@ String currentVersion
 String nextVersion
 String semanticVersion
 
+// The git remote
+final String gitCredentials = "ssh-bitbucket-asuresoftware"
+
 // Configuration properties
 @Field def configData
 @Field String teamEmail
@@ -56,6 +59,9 @@ stage("Build")
             currentVersion = getVersion()
             sh "npm --no-git-tag-version version ${semanticVersion}"
             nextVersion = getVersion()
+
+            stash name: "package", includes: "package.json"
+            stash name: "package lock", includes: "package-lock.json"
         }
         catch (Exception e) {
             cleanUpWorkspace()
@@ -82,22 +88,31 @@ stage("Build")
         stage("Deploy to Production") {
             deploymentNotification("${projectName}: ready to deploy version: ${nextVersion} to production.", teamEmail, false)
             deployStage("production")
-            node("linux") {
-                sh "git add package.json package-lock.json"
-                sh "git commit -m 'version bump to ${nextVersion}'"
+            node("EvolutionCore") {
+                ws("workspace/${env.JOB_NAME}") { 
+                    checkout scm
+                    unstash "package"
+                    unstash "package lock"
 
-                sh "git checkout ${env.BRANCH_NAME}" // This should always be 'master'
-                sh "git merge temp-${env.BRANCH_NAME}" // This should always be 'temp-master'
-                //Get commit id:
-                commit_id = sh(
+                    bat "git add package.json package-lock.json"
+                    bat "git commit -m \"version bump to ${nextVersion}\""
+
+                    //Get commit id:
+                    commit_id = powershell (
                         script: "git rev-parse --short HEAD",
-                        returnStdout: true
-                ).trim()
+                        returnStdout: true,
+                        returnStatus: false
+                    ).trim()
 
-                sh "git tag -m \"Built by Jenkins\" -a ${nextVersion} ${commit_id}"
-                sh "git push origin ${env.BRANCH_NAME} ${nextVersion}"
-                deploymentNotification("${projectName}: successfully deployed version: ${nextVersion} to production!", teamEmail, true)
+                    sshagent(credentials: [gitCredentials]) {
+                        bat "git tag -m \"Built by Jenkins\" -a ${nextVersion} ${commit_id}"
+                        bat "git push origin ${env.BRANCH_NAME} ${nextVersion}"
+                    }
+                    deploymentNotification("${projectName}: successfully deployed version: ${nextVersion} to production!", teamEmail, true)
 
+                }
+            }
+            node("linux") {
                 // TODO: Run integration tests in production when e-signatures is turned on for EvoNPD
                 // runIntegrationTests("production") 
                 sh "INTEGRATION_TEST_CONFIG_FILENAME=production.config.json node_modules/.bin/jest -c jest.integration.test.config.json -i -t direct deposit"
