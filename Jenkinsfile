@@ -11,9 +11,9 @@ final String gitCredentials = "ssh-bitbucket-asuresoftware"
 // Configuration properties
 @Field def configData
 @Field String teamEmail
-@Field String slackRoomName
-@Field String slackCredentials
-
+@Field String teamsWebhookUrl
+@Field final String teamsDanger = "#ff6f60"
+@Field final String teamsGood = "#4caf50"
 // How many days before we expire a build or un-deploy a dev stage?
 @Field final int timeoutDays = 1
 
@@ -44,8 +44,7 @@ stage("Build")
 
             configData = readJSON file: './jenkins.config.json'
             teamEmail = configData.teamEmail
-            slackRoomName = configData.slackRoomName
-            slackCredentials = configData.slackCredentials
+            teamsWebhookUrl = configData.teamsWebhookUrl
 
             sh "git checkout -b temp-${env.BRANCH_NAME}"
 
@@ -125,7 +124,7 @@ stage("Build")
 void notifyTeam(Exception ex) {
     echo "Failure Notification"
     echo "${ex}"
-    sendSlackMessage(slackCredentials, slackRoomName, "Failing build: ${env.BUILD_URL}: ${ex}", "#e01716")
+    sendTeamsMessage("Failing build: ${env.BUILD_URL}: ${ex}", teamsWebhookUrl, teamsDanger)
     emailext body: "Failing build: ${env.BUILD_URL}: ${ex}",
             recipientProviders: [[$class: "DevelopersRecipientProvider"], [$class: "CulpritsRecipientProvider"]],
             subject: "Broken Build Alert! - ${env.JOB_NAME}",
@@ -134,7 +133,7 @@ void notifyTeam(Exception ex) {
 }
 
 void deploymentNotification(String message, String teamEmail, Boolean sendEmail) {
-    sendSlackMessage(slackCredentials, slackRoomName, message, "#2eb886")
+    sendTeamsMessage(message, teamsWebhookUrl, teamsGood)
     if (sendEmail) {
         emailext body: "${message}",
                 recipientProviders: [
@@ -146,11 +145,10 @@ void deploymentNotification(String message, String teamEmail, Boolean sendEmail)
     }
 }
 
-void sendSlackMessage(String creds, String room, String message, String color) {
-    slackSend channel: room,
-            color: color,
-            message: ":mojo-jojo: ${message}",
-            tokenCredentialId: creds
+void sendTeamsMessage(String message, String webhookUrl, String color){
+    office365ConnectorSend message: message, 
+    webhookUrl: webhookUrl,
+    color: color
 }
 
 String getVersion() {

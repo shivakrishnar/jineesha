@@ -1,7 +1,6 @@
 {
   "teamEmail": "team_mojojojo@asuresoftware.com",
-  "slackRoomName": "#mojojojo",
-  "slackCredentials": "jenkins-slack-token",
+  "teamsWebhookUrl": "https://outlook.office.com/webhook/ff5a738c-ae40-49bb-993e-780d2cba6fb9@77410b39-60de-4dd9-916a-e12170d0817e/JenkinsCI/2fc511263b1a4bb2bf7183049d757d5c/e2be6529-35d5-48de-aa5e-11e42ee9ccec",
   "awsConfig": {
     "development": {
       "credentialsId": "f7f7f096-ea3a-4534-b153-5b3446c96d85",

@@ -15,6 +15,7 @@ import { SecurityContext } from '../../../internal-api/authentication/securityCo
 import * as databaseService from '../../../internal-api/database/database.service';
 import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
 
+const teamsGood = '#4caf50';
 /**
  * Adds the HR Global administrator account to a specific tenant
  * @param {string} tenantId: The unique identifier for the tenant
@@ -207,7 +208,7 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
         await databaseService.executeBatch(pool, stripBom(postDeploymentScript));
 
         // Send notification of successful creation:
-        const success = buildMessageAttachment(dbInfo, rdsEndpoint, 'RDS Database Creation', 'good');
+        const success = buildMessageAttachment(dbInfo, rdsEndpoint, 'RDS Database Creation', teamsGood);
         await addConnectionString(dbInfo, rdsEndpoint);
         await publishMessage(success);
         return dbInfo;
@@ -261,52 +262,67 @@ async function applyDatabaseSchemaScript(s3FilePath: string, pool: ConnectionPoo
 }
 
 /**
- * Builds a Slack message attachment
- * {@link https://api.slack.com/docs/message-attachments}
+ * Builds a Teams message attachment
+ * {@link https://docs.microsoft.com/en-us/microsoftteams/platform/}
  * @param {TenantDatabase} dbInfo: The created tenant database details
  * @param {string} rdsInstance: The RDS instance a tenant was created on
  * @param {string} title: Title to be used for the notification
- * @param {string} color: color in hex format for slack notification border
- * @returns {string}:  A formatted Slack message attachment
+ * @param {string} themeColor: color in hex format for Teams notification border
+ * @returns {string}:  A formatted Teams message attachment
  */
-export function buildMessageAttachment(dbInfo: TenantDatabase, rdsInstance: string, title: string, color: string): string {
+export function buildMessageAttachment(dbInfo: TenantDatabase, rdsInstance: string, title: string, themeColor: string): string {
     console.info('tenants.service.buildMessageAttachment');
 
     const messageAttachment = {
-        attachments: [
-            {
-                fallback: 'RDS Database Creation',
-                color,
-                title,
-                fields: [
-                    {
-                        title: 'Tenant ID',
-                        value: `${dbInfo.id}`,
-                        short: true,
-                    },
-                    {
-                        title: 'Tenant URL',
-                        value: `${dbInfo.subdomain}.${configService.getDomain()}`,
-                        short: true,
-                    },
-                    {
-                        title: 'RDS Instance',
-                        value: rdsInstance,
-                        short: true,
-                    },
-                    {
-                        title: 'Environment',
-                        value: `${configService.getStage()}`,
-                        short: true,
-                    },
-                ],
-                footer: 'Mojojojo',
-            },
-        ],
+        title,
+        text: `<div>Tenant ID: ${dbInfo.id}</div><div>Tenant URL: ${
+            dbInfo.subdomain
+        }.${configService.getDomain()}</div><div>RDS Instance: ${rdsInstance}</div><div>Environment: ${configService.getStage()}</div>`,
+        themeColor,
     };
 
     return JSON.stringify(messageAttachment);
 }
+
+//Old code for Slack
+// export function buildMessageAttachment(dbInfo: TenantDatabase, rdsInstance: string, title: string, color: string): string {
+//     console.info('tenants.service.buildMessageAttachment');
+
+//     const messageAttachment = {
+//         attachments: [
+//             {
+//                 fallback: 'RDS Database Creation',
+//                 color,
+//                 title,
+//                 fields: [
+//                     {
+//                         title: 'Tenant ID',
+//                         value: `${dbInfo.id}`,
+//                         short: true,
+//                     },
+//                     {
+//                         title: 'Tenant URL',
+//                         value: `${dbInfo.subdomain}.${configService.getDomain()}`,
+//                         short: true,
+//                     },
+//                     {
+//                         title: 'RDS Instance',
+//                         value: rdsInstance,
+//                         short: true,
+//                     },
+//                     {
+//                         title: 'Environment',
+//                         value: `${configService.getStage()}`,
+//                         short: true,
+//                     },
+//                 ],
+//                 footer: 'Mojojojo',
+//             },
+//         ],
+//     };
+
+//     return JSON.stringify(messageAttachment);
+// }
 
 /**
  * Publishes a message to an SNS topic
