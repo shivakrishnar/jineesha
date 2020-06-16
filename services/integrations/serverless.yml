@@ -369,7 +369,7 @@ functions:
     handler: applicant-tracking/src/handler.applicantDataImport
     events:
         - http:
-            path: /tenants/{tenantId}/companies/{companyId}/applicants
+            path: /applicants
             method: post
             cors:
               origin: '*'

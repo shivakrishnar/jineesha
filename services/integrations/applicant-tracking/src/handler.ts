@@ -1,15 +1,11 @@
 import 'reflect-metadata'; // required by asure.auth dependency
-import * as UUID from '@smallwins/validate/uuid';
 import { IGatewayEventInput } from '../../../util.service';
 import { Headers } from '../../models/headers';
 import * as utilService from '../../../util.service';
 import * as applicantTrackingService from './applicant-tracking.service';
 import * as errorService from '../../../errors/error.service';
+import { ErrorMessage } from '../../../errors/errorMessage';
 
-const companyResourceUriSchema = {
-    tenantId: { required: true, type: UUID },
-    companyId: { required: true, type: String },
-};
 
 /**
  * 
@@ -17,11 +13,36 @@ const companyResourceUriSchema = {
  */ 
 export const eventCallbackDelegate = async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
         console.info('applicant-tracking.handler.eventCallback');
-
-        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
+ 
+        const validQueryStringParameters: string[] = ['id'];
         
-        const { tenantId, companyId } = event.pathParameters;
+        const queryParams: any = event.queryStringParameters;
+
+        if (queryParams) {
+            // Check for unsupported query params
+            if (!Object.keys(queryParams).every((param) => validQueryStringParameters.includes(param))) {
+                const error: ErrorMessage = errorService.getErrorResponse(30);
+                error
+                    .setDeveloperMessage('Unsupported query parameter(s) supplied')
+                    .setMoreInfo(
+                        `Available query parameters: ${validQueryStringParameters.join(', ')}. See documentation for usage.`,
+                    );
+                throw error;
+            }
+
+            if (queryParams.id && !((queryParams.id as string).split('_').length == 2)) {
+                const error: ErrorMessage = errorService.getErrorResponse(30);
+                error
+                    .setDeveloperMessage(`Unsupported value: ${queryParams.id}`)
+                    .setMoreInfo(`Value format for id: tenantId_companyId.`);
+                throw error;
+            }
+        }
+
+        const [tenantId, companyId] = (queryParams.id as string).split('_');
+
+        utilService.checkBoundedIntegralValues({ company_request_id: companyId });
+        
         await utilService.requirePayload(requestBody);
 
         utilService.normalizeHeaders(event);
