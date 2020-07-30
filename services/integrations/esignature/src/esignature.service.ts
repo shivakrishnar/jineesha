@@ -261,10 +261,15 @@ export async function createBulkSignatureRequest(
     request: BulkSignatureRequest,
     suppliedMetadata: any,
     configuration: EsignatureConfiguration,
+    skipEmployeeValidation: boolean = false,
 ): Promise<SignatureRequestResponse> {
     console.info('esignature.handler.createBulkSignatureRequest');
 
     try {
+        if (!skipEmployeeValidation) {
+            await checkEmployeesExistenceByCodes(tenantId, companyId, request.employeeCodes);
+        }
+
         if (!configuration) {
             configuration = await getConfigurationData(tenantId, companyId);
         }
@@ -1388,7 +1393,9 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
                 ],
             };
 
-            invocations.push(createBulkSignatureRequest(tenantId, companyId, signatureRequest, signatureRequestMetadata, configuration));
+            invocations.push(
+                createBulkSignatureRequest(tenantId, companyId, signatureRequest, signatureRequestMetadata, configuration, true),
+            );
         }
 
         const creations = await Promise.all(invocations);
@@ -3412,6 +3419,48 @@ async function validateEmployeeId(tenantId: string, companyId: string, employeeI
 
         if (result.recordset.length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage(`Employee with ID ${employeeId} not found`);
+        }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Checks that an employee with the specified code exists in the database.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {string[]} employeeCodes: The codes associated with the employees.
+ */
+async function checkEmployeesExistenceByCodes(tenantId: string, companyId: string, employeeCodes: string[]): Promise<void> {
+    console.info('esignature.service.validateEmployeeId');
+
+    try {
+        const employeeCodesFilter: string = employeeCodes.map((code) => `'${code}'`).join(',');
+        const query: ParameterizedQuery = new ParameterizedQuery('GetEmployeeByCompanyIdAndCode', Queries.getEmployeeByCompanyIdAndCode);
+        query.setParameter('@companyId', companyId);
+        query.setParameter('@employeeCodes', employeeCodesFilter);
+        const payload: DatabaseEvent = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        };
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        const employeeCodeResults: string[] = (result.recordset || []).map((res) => res.EmployeeCode);
+        const differences: string[] = employeeCodes.filter((code) => !employeeCodeResults.includes(code));
+        if (differences.length > 0) {
+            throw errorService
+                .getErrorResponse(50)
+                .setDeveloperMessage(
+                    `Employees with the following codes were not found under company ${companyId}: ${differences.join(',')}`,
+                );
         }
     } catch (error) {
         if (error instanceof ErrorMessage) {
