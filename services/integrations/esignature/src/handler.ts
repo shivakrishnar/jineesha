@@ -335,7 +335,10 @@ export const createBulkSignatureRequest = utilService.gatewayEventHandlerV2(
 
         const configuration: EsignatureConfiguration = await esignatureService.getConfigurationData(tenantId, companyId);
 
-        return await esignatureService.createBulkSignatureRequest(tenantId, companyId, requestBody, {}, configuration);
+        return {
+            statusCode: 201,
+            body: await esignatureService.createBulkSignatureRequest(tenantId, companyId, requestBody, {}, configuration),
+        };
     },
 );
 

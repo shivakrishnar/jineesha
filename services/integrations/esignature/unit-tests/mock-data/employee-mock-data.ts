@@ -25,3 +25,16 @@ export const employeeEmailsByManagerDBResponse = {
     output: {},
     rowsAffected: [1],
 };
+
+export const employeesByCodeDBResponse = {
+    recordset: [
+        {
+            EmployeeCode: '1',
+        },
+        {
+            EmployeeCode: '2',
+        },
+    ],
+    output: {},
+    rowsAffected: [2],
+};

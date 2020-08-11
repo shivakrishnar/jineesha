@@ -48,23 +48,6 @@ describe('create bulk signature requests', () => {
             });
     });
 
-    test.skip('must return a 400 if tenantID is invalid', (done) => {
-        const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/requests`;
-        request(baseUri)
-            .post(uri)
-            .set('Authorization', `Bearer ${accessToken}`)
-            .set('Content-Type', 'application/json')
-            .send(signatureRequest)
-            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(400)
-            .end((error, response) => {
-                utils.testResponse(error, response, done, () => {
-                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
-                });
-            });
-    });
-
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
         const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/requests`;
@@ -156,7 +139,27 @@ describe('create bulk signature requests', () => {
             });
     });
 
-    test.skip('must return a 201 when a request is created', (done) => {
+    test('must return a 404 if employees are not found', (done) => {
+        const invalidRequest = {
+            ...signatureRequest,
+            employeeCodes: ['99999', '1234567'],
+        };
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        request(baseUri)
+            .post(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .send(invalidRequest)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(404)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 201 when a request is created', (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
