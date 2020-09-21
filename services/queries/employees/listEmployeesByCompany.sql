@@ -15,7 +15,8 @@ select
     CompanyID,
     EmployeeCode,
     FirstName,
-    LastName
+    LastName,
+    EmailAddress
 from
     dbo.Employee
 where

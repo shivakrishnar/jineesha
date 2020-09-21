@@ -108,15 +108,14 @@ const saveTemplateMetadataSchema = Yup.object().shape({
 });
 
 //   Bulk Signature Request schemas
-const bulkSignatureRequestValidationSchema = {
+const batchSignatureRequestValidationSchema = {
     templateId: { required: true, type: String },
     subject: { required: false, type: String },
     message: { required: false, type: String },
     signatories: { required: true, type: Array },
-    employeeCodes: { required: true, type: Array },
 };
 
-const bulkSignatureRequestSchema = Yup.object().shape({
+const batchSignatureRequestSchema = Yup.object().shape({
     templateId: Yup.string().required(),
     subject: Yup.string(),
     message: Yup.string(),
@@ -125,15 +124,10 @@ const bulkSignatureRequestSchema = Yup.object().shape({
         .max(250, 'You can only send 250 signatories at a time, consider batching your requests')
         .of(Yup.object())
         .required(),
-    employeeCodes: Yup.array()
-        .min(1, 'You must provide at least one employee code')
-        .of(Yup.string())
-        .required(),
 });
 
 const signatorySchema = Yup.object().shape({
-    emailAddress: Yup.string().required(),
-    name: Yup.string().required(),
+    employeeCode: Yup.string().required(),
     role: Yup.string().required(),
 });
 
@@ -143,7 +137,6 @@ const signatureRequestValidationSchema = {
     subject: { required: false, type: String },
     message: { required: false, type: String },
     role: { required: true, type: String },
-    employeeCode: { required: true, type: String },
 };
 
 const signatureRequestSchema = Yup.object().shape({
@@ -151,7 +144,6 @@ const signatureRequestSchema = Yup.object().shape({
     subject: Yup.string(),
     message: Yup.string(),
     role: Yup.string().required(),
-    employeeCode: Yup.string().required(),
 });
 
 // Onboarding Signature Request schemas
@@ -318,29 +310,28 @@ export const saveTemplateMetadata = utilService.gatewayEventHandlerV2(
     },
 );
 
-export const createBulkSignatureRequest = utilService.gatewayEventHandlerV2(
+export const createBatchSignatureRequest = utilService.gatewayEventHandlerV2(
     async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.createBulkSignatureRequest');
+        console.info('esignature.handler.createBatchSignatureRequest');
 
         utilService.normalizeHeaders(event);
         utilService.validateAndThrow(event.headers, headerSchema);
         utilService.checkBoundedIntegralValues(event.pathParameters);
 
         await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, bulkSignatureRequestValidationSchema);
-        utilService.checkAdditionalProperties(bulkSignatureRequestValidationSchema, requestBody, 'Signature Request');
+        utilService.validateAndThrow(requestBody, batchSignatureRequestValidationSchema);
+        utilService.checkAdditionalProperties(batchSignatureRequestValidationSchema, requestBody, 'Signature Request');
 
-        await utilService.validateRequestBody(bulkSignatureRequestSchema, requestBody);
+        await utilService.validateRequestBody(batchSignatureRequestSchema, requestBody);
         await utilService.validateCollection(signatorySchema, requestBody.signatories);
 
         const { tenantId, companyId } = event.pathParameters;
 
-        const response: SignatureRequestResponse[] = await esignatureService.createBulkSignatureRequest(
+        const response: SignatureRequestResponse[] = await esignatureService.createBatchSignatureRequest(
             tenantId,
             companyId,
             requestBody,
             {},
-            configuration,
         );
 
         // send email
