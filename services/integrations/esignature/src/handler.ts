@@ -7,9 +7,11 @@ import * as utilService from '../../../util.service';
 import * as esignatureService from './esignature.service';
 
 import { Role } from '../../../api/models/Role';
+import { EsignatureAction, IEsignatureEvent, NotificationEventType } from '../../../internal-api/notification/events';
 import { IGatewayEventInput } from '../../../util.service';
 import { Headers } from '../../models/headers';
 import { EsignatureConfiguration } from './esignature.service';
+import { SignatureRequestResponse } from './signature-requests/signatureRequestResponse';
 
 const headerSchema = {
     authorization: { required: true, type: String },
@@ -333,11 +335,36 @@ export const createBulkSignatureRequest = utilService.gatewayEventHandlerV2(
 
         const { tenantId, companyId } = event.pathParameters;
 
-        const configuration: EsignatureConfiguration = await esignatureService.getConfigurationData(tenantId, companyId);
+        const response: SignatureRequestResponse[] = await esignatureService.createBulkSignatureRequest(
+            tenantId,
+            companyId,
+            requestBody,
+            {},
+            configuration,
+        );
+
+        // send email
+        const email = securityContext.principal.email;
+        const signatories = [];
+        for (const request of response) {
+            for (const signature of request.signatures) {
+                signatories.push(signature.signer);
+            }
+        }
+        utilService.sendEventNotification({
+            urlParameters: event.pathParameters,
+            invokerEmail: email,
+            type: NotificationEventType.EsignatureEvent,
+            actions: [EsignatureAction.SignatureRequestSubmitted],
+            accessToken: event.headers.authorization.replace(/Bearer /i, ''),
+            metadata: {
+                signatureRequests: response,
+            },
+        } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
 
         return {
             statusCode: 201,
-            body: await esignatureService.createBulkSignatureRequest(tenantId, companyId, requestBody, {}, configuration),
+            body: response,
         };
     },
 );

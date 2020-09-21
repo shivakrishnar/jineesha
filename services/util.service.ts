@@ -391,7 +391,7 @@ export async function getSecret(id: string): Promise<string> {
     // return data.SecretString;
 
     try {
-        console.log('getting secret..');
+        console.log('getting secret...', id);
         const data = await client.getSecretValue({ SecretId: id }).promise();
         return data.SecretString;
     } catch (error) {
