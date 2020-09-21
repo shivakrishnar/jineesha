@@ -87,11 +87,9 @@ describe('create bulk signature requests', () => {
             templateId: 'this definitely does not exist',
             subject: 'This is a test request',
             message: 'This is a test request message',
-            employeeCodes: ['1234'],
             signatories: [
                 {
-                    emailAddress: 'esignature-integration-tests@asuresoftware.com',
-                    name: 'Test User',
+                    employeeCode: '445',
                     role: 'OnboardingSignatory',
                 },
             ],
@@ -116,13 +114,6 @@ describe('create bulk signature requests', () => {
             templateId: 'this definitely does not exist',
             subject: 'This is a test request',
             message: 'This is a test request message',
-            signatories: [
-                {
-                    emailAddress: 'esignature-integration-tests@asuresoftware.com',
-                    name: 'Test User',
-                    role: 'OnboardingSignatory',
-                },
-            ],
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
@@ -142,7 +133,16 @@ describe('create bulk signature requests', () => {
     test('must return a 404 if employees are not found', (done) => {
         const invalidRequest = {
             ...signatureRequest,
-            employeeCodes: ['99999', '1234567'],
+            signatories: [
+                {
+                    employeeCode: '99999',
+                    role: 'Employee',
+                },
+                {
+                    employeeCode: '1234567',
+                    role: 'Employee'
+                }
+            ],
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
@@ -267,7 +267,6 @@ describe('create signature requests', () => {
             subject: 'This is a signature request',
             message: 'This is a signature request message',
             role: 'OnboardingSignatory',
-            employeeCode: '1234',
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
             configs.employeeId
@@ -290,7 +289,6 @@ describe('create signature requests', () => {
         const invalidRequest = {
             templateId: configs.esignature.templateId,
             title: 'This is a signature request',
-            message: 'This is a signature request message',
             role: 'OnboardingSignatory',
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${

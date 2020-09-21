@@ -1,4 +1,6 @@
-import { Signatory } from '../../src/signature-requests/signatory';
+import { SignatoryRequest } from '../../src/signature-requests/signatory';
+import { SignatureRequestResponseStatus, SignatureStatus } from '../../src/signature-requests/signatureRequestResponse';
+import { SignatureRequestResponse } from '../../src/signature-requests/signatureRequestResponse';
 
 export const signatureId = '12345';
 
@@ -17,21 +19,24 @@ export const helloSignSignatureRequest = {
     signature_request_id: '1234',
     title: 'Sig Request',
     is_complete: true,
+    metadata: {
+        employeeCodes: ['1'],
+    },
     signatures: [
         {
             status_code: 'signed',
-            signature_id: 1,
+            signature_id: '1',
             signer_email_address: 'hugh@jass.com',
             signer_name: 'Hugh',
             signer_role: 'Employee',
         },
-        {
-            status_code: 'awaiting_signature',
-            signature_id: 2,
-            signer_email_address: 'matt.yoga@gmail.com',
-            signer_name: 'Matt',
-            signer_role: 'Employee',
-        },
+        // {
+        //     status_code: 'awaiting_signature',
+        //     signature_id: '2',
+        //     signer_email_address: 'matt.yoga@gmail.com',
+        //     signer_name: 'Matt',
+        //     signer_role: 'Employee',
+        // },
     ],
 };
 
@@ -43,14 +48,14 @@ export const helloSignSignatureRequests = [
         signatures: [
             {
                 status_code: 'signed',
-                signature_id: 1,
+                signature_id: '1',
                 signer_email_address: 'hugh@jass.com',
                 signer_name: 'Hugh',
                 signer_role: 'Employee',
             },
             {
                 status_code: 'test',
-                signature_id: 2,
+                signature_id: '2',
                 signer_email_address: 'matt.yoga@gmail.com',
                 signer_name: 'Matt',
                 signer_role: 'Manager',
@@ -64,14 +69,14 @@ export const helloSignSignatureRequests = [
         signatures: [
             {
                 status_code: 'awaiting_signature',
-                signature_id: 1,
+                signature_id: '1',
                 signer_email_address: 'mike@pizza.com',
                 signer_name: 'Mike',
                 signer_role: 'OnboardingSignatory',
             },
             {
                 status_code: 'declined',
-                signature_id: 2,
+                signature_id: '2',
                 signer_email_address: 'several@ponchos.com',
                 signer_name: 'Several',
                 signer_role: 'OnboardingSignatory',
@@ -84,46 +89,83 @@ export const bulkSignatureRequestRequestBody = {
     templateId: '12345',
     subject: 'Signature request subject',
     message: 'Signature request message',
-    employeeCodes: ['1', '2'],
     signatories: [
-        new Signatory({
-            emailAddress: 'employee@test.com',
-            name: 'Employee User',
+        new SignatoryRequest({
+            employeeCode: '1',
             role: 'Employee',
         }),
-        new Signatory({
-            emailAddress: 'manager@test.com',
-            name: 'Manager User',
-            role: 'Manager',
+        new SignatoryRequest({
+            employeeCode: '2',
+            role: 'Employee',
         }),
     ],
 };
 
-export const signatureRequestResponse = {
+export const allEmployeesBulkSignatureRequestRequestBody = {
+    templateId: '12345',
+    subject: 'Signature request subject',
+    message: 'Signature request message',
+    signatories: [
+        new SignatoryRequest({
+            employeeCode: 'all',
+            role: 'Employee',
+        }),
+    ],
+};
+
+export const signatureRequestResponse: SignatureRequestResponse = {
     id: '1234',
-    title: 'Sig Request',
-    status: 'Pending',
     signatures: [
         {
-            id: 1,
-            status: 'Pending',
+            id: '1',
             signer: {
                 emailAddress: 'hugh@jass.com',
                 name: 'Hugh',
                 role: 'Employee',
             },
-        },
-        {
-            id: 2,
-            status: 'Pending',
-            signer: {
-                emailAddress: 'matt.yoga@gmail.com',
-                name: 'Matt',
-                role: 'Employee',
-            },
+            status: SignatureStatus.Pending,
         },
     ],
+    status: SignatureRequestResponseStatus.Pending,
+    title: 'Sig Request',
 };
+
+export const signatureRequestsResponse: SignatureRequestResponse[] = [
+    {
+        id: '1234',
+        title: 'Sig Request',
+        status: SignatureRequestResponseStatus.Pending,
+        signatures: [
+            {
+                id: '1',
+                status: SignatureStatus.Pending,
+                signer: {
+                    emailAddress: 'hugh@jass.com',
+                    name: 'Hugh',
+                    role: 'Employee',
+                    employeeCode: '1',
+                },
+            },
+        ],
+    },
+    {
+        id: '1234',
+        title: 'Sig Request',
+        status: SignatureRequestResponseStatus.Pending,
+        signatures: [
+            {
+                id: '1',
+                status: SignatureStatus.Pending,
+                signer: {
+                    emailAddress: 'hugh@jass.com',
+                    name: 'Hugh',
+                    role: 'Employee',
+                    employeeCode: '1',
+                },
+            },
+        ],
+    },
+];
 
 export const signatureRequestRequestBody = {
     templateId: '12345',
@@ -192,20 +234,11 @@ export const signatureRequestListResponse = [
         status: 'Complete',
         signatures: [
             {
-                id: 1,
+                id: '1',
                 status: 'Complete',
                 signer: {
                     emailAddress: 'hugh@jass.com',
                     name: 'Hugh',
-                    role: 'Employee',
-                },
-            },
-            {
-                id: 2,
-                status: 'Pending',
-                signer: {
-                    emailAddress: 'matt.yoga@gmail.com',
-                    name: 'Matt',
                     role: 'Employee',
                 },
             },
