@@ -1,13 +1,25 @@
+import * as jwt from 'jsonwebtoken';
 import * as nodemailer from 'nodemailer';
 import * as configService from '../../config.service';
+import * as ssoService from '../../remote-services/sso.service';
 import * as utilService from '../../util.service';
 
+import { IPayrollApiCredentials } from '../../api/models/IPayrollApiCredentials';
 import { ParameterizedQuery } from '../../queries/parameterizedQuery';
 import { Queries } from '../../queries/queries';
 import { InvocationType } from '../../util.service';
 import { DatabaseEvent, QueryType } from '../database/events';
 import { EmailMessage } from './emailMessage';
-import { AlertCategory, DirectDepositAction, IDirectDepositEvent, INotificationEvent, NotificationEventType } from './events';
+import {
+    AlertCategory,
+    DirectDepositAction,
+    IDirectDepositEvent,
+    IEsignatureEvent,
+    INotificationEvent,
+    NotificationEventType,
+} from './events';
+import { IDirectDepositMetadataKeys } from './metadata-keys/IDirectDepositMetadataKeys';
+import { IESignatureMetadataKeys } from './metadata-keys/IESignatureMetadataKeys';
 
 type Alert = {
     companyId: number;
@@ -20,35 +32,6 @@ type Alert = {
     recipientEmployeesIds: number[] | undefined;
     recipientUsersIds: number[] | undefined;
 };
-
-type AlertAction = DirectDepositAction;
-
-type MetadataKeys = {};
-
-interface IDirectDepositMetadataKeys extends MetadataKeys {
-    firstName: string;
-    lastName: string;
-    address1: string;
-    city: string;
-    zip: string;
-    email: string;
-    phoneHome: string;
-    phoneCell: string;
-    companyName: string;
-    displayName: string;
-    hireDate: string;
-    termDate: string;
-    directDepositStartDate: string;
-    directDepositEndDate: string;
-    directDepositAccount: string;
-    directDepositRouting: string;
-    directDepositAmountCode: string;
-    directDepositAmount: string;
-    directDepositAccountType: string;
-    directDepositStatus: string;
-    directDepositNameOnAccount: string;
-    pageLink: string;
-}
 
 /**
  *  Routes and executes the notification event based on its type
@@ -63,7 +46,9 @@ export async function processEvent(event: INotificationEvent): Promise<boolean> 
             case NotificationEventType.DirectDepositEvent:
                 await submitDirectDepositEventNotification(event as IDirectDepositEvent);
                 return true;
-
+            case NotificationEventType.EsignatureEvent:
+                await submitEsignatureEventNotification(event as IEsignatureEvent);
+                return true;
             default:
                 return false;
         }
@@ -125,6 +110,75 @@ async function submitDirectDepositEventNotification(event: IDirectDepositEvent):
     }
 }
 
+/*
+ * Handles and sends alerts for E-Signature events
+ * @param {IEsignatureEvent} event
+ */
+async function submitEsignatureEventNotification(event: IEsignatureEvent): Promise<void> {
+    console.info('notification.service.submitEsignatureEventNotification');
+
+    const { tenantId, companyId } = event.urlParameters;
+
+    for (const action of event.actions) {
+        // TODO: get alert from database
+        // const alert: Alert = await getAlertByCategoryAndAction(tenantId, companyId, AlertCategory.Esignature, action);
+        // if (alert === undefined) {
+        //     continue;
+        // }
+        const alert: any = {
+            emailSubjectTemplate: `[COMPANYNAME] - Action Required - Sign [DOCUMENTNAME]`,
+            emailBodyTemplate: `
+                <html xmlns="http://www.w3.org/1999/xhtml">
+                    <head>
+                        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet">
+                        <title>E-Signature Action Required</title>
+                    </head>
+                    <body style="font-family: 'Roboto', sans-serif;">
+                        <div style="background-color: White; padding: 10px;">
+                            <div style="margin-bottom: 10px;"><b>[COMPANYNAME]</b></div>
+                            <br/>
+                            <div style="margin-bottom: 10px;">Hi [NAME],</div>
+                            <br/>
+                            <div style="margin-bottom: 10px;">A new document needs your signature. Please review and sign "[DOCUMENTNAME]" in your employee portal.</div>
+                            <br/>
+                        </div>
+                        <br/><br/>
+                    </body>
+                </html>
+            `,
+        };
+
+        const invocations: Array<Promise<any>> = [];
+        const emailMessages: EmailMessage[] = [];
+        for (const request of event.metadata.signatureRequests) {
+            for (const signature of request.signatures) {
+                const emailAction = async () => {
+                    const esignatureMetadata = await getEsignatureMetadata(tenantId, companyId, signature.signer.employeeCode, request.id);
+                    const metadata: IESignatureMetadataKeys = {
+                        documentName: request.title,
+                        companyName: esignatureMetadata.companyName,
+                        name: esignatureMetadata.firstName,
+                    };
+                    const emailMessage = new EmailMessage(
+                        applyMetadata(metadata, alert.emailSubjectTemplate),
+                        applyMetadata(metadata, alert.emailBodyTemplate),
+                        configService.getFromEmailAddress(),
+                        [signature.signer.emailAddress],
+                    );
+                    sendEmail(tenantId, emailMessage);
+                    emailMessages.push(emailMessage);
+                };
+                invocations.push(emailAction());
+            }
+        }
+
+        await Promise.all(invocations);
+        await createEmailRecordListEntries(tenantId, companyId, emailMessages, event.accessToken);
+
+        console.log(action, 'Esignature request sent');
+    }
+}
+
 /**
  * Retrieves an alert based on a specified category and action
  * @param {string} tenantId: The unique identifier for a tenant
@@ -137,7 +191,7 @@ async function getAlertByCategoryAndAction(
     tenantId: string,
     companyId: string,
     alertCategory: AlertCategory,
-    action: AlertAction,
+    action: unknown,
 ): Promise<Alert | undefined> {
     console.info('notification.service.getAlertByCategoryAndAction');
 
@@ -402,16 +456,117 @@ async function getDirectDepositMetadata(tenantId: string, directDepositId: numbe
 }
 
 /**
+ * Retrieves a listing of e-signature metadata for use in populating
+ * E-Signature-based email templates.
+ * @param {string} tenantId: The unique identifier for a tenant
+ * @param {string} companyId: The unique identifier for a company
+ * @param {string} employeeCode: The code associated with the employee
+ * @param {string} esignatureMetadataId: The unique identifier for the e-signature metadata record
+ * @return {Promise<any>}: a Promise of the tenant's base URL
+ */
+async function getEsignatureMetadata(
+    tenantId: string,
+    companyId: string,
+    employeeCode: string,
+    esignatureMetadataId: string,
+): Promise<any> {
+    console.info('notification.service.getEsignatureMetadata');
+
+    try {
+        const query = new ParameterizedQuery('esignatureMetadata', Queries.esignatureMetadata);
+        query.setParameter('@companyId', companyId);
+        query.setParameter('@employeeCode', employeeCode);
+        query.setParameter('@esignatureMetadataId', esignatureMetadataId);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        return (result.recordset || []).map((record) => ({
+            firstName: record.FirstName,
+            companyName: record.CompanyName,
+        }))[0];
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+/**
+ * Creates entries into the Email Record List table
+ * @param {string} tenantId: The unique identifier for a tenant
+ * @param {string} companyId: The unique identifier for a company
+ * @param {EmailMessage[]} emails: A collection of email message objects
+ * @param {string} accessToken: The access token of the invoking user
+ */
+async function createEmailRecordListEntries(
+    tenantId: string,
+    companyId: string,
+    emails: EmailMessage[],
+    accessToken: string,
+): Promise<void> {
+    console.info('notification.service.createEmailRecordListEntries');
+
+    try {
+        const emailQuery = new ParameterizedQuery('createEmailRecordListEntry', '');
+        for (const email of emails) {
+            const query = new ParameterizedQuery('createEmailRecordListEntry', Queries.createEmailRecordListEntry);
+            query.setParameter('@companyId', companyId);
+            query.setParameter('@originAddress', 'Service Account');
+            query.setStringParameter('@emailString', email.body);
+            query.setParameter('@addressList', email.recipients.join(','));
+            query.setParameter('@dateTimeSent', new Date().toISOString());
+            query.setStringParameter('@subject', email.subject);
+            emailQuery.combineQueries(query, false);
+        }
+
+        const payload = {
+            tenantId,
+            queryName: emailQuery.name,
+            query: emailQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.Event);
+
+        const payrollApiCredentials = await utilService.getPayrollApiCredentials(tenantId);
+        const payrollApiToken: string = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
+        await utilService.clearCache(tenantId, payrollApiToken);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+/**
  * Replaces existing placeholder items in an email template with
  * metadata data
  * @param {MetadataKeys} metadataKeys
  * @param {string} template
  */
-function applyMetadata(metadataKeys: MetadataKeys, template: string): string {
+function applyMetadata(metadataKeys: any, template: string): string {
     console.info('notification.service.applyMetadata');
     Object.keys(metadataKeys).forEach((key) => {
         template = template.replace(new RegExp(`\\[${key.toUpperCase()}\\]`, 'g'), metadataKeys[key]);
     });
 
     return template;
+}
+
+/**
+ *  Swaps an HR access token for a Payroll API access token.
+ * @param {string} hrAccessToken: The access token for the HR user.
+ * @param {string} tenantId: The unqiue identifier for the tenant.
+ * @param {IPayrollApiCredentials} payrollApiCredentials: The credentials of the user to access the Payroll API
+ * @return {string}: A Promise of the access token to access the Payroll API with.
+ */
+export async function getPayrollApiToken(
+    hrAccessToken: string,
+    tenantId: string,
+    payrollApiCredentials: IPayrollApiCredentials,
+): Promise<string> {
+    const decodedToken: any = jwt.decode(hrAccessToken);
+    const ssoToken = await utilService.getSSOToken(tenantId, decodedToken.applicationId);
+    return await ssoService.getAccessToken(tenantId, ssoToken, payrollApiCredentials.evoApiUsername, payrollApiCredentials.evoApiPassword);
 }

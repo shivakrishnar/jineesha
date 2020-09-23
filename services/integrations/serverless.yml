@@ -122,8 +122,8 @@ functions:
             cors:
               origin: '*'
 
-  createBulkSignRequest:
-    handler: esignature/src/handler.createBulkSignatureRequest
+  createBatchSignRequest:
+    handler: esignature/src/handler.createBatchSignatureRequest
     events:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/requests

@@ -30,9 +30,58 @@ export const employeesByCodeDBResponse = {
     recordset: [
         {
             EmployeeCode: '1',
+            EmailAddress: 'hugh@jass.com',
+            FirstName: 'Hugh',
+            LastName: 'Jass',
         },
         {
             EmployeeCode: '2',
+            EmailAddress: 'matt.yoga@gmail.com',
+            FirstName: 'Matt',
+            LastName: 'Employee',
+        },
+    ],
+    output: {},
+    rowsAffected: [2],
+};
+
+export const employeeByCodeDBResponse = {
+    recordset: [
+        {
+            EmployeeCode: '1',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const paginatedEmployeesDBResponse = {
+    recordsets: [
+        [
+            [
+                {
+                    totalCount: 2,
+                },
+            ],
+        ],
+        [
+            {
+                EmployeeCode: '1',
+                EmailAddress: 'hugh@jass.com',
+                FirstName: 'Hugh',
+                LastName: 'Jass',
+            },
+            {
+                EmployeeCode: '2',
+                EmailAddress: 'matt.yoga@gmail.com',
+                FirstName: 'Matt',
+                LastName: 'Employee',
+            },
+        ],
+    ],
+    recordset: [
+        {
+            totalCount: 2,
         },
     ],
     output: {},

@@ -1,3 +1,5 @@
+import { SignatureRequestResponse } from '../../integrations/esignature/src/signature-requests/signatureRequestResponse';
+
 export interface INotificationEvent {
     urlParameters: { [i: string]: string };
     invokerEmail: string;
@@ -6,10 +8,12 @@ export interface INotificationEvent {
 
 export enum NotificationEventType {
     DirectDepositEvent = 'DirectDepositEvent',
+    EsignatureEvent = 'EsignatureEvent',
 }
 
 export enum AlertCategory {
     DirectDeposit = 'Direct Deposit',
+    Esignature = 'E-Signature',
 }
 
 export interface IDirectDepositEvent extends INotificationEvent {
@@ -22,4 +26,18 @@ export enum DirectDepositAction {
     Approved = 'Request Approved',
     Rejected = 'Request Rejected',
     ApprovalRequest = 'New Request',
+}
+
+export interface IEsignatureEvent extends INotificationEvent {
+    actions: EsignatureAction[];
+    accessToken: string;
+    metadata: IESignatureMetadata;
+}
+
+export interface IESignatureMetadata {
+    signatureRequests: SignatureRequestResponse[];
+}
+
+export enum EsignatureAction {
+    SignatureRequestSubmitted = 'Request Submitted',
 }

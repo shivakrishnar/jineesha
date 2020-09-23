@@ -36,11 +36,13 @@ export const Queries = {
     listAlertRecipients: fs.readFileSync(path.join(basePath, 'alerts/listDirectDepositEventRecipientEmailAddresses.sql')).toString(),
     smtpCredentials: fs.readFileSync(path.join(basePath, 'alerts/getSmtpCredentials.sql')).toString(),
     directDepositMetadata: fs.readFileSync(path.join(basePath, 'alerts/directDepositMetadata.sql')).toString(),
+    esignatureMetadata: fs.readFileSync(path.join(basePath, 'alerts/esignatureMetadata.sql')).toString(),
 
     // Audit
     createAuditEntry: fs.readFileSync(path.join(basePath, 'audit/createAuditEntry.sql')).toString(),
     createAuditDetailEntry: fs.readFileSync(path.join(basePath, 'audit/createAuditDetailEntry.sql')).toString(),
     getEmployeeInfoById: fs.readFileSync(path.join(basePath, 'audit/getEmployeeInfoById.sql')).toString(),
+    createEmailRecordListEntry: fs.readFileSync(path.join(basePath, 'audit/createEmailRecordListEntry.sql')).toString(),
 
     // E-Signatures
     checkForDuplicateFileMetadata: fs.readFileSync(path.join(basePath, 'esignatures/checkForDuplicateFileMetadata.sql')).toString(),

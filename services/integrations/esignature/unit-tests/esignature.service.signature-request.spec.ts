@@ -20,8 +20,6 @@ describe('esignatureService.signature-request.create', () => {
                 return Promise.resolve(mockData.companyInfo);
             } else if (payload.queryName === 'GetEmployeeInfoById') {
                 return Promise.resolve(mockData.employeeDBResponse);
-            } else if (payload.queryName === 'GetEmployeeByCompanyIdAndCode') {
-                return Promise.resolve(mockData.employeesByCodeDBResponse);
             }
         });
 
@@ -342,7 +340,7 @@ describe('esignatureService.signature-requests.create', () => {
         setup();
     });
 
-    test('creates and returns signature requests', () => {
+    test('creates and returns signature requests for some employees', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetCompanyInfo') {
                 return Promise.resolve(mockData.companyInfo);
@@ -352,10 +350,47 @@ describe('esignatureService.signature-requests.create', () => {
         });
 
         return esignatureService
-            .createBulkSignatureRequest(mockData.tenantId, mockData.companyId, mockData.bulkSignatureRequestRequestBody, {}, undefined)
-            .then((signatureRequest) => {
-                expect(signatureRequest).toBeInstanceOf(SignatureRequestResponse);
-                expect(signatureRequest).toEqual(mockData.signatureRequestResponse);
+            .createBatchSignatureRequest(mockData.tenantId, mockData.companyId, mockData.bulkSignatureRequestRequestBody, {})
+            .then((signatureRequests) => {
+                expect(Array.isArray(signatureRequests)).toBe(true);
+                expect(signatureRequests).toEqual(mockData.signatureRequestsResponse);
+            });
+    });
+
+    test('creates and returns signature requests for all employees', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            } else if (payload.queryName === 'listEmployeesByCompany') {
+                return Promise.resolve(mockData.paginatedEmployeesDBResponse);
+            }
+        });
+
+        return esignatureService
+            .createBatchSignatureRequest(mockData.tenantId, mockData.companyId, mockData.allEmployeesBulkSignatureRequestRequestBody, {})
+            .then((signatureRequests) => {
+                expect(Array.isArray(signatureRequests)).toBe(true);
+                expect(signatureRequests).toEqual(mockData.signatureRequestsResponse);
+            });
+    });
+
+    test('returns a 404 if employees are not found when trying to find all employees', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            } else if (payload.queryName === 'listEmployeesByCompany') {
+                return Promise.resolve(mockData.emptyPaginatedDBResponse);
+            }
+        });
+
+        return esignatureService
+            .createBatchSignatureRequest(mockData.tenantId, mockData.companyId, mockData.allEmployeesBulkSignatureRequestRequestBody, {})
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toContain(`No employees were found under the provided company ${mockData.companyId}`);
             });
     });
 
@@ -367,7 +402,7 @@ describe('esignatureService.signature-requests.create', () => {
         });
 
         return esignatureService
-            .createBulkSignatureRequest(mockData.tenantId, mockData.companyId, mockData.bulkSignatureRequestRequestBody, {}, undefined)
+            .createBatchSignatureRequest(mockData.tenantId, mockData.companyId, mockData.bulkSignatureRequestRequestBody, {})
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -376,7 +411,7 @@ describe('esignatureService.signature-requests.create', () => {
                 expect(error.developerMessage).toContain(
                     `Employees with the following codes were not found under company ${
                         mockData.companyId
-                    }: ${mockData.bulkSignatureRequestRequestBody.employeeCodes.join(',')}`,
+                    }: ${mockData.bulkSignatureRequestRequestBody.signatories.map((signatory) => signatory.employeeCode).join(',')}`,
                 );
             });
     });
