@@ -4,6 +4,7 @@ import * as paginationService from '../pagination/pagination.service';
 import * as hellosignService from '../remote-services/hellosign.service';
 import * as integrationsService from '../remote-services/integrations.service';
 import * as utilService from '../util.service';
+import * as errorService from '../errors/error.service';
 
 export const setup = () => {
     (configService as any).getSecretsAwsEndpoint = jest.fn(() => {
@@ -61,8 +62,11 @@ export const setup = () => {
         return 'key';
     });
 
-    (utilService as any).validateCompany = jest.fn((params: any) => {
-        return;
+    (utilService as any).validateCompany = jest.fn((tenantId, companyId) => {
+        if (Number.isNaN(Number(companyId))) {
+            const errorMessage = `${companyId} is not a valid number`;
+            throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        }
     });
 
     (utilService as any).authorizeAndRunQuery = jest.fn((params: any) => {

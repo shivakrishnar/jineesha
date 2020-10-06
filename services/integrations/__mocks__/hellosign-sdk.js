@@ -2,6 +2,7 @@
 
 let hellosign = jest.genMockFromModule('hellosign-sdk');
 const mockData = require('../esignature/unit-tests/mock-data');
+const listSignatureRequests = require('../esignature/unit-tests/mock-functions/hellosign-list-requests');
 
 hellosign = (params) => {
     return {
@@ -28,17 +29,7 @@ hellosign = (params) => {
                     signature_request: mockData.helloSignSignatureRequest,
                 };
             },
-            list: (request) => {
-                const requestModifier = request.query;
-                switch (requestModifier) {
-                    case 'metadata:returnNothing':
-                        return { signature_requests: [] };
-                    case 'metadata:errorNotFound':
-                        throw { message: 'Signature not found' };
-                    default:
-                        return { signature_requests: mockData.helloSignSignatureRequests };
-                }
-            },
+            list: listSignatureRequests,
             createEmbeddedWithTemplate: () => {
                 return {
                     signature_request: mockData.helloSignSignatureRequest,
