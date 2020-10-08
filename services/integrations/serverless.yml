@@ -158,6 +158,15 @@ functions:
             cors:
               origin: '*'
 
+  updateSignatureRequestStatus: 
+    handler: esignature/src/handler.updateSignatureRequestStatus
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/esignatures/requests/{documentId}/status
+            method: patch
+            cors:
+              origin: '*'
+
   listTemplates:
     handler: esignature/src/handler.listTemplates
     events:

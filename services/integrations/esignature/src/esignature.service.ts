@@ -2865,6 +2865,86 @@ export async function updateCompanyDocument(tenantId: string, companyId: string,
     }
 }
 
+export async function updateSignatureRequestStatus(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    documentId: string,
+    request: any,
+): Promise<any> {
+    console.info('esignature.service.updateSignatureRequestStatus');
+
+    try {
+        const { stepNumber } = request;
+
+        const statusQuery = new ParameterizedQuery('getSignatureStatusByStepNumber', Queries.getSignatureStatusByStepNumber);
+        statusQuery.setParameter('@stepNumber', stepNumber);
+        const statusPayload = {
+            tenantId,
+            queryName: statusQuery.name,
+            query: statusQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const esignatureMetadataQuery = new ParameterizedQuery('getEsignatureMetadataById', Queries.getEsignatureMetadataById);
+        esignatureMetadataQuery.setParameter('@id', documentId);
+        const esignatureMetadataPayload = {
+            tenantId,
+            queryName: esignatureMetadataQuery.name,
+            query: esignatureMetadataQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const [statusResult, esignatureMetadataResult]: any[] = await Promise.all([
+            utilService.invokeInternalService('queryExecutor', statusPayload, InvocationType.RequestResponse),
+            utilService.invokeInternalService('queryExecutor', esignatureMetadataPayload, InvocationType.RequestResponse),
+            utilService.validateCompany(tenantId, companyId),
+            validateEmployeeId(tenantId, companyId, employeeId),
+        ]);
+
+        if (statusResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Status with step number ${stepNumber} not found.`);
+        }
+
+        if (esignatureMetadataResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Signature request with ID ${documentId} not found.`);
+        }
+
+        const statusId = statusResult.recordset[0].ID;
+        const query = new ParameterizedQuery(
+            'UpdateEsignatureMetadataSignatureStatusById',
+            Queries.updateEsignatureMetadataSignatureStatusById,
+        );
+        query.setParameter('@signatureStatusId', statusId);
+        query.setParameter('@id', documentId);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        return {
+            id: documentId,
+            status: {
+                name: statusResult.recordset[0].Name,
+                priority: statusResult.recordset[0].Priority,
+                stepNumber: statusResult.recordset[0].StepNumber,
+                isProcessing: true,
+            },
+        };
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
 /**
  * Updates a specified document record under an employee.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.

@@ -209,6 +209,15 @@ const createCompanyDocumentSchema = Yup.object().shape({
     isPublishedToEmployee: Yup.bool().required(),
 });
 
+// Update signature request status schemas
+const updateSignatureRequestStatusValidationSchema = {
+    stepNumber: { required: true, type: Number },
+};
+
+const updateSignatureRequestStatusSchema = Yup.object().shape({
+    stepNumber: Yup.number().required(),
+});
+
 // Update Document schemas
 const updateDocumentValidationSchema = {
     title: { required: false, type: String },
@@ -942,6 +951,28 @@ export const createCompanyDocument = utilService.gatewayEventHandlerV2(
             statusCode: 201,
             body: await esignatureService.createCompanyDocument(tenantId, companyId, requestBody, givenName, surname),
         };
+    },
+);
+
+/**
+ * Updates the status of a signature request (EsignatureMetadata).
+ */
+export const updateSignatureRequestStatus = utilService.gatewayEventHandlerV2(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.updateSignatureRequestStatus');
+
+        const { tenantId, companyId, employeeId, documentId } = event.pathParameters;
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, updateSignatureRequestStatusValidationSchema);
+        utilService.checkAdditionalProperties(updateSignatureRequestStatusValidationSchema, requestBody, 'Update Esignature Metadata');
+        await utilService.validateRequestBody(updateSignatureRequestStatusSchema, requestBody);
+
+        return await esignatureService.updateSignatureRequestStatus(tenantId, companyId, employeeId, documentId, requestBody);
     },
 );
 
