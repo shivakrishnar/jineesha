@@ -35,9 +35,9 @@ describe('esignatureService.deleteOnboardingDcouments', () => {
         if (mockData.helloSignSignatureRequestsIdList.length != mockData.helloSignSignatureRequests.length) {
             throw new Error('Ensure that all the mock signature requests have a matching ID in mockData.helloSignSignatureRequestIdList');
         }
-        const requestIds = `'${mockData.helloSignSignatureRequestsIdList[0]}', '${mockData.helloSignSignatureRequestsIdList[1]}'`;
+        const requestIds = `${mockData.helloSignSignatureRequestsIdList[0]},${mockData.helloSignSignatureRequestsIdList[1]}`;
         const query = new ParameterizedQuery('deleteEsignatureMetadataByIdList', Queries.deleteEsignatureMetadataByIdList);
-        query.setParameter('@idList', requestIds);
+        query.setStringParameter('@idList', requestIds);
         const payload = {
             tenantId: mockData.tenantId,
             queryName: query.name,
@@ -66,9 +66,9 @@ describe('esignatureService.deleteOnboardingDcouments', () => {
             );
         }
 
-        const requestIds = `'${mockData.helloSignSignatureRequestsIdList[0]}'`;
+        const requestIds = `${mockData.helloSignSignatureRequestsIdList[0]}`;
         const query = new ParameterizedQuery('deleteEsignatureMetadataByIdList', Queries.deleteEsignatureMetadataByIdList);
-        query.setParameter('@idList', requestIds);
+        query.setStringParameter('@idList', requestIds);
         const payload = {
             tenantId: mockData.tenantId,
             queryName: query.name,

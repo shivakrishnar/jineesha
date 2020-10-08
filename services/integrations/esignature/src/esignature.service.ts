@@ -449,7 +449,7 @@ export async function createSignatureRequest(
  * Delete all esign docs associated with an onboarding
  * @param {string} tenantId: The unique identifier for the tenant the onboarding belongs to.
  * @param {string} companyId: The unique identifier for the company the onboarding belongs to.
- * @param {string} onboardingId: The unique identifier for the onboarding the onboarding belongs to.
+ * @param {string} onboardingId: The unique identifier for the onboarding.
  */
 export async function deleteOnboardingDocuments(tenantId: string, companyId: string, onboardingId: string): Promise<void> {
     console.info('esignatureService.deleteOnboardingDocuments');
@@ -467,12 +467,12 @@ export async function deleteOnboardingDocuments(tenantId: string, companyId: str
 
         let requestIds: string;
         if (signatureRequests.length == 1) {
-            requestIds = "'" + signatureRequests[0].signature_request_id + "'";
+            requestIds = signatureRequests[0].signature_request_id;
         } else {
-            requestIds = "'" + signatureRequests.map((e) => e.signature_request_id).join("', '") + "'";
+            requestIds = signatureRequests.map((e) => e.signature_request_id).join(',');
         }
         const query = new ParameterizedQuery('deleteEsignatureMetadataByIdList', Queries.deleteEsignatureMetadataByIdList);
-        query.setParameter('@idList', requestIds);
+        query.setStringParameter('@idList', requestIds);
         const payload = {
             tenantId,
             queryName: query.name,
@@ -488,7 +488,6 @@ export async function deleteOnboardingDocuments(tenantId: string, companyId: str
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
     }
-    return;
 }
 
 /**
@@ -3476,7 +3475,7 @@ async function validateEmployeeId(tenantId: string, companyId: string, employeeI
  * @param {string} onboardingId: The unique identifier for the specified onboarding
  */
 async function validateOnboardingForDeletion(tenantId: string, companyId: string, onboardingId: string): Promise<void> {
-    console.info('esignature.service.validateOnboardingId');
+    console.info('esignature.service.validateOnboardingForDeletion');
     try {
         await utilService.validateCompany(tenantId, companyId);
         const query: ParameterizedQuery = new ParameterizedQuery(
