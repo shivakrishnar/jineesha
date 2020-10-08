@@ -350,7 +350,15 @@ describe('esignatureService.signature-requests.create', () => {
         });
 
         return esignatureService
-            .createBatchSignatureRequest(mockData.tenantId, mockData.companyId, mockData.bulkSignatureRequestRequestBody, {})
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.bulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123'
+            )
             .then((signatureRequests) => {
                 expect(Array.isArray(signatureRequests)).toBe(true);
                 expect(signatureRequests).toEqual(mockData.signatureRequestsResponse);
@@ -367,7 +375,15 @@ describe('esignatureService.signature-requests.create', () => {
         });
 
         return esignatureService
-            .createBatchSignatureRequest(mockData.tenantId, mockData.companyId, mockData.allEmployeesBulkSignatureRequestRequestBody, {})
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.allEmployeesBulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123'
+            )
             .then((signatureRequests) => {
                 expect(Array.isArray(signatureRequests)).toBe(true);
                 expect(signatureRequests).toEqual(mockData.signatureRequestsResponse);
@@ -384,7 +400,15 @@ describe('esignatureService.signature-requests.create', () => {
         });
 
         return esignatureService
-            .createBatchSignatureRequest(mockData.tenantId, mockData.companyId, mockData.allEmployeesBulkSignatureRequestRequestBody, {})
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.allEmployeesBulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123'
+            )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -402,7 +426,15 @@ describe('esignatureService.signature-requests.create', () => {
         });
 
         return esignatureService
-            .createBatchSignatureRequest(mockData.tenantId, mockData.companyId, mockData.bulkSignatureRequestRequestBody, {})
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.bulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123'
+            )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);

@@ -4,6 +4,7 @@ import * as configService from '../../config.service';
 import * as hellosignService from '../../remote-services/hellosign.service';
 import * as utilService from '../../util.service';
 
+import { SignatureStatusID } from '../../integrations/esignature/src/signature-requests/signatureRequestResponse';
 import { DatabaseEvent, QueryType } from '../../internal-api/database/events';
 import { ParameterizedQuery } from '../../queries/parameterizedQuery';
 import { Queries } from '../../queries/queries';
@@ -79,10 +80,25 @@ export async function uploadSignedDocument(request: any): Promise<boolean> {
             query.setParameter('@pointer', key);
             query.setParameter('@uploadedBy', 'NULL');
             query.setParameter('@isPublishedToEmployee', '1');
+            query.setStringParameter('@esignatureMetadataId', requestId);
             payload = {
                 tenantId,
                 queryName: query.name,
                 query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+            const esignatureMetadataUpdateQuery = new ParameterizedQuery(
+                'updateEsignatureMetadataSignatureStatusById',
+                Queries.updateEsignatureMetadataSignatureStatusById,
+            );
+            esignatureMetadataUpdateQuery.setParameter('@signatureStatusId', SignatureStatusID.Signed);
+            esignatureMetadataUpdateQuery.setParameter('@id', requestId);
+            payload = {
+                tenantId,
+                queryName: esignatureMetadataUpdateQuery.name,
+                query: esignatureMetadataUpdateQuery.value,
                 queryType: QueryType.Simple,
             } as DatabaseEvent;
             await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);

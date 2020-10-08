@@ -7,7 +7,6 @@ import * as utilService from '../../../util.service';
 import * as esignatureService from './esignature.service';
 
 import { Role } from '../../../api/models/Role';
-import { EsignatureAction, IEsignatureEvent, NotificationEventType } from '../../../internal-api/notification/events';
 import { IGatewayEventInput } from '../../../util.service';
 import { Headers } from '../../models/headers';
 import { EsignatureConfiguration } from './esignature.service';
@@ -332,26 +331,10 @@ export const createBatchSignatureRequest = utilService.gatewayEventHandlerV2(
             companyId,
             requestBody,
             {},
+            securityContext.principal.email,
+            event.pathParameters,
+            event.headers.authorization,
         );
-
-        // send email
-        const email = securityContext.principal.email;
-        const signatories = [];
-        for (const request of response) {
-            for (const signature of request.signatures) {
-                signatories.push(signature.signer);
-            }
-        }
-        utilService.sendEventNotification({
-            urlParameters: event.pathParameters,
-            invokerEmail: email,
-            type: NotificationEventType.EsignatureEvent,
-            actions: [EsignatureAction.SignatureRequestSubmitted],
-            accessToken: event.headers.authorization.replace(/Bearer /i, ''),
-            metadata: {
-                signatureRequests: response,
-            },
-        } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
 
         return {
             statusCode: 201,
