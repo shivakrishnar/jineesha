@@ -935,7 +935,7 @@ export async function createSignUrl(tenantId: string, companyId: string, employe
         });
     } catch (error) {
         if (error.message) {
-            if (error.message.includes('Signature not found')) {
+            if (error.message.includes('Signature not found') || error.message.includes('Not found')) {
                 throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
             }
         }

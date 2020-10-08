@@ -9,3 +9,4 @@ export * from './category-mock-data';
 export * from './onboarding-mock-data';
 export * from './configure-mock-data';
 export * from './preview-mock-data';
+export * from './signature-status-mock-data';

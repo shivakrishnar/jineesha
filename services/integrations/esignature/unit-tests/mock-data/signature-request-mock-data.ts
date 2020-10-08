@@ -245,3 +245,18 @@ export const signatureRequestListResponse = [
         ],
     },
 ];
+
+export const esignatureMetadataDBResponse = {
+    recordset: [
+        {
+            ID: 1,
+            UploadDate: '1/1/2020',
+            UploadedBy: 'Admin',
+            Title: 'Test',
+            Filename: 'test.png',
+            Category: 'test',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};

@@ -14,7 +14,7 @@
         },
         "fileName": {
             "description": "The name of the file associated with the document.",
-            "type": ["string"]
+            "type": ["string", "null"]
         },
         "category": {
             "description": "The category that the document belongs to.",

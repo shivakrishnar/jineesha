@@ -45,6 +45,26 @@ export const employeesByCodeDBResponse = {
     rowsAffected: [2],
 };
 
+export const employeesWithoutEmailAddressDBResponse = {
+    recordset: [
+        {
+            EmployeeCode: '1',
+            // tslint:disable-next-line:no-null-keyword
+            EmailAddress: null,
+            FirstName: 'Hugh',
+            LastName: 'Jass',
+        },
+        {
+            EmployeeCode: '2',
+            EmailAddress: 'matt.yoga@gmail.com',
+            FirstName: 'Matt',
+            LastName: 'Employee',
+        },
+    ],
+    output: {},
+    rowsAffected: [2],
+};
+
 export const employeeByCodeDBResponse = {
     recordset: [
         {
