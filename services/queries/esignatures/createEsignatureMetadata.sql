@@ -10,7 +10,8 @@ into
     Title,
     Filename,
     Category,
-    EmployeeCode
+    EmployeeCode,
+    SignatureStatusID
 )
 values
 (
@@ -22,5 +23,6 @@ values
     @title,
     @fileName,
     @category,
-    @employeeCode
+    @employeeCode,
+    @signatureStatusId
 )
