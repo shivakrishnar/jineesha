@@ -69,6 +69,8 @@ export const setup = () => {
         return [[{}]];
     });
 
+    (utilService as any).sendEventNotification = jest.fn();
+
     (paginationService as any).appendPaginationFilter = jest.fn((params: any) => {
         return Promise.resolve({ name: params.name, value: params.value });
     });

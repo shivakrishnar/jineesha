@@ -350,7 +350,15 @@ describe('esignatureService.signature-requests.create', () => {
         });
 
         return esignatureService
-            .createBatchSignatureRequest(mockData.tenantId, mockData.companyId, mockData.bulkSignatureRequestRequestBody, {})
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.bulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123'
+            )
             .then((signatureRequests) => {
                 expect(Array.isArray(signatureRequests)).toBe(true);
                 expect(signatureRequests).toEqual(mockData.signatureRequestsResponse);
@@ -367,7 +375,15 @@ describe('esignatureService.signature-requests.create', () => {
         });
 
         return esignatureService
-            .createBatchSignatureRequest(mockData.tenantId, mockData.companyId, mockData.allEmployeesBulkSignatureRequestRequestBody, {})
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.allEmployeesBulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123'
+            )
             .then((signatureRequests) => {
                 expect(Array.isArray(signatureRequests)).toBe(true);
                 expect(signatureRequests).toEqual(mockData.signatureRequestsResponse);
@@ -384,7 +400,15 @@ describe('esignatureService.signature-requests.create', () => {
         });
 
         return esignatureService
-            .createBatchSignatureRequest(mockData.tenantId, mockData.companyId, mockData.allEmployeesBulkSignatureRequestRequestBody, {})
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.allEmployeesBulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123'
+            )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -402,7 +426,15 @@ describe('esignatureService.signature-requests.create', () => {
         });
 
         return esignatureService
-            .createBatchSignatureRequest(mockData.tenantId, mockData.companyId, mockData.bulkSignatureRequestRequestBody, {})
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.bulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123'
+            )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -413,6 +445,36 @@ describe('esignatureService.signature-requests.create', () => {
                         mockData.companyId
                     }: ${mockData.bulkSignatureRequestRequestBody.signatories.map((signatory) => signatory.employeeCode).join(',')}`,
                 );
+            });
+    });
+
+    test('returns a 422 if some employee do not have email addresses', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            } else if (payload.queryName === 'GetEmployeeByCompanyIdAndCode') {
+                return Promise.resolve(mockData.employeesWithoutEmailAddressDBResponse);
+            }
+        });
+
+        return esignatureService
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.bulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123'
+            )
+            .catch((error) => {
+                console.log(error);
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(422);
+                expect(error.code).toEqual(70);
+                expect(error.message).toEqual('The database contains bad data.');
+                expect(error.developerMessage).toContain('Some employees do not have email addresses.');
+                expect(error.moreInfo).toContain('{"employees":"[{\\"firstName\\":\\"Hugh\\",\\"lastName\\":\\"Jass\\",\\"emailAddress\\":null,\\"employeeCode\\":\\"1\\"}]","successes":1,"failures":1}');
             });
     });
 });

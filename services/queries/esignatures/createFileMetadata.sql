@@ -9,7 +9,8 @@ into
     UploadDate,
     Pointer,
     UploadedBy,
-    IsPublishedToEmployee
+    IsPublishedToEmployee,
+    EsignatureMetadataID
 )
 values
 (
@@ -20,7 +21,8 @@ values
     '@uploadDate',
     '@pointer',
     @uploadedBy,
-    @isPublishedToEmployee
+    @isPublishedToEmployee,
+    @esignatureMetadataId
 )
 
 select SCOPE_IDENTITY() as ID
