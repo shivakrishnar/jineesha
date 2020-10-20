@@ -34,7 +34,7 @@ export async function createPaginatedResult(
         lastPageToken = undefined;
     }
 
-    return new PaginatedResult(limit, results, baseUrl, previousPageToken, nextPageToken, firstPageToken, lastPageToken);
+    return new PaginatedResult(limit, results, baseUrl, totalResults, previousPageToken, nextPageToken, firstPageToken, lastPageToken);
 }
 
 /**

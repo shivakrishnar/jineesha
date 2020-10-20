@@ -122,8 +122,8 @@ functions:
             cors:
               origin: '*'
 
-  createBulkSignRequest:
-    handler: esignature/src/handler.createBulkSignatureRequest
+  createBatchSignRequest:
+    handler: esignature/src/handler.createBatchSignatureRequest
     events:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/requests
@@ -155,6 +155,15 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/templates/{templateId}/edit-url
             method: get
+            cors:
+              origin: '*'
+
+  updateSignatureRequestStatus: 
+    handler: esignature/src/handler.updateSignatureRequestStatus
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/esignatures/requests/{documentId}/status
+            method: patch
             cors:
               origin: '*'
 

@@ -1,4 +1,4 @@
-import { Signatory } from './signatory';
+import { Signatory, SignatoryRequest } from './signatory';
 
 /**
  * @class SignatureRequest
@@ -11,6 +11,20 @@ export interface ISignatureRequest {
     subject?: string;
 
     message?: string;
+}
+
+export class BatchSignatureRequest implements ISignatureRequest {
+    templateId: string;
+
+    subject?: string;
+
+    message?: string;
+
+    signatories: SignatoryRequest[];
+
+    public constructor(init?: Partial<BatchSignatureRequest>) {
+        Object.assign(this, init);
+    }
 }
 
 export class BulkSignatureRequest implements ISignatureRequest {
@@ -39,8 +53,6 @@ export class SignatureRequest implements ISignatureRequest {
     role: string;
 
     category: string;
-
-    employeeCode: string;
 
     public constructor(init?: Partial<SignatureRequest>) {
         Object.assign(this, init);

@@ -18,11 +18,9 @@ export function getValidBulkSignatureRequestObject(): any {
         templateId: configs.esignature.templateId,
         subject: 'This is a test request',
         message: 'This is a test request message',
-        employeeCodes: ['1234'],
         signatories: [
             {
-                emailAddress: 'esignature-integration-tests@asuresoftware.com',
-                name: 'Test User',
+                employeeCode: '445',
                 role: 'OnboardingSignatory',
             },
         ],
@@ -35,7 +33,6 @@ export function getValidSignatureRequestObject(): any {
         subject: 'This is a signature request',
         message: 'This is a signature request message',
         role: 'OnboardingSignatory',
-        employeeCode: '1234',
     };
 }
 

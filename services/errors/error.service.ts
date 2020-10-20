@@ -101,6 +101,13 @@ function errorMessages(): ErrorMessage[] {
       "message": "Invalid url parameter value",
       "developerMessage": "",
       "moreInfo": ""
+    },
+    {
+      "statusCode": 422,
+      "code": 70,
+      "message": "The database contains bad data.",
+      "developerMessage": "",
+      "moreInfo": ""
     }
   ]`);
 }

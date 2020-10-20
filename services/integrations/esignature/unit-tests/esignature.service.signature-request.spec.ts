@@ -14,21 +14,6 @@ describe('esignatureService.signature-request.create', () => {
         setup();
     });
 
-    test('creates and returns a bulk signature request', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfo') {
-                return Promise.resolve(mockData.companyInfo);
-            }
-        });
-
-        return esignatureService
-            .createBulkSignatureRequest(mockData.tenantId, mockData.companyId, mockData.bulkSignatureRequestRequestBody, {}, undefined)
-            .then((signatureRequest) => {
-                expect(signatureRequest).toBeInstanceOf(SignatureRequestResponse);
-                expect(signatureRequest).toEqual(mockData.signatureRequestResponse);
-            });
-    });
-
     test('creates and returns a signature request', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetCompanyInfo') {
@@ -63,6 +48,32 @@ describe('esignatureService.signature-request.create', () => {
                 expect(error.code).toEqual(50);
                 expect(error.message).toEqual('The requested resource does not exist.');
                 expect(error.developerMessage).toEqual('Employee record not found');
+            });
+    });
+
+    test('returns a 404 if employee code is not found', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            } else if (payload.queryName === 'GetEmployeeInfoById') {
+                return Promise.resolve(mockData.employeeDBResponse);
+            } else if (payload.queryName === 'GetEmployeeByCompanyIdAndCode') {
+                return Promise.resolve(mockData.emptyDBResponse);
+            }
+        });
+
+        return esignatureService
+            .createSignatureRequest(mockData.tenantId, mockData.companyId, mockData.employeeId, mockData.signatureRequestRequestBody)
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toContain(
+                    `Employees with the following codes were not found under company ${mockData.companyId}: ${
+                        mockData.signatureRequestRequestBody.employeeCode
+                    }`,
+                );
             });
     });
 });
@@ -320,6 +331,152 @@ describe('esignatureService.signature-request.list', () => {
             )
             .then((signatureRequests) => {
                 expect(signatureRequests).toEqual(undefined);
+            });
+    });
+});
+
+describe('esignatureService.signature-requests.create', () => {
+    beforeEach(() => {
+        setup();
+    });
+
+    test('creates and returns signature requests for some employees', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            } else if (payload.queryName === 'GetEmployeeByCompanyIdAndCode') {
+                return Promise.resolve(mockData.employeesByCodeDBResponse);
+            }
+        });
+
+        return esignatureService
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.bulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123',
+            )
+            .then((signatureRequests) => {
+                expect(Array.isArray(signatureRequests)).toBe(true);
+                expect(signatureRequests).toEqual(mockData.signatureRequestsResponse);
+            });
+    });
+
+    test('creates and returns signature requests for all employees', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            } else if (payload.queryName === 'listEmployeesByCompany') {
+                return Promise.resolve(mockData.paginatedEmployeesDBResponse);
+            }
+        });
+
+        return esignatureService
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.allEmployeesBulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123',
+            )
+            .then((signatureRequests) => {
+                expect(Array.isArray(signatureRequests)).toBe(true);
+                expect(signatureRequests).toEqual(mockData.signatureRequestsResponse);
+            });
+    });
+
+    test('returns a 404 if employees are not found when trying to find all employees', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            } else if (payload.queryName === 'listEmployeesByCompany') {
+                return Promise.resolve(mockData.emptyPaginatedDBResponse);
+            }
+        });
+
+        return esignatureService
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.allEmployeesBulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123',
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toContain(`No employees were found under the provided company ${mockData.companyId}`);
+            });
+    });
+
+    test('returns a 404 if some employees are not found', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetEmployeeByCompanyIdAndCode') {
+                return Promise.resolve(mockData.emptyDBResponse);
+            }
+        });
+
+        return esignatureService
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.bulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123',
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toContain(
+                    `Employees with the following codes were not found under company ${
+                        mockData.companyId
+                    }: ${mockData.bulkSignatureRequestRequestBody.signatories.map((signatory) => signatory.employeeCode).join(',')}`,
+                );
+            });
+    });
+
+    test('returns a 422 if some employee do not have email addresses', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfo') {
+                return Promise.resolve(mockData.companyInfo);
+            } else if (payload.queryName === 'GetEmployeeByCompanyIdAndCode') {
+                return Promise.resolve(mockData.employeesWithoutEmailAddressDBResponse);
+            }
+        });
+
+        return esignatureService
+            .createBatchSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.bulkSignatureRequestRequestBody,
+                {},
+                mockData.userEmail,
+                {},
+                '123',
+            )
+            .catch((error) => {
+                console.log(error);
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(422);
+                expect(error.code).toEqual(70);
+                expect(error.message).toEqual('The database contains bad data.');
+                expect(error.developerMessage).toContain('Some employees do not have email addresses.');
+                expect(error.moreInfo).toContain(
+                    '{"employees":"[{\\"firstName\\":\\"Hugh\\",\\"lastName\\":\\"Jass\\",\\"emailAddress\\":null,\\"employeeCode\\":\\"1\\"}]","successes":1,"failures":1}',
+                );
             });
     });
 });

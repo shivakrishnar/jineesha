@@ -27,7 +27,7 @@ describe('esignatureService.onboarding', () => {
         request.onboardingKey = 'returnNothing';
         return esignatureService.onboarding(mockData.tenantId, mockData.companyId, request).then((signatureRequests) => {
             expect(signatureRequests).toBeInstanceOf(SignatureRequestListResponse);
-            expect(signatureRequests.results).toEqual(mockData.onboardingResponse);
+            expect(signatureRequests.results).toEqual(mockData.onboardingResponse.results);
         });
     });
 
@@ -60,7 +60,7 @@ describe('esignatureService.onboarding', () => {
                 expect(signatureRequests).toBeInstanceOf(SignatureRequestListResponse);
                 expect(signatureRequests.results[0]).toBeInstanceOf(SignatureRequestResponse);
                 expect(signatureRequests.results[1]).toBeInstanceOf(SignatureRequestResponse);
-                expect(signatureRequests.results).toEqual(mockData.existingOnboardingResponse);
+                expect(signatureRequests.results).toEqual(mockData.existingOnboardingResponse.results);
             });
     });
 

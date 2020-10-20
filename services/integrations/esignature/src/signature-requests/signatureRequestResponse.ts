@@ -27,6 +27,12 @@ export enum SignatureStatus {
     Signed = 'Signed',
 }
 
+export enum SignatureStatusID {
+    Signed = 1,
+    Pending = 2,
+    NotRequired = 3,
+}
+
 export type Signature = {
     id: string;
     status?: SignatureStatus;

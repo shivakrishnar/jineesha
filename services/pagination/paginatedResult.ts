@@ -11,6 +11,12 @@ export class PaginatedResult {
     count: number;
 
     /**
+     * @property {number} count
+     * The total number of items in the database.
+     */
+    totalCount: number;
+
+    /**
      * @property {number} limit
      * The limit used to determine how many records are returned.
      */
@@ -46,6 +52,7 @@ export class PaginatedResult {
         limit: number,
         results: any,
         baseUrl: string,
+        totalCount: number,
         previousPageToken?: any,
         nextPageToken?: any,
         firstPageToken?: any,
@@ -53,6 +60,7 @@ export class PaginatedResult {
     ) {
         this.limit = limit;
         this.count = results.length;
+        this.totalCount = totalCount;
 
         if (previousPageToken) {
             this.setLink(baseUrl, previousPageToken, 'previous');

@@ -48,23 +48,6 @@ describe('create bulk signature requests', () => {
             });
     });
 
-    test.skip('must return a 400 if tenantID is invalid', (done) => {
-        const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/requests`;
-        request(baseUri)
-            .post(uri)
-            .set('Authorization', `Bearer ${accessToken}`)
-            .set('Content-Type', 'application/json')
-            .send(signatureRequest)
-            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(400)
-            .end((error, response) => {
-                utils.testResponse(error, response, done, () => {
-                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
-                });
-            });
-    });
-
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
         const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/requests`;
@@ -104,11 +87,9 @@ describe('create bulk signature requests', () => {
             templateId: 'this definitely does not exist',
             subject: 'This is a test request',
             message: 'This is a test request message',
-            employeeCodes: ['1234'],
             signatories: [
                 {
-                    emailAddress: 'esignature-integration-tests@asuresoftware.com',
-                    name: 'Test User',
+                    employeeCode: '445',
                     role: 'OnboardingSignatory',
                 },
             ],
@@ -133,13 +114,6 @@ describe('create bulk signature requests', () => {
             templateId: 'this definitely does not exist',
             subject: 'This is a test request',
             message: 'This is a test request message',
-            signatories: [
-                {
-                    emailAddress: 'esignature-integration-tests@asuresoftware.com',
-                    name: 'Test User',
-                    role: 'OnboardingSignatory',
-                },
-            ],
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
@@ -156,7 +130,36 @@ describe('create bulk signature requests', () => {
             });
     });
 
-    test.skip('must return a 201 when a request is created', (done) => {
+    test('must return a 404 if employees are not found', (done) => {
+        const invalidRequest = {
+            ...signatureRequest,
+            signatories: [
+                {
+                    employeeCode: '99999',
+                    role: 'Employee',
+                },
+                {
+                    employeeCode: '1234567',
+                    role: 'Employee',
+                },
+            ],
+        };
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        request(baseUri)
+            .post(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .send(invalidRequest)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(404)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 201 when a request is created', (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
@@ -264,7 +267,6 @@ describe('create signature requests', () => {
             subject: 'This is a signature request',
             message: 'This is a signature request message',
             role: 'OnboardingSignatory',
-            employeeCode: '1234',
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
             configs.employeeId
@@ -287,7 +289,6 @@ describe('create signature requests', () => {
         const invalidRequest = {
             templateId: configs.esignature.templateId,
             title: 'This is a signature request',
-            message: 'This is a signature request message',
             role: 'OnboardingSignatory',
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
