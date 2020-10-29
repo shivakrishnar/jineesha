@@ -156,6 +156,8 @@ export async function createTemplate(
 enum EsignatureMetadataType {
     Template = 'Template',
     SignatureRequest = 'SignatureRequest',
+    SimpleSignatureRequest = 'SimpleSignatureRequest',
+    NoSignature = 'NoSignature',
 }
 
 /**
@@ -176,7 +178,7 @@ export async function saveTemplateMetadata(
 ): Promise<TemplateMetadata> {
     console.info('esignatureService.saveTemplateMetadata');
 
-    const { title, fileName, category } = requestBody;
+    const { title, fileName, category, isOnboardingDocument = false } = requestBody;
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -214,6 +216,7 @@ export async function saveTemplateMetadata(
         query.setParameter('@category', category ? `'${category}'` : 'NULL');
         query.setParameter('@employeeCode', 'NULL');
         query.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
+        query.setParameter('@isOnboardingDocument', isOnboardingDocument ? 1 : 0)
         payload = {
             tenantId,
             queryName: query.name,
@@ -231,6 +234,7 @@ export async function saveTemplateMetadata(
             category,
             isEsignatureDocument: true,
             isPublishedToEmployee: false,
+            isOnboardingDocument,
         } as TemplateMetadata;
     } catch (error) {
         if (error.message) {
@@ -388,6 +392,7 @@ export async function createBatchSignatureRequest(
                     );
                     query.setParameter('@employeeCode', `'${signatureRequest.metadata.employeeCodes[0]}'`);
                     query.setParameter('@signatureStatusId', SignatureStatusID.Pending);
+                    query.setParameter('@isOnboardingDocument', 0);
                     esignatureMetadataQuery.combineQueries(query, false);
 
                     signatureRequests.push(
@@ -675,6 +680,7 @@ async function saveEsignatureMetadata(
             query.setParameter('@category', category ? `'${category}'` : 'NULL');
             query.setParameter('@employeeCode', `'${code}'`);
             query.setParameter('@signatureStatusId', SignatureStatusID.Pending);
+            query.setParameter('@isOnboardingDocument', 0);
             esignatureMetadataQuery.combineQueries(query, false);
         }
 
@@ -2370,7 +2376,15 @@ export async function getTemplateFiles(templateId: any): Promise<any> {
 export async function generateDocumentUploadUrl(tenantId: string, companyId: string, invoker: string, requestPayload: any): Promise<any> {
     console.info('esignature.service.generateDocumentUploadUrl');
 
-    const { employeeId, fileName: filename, title, isPrivate = false, documentId, category } = requestPayload;
+    const {
+        employeeId,
+        fileName: filename,
+        title,
+        isPrivate = false,
+        documentId,
+        category,
+        isOnboardingDocument,
+    } = requestPayload;
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -2388,7 +2402,17 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
         throw errorService.getErrorResponse(30).setDeveloperMessage('fileName should have an extension');
     }
 
-    const uploadS3Filename = filename.replace(/[^a-zA-Z0-9.]/g, '');
+    // handle company documents
+    let newFileName = filename;
+    let esignatureMetadataId;
+    if (!documentId && !employeeId && companyId) {
+        esignatureMetadataId = (uuidV4()).replace(/-/g, "");
+        // we are using the generated id as the filename to avoid duplicates
+        // pull off the file extension and append it to the id
+        newFileName = `${esignatureMetadataId}${filename.substring(filename.lastIndexOf('.'))}`;
+    }
+
+    const uploadS3Filename = newFileName.replace(/[^a-zA-Z0-9.]/g, '');
 
     let key = employeeId ? `${tenantId}/${companyId}/${employeeId}/${filename}` : `${tenantId}/${companyId}/${uploadS3Filename}`;
     key = utilService.sanitizeForS3(key);
@@ -2502,6 +2526,12 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
             if (oldCategory) {
                 documentMetadata.category = oldCategory;
             }
+        }
+    } else {
+        if (!documentId && !employeeId && companyId) {
+            documentMetadata.isOnboardingDocument = isOnboardingDocument ? 'true' : 'false';
+            documentMetadata.category = category;
+            documentMetadata.esignatureMetadataId = esignatureMetadataId;
         }
     }
 
@@ -2634,6 +2664,9 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
             isprivate,
             isesigneddocument,
             category,
+            isonboardingdocument,
+            filename,
+            esignaturemetadataid,
         } = metadata;
 
         // Don't handle documents generated when e-signed. Their metadata has already been persisted to the database
@@ -2713,6 +2746,44 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
             }
         }
 
+        // Company document creation
+        if (companyid && !employeeid && !documentid) {
+            // create esignature metadata
+            query = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
+            query.setParameter('@id', esignaturemetadataid);
+            query.setParameter('@companyId', companyid);
+            query.setParameter('@type', EsignatureMetadataType.SimpleSignatureRequest);
+            query.setParameter('@uploadDate', uploadTime);
+            query.setParameter('@uploadedBy', `'${uploadedby}'`);
+            query.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
+            query.setParameter('@fileName', `'${filename.replace(/'/g, "''")}'`);
+            query.setParameter('@category', category ? `'${category}'` : 'NULL');
+            query.setParameter('@employeeCode', 'NULL');
+            query.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
+            query.setParameter('@isOnboardingDocument', isonboardingdocument === 'true' ? '1' : '0')
+
+            payload = {
+                tenantId: tenantid,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+
+            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+            // create file metadata
+            query = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
+            query.setParameter('@companyId', companyid);
+            query.setParameter('@employeeCode', 'NULL');
+            query.setParameter('@title', `${title.replace(/'/g, "''")}`);
+            query.setStringParameter('@category', category || '');
+            query.setParameter('@uploadDate', uploadTime);
+            query.setParameter('@pointer', uploadedItemS3Key.replace(/'/g, "''"));
+            query.setParameter('@uploadedBy', `'${uploadedby}'`);
+            query.setParameter('@isPublishedToEmployee', isprivate === 'true' ? '0' : '1');
+            query.setParameter('@esignatureMetadataId', esignaturemetadataid);
+        }
+
         if (!query) {
             return;
         }
@@ -2748,7 +2819,14 @@ export async function createCompanyDocument(
 ): Promise<any> {
     console.info('esignature.service.createCompanyDocument');
 
-    const { file, fileName, title, category, isPublishedToEmployee } = request;
+    const {
+        file,
+        fileName,
+        title,
+        category,
+        isPublishedToEmployee,
+        isOnboardingDocument = false,
+    } = request;
 
     try {
         // verify that the company exists
@@ -2784,22 +2862,48 @@ export async function createCompanyDocument(
                 throw new Error(e);
             });
 
-        // create file metadata
         const uploadDate = new Date().toISOString();
-        const query = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
-        query.setParameter('@companyId', companyId);
-        query.setParameter('@employeeCode', 'NULL');
-        query.setParameter('@title', `${title.replace(/'/g, "''")}`);
-        query.setParameter('@category', category ? `'${category}'` : 'NULL');
-        query.setParameter('@uploadDate', uploadDate);
-        query.setParameter('@pointer', key.replace(/'/g, "''"));
-        query.setParameter('@uploadedBy', `'${firstName} ${lastName}'`);
-        query.setParameter('@isPublishedToEmployee', isPublishedToEmployee ? '1' : '0');
-        query.setParameter('@esignatureMetadataId', 'NULL');
-        const payload = {
+        const esignatureMetadataId = (uuidV4()).replace(/-/g, "");
+        const uploadedBy = `'${firstName} ${lastName}'`;
+
+        // create esignature metadata
+        const esignatureMetadataQuery = new ParameterizedQuery('createEsignatureMetadata', Queries.createEsignatureMetadata);
+        esignatureMetadataQuery.setParameter('@id', esignatureMetadataId);
+        esignatureMetadataQuery.setParameter('@companyId', companyId);
+        esignatureMetadataQuery.setParameter('@type', EsignatureMetadataType.NoSignature);
+        esignatureMetadataQuery.setParameter('@uploadDate', uploadDate);
+        esignatureMetadataQuery.setParameter('@uploadedBy', uploadedBy);
+        esignatureMetadataQuery.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
+        esignatureMetadataQuery.setParameter('@fileName', `'${fileName.replace(/'/g, "''")}'`);
+        esignatureMetadataQuery.setParameter('@category', category ? `'${category}'` : 'NULL');
+        esignatureMetadataQuery.setParameter('@employeeCode', 'NULL');
+        esignatureMetadataQuery.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
+        esignatureMetadataQuery.setParameter('@isOnboardingDocument', isOnboardingDocument ? 1 : 0);
+
+        let payload = {
             tenantId,
-            queryName: query.name,
-            query: query.value,
+            queryName: esignatureMetadataQuery.name,
+            query: esignatureMetadataQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        // create file metadata
+        const fileMetadataQuery = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
+        fileMetadataQuery.setParameter('@companyId', companyId);
+        fileMetadataQuery.setParameter('@employeeCode', 'NULL');
+        fileMetadataQuery.setParameter('@title', `${title.replace(/'/g, "''")}`);
+        fileMetadataQuery.setParameter('@category', category ? `'${category}'` : 'NULL');
+        fileMetadataQuery.setParameter('@uploadDate', uploadDate);
+        fileMetadataQuery.setParameter('@pointer', key.replace(/'/g, "''"));
+        fileMetadataQuery.setParameter('@uploadedBy', uploadedBy);
+        fileMetadataQuery.setParameter('@isPublishedToEmployee', isPublishedToEmployee ? '1' : '0');
+        fileMetadataQuery.setParameter('@esignatureMetadataId', esignatureMetadataId);
+
+        payload = {
+            tenantId,
+            queryName: fileMetadataQuery.name,
+            query: fileMetadataQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
         const fileMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
@@ -2815,6 +2919,7 @@ export async function createCompanyDocument(
             isEsignatureDocument: false,
             category,
             isPublishedToEmployee,
+            isOnboardingDocument,
         };
 
         return response;

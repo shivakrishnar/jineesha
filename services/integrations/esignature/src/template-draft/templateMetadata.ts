@@ -5,4 +5,5 @@ export type TemplateMetadata = {
     title?: string;
     fileName?: string;
     category: string;
+    isOnboardingDocument: boolean;
 };
