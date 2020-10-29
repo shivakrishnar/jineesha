@@ -222,6 +222,31 @@ export const companyList = utilService.gatewayEventHandlerV2(async ({ securityCo
 });
 
 /**
+ * Returns a listing of the companies a user has access to.
+ */
+export const getCompanyById = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('tenants.handler.getCompanyById');
+
+    const { tenantId, companyId } = event.pathParameters;
+    const email = securityContext.principal.email;
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin || role === Role.hrAdmin;
+    });
+
+    if (!isAuthorized) {
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    return await companyService.getById(tenantId, companyId, email);
+});
+
+/**
  * Returns a listing of the employees a user has access to under a tenant.
  */
 export const listEmployeesByTenant = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
@@ -341,47 +366,52 @@ export const listConnectionStrings = utilService.gatewayEventHandlerV2(async ({ 
 /**
  * Return company logo as binary image response.
  */
-export const getCompanyLogo = utilService.gatewayEventHandlerV2({ allowAnonymous: true, delegate: async ({ event }: IGatewayEventInput) => {
-    console.info('tenants.handler.getCompanyLogo');
+export const getCompanyLogo = utilService.gatewayEventHandlerV2({
+    allowAnonymous: true,
+    delegate: async ({ event }: IGatewayEventInput) => {
+        console.info('tenants.handler.getCompanyLogo');
 
-    utilService.validateAndThrow(event.pathParameters, companyUriSchema);
+        utilService.validateAndThrow(event.pathParameters, companyUriSchema);
 
-    const { tenantId, companyId } = event.pathParameters;
+        const { tenantId, companyId } = event.pathParameters;
 
-    const companyLogo = await companyService.getLogoDocument(tenantId, companyId);
-    if (!companyLogo) {
-        throw errorService.notFound();
-    }
+        const companyLogo = await companyService.getLogoDocument(tenantId, companyId);
+        if (!companyLogo) {
+            throw errorService.notFound();
+        }
 
-    const headers = new Headers()
-        .append('Content-Type', mime.contentType(companyLogo.extension))
-        .append('Cache-Control', logoCacheHeaderValue);
+        const headers = new Headers()
+            .append('Content-Type', mime.contentType(companyLogo.extension))
+            .append('Cache-Control', logoCacheHeaderValue);
 
-    return {
-        statusCode: 200,
-        body: companyLogo.base64String,
-        headers,
-        isBase64Encoded: true,
-    };
-}});
+        return {
+            statusCode: 200,
+            body: companyLogo.base64String,
+            headers,
+            isBase64Encoded: true,
+        };
+    },
+});
 
 /**
  * Return the list of companies for the employees a user is mapped to.
  */
-export const listEmployeeCompaniesBySsoAccount = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
-    console.info('tenants.handler.listEmployeeCompaniesBySsoAccount');
+export const listEmployeeCompaniesBySsoAccount = utilService.gatewayEventHandlerV2(
+    async ({ event, securityContext }: IGatewayEventInput) => {
+        console.info('tenants.handler.listEmployeeCompaniesBySsoAccount');
 
-    utilService.validateAndThrow(event.pathParameters, ssoUserUriSchema);
+        utilService.validateAndThrow(event.pathParameters, ssoUserUriSchema);
 
-    const { tenantId, ssoAccountId } = event.pathParameters;
+        const { tenantId, ssoAccountId } = event.pathParameters;
 
-    const isAdmin: boolean = securityContext.roleMemberships.some((role) => {
-        return role === Role.asureAdmin || role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin;
-    });
+        const isAdmin: boolean = securityContext.roleMemberships.some((role) => {
+            return role === Role.asureAdmin || role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin;
+        });
 
-    if (!isAdmin) {
-        securityContext.requireSelf({ tenantId, accountId: ssoAccountId });
-    }
+        if (!isAdmin) {
+            securityContext.requireSelf({ tenantId, accountId: ssoAccountId });
+        }
 
-    return await companyService.listEmployeeCompaniesBySsoAccount(tenantId, ssoAccountId);
-});
+        return await companyService.listEmployeeCompaniesBySsoAccount(tenantId, ssoAccountId);
+    },
+);
