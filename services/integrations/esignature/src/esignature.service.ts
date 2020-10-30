@@ -281,7 +281,7 @@ export async function createBatchSignatureRequest(
             // implementation. If performance becomes an issue, we should consider using a filter statement.
             employees.forEach((employee) => {
                 if (employee.emailAddress) {
-                    employeeData.push(employee)
+                    employeeData.push(employee);
                 } else {
                     employeesWithoutEmailAddresses.push(employee);
                 }
@@ -316,7 +316,7 @@ export async function createBatchSignatureRequest(
                     lastName: record.LastName,
                     employeeCode: record.EmployeeCode,
                     emailAddress: record.EmailAddress,
-                }
+                };
                 if (record.EmailAddress) {
                     employeeData.push(employee);
                 } else {
@@ -432,11 +432,13 @@ export async function createBatchSignatureRequest(
             throw errorService
                 .getErrorResponse(70)
                 .setDeveloperMessage('Some employees do not have email addresses.')
-                .setMoreInfo(JSON.stringify({
-                    employees: JSON.stringify(employeesWithoutEmailAddresses),
-                    successes: signatureRequests.length,
-                    failures: employeesWithoutEmailAddresses.length,
-                }));
+                .setMoreInfo(
+                    JSON.stringify({
+                        employees: JSON.stringify(employeesWithoutEmailAddresses),
+                        successes: signatureRequests.length,
+                        failures: employeesWithoutEmailAddresses.length,
+                    }),
+                );
         }
 
         if (failures.length > 0) {
@@ -692,6 +694,51 @@ async function saveEsignatureMetadata(
             status: SignatureRequestResponseStatus.Pending,
             signatures,
         });
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Delete all esign docs associated with an onboarding
+ * @param {string} tenantId: The unique identifier for the tenant the onboarding belongs to.
+ * @param {string} companyId: The unique identifier for the company the onboarding belongs to.
+ * @param {string} onboardingId: The unique identifier for the onboarding.
+ */
+export async function deleteOnboardingDocuments(tenantId: string, companyId: string, onboardingId: string): Promise<void> {
+    console.info('esignatureService.deleteOnboardingDocuments');
+
+    try {
+        await validateOnboardingForDeletion(tenantId, companyId, onboardingId);
+        const hsResponse = getConfigurationData(tenantId, companyId).then((configuration) => {
+            const { eSigner } = configuration;
+            return eSigner.signatureRequest.list({
+                query: `metadata:${onboardingId}`,
+            });
+        });
+        const { signature_requests: signatureRequests } = await hsResponse;
+        if (signatureRequests.length == 0) return;
+
+        let requestIds: string;
+        if (signatureRequests.length == 1) {
+            requestIds = signatureRequests[0].signature_request_id;
+        } else {
+            requestIds = signatureRequests.map((e) => e.signature_request_id).join(',');
+        }
+        const query = new ParameterizedQuery('deleteEsignatureMetadataByIdList', Queries.deleteEsignatureMetadataByIdList);
+        query.setStringParameter('@idList', requestIds);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -3823,7 +3870,7 @@ async function validateEmployeeId(tenantId: string, companyId: string, employeeI
     }
 }
 
-/**
+/*
  * Checks that a collection of employee codes exist in the database.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for the company the user belongs to.
@@ -3864,6 +3911,44 @@ async function checkEmployeesExistenceByCodes(tenantId: string, companyId: strin
             emailAddress: EmailAddress,
             employeeCode: EmployeeCode,
         }));
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Validates a specified onboarding and checks that it's status is valid for deletion.
+ * @param {string} tenantId: The unique identifier for the tenant the onboarding belongs to.
+ * @param {string} companyId: The unique identifier for the company the onboarding belongs to.
+ * @param {string} onboardingId: The unique identifier for the specified onboarding
+ */
+async function validateOnboardingForDeletion(tenantId: string, companyId: string, onboardingId: string): Promise<void> {
+    console.info('esignature.service.validateOnboardingForDeletion');
+    try {
+        await utilService.validateCompany(tenantId, companyId);
+        const query: ParameterizedQuery = new ParameterizedQuery(
+            'getIncompleteOnboardingsByCompanyIdAndKey',
+            Queries.getIncompleteOnboardingsByCompanyIdAndKey,
+        );
+        query.setParameter('@companyId', companyId);
+        query.setStringParameter('@id', onboardingId);
+        const payload: DatabaseEvent = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        };
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (result.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`No incomplete onboarding with key ${onboardingId} could be found`);
+        }
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

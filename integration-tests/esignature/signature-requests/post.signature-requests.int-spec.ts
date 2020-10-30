@@ -140,8 +140,8 @@ describe('create bulk signature requests', () => {
                 },
                 {
                     employeeCode: '1234567',
-                    role: 'Employee'
-                }
+                    role: 'Employee',
+                },
             ],
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;

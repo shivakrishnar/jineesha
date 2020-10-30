@@ -365,6 +365,15 @@ functions:
             cors:
               origin: '*'
 
+  deleteOnboardingDocuments:
+    handler: esignature/src/handler.deleteOnboardingDocuments
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/onboarding/{onboardingId}
+            method: delete
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

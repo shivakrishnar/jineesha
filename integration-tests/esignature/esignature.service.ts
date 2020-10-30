@@ -20,7 +20,7 @@ export function getValidBulkSignatureRequestObject(): any {
         message: 'This is a test request message',
         signatories: [
             {
-                employeeCode: "445",
+                employeeCode: '445',
                 role: 'OnboardingSignatory',
             },
         ],
