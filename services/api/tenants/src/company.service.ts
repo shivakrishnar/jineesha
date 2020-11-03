@@ -140,7 +140,7 @@ export async function getById(tenantId: string, companyId: string, email: string
         const company: any = result.recordset[0];
 
         // retrieve legacy client cut off date
-        const ssm = new AWS.SSM({ region: 'us-east-1' });
+        const ssm = new AWS.SSM({ region: configService.getAwsRegion() });
         const params = {
             Name: '/hr/esignature/simplesign/legacyClientCutOffDate',
             WithDecryption: false,

@@ -216,7 +216,7 @@ export async function saveTemplateMetadata(
         query.setParameter('@category', category ? `'${category}'` : 'NULL');
         query.setParameter('@employeeCode', 'NULL');
         query.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
-        query.setParameter('@isOnboardingDocument', isOnboardingDocument ? 1 : 0)
+        query.setParameter('@isOnboardingDocument', isOnboardingDocument ? 1 : 0);
         payload = {
             tenantId,
             queryName: query.name,
@@ -285,7 +285,7 @@ export async function createBatchSignatureRequest(
             // implementation. If performance becomes an issue, we should consider using a filter statement.
             employees.forEach((employee) => {
                 if (employee.emailAddress) {
-                    employeeData.push(employee)
+                    employeeData.push(employee);
                 } else {
                     employeesWithoutEmailAddresses.push(employee);
                 }
@@ -320,7 +320,7 @@ export async function createBatchSignatureRequest(
                     lastName: record.LastName,
                     employeeCode: record.EmployeeCode,
                     emailAddress: record.EmailAddress,
-                }
+                };
                 if (record.EmailAddress) {
                     employeeData.push(employee);
                 } else {
@@ -437,11 +437,13 @@ export async function createBatchSignatureRequest(
             throw errorService
                 .getErrorResponse(70)
                 .setDeveloperMessage('Some employees do not have email addresses.')
-                .setMoreInfo(JSON.stringify({
-                    employees: JSON.stringify(employeesWithoutEmailAddresses),
-                    successes: signatureRequests.length,
-                    failures: employeesWithoutEmailAddresses.length,
-                }));
+                .setMoreInfo(
+                    JSON.stringify({
+                        employees: JSON.stringify(employeesWithoutEmailAddresses),
+                        successes: signatureRequests.length,
+                        failures: employeesWithoutEmailAddresses.length,
+                    }),
+                );
         }
 
         if (failures.length > 0) {
@@ -791,22 +793,22 @@ export async function listTemplates(
 
         const reducer = async (memoPromise, document) => {
             const memo = await memoPromise;
-            if (document.Type === 'non-signature' || document.Type === 'legacy') {
+            if (document.Type === 'non-signature' || document.Type === 'legacy' || document.Type === 'simpleSign') {
                 const filename =
-                    document.Type === 'non-signature'
-                        ? document.Filename.split('/')[document.Filename.split('/').length - 1]
-                        : document.Filename;
+                    document.Type !== 'legacy' ? document.Filename.split('/')[document.Filename.split('/').length - 1] : document.Filename;
                 const uploadedBy =
-                    document.Type === 'non-signature'
+                    document.Type !== 'legacy'
                         ? document.FirstName // Note: the query returns the full name as the FirstName field
                         : `${document.FirstName} ${document.LastName}`;
-                const id = hashids.encode(document.ID, document.Type === 'non-signature' ? DocType.S3Document : DocType.LegacyDocument);
+                const id = hashids.encode(document.ID, document.Type === 'legacy' ? DocType.LegacyDocument : DocType.S3Document);
+
                 memo.push({
                     id,
                     title: document.Title,
                     filename,
                     uploadDate: document.UploadDate,
-                    isEsignatureDocument: false,
+                    isEsignatureDocument: document.Type === 'simpleSign',
+                    isHelloSignTemplate: false,
                     uploadedBy,
                     category: document.Category,
                     isPublishedToEmployee: document.IsPublishedToEmployee,
@@ -862,6 +864,7 @@ export async function listTemplates(
                             uploadDate,
                             uploadedBy,
                             isEsignatureDocument: true,
+                            isHelloSignTemplate: true,
                             category,
                             existsInTaskList: nonLegacyDocuments[index].ID === id ? nonLegacyDocuments[index].ExistsInTaskList : undefined,
                         }),
@@ -2376,15 +2379,7 @@ export async function getTemplateFiles(templateId: any): Promise<any> {
 export async function generateDocumentUploadUrl(tenantId: string, companyId: string, invoker: string, requestPayload: any): Promise<any> {
     console.info('esignature.service.generateDocumentUploadUrl');
 
-    const {
-        employeeId,
-        fileName: filename,
-        title,
-        isPrivate = false,
-        documentId,
-        category,
-        isOnboardingDocument,
-    } = requestPayload;
+    const { employeeId, fileName: filename, title, isPrivate = false, documentId, category, isOnboardingDocument } = requestPayload;
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -2406,7 +2401,7 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
     let newFileName = filename;
     let esignatureMetadataId;
     if (!documentId && !employeeId && companyId) {
-        esignatureMetadataId = (uuidV4()).replace(/-/g, "");
+        esignatureMetadataId = uuidV4().replace(/-/g, '');
         // we are using the generated id as the filename to avoid duplicates
         // pull off the file extension and append it to the id
         newFileName = `${esignatureMetadataId}${filename.substring(filename.lastIndexOf('.'))}`;
@@ -2760,7 +2755,7 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
             query.setParameter('@category', category ? `'${category}'` : 'NULL');
             query.setParameter('@employeeCode', 'NULL');
             query.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
-            query.setParameter('@isOnboardingDocument', isonboardingdocument === 'true' ? '1' : '0')
+            query.setParameter('@isOnboardingDocument', isonboardingdocument === 'true' ? '1' : '0');
 
             payload = {
                 tenantId: tenantid,
@@ -2819,14 +2814,7 @@ export async function createCompanyDocument(
 ): Promise<any> {
     console.info('esignature.service.createCompanyDocument');
 
-    const {
-        file,
-        fileName,
-        title,
-        category,
-        isPublishedToEmployee,
-        isOnboardingDocument = false,
-    } = request;
+    const { file, fileName, title, category, isPublishedToEmployee, isOnboardingDocument = false } = request;
 
     try {
         // verify that the company exists
@@ -2863,7 +2851,7 @@ export async function createCompanyDocument(
             });
 
         const uploadDate = new Date().toISOString();
-        const esignatureMetadataId = (uuidV4()).replace(/-/g, "");
+        const esignatureMetadataId = uuidV4().replace(/-/g, '');
         const uploadedBy = `'${firstName} ${lastName}'`;
 
         // create esignature metadata
