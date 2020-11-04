@@ -380,6 +380,7 @@ export const companyDocumentRequest = {
     title: 'Title',
     category: 'onboarding',
     isPublishedToEmployee: false,
+    isOnboardingDocument: true,
 };
 
 export const companyDocumentResponse = {
@@ -390,6 +391,7 @@ export const companyDocumentResponse = {
     isEsignatureDocument: false,
     category: 'onboarding',
     isPublishedToEmployee: false,
+    isOnboardingDocument: true,
 };
 
 export const fileExistenceResponseArray = ['test.png', 'path/to/object'];

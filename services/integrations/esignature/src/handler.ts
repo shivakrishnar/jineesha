@@ -98,12 +98,14 @@ const saveTemplateMetadataValidationSchema = {
     fileName: { required: true, type: String },
     title: { required: true, type: String },
     category: { required: false, type: String },
+    isOnboardingDocument: { required: false, type: Boolean },
 };
 
 const saveTemplateMetadataSchema = Yup.object().shape({
     fileName: Yup.string().required(),
     category: Yup.string(),
     title: Yup.string().required(),
+    isOnboardingDocument: Yup.bool(),
 });
 
 //   Bulk Signature Request schemas
@@ -181,6 +183,7 @@ const generateDocumentUploadValidationSchema = {
     isPrivate: { required: false, type: Boolean },
     documentId: { required: false, type: String },
     category: { required: false, type: String },
+    isOnboardingDocument: { required: false, type: Boolean },
 };
 
 const generateDocumentUploadSchema = Yup.object().shape({
@@ -190,6 +193,7 @@ const generateDocumentUploadSchema = Yup.object().shape({
     isPrivate: Yup.bool(),
     documentId: Yup.string(),
     category: Yup.string(),
+    isOnboardingDocument: Yup.bool(),
 });
 
 // Create Company Document schemas
@@ -199,6 +203,7 @@ const createCompanyDocumentValidationSchema = {
     title: { required: true, type: String },
     category: { required: false, type: String },
     isPublishedToEmployee: { required: true, type: Boolean },
+    isOnboardingDocument: { required: false, type: Boolean },
 };
 
 const createCompanyDocumentSchema = Yup.object().shape({
@@ -207,6 +212,7 @@ const createCompanyDocumentSchema = Yup.object().shape({
     title: Yup.string().required(),
     category: Yup.string(),
     isPublishedToEmployee: Yup.bool().required(),
+    isOnboardingDocument: Yup.bool(),
 });
 
 // Update signature request status schemas

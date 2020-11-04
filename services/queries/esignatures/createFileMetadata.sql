@@ -22,7 +22,7 @@ values
     '@pointer',
     @uploadedBy,
     @isPublishedToEmployee,
-    @esignatureMetadataId
+    '@esignatureMetadataId'
 )
 
 select SCOPE_IDENTITY() as ID

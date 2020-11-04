@@ -79,22 +79,28 @@ where
 
 insert into @tmp
 select
-    ID,
-    UploadDate,
-    UploadedBy,
+    f.ID,
+    f.UploadDate,
+    f.UploadedBy,
     null,
     Pointer,
-    Title,
-    Category,
-    'non-signature',
+    f.Title,
+    f.Category,
+    [Type] = (
+        case
+            when e.[Type] = 'SimpleSignatureRequest'
+            then 'simpleSign'
+            else 'non-signature'
+        end
+    ),
     IsPublishedToEmployee,
-    ExistsInTaskList = 0 -- documents in FileMetadata should never show up in a task list
+    ExistsInTaskList = ( e.IsOnboardingDocument )
 from
-    dbo.FileMetadata
+    dbo.FileMetadata f join dbo.EsignatureMetadata e on f.EsignatureMetadataID = e.ID
 where
-    CompanyID = @_companyId and
-    EmployeeCode is null and
-    (lower(isnull(Category, '')) like @_search or lower(isnull(Title, '')) like @_search)
+    f.CompanyID = @_companyId and
+    f.EmployeeCode is null and
+    (lower(isnull(f.Category, '')) like @_search or lower(isnull(f.Title, '')) like @_search)
 
 -- get total count for pagination
 select count(*) as totalCount from @tmp

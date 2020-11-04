@@ -11,7 +11,8 @@ into
     Filename,
     Category,
     EmployeeCode,
-    SignatureStatusID
+    SignatureStatusID,
+    IsOnboardingDocument
 )
 values
 (
@@ -24,5 +25,6 @@ values
     @fileName,
     @category,
     @employeeCode,
-    @signatureStatusId
+    @signatureStatusId,
+    @isOnboardingDocument
 )

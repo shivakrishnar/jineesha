@@ -94,6 +94,12 @@ export class Template {
     isEsignatureDocument?: boolean;
 
     /**
+     * @property {boolean} isHelloSignTemplate
+     * Determines if the document is a HelloSign template (handled through HelloSign integration/embed)
+     */
+    isHelloSignTemplate?: boolean;
+
+    /**
      * @property {string} category
      * The category the user specified when creating the template
      */

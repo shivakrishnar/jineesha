@@ -107,6 +107,11 @@ provider:
         - dynamodb:GetItem
       Resource: arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings/index/*
 
+    - Effect: Allow
+      Action:
+        - ssm:GetParameter
+      Resource: arn:aws:ssm:us-east-1:*:parameter/hr/esignature/simplesign/legacyClientCutOffDate
+
   apiGateway:
     binaryMediaTypes:
       - '*/*'
@@ -174,6 +179,15 @@ functions:
     events:
         - http:
             path: /tenants/{tenantId}/companies
+            method: get
+            cors:
+              origin: '*'
+
+  getCompanyById:
+    handler: src/handler.getCompanyById
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}
             method: get
             cors:
               origin: '*'
