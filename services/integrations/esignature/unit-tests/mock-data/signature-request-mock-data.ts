@@ -40,9 +40,11 @@ export const helloSignSignatureRequest = {
     ],
 };
 
+export const helloSignSignatureRequestsIdList = ['1234', '1235'];
+
 export const helloSignSignatureRequests = [
     {
-        signature_request_id: '1234',
+        signature_request_id: helloSignSignatureRequestsIdList[0],
         title: 'Sig Request',
         is_complete: true,
         signatures: [
@@ -63,7 +65,7 @@ export const helloSignSignatureRequests = [
         ],
     },
     {
-        signature_request_id: '1235',
+        signature_request_id: helloSignSignatureRequestsIdList[1],
         title: 'Sig Request 2',
         is_complete: false,
         signatures: [

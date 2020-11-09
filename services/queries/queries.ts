@@ -93,6 +93,9 @@ export const Queries = {
         .toString(),
     getDocumentCategoriesByCompany: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentCategoryByCompany.sql')).toString(),
     getOnboardingDocumentsByCompanyId: fs.readFileSync(path.join(basePath, 'esignatures/getOnboardingDocumentsByCompanyId.sql')).toString(),
+    getIncompleteOnboardingsByCompanyIdAndKey: fs
+        .readFileSync(path.join(basePath, 'esignatures/getIncompleteOnboardingsByCompanyIdAndKey.sql'))
+        .toString(),
     updateFileMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/updateFileMetadataById.sql')).toString(),
     updateDocumentMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/updateDocumentMetadataById.sql')).toString(),
     updateDocumentById: fs.readFileSync(path.join(basePath, 'esignatures/updateDocumentById.sql')).toString(),
@@ -100,6 +103,7 @@ export const Queries = {
     getDocumentMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentMetadataById.sql')).toString(),
     deleteFileMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/deleteFileMetadataById.sql')).toString(),
     deleteEsignatureMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/deleteEsignatureMetadataById.sql')).toString(),
+    deleteEsignatureMetadataByIdList: fs.readFileSync(path.join(basePath, 'esignatures/deleteEsignatureMetadataByIdList.sql')).toString(),
     deleteDocumentById: fs.readFileSync(path.join(basePath, 'esignatures/deleteDocumentById.sql')).toString(),
     getFileMetadataByIdAndCompanyId: fs.readFileSync(path.join(basePath, 'esignatures/getFileMetadataByIdAndCompanyId.sql')).toString(),
     getEsignatureMetadataByIdAndCompanyId: fs

@@ -357,7 +357,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 {},
-                '123'
+                '123',
             )
             .then((signatureRequests) => {
                 expect(Array.isArray(signatureRequests)).toBe(true);
@@ -382,7 +382,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 {},
-                '123'
+                '123',
             )
             .then((signatureRequests) => {
                 expect(Array.isArray(signatureRequests)).toBe(true);
@@ -407,7 +407,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 {},
-                '123'
+                '123',
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -433,7 +433,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 {},
-                '123'
+                '123',
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -465,7 +465,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 {},
-                '123'
+                '123',
             )
             .catch((error) => {
                 console.log(error);
@@ -474,7 +474,9 @@ describe('esignatureService.signature-requests.create', () => {
                 expect(error.code).toEqual(70);
                 expect(error.message).toEqual('The database contains bad data.');
                 expect(error.developerMessage).toContain('Some employees do not have email addresses.');
-                expect(error.moreInfo).toContain('{"employees":"[{\\"firstName\\":\\"Hugh\\",\\"lastName\\":\\"Jass\\",\\"emailAddress\\":null,\\"employeeCode\\":\\"1\\"}]","successes":1,"failures":1}');
+                expect(error.moreInfo).toContain(
+                    '{"employees":"[{\\"firstName\\":\\"Hugh\\",\\"lastName\\":\\"Jass\\",\\"emailAddress\\":null,\\"employeeCode\\":\\"1\\"}]","successes":1,"failures":1}',
+                );
             });
     });
 });

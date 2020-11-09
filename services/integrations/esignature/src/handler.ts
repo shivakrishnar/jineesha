@@ -164,6 +164,14 @@ const onboardingSignatureRequestSchema = Yup.object().shape({
     employeeCode: Yup.string().required(),
 });
 
+// Onboarding resource URI schema
+
+const onboardingResourceUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+    onboardingId: { required: true, type: UUID },
+};
+
 //  Configuration schemas:
 const configurationValidationSchema = {
     op: { required: true, type: String },
@@ -683,6 +691,32 @@ export const onboarding = utilService.gatewayEventHandlerV2({
         return result;
     },
 });
+
+/**
+ * Remove signed onboarding documents from the database if the onboarding they're associated with is incomplete.
+ */
+export const deleteOnboardingDocuments = utilService.gatewayEventHandlerV2(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.deleteOnboardingDocuments');
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, onboardingResourceUriSchema);
+
+        const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+            console.log(`User Role: ${role}`);
+            return role === Role.globalAdmin;
+        });
+
+        if (!isAuthorized) {
+            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        }
+
+        const { tenantId, companyId, onboardingId } = event.pathParameters;
+
+        return await esignatureService.deleteOnboardingDocuments(tenantId, companyId, onboardingId);
+    },
+);
 
 /**
  *  Adds/Remove e-signature functionality for a specified company within a tenant

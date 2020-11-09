@@ -9,6 +9,10 @@ export const onboardingRequestBody = {
     employeeCode: '1',
 };
 
+export const obKey = 'BDDB913D-231F-4F0F-A33D-66E057686DD8';
+
+export const obKeyOneResult = '00000000-0000-0000-0000-000000000001';
+
 export const onboardingResponse: SignatureRequestListResponse = {
     results: [
         {
