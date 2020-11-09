@@ -859,6 +859,7 @@ export async function listTemplates(
                     isPublishedToEmployee: document.IsPublishedToEmployee,
                     existsInTaskList: document.ExistsInTaskList,
                     isLegacyDocument: document.Type === 'legacy',
+                    isOnboardingDocument: document.IsOnboardingDocument,
                 });
             }
             return memo;

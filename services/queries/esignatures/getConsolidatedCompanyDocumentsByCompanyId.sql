@@ -10,7 +10,8 @@ declare @tmp table
     Category nvarchar(max),
     Type nvarchar(max),
     IsPublishedToEmployee bit,
-    ExistsInTaskList bit
+    ExistsInTaskList bit,
+    IsOnboardingDocument bit
 );
 declare @_search nvarchar(max) = '%' + @search + '%';
 
@@ -37,7 +38,11 @@ select
             ) > 0 then 1
             else 0
         end
-    )
+    ),
+    IsOnboardingDocument = case
+        when d.DocumentCategory = 'onboarding' then 1
+        else 0
+    end
 from 
     dbo.Document d
     left join dbo.HRnextUser u
@@ -69,7 +74,8 @@ select
             ) > 0 then 1
             else 0
         end
-    )
+    ),
+    e.IsOnboardingDocument
 from
     dbo.EsignatureMetadata e
 where
@@ -94,7 +100,8 @@ select
         end
     ),
     IsPublishedToEmployee,
-    ExistsInTaskList = ( e.IsOnboardingDocument )
+    ExistsInTaskList = ( e.IsOnboardingDocument ),
+    e.IsOnboardingDocument
 from
     dbo.FileMetadata f join dbo.EsignatureMetadata e on f.EsignatureMetadataID = e.ID
 where
