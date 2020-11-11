@@ -155,7 +155,7 @@ async function submitEsignatureEventNotification(event: IEsignatureEvent): Promi
                 const emailAction = async () => {
                     const esignatureMetadata = await getEsignatureMetadata(tenantId, companyId, signature.signer.employeeCode, request.id);
                     const metadata: IESignatureMetadataKeys = {
-                        documentName: request.title,
+                        documentName: esignatureMetadata.title,
                         companyName: esignatureMetadata.companyName,
                         name: esignatureMetadata.firstName,
                     };
@@ -489,6 +489,7 @@ async function getEsignatureMetadata(
         return (result.recordset || []).map((record) => ({
             firstName: record.FirstName,
             companyName: record.CompanyName,
+            title: record.Title,
         }))[0];
     } catch (error) {
         console.error(error);

@@ -114,6 +114,7 @@ const batchSignatureRequestValidationSchema = {
     subject: { required: false, type: String },
     message: { required: false, type: String },
     signatories: { required: true, type: Array },
+    isSimpleSign: { required: true, type: Boolean },
 };
 
 const batchSignatureRequestSchema = Yup.object().shape({
@@ -125,25 +126,11 @@ const batchSignatureRequestSchema = Yup.object().shape({
         .max(250, 'You can only send 250 signatories at a time, consider batching your requests')
         .of(Yup.object())
         .required(),
+    isSimpleSign: Yup.boolean().required(),
 });
 
 const signatorySchema = Yup.object().shape({
     employeeCode: Yup.string().required(),
-    role: Yup.string().required(),
-});
-
-// Signature Request schemas
-const signatureRequestValidationSchema = {
-    templateId: { required: true, type: String },
-    subject: { required: false, type: String },
-    message: { required: false, type: String },
-    role: { required: true, type: String },
-};
-
-const signatureRequestSchema = Yup.object().shape({
-    templateId: Yup.string().required(),
-    subject: Yup.string(),
-    message: Yup.string(),
     role: Yup.string().required(),
 });
 
@@ -347,15 +334,11 @@ export const createBatchSignatureRequest = utilService.gatewayEventHandlerV2(
         await utilService.validateRequestBody(batchSignatureRequestSchema, requestBody);
         await utilService.validateCollection(signatorySchema, requestBody.signatories);
 
-        const { tenantId, companyId } = event.pathParameters;
-
         const response: SignatureRequestResponse[] = await esignatureService.createBatchSignatureRequest(
-            tenantId,
-            companyId,
+            event.pathParameters,
             requestBody,
             {},
             securityContext.principal.email,
-            event.pathParameters,
             event.headers.authorization,
         );
 
@@ -363,25 +346,6 @@ export const createBatchSignatureRequest = utilService.gatewayEventHandlerV2(
             statusCode: 201,
             body: response,
         };
-    },
-);
-
-export const createSignatureRequest = utilService.gatewayEventHandlerV2(
-    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.createSignatureRequest');
-
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
-
-        await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, signatureRequestValidationSchema);
-        utilService.checkAdditionalProperties(signatureRequestValidationSchema, requestBody, 'Signature Request');
-        await utilService.validateRequestBody(signatureRequestSchema, requestBody);
-
-        const { tenantId, companyId, employeeId } = event.pathParameters;
-
-        return await esignatureService.createSignatureRequest(tenantId, companyId, employeeId, requestBody);
     },
 );
 

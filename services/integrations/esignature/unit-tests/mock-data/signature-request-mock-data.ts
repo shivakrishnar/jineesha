@@ -101,6 +101,24 @@ export const bulkSignatureRequestRequestBody = {
             role: 'Employee',
         }),
     ],
+    isSimpleSign: false,
+};
+
+export const bulkSimpleSignatureRequestRequestBody = {
+    templateId: '12345',
+    subject: 'Signature request subject',
+    message: 'Signature request message',
+    signatories: [
+        new SignatoryRequest({
+            employeeCode: '1',
+            role: 'Employee',
+        }),
+        new SignatoryRequest({
+            employeeCode: '2',
+            role: 'Employee',
+        }),
+    ],
+    isSimpleSign: true,
 };
 
 export const allEmployeesBulkSignatureRequestRequestBody = {
@@ -113,6 +131,20 @@ export const allEmployeesBulkSignatureRequestRequestBody = {
             role: 'Employee',
         }),
     ],
+    isSimpleSign: false,
+};
+
+export const allEmployeesBulkSimpleSignatureRequestRequestBody = {
+    templateId: '12345',
+    subject: 'Signature request subject',
+    message: 'Signature request message',
+    signatories: [
+        new SignatoryRequest({
+            employeeCode: 'all',
+            role: 'Employee',
+        }),
+    ],
+    isSimpleSign: true,
 };
 
 export const signatureRequestResponse: SignatureRequestResponse = {

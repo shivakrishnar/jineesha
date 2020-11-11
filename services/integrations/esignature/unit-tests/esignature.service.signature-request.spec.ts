@@ -7,76 +7,6 @@ import * as mockData from './mock-data';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
 import { setup } from '../../../unit-test-mocks/mock';
-import { SignatureRequestResponse } from '../src/signature-requests/signatureRequestResponse';
-
-describe('esignatureService.signature-request.create', () => {
-    beforeEach(() => {
-        setup();
-    });
-
-    test('creates and returns a signature request', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfo') {
-                return Promise.resolve(mockData.companyInfo);
-            } else if (payload.queryName === 'GetEmployeeInfoById') {
-                return Promise.resolve(mockData.employeeDBResponse);
-            }
-        });
-
-        return esignatureService
-            .createSignatureRequest(mockData.tenantId, mockData.companyId, mockData.employeeId, mockData.signatureRequestRequestBody)
-            .then((signatureRequest) => {
-                expect(signatureRequest).toBeInstanceOf(SignatureRequestResponse);
-                expect(signatureRequest).toEqual(mockData.signatureRequestResponse);
-            });
-    });
-
-    test('returns a 404 if employee is not found', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfo') {
-                return Promise.resolve(mockData.companyInfo);
-            } else if (payload.queryName === 'GetEmployeeInfoById') {
-                return Promise.resolve(mockData.emptyDBResponse);
-            }
-        });
-
-        return esignatureService
-            .createSignatureRequest(mockData.tenantId, mockData.companyId, mockData.employeeId, mockData.signatureRequestRequestBody)
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(404);
-                expect(error.code).toEqual(50);
-                expect(error.message).toEqual('The requested resource does not exist.');
-                expect(error.developerMessage).toEqual('Employee record not found');
-            });
-    });
-
-    test('returns a 404 if employee code is not found', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfo') {
-                return Promise.resolve(mockData.companyInfo);
-            } else if (payload.queryName === 'GetEmployeeInfoById') {
-                return Promise.resolve(mockData.employeeDBResponse);
-            } else if (payload.queryName === 'GetEmployeeByCompanyIdAndCode') {
-                return Promise.resolve(mockData.emptyDBResponse);
-            }
-        });
-
-        return esignatureService
-            .createSignatureRequest(mockData.tenantId, mockData.companyId, mockData.employeeId, mockData.signatureRequestRequestBody)
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(404);
-                expect(error.code).toEqual(50);
-                expect(error.message).toEqual('The requested resource does not exist.');
-                expect(error.developerMessage).toContain(
-                    `Employees with the following codes were not found under company ${mockData.companyId}: ${
-                        mockData.signatureRequestRequestBody.employeeCode
-                    }`,
-                );
-            });
-    });
-});
 
 describe('esignatureService.signature-request.list', () => {
     beforeEach(() => {
@@ -351,12 +281,10 @@ describe('esignatureService.signature-requests.create', () => {
 
         return esignatureService
             .createBatchSignatureRequest(
-                mockData.tenantId,
-                mockData.companyId,
+                { tenantId: mockData.tenantId, companyId: mockData.companyId },
                 mockData.bulkSignatureRequestRequestBody,
                 {},
                 mockData.userEmail,
-                {},
                 '123',
             )
             .then((signatureRequests) => {
@@ -376,12 +304,10 @@ describe('esignatureService.signature-requests.create', () => {
 
         return esignatureService
             .createBatchSignatureRequest(
-                mockData.tenantId,
-                mockData.companyId,
+                { tenantId: mockData.tenantId, companyId: mockData.companyId },
                 mockData.allEmployeesBulkSignatureRequestRequestBody,
                 {},
                 mockData.userEmail,
-                {},
                 '123',
             )
             .then((signatureRequests) => {
@@ -401,12 +327,10 @@ describe('esignatureService.signature-requests.create', () => {
 
         return esignatureService
             .createBatchSignatureRequest(
-                mockData.tenantId,
-                mockData.companyId,
+                { tenantId: mockData.tenantId, companyId: mockData.companyId },
                 mockData.allEmployeesBulkSignatureRequestRequestBody,
                 {},
                 mockData.userEmail,
-                {},
                 '123',
             )
             .catch((error) => {
@@ -427,12 +351,10 @@ describe('esignatureService.signature-requests.create', () => {
 
         return esignatureService
             .createBatchSignatureRequest(
-                mockData.tenantId,
-                mockData.companyId,
+                { tenantId: mockData.tenantId, companyId: mockData.companyId },
                 mockData.bulkSignatureRequestRequestBody,
                 {},
                 mockData.userEmail,
-                {},
                 '123',
             )
             .catch((error) => {
@@ -459,12 +381,10 @@ describe('esignatureService.signature-requests.create', () => {
 
         return esignatureService
             .createBatchSignatureRequest(
-                mockData.tenantId,
-                mockData.companyId,
+                { tenantId: mockData.tenantId, companyId: mockData.companyId },
                 mockData.bulkSignatureRequestRequestBody,
                 {},
                 mockData.userEmail,
-                {},
                 '123',
             )
             .catch((error) => {
