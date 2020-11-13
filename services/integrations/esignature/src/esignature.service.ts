@@ -760,10 +760,12 @@ export async function deleteOnboardingDocuments(tenantId: string, companyId: str
             });
         });
         const { signature_requests: signatureRequests } = await hsResponse;
-        if (signatureRequests.length == 0) return;
+        if (signatureRequests.length === 0) {
+            return;
+        }
 
         let requestIds: string;
-        if (signatureRequests.length == 1) {
+        if (signatureRequests.length === 1) {
             requestIds = signatureRequests[0].signature_request_id;
         } else {
             requestIds = signatureRequests.map((e) => e.signature_request_id).join(',');
@@ -2423,6 +2425,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 signatureStatusPriority,
                 signatureStatusStepNumber,
                 isProcessing,
+                isHelloSignDocument,
             } = document;
             updatedDocuments.push({
                 id,
@@ -2442,6 +2445,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 uploadedBy,
                 isLegacyDocument,
                 isEsignatureDocument,
+                isHelloSignDocument,
                 status: {
                     name: signatureStatusName,
                     priority: signatureStatusPriority,
