@@ -121,6 +121,7 @@ export const templateListResponse: any[] = [
         isEsignatureDocument: true,
         category: 'test',
         existsInTaskList: true,
+        isHelloSignTemplate: true,
     },
     {
         id: 'z6etP',
@@ -133,6 +134,7 @@ export const templateListResponse: any[] = [
         isPublishedToEmployee: false,
         existsInTaskList: false,
         isLegacyDocument: true,
+        isHelloSignTemplate: false,
     },
     {
         id: 'N57UV',
@@ -145,6 +147,7 @@ export const templateListResponse: any[] = [
         isPublishedToEmployee: true,
         existsInTaskList: true,
         isLegacyDocument: false,
+        isHelloSignTemplate: false,
     },
 ];
 
@@ -164,6 +167,7 @@ export const templateOnboardingListResponse = [
         isEsignatureDocument: true,
         category: 'onboarding',
         existsInTaskList: true,
+        isHelloSignTemplate: true,
     },
 ];
 
