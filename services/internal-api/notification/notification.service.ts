@@ -10,12 +10,14 @@ import { Queries } from '../../queries/queries';
 import { InvocationType } from '../../util.service';
 import { DatabaseEvent, QueryType } from '../database/events';
 import { EmailMessage } from './emailMessage';
+import { Attachment } from './attachment';
 import {
     AlertCategory,
     DirectDepositAction,
     IDirectDepositEvent,
     IEsignatureEvent,
     INotificationEvent,
+    IBillingEvent,
     NotificationEventType,
 } from './events';
 import { IDirectDepositMetadataKeys } from './metadata-keys/IDirectDepositMetadataKeys';
@@ -49,6 +51,8 @@ export async function processEvent(event: INotificationEvent): Promise<boolean> 
             case NotificationEventType.EsignatureEvent:
                 await submitEsignatureEventNotification(event as IEsignatureEvent);
                 return true;
+            case NotificationEventType.BillingEvent:
+                await submitBillingEventNotification(event as IBillingEvent);
             default:
                 return false;
         }
@@ -177,6 +181,35 @@ async function submitEsignatureEventNotification(event: IEsignatureEvent): Promi
 
         console.log(action, 'Esignature request sent');
     }
+}
+
+async function submitBillingEventNotification(event: IBillingEvent): Promise<void> {
+    console.info('notification.service.submitBillingEventNotification');
+    const today = new Date();
+    const yearMonth = `${today.getUTCFullYear()}_${today.getMonth()}`;
+    today.setMonth(today.getMonth() - 1);
+    const month = today.toLocaleString('default', { month: 'long' });
+    const message =
+        'See Attached For Billing Report' + event.additionalMessage ? `additional message info: ${event.additionalMessage}` : '';
+    const emailMessage = new EmailMessage(`${month} Esignature Billing Report`, message, configService.getFromEmailAddress(), [
+        event.recipient || configService.getBillingRecipient(),
+    ]);
+    const sesCredentials: SesSmtpCredentials = JSON.parse(await utilService.getSecret(configService.getSesSmtpCredentials()));
+    if (!sesCredentials) {
+        return;
+    }
+
+    const smtpCredentials = {
+        host: configService.getSesSmtpServerHost(),
+        port: Number(configService.getSesSmtpServerPort()),
+        username: sesCredentials.username,
+        password: sesCredentials.password,
+        senderEmailAddress: configService.getFromEmailAddress(),
+    };
+
+    const attachment: Attachment = new Attachment({ filename: `${yearMonth}_Esign_Billing_Report.csv`, content: event.reportCsv });
+
+    return await sendSmtpHtmlEmail(emailMessage, smtpCredentials, [attachment]);
 }
 
 /**
@@ -332,8 +365,9 @@ async function sendEmail(tenantId: string, emailMessage: EmailMessage): Promise<
  * @param {EmailMessage} emailMessage: The message to be sent
  * @param {SmtpCredentials} smtpCredentials: The SMTP credentials
  */
-async function sendSmtpHtmlEmail(message: EmailMessage, smtpCredentials: SmtpCredentials): Promise<void> {
+async function sendSmtpHtmlEmail(message: EmailMessage, smtpCredentials: SmtpCredentials, attachments: Attachment[] = []): Promise<void> {
     console.info('notification.service.sendSmtpHtmlEmail');
+    const unTypedAttachments: any = attachments; //sendMail requrires the nodemailer.Mail.Attachment interface, but doesn't expose it, so we un-type this
     const transporter = nodemailer.createTransport({
         host: smtpCredentials.host,
         port: smtpCredentials.port,
@@ -349,6 +383,7 @@ async function sendSmtpHtmlEmail(message: EmailMessage, smtpCredentials: SmtpCre
         to: message.recipients.join(','),
         subject: message.subject,
         html: message.populateTemplate(),
+        attachments: unTypedAttachments,
     };
 
     await transporter.sendMail(mail);

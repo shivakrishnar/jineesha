@@ -16,13 +16,14 @@ import * as utilService from '../../../util.service';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
-import { EsignatureAction, IEsignatureEvent, NotificationEventType } from '../../../internal-api/notification/events';
+import { EsignatureAction, IBillingEvent, IEsignatureEvent, NotificationEventType } from '../../../internal-api/notification/events';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { Query } from '../../../queries/query';
 import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
 import { InvocationType } from '../../../util.service';
+import { listConnectionStrings } from '../../../api/tenants/src/tenants.service';
 import { DocumentCategory, DocumentMetadata } from './documents/document';
 import { EditUrl, SignUrl } from './embedded/url';
 import { Onboarding } from './signature-requests/onboarding';
@@ -40,6 +41,7 @@ import { TemplateDraftResponse } from './template-draft/templateDraftResponse';
 import { TemplateMetadata } from './template-draft/templateMetadata';
 import { ICustomField, Role, TemplateRequest } from './template-draft/templateRequest';
 import { Template } from './template-list/templateListResponse';
+import { BillingReportOptions } from './billing/billingReportOptions';
 
 /**
  * Creates a template under the specified company.
@@ -649,6 +651,94 @@ async function saveEsignatureMetadata(
 
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
+    }
+}
+
+export async function generateBillingReport(options: any | BillingReportOptions) {
+    console.info('esignatureService.generateBillingReport');
+
+    // get all tenant IDs
+    const connectionStrings = await listConnectionStrings();
+    const tenantIDs = connectionStrings.Items.map((conn) => conn.TenantID);
+    const tenantDomains = {};
+    connectionStrings.Items.forEach((conn) => (tenantDomains[conn.TenantID] = conn.Domain));
+
+    // run query for every tenant
+    const getBillableSignRequests: ParameterizedQuery = new ParameterizedQuery('getBillableSignRequests', Queries.getBillableSignRequests);
+    const today = new Date();
+    getBillableSignRequests.setParameter('@month', today.getUTCMonth() || 12); // UTC months are 0-11, mssql months are 1-12, we want last month's records
+    getBillableSignRequests.setParameter('@year', today.getUTCMonth() ? today.getUTCFullYear() : today.getUTCFullYear() - 1); // if month is 0 (Jan) we're doing December of last year
+    getBillableSignRequests.setStringParameter('@esignLegacyCutoff', configService.getLegacyClientCutOffDate());
+
+    const payload = {
+        tenantId: '',
+        queryName: getBillableSignRequests.name,
+        query: getBillableSignRequests.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+
+    let queryResultPromises = [];
+    let tenantErrors = [];
+
+    let csvOut = 'Domain,Company,Billable Documents\r\n';
+    for (const tenantId of tenantIDs) {
+        payload.tenantId = tenantId;
+        queryResultPromises.push(
+            utilService.withTimeout(() => {
+                return utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse).then(
+                    (result: any) => {
+                        result.tenantId = tenantId;
+                        return result;
+                    },
+                    (err) => {
+                        tenantErrors.push({ tenantId: tenantId, domain: tenantDomains[tenantId], reason: err });
+                        return { error: true, reason: err };
+                    },
+                );
+            }, 17500),
+        );
+    }
+    const queryResults = await pSettle(queryResultPromises);
+    let successfulTenants = [];
+    queryResults.forEach((queryResult: any) => {
+        if (queryResult.isFulfilled && !queryResult.value.error) {
+            successfulTenants.push(queryResult.value.tenantId);
+            queryResult.value.recordsets[0].forEach((row) => {
+                csvOut += `${tenantDomains[row.tenantID]},${row.company},${row.billableDocuments}\r\n`;
+            });
+        }
+    });
+
+    const failedTenants = tenantIDs.filter((id) => {
+        return !successfulTenants.includes(id);
+    });
+    let additionalMessage = '';
+    if (failedTenants.length) {
+        console.info(
+            `failed executions without error messages: ${JSON.stringify(
+                failedTenants.filter((id) => !tenantErrors.map((err) => err.tenantId).includes(id)),
+            )}`,
+        );
+        console.info(`failed executions with error messages: ${JSON.stringify(tenantErrors)}`);
+        additionalMessage = `Billing report incomplete, errors occurred when trying to get esign info for the following tenant(s):\n${failedTenants
+            .map((id) => tenantDomains[id])
+            .join('\r\n')}`;
+    }
+
+    // send email
+    utilService.sendEventNotification({
+        urlParameters: {},
+        invokerEmail: '',
+        type: NotificationEventType.BillingEvent,
+        reportCsv: csvOut,
+        recipient: options.targetEmail || '',
+        additionalMessage,
+    } as IBillingEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
+
+    console.info(`successful executions ${tenantIDs.length - failedTenants.length}`);
+
+    if (options.returnReport) {
+        return csvOut;
     }
 }
 

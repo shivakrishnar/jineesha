@@ -890,3 +890,13 @@ export function appendDuplicationSuffix(filenameWithExtension: string): string {
     const [filename, extension] = splitFilename(filenameWithExtension);
     return `${filename}-${shortid.generate()}${extension}`;
 }
+
+export async function withTimeout(callee: any, timeout: number): Promise<any> {
+    const throwOnTime = new Promise((resolve, reject) => {
+        setTimeout(() => {
+            reject(new Error('Request timed out'));
+        }, timeout);
+    });
+    const result = callee();
+    return Promise.race([result, throwOnTime]);
+}
