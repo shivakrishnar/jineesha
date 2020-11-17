@@ -105,7 +105,7 @@ export const bulkSignatureRequestRequestBody = {
 };
 
 export const bulkSimpleSignatureRequestRequestBody = {
-    templateId: '12345',
+    templateId: 'X4j1Ta',
     subject: 'Signature request subject',
     message: 'Signature request message',
     signatories: [
@@ -135,7 +135,7 @@ export const allEmployeesBulkSignatureRequestRequestBody = {
 };
 
 export const allEmployeesBulkSimpleSignatureRequestRequestBody = {
-    templateId: '12345',
+    templateId: 'X4j1Ta',
     subject: 'Signature request subject',
     message: 'Signature request message',
     signatories: [
@@ -195,6 +195,39 @@ export const signatureRequestsResponse: SignatureRequestResponse[] = [
                     name: 'Hugh',
                     role: 'Employee',
                     employeeCode: '1',
+                },
+            },
+        ],
+    },
+];
+
+export const SimpleSignatureRequestsResponse: any[] = [
+    {
+        id: '1234',
+        title: '',
+        status: SignatureRequestResponseStatus.Pending,
+        signatures: [
+            {
+                id: '',
+                signer: {
+                    emailAddress: 'hugh@jass.com',
+                    name: '',
+                    employeeCode: '1',
+                },
+            },
+        ],
+    },
+    {
+        id: '1234',
+        title: '',
+        status: SignatureRequestResponseStatus.Pending,
+        signatures: [
+            {
+                id: '',
+                signer: {
+                    emailAddress: 'matt.yoga@gmail.com',
+                    name: '',
+                    employeeCode: '2',
                 },
             },
         ],

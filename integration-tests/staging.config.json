@@ -36,7 +36,9 @@
         "documentId": "47fk",
         "legacyCompanyDocumentId": "oExGcr",
         "nonExistingDocumentId": "v7Xbv3hX",
-        "searchQueryParam": "onboarding"
+        "searchQueryParam": "onboarding",
+        "signableDocument": "527tD",
+        "nonExistentSignableDocument": "W6oy6tb"
     },
     "documentsBucket": "staging.hr.files",
     "logo": {
