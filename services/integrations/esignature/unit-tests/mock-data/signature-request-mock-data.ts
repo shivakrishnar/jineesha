@@ -101,6 +101,24 @@ export const bulkSignatureRequestRequestBody = {
             role: 'Employee',
         }),
     ],
+    isSimpleSign: false,
+};
+
+export const bulkSimpleSignatureRequestRequestBody = {
+    templateId: 'X4j1Ta',
+    subject: 'Signature request subject',
+    message: 'Signature request message',
+    signatories: [
+        new SignatoryRequest({
+            employeeCode: '1',
+            role: 'Employee',
+        }),
+        new SignatoryRequest({
+            employeeCode: '2',
+            role: 'Employee',
+        }),
+    ],
+    isSimpleSign: true,
 };
 
 export const allEmployeesBulkSignatureRequestRequestBody = {
@@ -113,6 +131,20 @@ export const allEmployeesBulkSignatureRequestRequestBody = {
             role: 'Employee',
         }),
     ],
+    isSimpleSign: false,
+};
+
+export const allEmployeesBulkSimpleSignatureRequestRequestBody = {
+    templateId: 'X4j1Ta',
+    subject: 'Signature request subject',
+    message: 'Signature request message',
+    signatories: [
+        new SignatoryRequest({
+            employeeCode: 'all',
+            role: 'Employee',
+        }),
+    ],
+    isSimpleSign: true,
 };
 
 export const signatureRequestResponse: SignatureRequestResponse = {
@@ -163,6 +195,39 @@ export const signatureRequestsResponse: SignatureRequestResponse[] = [
                     name: 'Hugh',
                     role: 'Employee',
                     employeeCode: '1',
+                },
+            },
+        ],
+    },
+];
+
+export const SimpleSignatureRequestsResponse: any[] = [
+    {
+        id: '1234',
+        title: '',
+        status: SignatureRequestResponseStatus.Pending,
+        signatures: [
+            {
+                id: '',
+                signer: {
+                    emailAddress: 'hugh@jass.com',
+                    name: '',
+                    employeeCode: '1',
+                },
+            },
+        ],
+    },
+    {
+        id: '1234',
+        title: '',
+        status: SignatureRequestResponseStatus.Pending,
+        signatures: [
+            {
+                id: '',
+                signer: {
+                    emailAddress: 'matt.yoga@gmail.com',
+                    name: '',
+                    employeeCode: '2',
                 },
             },
         ],

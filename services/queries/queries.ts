@@ -47,6 +47,7 @@ export const Queries = {
     // E-Signatures
     checkForDuplicateFileMetadata: fs.readFileSync(path.join(basePath, 'esignatures/checkForDuplicateFileMetadata.sql')).toString(),
     createEsignatureMetadata: fs.readFileSync(path.join(basePath, 'esignatures/createEsignatureMetadata.sql')).toString(),
+    createSimpleSignMetadata: fs.readFileSync(path.join(basePath, 'esignatures/createSimpleSignMetadata.sql')).toString(),
     createFileMetadata: fs.readFileSync(path.join(basePath, 'esignatures/createFileMetadata.sql')).toString(),
     getConsolidatedCompanyDocumentsByCompanyId: fs
         .readFileSync(path.join(basePath, 'esignatures/getConsolidatedCompanyDocumentsByCompanyId.sql'))

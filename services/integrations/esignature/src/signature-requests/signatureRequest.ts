@@ -22,6 +22,8 @@ export class BatchSignatureRequest implements ISignatureRequest {
 
     signatories: SignatoryRequest[];
 
+    isSimpleSign: boolean;
+
     public constructor(init?: Partial<BatchSignatureRequest>) {
         Object.assign(this, init);
     }

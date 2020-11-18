@@ -24,6 +24,22 @@ export function getValidBulkSignatureRequestObject(): any {
                 role: 'OnboardingSignatory',
             },
         ],
+        isSimpleSign: false,
+    };
+}
+
+export function getValidBulkSimpleSignatureRequestObject(): any {
+    return {
+        templateId: configs.esignature.signableDocument,
+        subject: 'This is a test request',
+        message: 'This is a test request message',
+        signatories: [
+            {
+                employeeCode: '445',
+                role: 'OnboardingSignatory',
+            },
+        ],
+        isSimpleSign: true,
     };
 }
 

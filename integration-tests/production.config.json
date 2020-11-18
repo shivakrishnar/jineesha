@@ -36,7 +36,9 @@
         "documentId": "47fk",
         "legacyCompanyDocumentId": "Nx6mI0",
         "nonExistingDocumentId": "v7Xbv3hX",
-        "searchQueryParam": "onboarding"
+        "searchQueryParam": "onboarding",
+        "signableDocument": "7XMVCW",
+        "nonExistentSignableDocument": "W6oy6tb"
     },
     "documentsBucket": "production.hr.files",
     "logo": {

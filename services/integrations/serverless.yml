@@ -130,15 +130,6 @@ functions:
             method: post
             cors:
               origin: '*'
-  
-  createSignRequest:
-    handler: esignature/src/handler.createSignatureRequest
-    events:
-        - http:
-            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/esignatures/requests
-            method: post
-            cors:
-              origin: '*'
 
   createSignUrl: 
     handler: esignature/src/handler.createSignUrl
