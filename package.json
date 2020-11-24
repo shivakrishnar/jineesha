@@ -92,16 +92,20 @@
     },
     "dependencies": {
         "@asuresoftware/asure.auth": "^1.0.0",
+        "@pdf-lib/fontkit": "^1.1.0",
         "@smallwins/validate": "^4.3.0",
         "@types/hashids": "^1.0.30",
         "aws-sdk": "^2.307.0",
         "hashids": "^1.2.2",
         "jsonwebtoken": "^8.4.0",
+        "moment-timezone": "^0.5.32",
         "mssql": "4.3.1",
         "njwt": "^0.4.0",
+        "pdf-lib": "^1.12.0",
         "request-promise-native": "^1.0.5",
         "strip-bom": "^3.0.0",
         "tslint": "^5.13.0",
+        "url-loader": "^4.1.1",
         "uuid": "^3.3.2"
     }
 }

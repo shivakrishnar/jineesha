@@ -755,6 +755,46 @@ export async function validateCompany(tenantId: string, companyId: string): Prom
     }
 }
 
+/**
+ * Validates that a specified employee exists
+ * @param {string} tenantId: The unique identifier for the tenant.
+ * @param {string} employeeId: The unique identifier for the employee.
+ * @returns: The employee details.
+ */
+export async function validateEmployee(tenantId: string, employeeId: string): Promise<any> {
+    console.info('utilService.validateEmployee');
+
+    // employeeId value must be integral
+    if (Number.isNaN(Number(employeeId))) {
+        const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    try {
+        // Check that the employee id is valid.
+        const query = new ParameterizedQuery('GetEmployeeInfoByID', Queries.getEmployeeInfoById);
+        query.setParameter('@employeeId', employeeId);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        if (result.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The employee id: ${employeeId} not found`);
+        }
+        return result.recordset[0];
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(`Unable to retrieve employee info. Reason: ${error}`);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
 export enum Resources {
     Company = 'company',
 }

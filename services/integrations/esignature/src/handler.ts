@@ -230,6 +230,17 @@ const updateSignatureRequestStatusSchema = Yup.object().shape({
     stepNumber: Yup.number().required(),
 });
 
+// Create simple sign document schemas
+const createSimpleSignDocumentValidationSchema = {
+    signatureRequestId: { required: true, type: String },
+    timeZone: { required: false, type: String },
+};
+
+const createSimpleSignDocumentSchema = Yup.object().shape({
+    signatureRequestId: Yup.string().required(),
+    timeZone: Yup.string(),
+});
+
 // Update Document schemas
 const updateDocumentValidationSchema = {
     title: { required: false, type: String },
@@ -1173,3 +1184,31 @@ export const deleteEmployeeDocument = utilService.gatewayEventHandlerV2(async ({
         securityContext.roleMemberships,
     );
 });
+
+/**
+ * Creates a signed version of a simple sign document for an employee
+ */
+export const createSimpleSignDocument = utilService.gatewayEventHandlerV2(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.createSimpleSignDocument');
+
+        const { tenantId, companyId, employeeId } = event.pathParameters;
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, createSimpleSignDocumentValidationSchema);
+        utilService.checkAdditionalProperties(createSimpleSignDocumentValidationSchema, requestBody, 'Create Simple Sign Document');
+        await utilService.validateRequestBody(createSimpleSignDocumentSchema, requestBody);
+
+        return await esignatureService.createSimpleSignDocument(
+            tenantId,
+            companyId,
+            employeeId,
+            requestBody,
+            event.requestContext.identity.sourceIp,
+        );
+    },
+);

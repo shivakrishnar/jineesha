@@ -42,5 +42,6 @@
     "logRetentionInDays": 5,
     "ssoPublicKey1": "1572371438|-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy6et6NI9qSjlp1ooSL2J\nY4u/b1usawD7drl5GdBqO9jrFm3fzXN3inHz15cadFz+MgjkO01kwVPYxWlvZVes\nqk0cD+VWChgkCxKTc5GiqEcoQ3BRp0JIXT3PSYRoeoMfRnUfscC91TmTcQgXKISc\n3qGp0uUINe+XxNggj8vr3gATh1rM3oHktRQbStl53tlc/U5L/j7x9SPNPdoyqWjx\nSkiP+iAqR40c7+XXfYKvwCRh6JenZcxYp2KpuqRMsZ2mrj6F6TjqlSfkM55DBdPE\nUirSa+7X2AUQvwcmFXTKZ5ELyraYhF5XRqR2CNCKHDvUcH5hlhUdv8uuIsS5N/Lg\nHQIDAQAB\n-----END PUBLIC KEY-----",
     "ssoPublicKey2": "1572367323|-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwVfykB7VJU+qQnfWdID+\nnsHQixt8NG6c4HItxFGo+HKMTSj1M6Ebo9rEGorJMf9UTHTKW9R58oWEHFFHWMPO\nLJIs4NEJ6+AY0zk+pSLaNkNN0UsTLfWcFPxZcuAxCryeHb/sBMEv99yqXdFworIt\nd5kAo97twxIKSkwgN+0WfCRFynmOsXIOS3iYRtk/Mpfj4/x0cu1fXJ8beeB5Hd0j\nEf1MohAlV2k7s4/MGoUPArDzpe/1KY/VHGvH4IRvVLJ2pVOI8splT3tJjI1pJtxR\ne1urphXVO9PuI4A6M9uXeLWoqWMi32lDg+4nfnrvipnAGA1V4YqeI91k9rKwHG8J\nTQIDAQAB\n-----END PUBLIC KEY-----",
-    "billingRecipient": "jack.houk@asuresoftware.com"
+    "billingRecipient": "jack.houk@asuresoftware.com",
+    "signaturePageFontUrl": "https://fonts.gstatic.com/s/roboto/v20/KFOmCnqEu92Fr1Me5Q.ttf"
 }
