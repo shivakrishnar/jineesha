@@ -1,10 +1,21 @@
 
 
 declare @documentIdCollection varchar(max)
+declare @_companyId int = @companyId
+
 
 declare @tmp table
 (
     DocumentID nvarchar(max)
+)
+
+declare @tmpResults table
+(
+	ID nvarchar(max),
+	Filename nvarchar(max),
+	Title nvarchar(max),
+	Description nvarchar(max),
+	Type nvarchar(max)
 )
 
 declare onboarding_documents_cursor cursor for
@@ -42,9 +53,6 @@ end
 close onboarding_documents_cursor
 deallocate onboarding_documents_cursor
 
--- Get total results for pagination
-select count(*) as totalCount from @tmp where isnumeric(DocumentID) <> 1
-
 ;with OriginalDocuments
 as 
 (
@@ -52,11 +60,12 @@ as
 	    ID,
 		Filename,
 		Title,
-		Description
+		Description,
+		null as Type
 	from
 		dbo.Document
 	where
-	    CompanyID = @companyId
+	    CompanyID = @_companyId
 		and ID in (select
 					DocumentID
 				from 
@@ -64,11 +73,35 @@ as
 				where
 					isnumeric(DocumentID) = 1 )
 		
+), 
+EsignatureDocuments
+as 
+(
+	select
+	    ID,
+		Filename,
+		Title,
+		null as Description,
+		Type
+	from
+		dbo.EsignatureMetadata
+	where
+	    CompanyID = @_companyId
+		and ID in (select
+					DocumentID
+				from 
+					@tmp
+				where
+					isnumeric(DocumentID) <> 1 )		
 )
 
-select cast(ID as varchar(max)) as ID, Filename, Title, Description from OriginalDocuments
+Insert into @tmpResults
+select cast(ID as varchar(max)) as ID, Filename, Title, Description, Type from OriginalDocuments
 union
-select ID = DocumentID, Filename = DocumentID, null, null from @tmp where isnumeric(DocumentID) <> 1
+select cast(ID as varchar(max)) as ID, Filename, Title, Description, Type from EsignatureDocuments
+-- Get total results for pagination
+select count(*) as totalCount from @tmpResults
+select * from @tmpResults
 order by ID
 
 
