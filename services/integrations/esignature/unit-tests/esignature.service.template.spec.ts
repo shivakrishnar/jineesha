@@ -79,7 +79,7 @@ describe('esignatureService.template.list', () => {
             if (payload.queryName === 'GetCompanyInfo') {
                 return Promise.resolve(mockData.companyInfo);
             }
-            return Promise.resolve(mockData.templateDBResponse);
+            return Promise.resolve(mockData.emptyPaginatedDBResponse);
         });
 
         return esignatureService
