@@ -31,6 +31,10 @@ export const setup = () => {
         return 'FileBucketName';
     });
 
+    (configService as any).getSignaturePageFontUrl = jest.fn(() => {
+        return 'www.awesomefonts.com';
+    });
+
     (utilService as any).getSecret = jest.fn((params: any) => {
         return `{
         "salt": "salt",

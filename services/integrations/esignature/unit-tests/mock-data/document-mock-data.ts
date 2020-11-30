@@ -413,6 +413,7 @@ export const documentFileMetadataDBResponse = {
     recordset: [
         {
             ID: 1,
+            Title: 'test'
         },
     ],
     output: {},
@@ -433,6 +434,7 @@ export const documentFileMetadataByIdDBResponse = {
             UploadedByUsername: 'Test User',
             Extension: 'png',
             Filename: 'file',
+            SignatureStatusID: 2,
         },
     ],
     output: {},
@@ -488,6 +490,11 @@ export const updateEmployeeDocumentRequest = {
     title: 'Title',
     isPrivate: false,
     category: 'test',
+};
+
+export const createSimpleSignDocumentRequest = {
+    signatureRequestId: '42dcb821-d91f-4b54-be47-16819128f845',
+    timeZone: 'EST',
 };
 
 export const updateNonLegacyEmployeeDocumentResponse = {
@@ -566,4 +573,31 @@ export const documentMetadataS3Response = {
     islegacydocument: true,
     isprivate: false,
     isesigneddocument: false,
+    filename: 'test.pdf',
+};
+
+export const createSimpleSignDocumentResponse = {
+    category: 'other',
+    companyId: '600013',
+    companyName: 'HRN IT Services',
+    employeeCode: '1',
+    employeeId: '113',
+    employeeName: 'Test User',
+    fileName: '42dcb821-d91f-4b54-be47-16819128f845.pdf',
+    id: '42dcb821-d91f-4b54-be47-16819128f845',
+    isEsignatureDocument: false,
+    isHelloSignDocument: false,
+    isLegacyDocument: false,
+    isOnboardingDocument: false,
+    isPrivate: false,
+    isPublishedToEmployee: true,
+    isSignedDocument: true,
+    status: {
+        isProcessing: false,
+        name: 'Signed',
+        priority: 1,
+        stepNumber: 2,
+    },
+    title: 'Title',
+    uploadedBy: 'Test User',
 };

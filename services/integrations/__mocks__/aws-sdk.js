@@ -36,6 +36,27 @@ AWS = {
                   }
                 : undefined;
         }
+
+        getObject(objectInfo) {
+            const metadata = Object.assign({}, mockData.documentMetadataS3Response);
+            switch (objectInfo.Bucket) {
+                case 'jpg':
+                    metadata.filename = 'test.jpg';
+                    break;
+                case 'png':
+                    metadata.filename = 'test.png';
+                default:
+            }
+            return {
+                promise: () => {
+                    return {
+                        catch: catchMethod,
+                        Metadata: metadata,
+                        Body: 'test',
+                    };
+                },
+            };
+        }
     },
 };
 

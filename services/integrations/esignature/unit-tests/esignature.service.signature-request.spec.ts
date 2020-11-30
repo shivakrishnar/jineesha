@@ -1,10 +1,10 @@
 import 'reflect-metadata'; // required by asure.auth dependency
 
+import * as uuidV4 from 'uuid/v4';
 import * as utilService from '../../../util.service';
 import * as esignatureService from '../src/esignature.service';
 import * as mockData from './mock-data';
-import * as uuidV4 from 'uuid/v4';
-jest.mock('uuid/v4')
+jest.mock('uuid/v4');
 
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
@@ -329,7 +329,7 @@ describe('esignatureService.signature-requests.create', () => {
             }
         });
 
-        uuidV4.mockImplementation(() => '1234')
+        uuidV4.mockImplementation(() => '1234');
         return esignatureService
             .createBatchSignatureRequest(
                 { tenantId: mockData.tenantId, companyId: mockData.companyId },
@@ -497,7 +497,7 @@ describe('esignatureService.signature-requests.create', () => {
             }
         });
 
-        uuidV4.mockImplementation(() => '1234')
+        uuidV4.mockImplementation(() => '1234');
         return esignatureService
             .createBatchSignatureRequest(
                 { tenantId: mockData.tenantId, companyId: mockData.companyId },
@@ -507,7 +507,7 @@ describe('esignatureService.signature-requests.create', () => {
                 '123',
             )
             .catch((error) => {
-                console.log('here',error);
+                console.log('here', error);
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(422);
                 expect(error.code).toEqual(70);

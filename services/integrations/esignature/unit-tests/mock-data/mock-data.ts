@@ -13,6 +13,7 @@ export const payrollApiCredentials: any = {
 };
 export const domainName: string = 'https://test.evolution-software.com';
 export const path: string = '/identity/tenants/1234/companies/1/employees/123/direct-deposits';
+export const ipAddress: string = '127.0.0.1';
 
 export const paginationQueryParams: any = {
     pageToken: 'Mg==',

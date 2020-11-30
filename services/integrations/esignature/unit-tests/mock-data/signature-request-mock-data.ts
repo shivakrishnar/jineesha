@@ -204,14 +204,14 @@ export const signatureRequestsResponse: SignatureRequestResponse[] = [
 export const SimpleSignatureRequestsResponse: any[] = [
     {
         id: '1234',
-        title: '',
+        title: 'test',
         status: SignatureRequestResponseStatus.Pending,
         signatures: [
             {
                 id: '',
                 signer: {
                     emailAddress: 'hugh@jass.com',
-                    name: '',
+                    name: 'Hugh Jass',
                     employeeCode: '1',
                 },
             },
@@ -219,14 +219,14 @@ export const SimpleSignatureRequestsResponse: any[] = [
     },
     {
         id: '1234',
-        title: '',
+        title: 'test',
         status: SignatureRequestResponseStatus.Pending,
         signatures: [
             {
                 id: '',
                 signer: {
                     emailAddress: 'matt.yoga@gmail.com',
-                    name: '',
+                    name: 'Matt Employee',
                     employeeCode: '2',
                 },
             },

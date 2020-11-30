@@ -5,6 +5,7 @@ export const employeeDBResponse = {
             CurrentDisplayName: 'Charles Bartowski',
             FirstName: 'Test',
             LastName: 'User',
+            EmployeeCode: '1',
         },
     ],
     output: {},

@@ -5,6 +5,7 @@ export const signatureStatusDBResponse = {
         {
             Name: 'Signed',
             Priority: 1,
+            StepNumber: 2,
         },
     ],
     output: {},
@@ -21,5 +22,6 @@ export const updateSignatureRequestStatusResponse = {
         name: 'Signed',
         priority: 1,
         isProcessing: true,
+        stepNumber: 2,
     },
 };
