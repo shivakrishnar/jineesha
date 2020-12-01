@@ -114,6 +114,7 @@ export const Queries = {
     getDocumentByIdAndEmployeeId: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentByIdAndEmployeeId.sql')).toString(),
     removeDocumentFromTaskList: fs.readFileSync(path.join(basePath, 'esignatures/removeDocumentFromTaskList.sql')).toString(),
     getSignatureStatusByStepNumber: fs.readFileSync(path.join(basePath, 'esignatures/getSignatureStatusByStepNumber.sql')).toString(),
+    getBillableSignRequests: fs.readFileSync(path.join(basePath, 'esignatures/getBillableSignRequests.sql')).toString(),
 
     // Companies
     getUserCompaniesById: fs.readFileSync(path.join(basePath, 'companies/getUserCompaniesById.sql')).toString(),

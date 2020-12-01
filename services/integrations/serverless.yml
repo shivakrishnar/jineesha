@@ -52,6 +52,7 @@ provider:
     lambdaPerfMonitorApiKey: ${file(${self:custom.configFile}):lambdaPerfMonitorApiKey}
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
     tenantAdminCredentialsId: ${file(${self:custom.configFile}):tenantAdminCredentialsId}
+    legacyClientCutOffDate: ${ssm:/hr/esignature/simplesign/legacyClientCutOffDate}
 
   iamRoleStatements:
     - Effect: Allow
@@ -102,6 +103,13 @@ provider:
         - s3:PutObject
         - s3:DeleteObject
       Resource: "arn:aws:s3:::*"
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+      Resource: "arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings"
 
 functions:
   createTemplate:
@@ -229,6 +237,20 @@ functions:
             method: post
             cors:
               origin: '*'
+
+  generateBilling:
+    handler: esignature/src/handler.generateBillingReport
+    events:
+      - http:
+          path: /esignatures/billing
+          method: post
+          cors:
+            origin: '*'
+  
+  scheduledGenerateBilling:
+    handler: esignature/src/handler.generateInternalBillingReport
+    events:
+      - schedule: cron(59, 11, 1, *, ?, *)
 
   configure:
     handler: esignature/src/handler.configure

@@ -9,6 +9,7 @@ export interface INotificationEvent {
 export enum NotificationEventType {
     DirectDepositEvent = 'DirectDepositEvent',
     EsignatureEvent = 'EsignatureEvent',
+    BillingEvent = 'BillingEvent',
 }
 
 export enum AlertCategory {
@@ -32,6 +33,12 @@ export interface IEsignatureEvent extends INotificationEvent {
     actions: EsignatureAction[];
     accessToken: string;
     metadata: IESignatureMetadata;
+}
+
+export interface IBillingEvent extends INotificationEvent {
+    reportCsv: string;
+    recipient?: string;
+    additionalMessage?: string;
 }
 
 export interface IESignatureMetadata {

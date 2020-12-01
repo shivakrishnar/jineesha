@@ -37,6 +37,7 @@ provider:
     lambdaPerfMonitorApiKey: ${file(${self:custom.configFile}):lambdaPerfMonitorApiKey}
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
     tenantAdminCredentialsId: ${file(${self:custom.configFile}):tenantAdminCredentialsId}
+    billingRecipient: ${file(${self:custom.configFile}):billingRecipient}
 
   iamRoleStatements:
     - Effect: Allow

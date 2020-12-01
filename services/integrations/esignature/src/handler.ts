@@ -134,6 +134,17 @@ const signatorySchema = Yup.object().shape({
     role: Yup.string().required(),
 });
 
+// Signature Request Billing schemas
+const billingValidationSchema = {
+    returnReport: { required: false, type: Boolean },
+    targetEmail: { required: false, type: String },
+};
+
+const billingSchema = Yup.object().shape({
+    returnReport: Yup.boolean(),
+    targetEmail: Yup.string(),
+});
+
 // Onboarding Signature Request schemas
 const onboardingSignatureRequestValidationSchema = {
     onboardingKey: { required: true, type: String },
@@ -348,6 +359,45 @@ export const createBatchSignatureRequest = utilService.gatewayEventHandlerV2(
         };
     },
 );
+
+export const generateBillingReport = utilService.gatewayEventHandlerV2(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.generateBillingReport');
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+
+        const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+            return role === Role.globalAdmin;
+        });
+
+        if (!isAuthorized) {
+            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        }
+
+        // default the request body if nothing was passed or default optional params if only some were passed
+        requestBody = requestBody || {};
+        requestBody = {
+            returnReport: requestBody.returnReport || false,
+            targetEmail: requestBody.targetEmail || '',
+        };
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, billingValidationSchema);
+        utilService.checkAdditionalProperties(billingValidationSchema, requestBody, 'Billing Options');
+        await utilService.validateRequestBody(billingSchema, requestBody);
+
+        return await esignatureService.generateBillingReport(requestBody);
+    },
+);
+
+export const generateInternalBillingReport = utilService.gatewayEventHandlerV2({
+    allowAnonymous: true,
+    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.generateInternalBillingReport');
+        return await esignatureService.generateBillingReport({ returnReport: false, targetEmail: '' });
+    },
+});
 
 /**
  * Lists all templates under a given company
