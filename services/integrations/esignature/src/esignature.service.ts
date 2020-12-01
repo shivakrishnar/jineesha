@@ -2848,6 +2848,29 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
 
         // Employee document creation
         if (employeeid && !documentid) {
+            const esignatureMetadataId = uuidV4().replace(/-/g, '');
+            query = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
+            query.setParameter('@id', esignatureMetadataId);
+            query.setParameter('@companyId', companyid);
+            query.setParameter('@type', EsignatureMetadataType.NoSignature);
+            query.setParameter('@uploadDate', uploadTime);
+            query.setParameter('@uploadedBy', `'${uploadedby}'`);
+            query.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
+            query.setParameter('@fileName', `'${filename.replace(/'/g, "''")}'`);
+            query.setParameter('@category', category ? `'${category}'` : 'NULL');
+            query.setParameter('@employeeCode', `'${employeecode}'`);
+            query.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
+            query.setParameter('@isOnboardingDocument', isonboardingdocument === 'true' ? '1' : '0');
+
+            payload = {
+                tenantId: tenantid,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+
+            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
             query = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
             query.setParameter('@companyId', companyid);
             query.setParameter('@employeeCode', `'${employeecode}'`);
@@ -2857,7 +2880,7 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
             query.setParameter('@pointer', uploadedItemS3Key.replace(/'/g, "''"));
             query.setParameter('@uploadedBy', `'${uploadedby}'`);
             query.setParameter('@isPublishedToEmployee', isprivate === 'true' ? '0' : '1');
-            query.setParameter('@esignatureMetadataId', 'NULL');
+            query.setParameter('@esignatureMetadataId', esignatureMetadataId);
         }
 
         // Employee document updates
