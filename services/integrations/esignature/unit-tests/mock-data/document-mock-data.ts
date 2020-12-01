@@ -38,6 +38,7 @@ export const originalDocsTaskListDBResponse = {
             {
                 ID: 4,
                 Filename: '123456',
+                Type: 'Template'
             },
         ],
     ],
@@ -65,18 +66,21 @@ export const hellosignDocsTaskListDBResponse = {
                 Filename: '12345',
                 Title: 'Title',
                 Description: 'Description',
+                Type: 'Template',
             },
             {
                 ID: 5,
                 Filename: '67890',
                 Title: 'Title',
                 Description: 'Description',
+                Type: 'Template',
             },
             {
                 ID: 6,
                 Filename: 'test.pdf',
                 Title: 'Title',
                 Description: 'Description',
+                Type: 'SimpleSignatureRequest'
             },
         ],
     ],
@@ -247,12 +251,14 @@ export const companyHellosignDocumentListResponse = [
         filename: 'test.pdf',
         title: 'hi',
         description: 'Description',
+        type: 'Template',
     },
     {
         id: 5,
         filename: 'test.pdf',
         title: 'hi',
         description: 'Description',
+        type: 'Template',
     },
 ];
 

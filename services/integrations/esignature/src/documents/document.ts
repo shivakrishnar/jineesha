@@ -3,6 +3,7 @@ export type DocumentMetadata = {
     filename: string;
     title: string | undefined;
     description: string | undefined;
+    type: string | undefined;
 };
 
 export class DocumentMetadataListResponse {

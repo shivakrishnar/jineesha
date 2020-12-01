@@ -973,7 +973,9 @@ export async function listTemplates(
                     document.Type !== 'legacy'
                         ? document.FirstName // Note: the query returns the full name as the FirstName field
                         : `${document.FirstName} ${document.LastName}`;
-                const id = hashids.encode(document.ID, document.Type === 'legacy' ? DocType.LegacyDocument : DocType.S3Document);
+                // GUIDs are strings so we can't encode them; we'll set those to document.ID while legacy documents' IDs need to  be encoded
+                let id = hashids.encode(document.ID, document.Type === 'legacy' ? DocType.LegacyDocument : DocType.S3Document);
+                if (!id) id = document.ID;
 
                 memo.push({
                     id,
@@ -1053,13 +1055,6 @@ export async function listTemplates(
         });
 
         consolidatedDocuments.sort((a, b) => (new Date(a.uploadDate).getTime() > new Date(b.uploadDate).getTime() ? -1 : 1));
-
-        if (queryParams && queryParams.onboarding) {
-            consolidatedDocuments = consolidatedDocuments.filter(
-                (doc) => doc.category && doc.category.toLowerCase() === 'onboarding' && doc.isEsignatureDocument,
-            );
-        }
-
         const paginatedResult = await paginationService.createPaginatedResult(consolidatedDocuments, baseUrl, totalRecords, page);
         return consolidatedDocuments.length === 0 ? undefined : paginatedResult;
     } catch (error) {
@@ -1279,11 +1274,12 @@ export async function listDocuments(
                 filename: entry.Filename,
                 title: entry.Title,
                 description: entry.Description,
+                type: entry.Type,
             };
         });
 
         if (filterByOriginalDocuments) {
-            const originalDocs = documents.filter((doc) => doc.filename.includes('.'));
+            const originalDocs = documents.filter((doc) => !doc.type);
             const paginatedResult =
                 originalDocs.length === 0
                     ? undefined
@@ -1292,7 +1288,7 @@ export async function listDocuments(
         }
 
         if (filterByHelloSignDocuments) {
-            documents = documents.filter((doc) => !doc.filename.includes('.'));
+            documents = documents.filter((doc) => doc.type === 'Template');
         }
 
         const unfoundDocuments: DocumentMetadata[] = [];
@@ -1300,8 +1296,8 @@ export async function listDocuments(
         const invocations: Array<Promise<any>> = [];
 
         for (const doc of documents) {
-            if (!doc.filename.includes('.')) {
-                invocations.push(eSigner.template.get(doc.filename));
+            if (doc.type === 'Template') {
+                invocations.push(eSigner.template.get(doc.id));
             }
         }
 
@@ -1311,7 +1307,7 @@ export async function listDocuments(
         // Extract template file information for document metadata
         for (let index = 0; index < documents.length; index++) {
             const doc = documents[index];
-            if (!doc.filename.includes('.')) {
+            if (doc.type === 'Template') {
                 const templateApiInvocation = templateApiResults[index];
 
                 if (templateApiInvocation) {
@@ -1322,7 +1318,7 @@ export async function listDocuments(
                     }
 
                     if (templateApiInvocation.isRejected) {
-                        console.error(`issue accessing template id: ${doc.filename}`);
+                        console.error(`issue accessing template id: ${doc.id}`);
                         unfoundDocuments.push(doc);
                     }
                 }
