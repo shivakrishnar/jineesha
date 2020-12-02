@@ -2327,7 +2327,32 @@ export async function getDocumentPreview(tenantId: string, id: string): Promise<
 
         // if id does not decode properly, assume it's a HelloSign document
         if (decoded.length === 0) {
-            return await getTemplateFiles(id);
+            const query = new ParameterizedQuery('getFileMetadataByEsignatureMetadataId', Queries.getFileMetadataByEsignatureMetadataId);
+            query.setParameter('@id', id);
+            const payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+            // Note: if there is no FileMetadata record associated with the EsignatureMetadata record,
+            // assume it is a HelloSign document.
+            if (result.recordset.length === 0) {
+                return await getTemplateFiles(id);
+            } else {
+                const key = result.recordset[0].Pointer;
+
+                const params = {
+                    Bucket: configService.getFileBucketName(),
+                    Key: key,
+                };
+                const url = s3Client.getSignedUrl('getObject', params);
+                // parse key to get file extension
+                const mimeType = key.split('.')[key.split('.').length - 1];
+        
+                return result ? { data: url, mimeType: `.${mimeType}` } : undefined; 
+            }
         }
 
         const [documentId, type] = decoded;
