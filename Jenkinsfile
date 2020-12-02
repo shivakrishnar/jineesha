@@ -4,6 +4,7 @@ import groovy.transform.Field
 String currentVersion
 String nextVersion
 String semanticVersion
+@Field String skipIntegrationTests
 
 // The git remote
 final String gitCredentials = "ssh-bitbucket-asuresoftware"
@@ -32,6 +33,12 @@ stage("Build")
         stage("Choose semantic version") {
             semanticVersion = input(id: 'userInput', message: "Please select the semantic version of build...",
                     parameters: [[$class: 'ChoiceParameterDefinition', choices: 'patch\nminor\nmajor', name: "choices"]])
+        }
+    }
+    timeout(time: timeoutDays, unit: "DAYS") {
+        stage("Skip integration tests?") {
+            skipIntegrationTests = input(id: 'userInput', message: "Skip integration tests?",
+                    parameters: [[$class: 'ChoiceParameterDefinition', choices: 'no\nyes', name: "choices"]])
         }
     }
     node("linux") {
@@ -76,11 +83,15 @@ stage("Build")
 
     stage("deploy - development") {
         deployStage("development")
-        runIntegrationTests("development")
+        if (skipIntegrationTests == "no") {
+            runIntegrationTests("development")
+        }
     }
     stage("deploy - staging") {
         deployStage("staging")
-        runIntegrationTests("staging")
+        if (skipIntegrationTests == "no") {
+            runIntegrationTests("staging")
+        }
     }
 
     if (isMasterBranch) {
