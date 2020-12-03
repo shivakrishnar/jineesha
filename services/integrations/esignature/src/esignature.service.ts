@@ -922,14 +922,14 @@ async function saveSimpleEsignatureMetadata(
             signatureRequestResponses.push(
                 new SignatureRequestResponse({
                     id: signatureRequestId,
-                    title: '',
+                    title: esignatureResult.recordset[0].Title,
                     status: SignatureRequestResponseStatus.Pending,
                     signatures: [
                         {
                             id: '',
                             signer: new Signatory({
                                 emailAddress: employeeData[code] ? employeeData[code].emailAddress : '',
-                                name: '',
+                                name: employeeData[code] ? `${employeeData[code].firstName} ${employeeData[code].lastName}` : '',
                                 employeeCode: code,
                             }),
                         },
