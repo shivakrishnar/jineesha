@@ -327,3 +327,17 @@ export const esignatureMetadataDBResponse = {
     output: {},
     rowsAffected: [1],
 };
+
+export const billableSignRequestDBResponse = {
+    recordsets: [
+        [
+            {
+                tenantID: '1234',
+                company: 'HRN IT Services (1)',
+                billableDocuments: 2
+            },
+        ],
+    ],
+    output: {},
+    rowsAffected: [1],
+};

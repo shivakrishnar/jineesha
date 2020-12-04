@@ -14,6 +14,7 @@ import * as uuidV4 from 'uuid/v4';
 
 import * as pSettle from 'p-settle';
 import * as employeeService from '../../../api/tenants/src/employee.service';
+import * as tenantsService from '../../../api/tenants/src/tenants.service';
 import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import * as paginationService from '../../../pagination/pagination.service';
@@ -31,7 +32,7 @@ import { Queries } from '../../../queries/queries';
 import { Query } from '../../../queries/query';
 import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
 import { InvocationType } from '../../../util.service';
-import { listConnectionStrings } from '../../../api/tenants/src/tenants.service';
+import { BillingReportOptions } from './billing/billingReportOptions';
 import { DocumentCategory, DocumentMetadata } from './documents/document';
 import { EditUrl, SignUrl } from './embedded/url';
 import { Onboarding } from './signature-requests/onboarding';
@@ -50,7 +51,6 @@ import { TemplateDraftResponse } from './template-draft/templateDraftResponse';
 import { TemplateMetadata } from './template-draft/templateMetadata';
 import { ICustomField, Role, TemplateRequest } from './template-draft/templateRequest';
 import { Template } from './template-list/templateListResponse';
-import { BillingReportOptions } from './billing/billingReportOptions';
 
 /**
  * Creates a template under the specified company.
@@ -663,11 +663,11 @@ async function saveEsignatureMetadata(
     }
 }
 
-export async function generateBillingReport(options: any | BillingReportOptions) {
+export async function generateBillingReport(options: any | BillingReportOptions): Promise<string> {
     console.info('esignatureService.generateBillingReport');
 
     // get all tenant IDs
-    const connectionStrings = await listConnectionStrings();
+    const connectionStrings = await tenantsService.listConnectionStrings();
     const tenantIDs = connectionStrings.Items.map((conn) => conn.TenantID);
     const tenantDomains = {};
     connectionStrings.Items.forEach((conn) => (tenantDomains[conn.TenantID] = conn.Domain));
@@ -700,7 +700,7 @@ export async function generateBillingReport(options: any | BillingReportOptions)
                         return result;
                     },
                     (err) => {
-                        tenantErrors.push({ tenantId: tenantId, domain: tenantDomains[tenantId], reason: err });
+                        tenantErrors.push({ tenantId, domain: tenantDomains[tenantId], reason: err });
                         return { error: true, reason: err };
                     },
                 );
