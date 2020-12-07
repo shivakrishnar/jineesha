@@ -31,7 +31,8 @@ declare @tmp table
 	SignatureStatusName nvarchar(max),
     SignatureStatusPriority int,
     SignatureStatusStepNumber int,
-	IsProcessing bit
+	IsProcessing bit,
+    IsHelloSignDocument bit
 )
 
 -- Restriction to prevent users with administrative privileges from viewing their own Private documentation
@@ -81,7 +82,11 @@ SignatureRequests as
 			IsProcessing = case
 				when d.SignatureStatusID = 1 and (select count(*) from dbo.FileMetadata where EsignatureMetadataID = d.ID) = 0 then 1
 				else 0
-			end
+			end,
+            IsHelloSignDocument = case
+                when d.FileMetadataID is null then 1
+                else 0
+            end
         from
             dbo.EsignatureMetadata d
             inner join EmployeeInfo e on d.EmployeeCode = e.EmployeeCode and d.CompanyID = e.CompanyID
@@ -117,7 +122,8 @@ LegacyDocuments as
 		UploadedBy = d.UploadByUsername,
         SignatureStatusName = (select Name from dbo.SignatureStatus where ID = 3),
         SignatureStatusPriority = (select Priority from dbo.SignatureStatus where ID = 3),
-        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3)
+        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3),
+        IsHelloSignDocument = 0
 	from
 		dbo.Document d
 		inner join EmployeeInfo e on d.EmployeeID = e.ID
@@ -144,7 +150,8 @@ LegacyDocuments as
 			UploadedBy = d.UploadByUsername,
 			SignatureStatusName = (select Name from dbo.SignatureStatus where ID = 3),
 			SignatureStatusPriority = (select Priority from dbo.SignatureStatus where ID = 3),
-        	SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3)
+        	SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3),
+            IsHelloSignDocument = 0
 		from
 			dbo.Document d
 			inner join EmployeeInfo e on d.EmployeeID = e.ID
@@ -173,7 +180,8 @@ LegacyDocumentPublishedToEmployee as
 		UploadedBy = d.UploadByUsername,
         SignatureStatusName = (select Name from dbo.SignatureStatus where ID = 3),
         SignatureStatusPriority = (select Priority from dbo.SignatureStatus where ID = 3),
-        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3)
+        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3),
+        IsHelloSignDocument = 0
 	from
 		dbo.Document d
 		inner join EmployeeInfo e on d.CompanyID = e.CompanyID
@@ -201,7 +209,8 @@ UploadedPrivateDocuments as
 		d.UploadedBy,
         SignatureStatusName = (select Name from dbo.SignatureStatus where ID = 3),
         SignatureStatusPriority = (select Priority from dbo.SignatureStatus where ID = 3),
-        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3)
+        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3),
+        IsHelloSignDocument = 0
 	from
 		dbo.FileMetadata d
 		inner join EmployeeInfo e on 
@@ -233,7 +242,8 @@ SignedDocuments as
 		d.UploadedBy,
 		SignatureStatusName = s.Name,
 		SignatureStatusPriority = s.Priority,
-        SignatureStatusStepNumber = s.StepNumber
+        SignatureStatusStepNumber = s.StepNumber,
+        IsHelloSignDocument = 0
 	from
 		dbo.FileMetadata d
 		inner join EmployeeInfo e on 
@@ -268,7 +278,8 @@ UploadedDocuments as
 		d.UploadedBy,
 		SignatureStatusName = (select Name from dbo.SignatureStatus where ID = 3),
         SignatureStatusPriority = (select Priority from dbo.SignatureStatus where ID = 3),
-        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3)
+        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3),
+        IsHelloSignDocument = 0
 	from
 		dbo.FileMetadata d
 		inner join EmployeeInfo e on 
@@ -301,7 +312,8 @@ NewDocumentPublishedToEmployee as
 		d.UploadedBy,
 		SignatureStatusName = (select Name from dbo.SignatureStatus where ID = 3),
 		SignatureStatusPriority = (select Priority from dbo.SignatureStatus where ID = 3),
-        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3)
+        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3),
+        IsHelloSignDocument = 0
 	from
 		dbo.FileMetadata d
 		inner join EmployeeInfo e on 
@@ -314,19 +326,19 @@ NewDocumentPublishedToEmployee as
 
 CollatedDocuments as
 (
-	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 0, IsEsignatureDocument = 1, IsSignedOrUploadedDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing from SignatureRequests
+	select ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 0, IsEsignatureDocument = 1, IsSignedOrUploadedDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing, IsHelloSignDocument from SignatureRequests
 	union
-    select cast(ID as nvarchar) as ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 1, IsEsignatureDocument = 0, IsSignedOrUploadedDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing = 0 from LegacyDocumentPublishedToEmployee
+    select cast(ID as nvarchar) as ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 1, IsEsignatureDocument = 0, IsSignedOrUploadedDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing = 0, IsHelloSignDocument from LegacyDocumentPublishedToEmployee
     union
-	select cast(ID as nvarchar) as ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 1, IsEsignatureDocument = 0, IsSignedOrUploadedDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing = 0 from LegacyDocuments
+	select cast(ID as nvarchar) as ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 1, IsEsignatureDocument = 0, IsSignedOrUploadedDocument = 0, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing = 0, IsHelloSignDocument from LegacyDocuments
 	union 
-	select cast(ID as nvarchar) as ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 0, IsEsignatureDocument = 0, IsSignedOrUploadedDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing = 0 from SignedDocuments
+	select cast(ID as nvarchar) as ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 0, IsEsignatureDocument = 0, IsSignedOrUploadedDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing = 0, IsHelloSignDocument from SignedDocuments
 	union
-	select cast(ID as nvarchar) as ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 0, IsEsignatureDocument = 0, IsSignedOrUploadedDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing = 0 from UploadedDocuments
+	select cast(ID as nvarchar) as ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 0, IsEsignatureDocument = 0, IsSignedOrUploadedDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing = 0, IsHelloSignDocument from UploadedDocuments
 	union
-	select cast(ID as nvarchar) as ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 0, IsEsignatureDocument = 0, IsSignedOrUploadedDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing = 0 from NewDocumentPublishedToEmployee
+	select cast(ID as nvarchar) as ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 0, IsEsignatureDocument = 0, IsSignedOrUploadedDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing = 0, IsHelloSignDocument from NewDocumentPublishedToEmployee
     union 
-    select cast(ID as nvarchar) as ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 0, IsEsignatureDocument = 0, IsSignedOrUploadedDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing = 0 from UploadedPrivateDocuments
+    select cast(ID as nvarchar) as ID, CompanyID, CompanyName, Title, Filename, Category, UploadDate, EsignDate, IsLegacyDocument = 0, IsEsignatureDocument = 0, IsSignedOrUploadedDocument = 1, IsPublishedToEmployee, IsPrivateDocument, EmployeeCode, EmployeeID, FirstName, LastName, UploadedBy, SignatureStatusName, SignatureStatusPriority, SignatureStatusStepNumber, IsProcessing = 0, IsHelloSignDocument from UploadedPrivateDocuments
 )
 
 insert into @tmp
@@ -364,7 +376,8 @@ select
     signatureStatusName = SignatureStatusName,
     signatureStatusPriority = SignatureStatusPriority,
     signatureStatusStepNumber = SignatureStatusStepNumber,
-	isProcessing = IsProcessing
+	isProcessing = IsProcessing,
+    isHelloSignDocument = IsHelloSignDocument
 from 
 	@tmp
 order by uploadDate desc

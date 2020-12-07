@@ -53,6 +53,7 @@ provider:
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
     tenantAdminCredentialsId: ${file(${self:custom.configFile}):tenantAdminCredentialsId}
     legacyClientCutOffDate: ${ssm:/hr/esignature/simplesign/legacyClientCutOffDate}
+    signaturePageFontUrl: ${file(${self:custom.configFile}):signaturePageFontUrl}
 
   iamRoleStatements:
     - Effect: Allow
@@ -357,6 +358,15 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents/{documentId}
             method: patch
+            cors:
+              origin: '*'
+
+  createSimpleSignDocument:
+    handler: esignature/src/handler.createSimpleSignDocument
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents
+            method: post
             cors:
               origin: '*'
 

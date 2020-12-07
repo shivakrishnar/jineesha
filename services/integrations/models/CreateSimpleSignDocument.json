@@ -1,0 +1,107 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Create Simple Sign Document Schema",
+    "$id": "CreateSimpleSignDocument",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "The unique identifier of the document.",
+            "type": ["string"]
+        },
+        "title": {
+            "description": "The title of the document.",
+            "type": ["string"]
+        },
+        "fileName": {
+            "description": "The name of the file associated with the document.",
+            "type": ["string", "null"]
+        },
+        "uploadDate": {
+            "description": "The date the document was uploaded to the system.",
+            "type": ["string"]
+        },
+        "esignDate": {
+            "description": "The date the document was e-signed.",
+            "type": ["string"]
+        },
+        "category": {
+            "description": "The category that the document belongs to.",
+            "type": ["string", "null"]
+        },
+        "isPrivate": {
+            "description": "Determines if the document is private to the employee.",
+            "type": ["boolean"]
+        },
+        "isPublishedToEmployee": {
+            "description": "Determines if the document is published to all employees.",
+            "type": ["boolean"]
+        },
+        "isOnboardingDocument": {
+            "description": "Determines if the document is an onboarding document.",
+            "type": ["boolean"]
+        },
+        "employeeId": {
+            "description": "The unique identifier for the employee.",
+            "type": ["number", "null", "string"]
+        },
+        "employeeCode": {
+            "description": "The code for the employee.",
+            "type": ["string"]
+        },
+        "employeeName": {
+            "description": "The name of the employee.",
+            "type": ["string"]
+        },
+        "companyId": {
+            "description": "The unique identifier for the company.",
+            "type": ["number", "string", "null"]
+        },
+        "companyName": {
+            "description": "The name of the company.",
+            "type": ["string"]
+        },
+        "isSignedDocument": {
+            "description": "Determines if the document was e-signed.",
+            "type": ["boolean"]
+        },
+        "uploadedBy": {
+            "description": "The name of the user that uploaded the document.",
+            "type": ["string"]
+        },
+        "isLegacyDocument": {
+            "description": "Determines if the document is a legacy document.",
+            "type": ["boolean"]
+        },
+        "isEsignatureDocument": {
+            "description": "Determines if the document is an e-signature document.",
+            "type": ["boolean"]
+        },
+        "isHelloSignDocument": {
+            "description": "Determines if the document is a HelloSign document.",
+            "type": ["boolean"]
+        },
+        "status": { "$ref": "SignatureStatus" }
+    },
+    "required": [
+        "id",
+        "title",
+        "fileName",
+        "uploadDate",
+        "esignDate",
+        "category",
+        "isPrivate",
+        "isPublishedToEmployee",
+        "isOnboardingDocument",
+        "employeeId",
+        "employeeCode",
+        "employeeName",
+        "companyId",
+        "companyName",
+        "isSignedDocument",
+        "uploadedBy",
+        "isLegacyDocument",
+        "isEsignatureDocument",
+        "isHelloSignDocument",
+        "status"
+    ]
+}

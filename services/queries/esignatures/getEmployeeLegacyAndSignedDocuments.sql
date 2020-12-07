@@ -31,7 +31,8 @@ declare @tmp table
     SignatureStatusName nvarchar(max),
     SignatureStatusPriority int,
     SignatureStatusStepNumber int,
-    IsProcessing bit
+    IsProcessing bit,
+    IsHelloSignDocument bit
 )
 
 ;with LegacyDocuments as
@@ -54,7 +55,8 @@ declare @tmp table
         UploadedBy = d.UploadbyUsername,
         SignatureStatusName = (select Name from dbo.SignatureStatus where ID = 3),
         SignatureStatusPriority = (select Priority from dbo.SignatureStatus where ID = 3),
-        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3)
+        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3),
+        IsHelloSignDocument = 0
     from
         dbo.Document d
         inner join dbo.Employee e on d.EmployeeID = e.ID
@@ -88,7 +90,11 @@ SignatureRequests as
             IsProcessing = case
 				when d.SignatureStatusID = 1 and (select count(*) from dbo.FileMetadata where EsignatureMetadataID = d.ID) = 0 then 1
 				else 0
-			end
+			end,
+            IsHelloSignDocument = case
+                when d.FileMetadataID is null then 1
+                else 0
+            end
         from
             dbo.EsignatureMetadata d
             left join dbo.Employee e on d.EmployeeCode = e.EmployeeCode and d.CompanyID = e.CompanyID
@@ -123,7 +129,8 @@ SignedDocuments as
         d.UploadedBy,
         SignatureStatusName = s.Name,
         SignatureStatusPriority = s.Priority,
-        SignatureStatusStepNumber = s.StepNumber
+        SignatureStatusStepNumber = s.StepNumber,
+        IsHelloSignDocument = 0
     from
         dbo.FileMetadata d
         inner join dbo.Employee e on
@@ -154,7 +161,8 @@ SignedDocuments as
         f.UploadedBy,
         SignatureStatusName = s.Name,
         SignatureStatusPriority = s.Priority,
-        SignatureStatusStepNumber = s.StepNumber
+        SignatureStatusStepNumber = s.StepNumber,
+        IsHelloSignDocument = 0
     from
         dbo.FileMetadata f
         inner join dbo.Company c on
@@ -186,7 +194,8 @@ UploadedDocuments as
         d.UploadedBy,
         SignatureStatusName = (select Name from dbo.SignatureStatus where ID = 3),
         SignatureStatusPriority = (select Priority from dbo.SignatureStatus where ID = 3),
-        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3)
+        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3),
+        IsHelloSignDocument = 0
     from
         dbo.FileMetadata d
         inner join dbo.Employee e on
@@ -215,7 +224,8 @@ UploadedDocuments as
         f.UploadedBy,
         SignatureStatusName = (select Name from dbo.SignatureStatus where ID = 3),
         SignatureStatusPriority = (select Priority from dbo.SignatureStatus where ID = 3),
-        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3)
+        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3),
+        IsHelloSignDocument = 0
     from
         dbo.FileMetadata f
         inner join dbo.Company c on
@@ -258,7 +268,8 @@ CollatedDocuments as
         SignatureStatusName,
         SignatureStatusPriority,
         SignatureStatusStepNumber,
-        IsProcessing = 0
+        IsProcessing = 0,
+        IsHelloSignDocument
     from
         LegacyDocuments
     union 
@@ -284,7 +295,8 @@ CollatedDocuments as
         SignatureStatusName,
         SignatureStatusPriority,
         SignatureStatusStepNumber,
-        IsProcessing
+        IsProcessing,
+        IsHelloSignDocument
     from
         SignatureRequests
     union 
@@ -310,7 +322,8 @@ CollatedDocuments as
         SignatureStatusName,
         SignatureStatusPriority,
         SignatureStatusStepNumber,
-        IsProcessing = 0
+        IsProcessing = 0,
+        IsHelloSignDocument
     from
         SignedDocuments
     union
@@ -336,7 +349,8 @@ CollatedDocuments as
         SignatureStatusName,
         SignatureStatusPriority,
         SignatureStatusStepNumber,
-        IsProcessing = 0
+        IsProcessing = 0,
+        IsHelloSignDocument
     from
         UploadedDocuments
 )
@@ -382,7 +396,8 @@ select
     signatureStatusName = SignatureStatusName,
     signatureStatusPriority = SignatureStatusPriority,
     signatureStatusStepNumber = SignatureStatusStepNumber,
-    isProcessing = IsProcessing
+    isProcessing = IsProcessing,
+    isHelloSignDocument = IsHelloSignDocument
 from 
     @tmp
 order by uploadDate desc

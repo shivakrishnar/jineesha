@@ -1,3 +1,4 @@
+import * as request from 'superagent';
 import * as utils from '../utils';
 
 const configs = utils.getConfig();
@@ -35,7 +36,7 @@ export function getValidBulkSimpleSignatureRequestObject(): any {
         message: 'This is a test request message',
         signatories: [
             {
-                employeeCode: '445',
+                employeeCode: configs.employeeCode,
                 role: 'OnboardingSignatory',
             },
         ],
@@ -87,4 +88,23 @@ export function getValidCompanyDocumentObject(): any {
         category: 'Integration test category',
         isPublishedToEmployee: false,
     };
+}
+
+export function createBatchSignRequest(baseUri: string, accessToken: string, isSimpleSign: boolean = false): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const url = `${baseUri}/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const document = isSimpleSign ? getValidBulkSimpleSignatureRequestObject() : getValidBulkSignatureRequestObject();
+        request
+            .post(url)
+            .send(document)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .end((error, response) => {
+                if (error) {
+                    reject(response.body);
+                } else {
+                    resolve(response.body);
+                }
+            });
+    });
 }

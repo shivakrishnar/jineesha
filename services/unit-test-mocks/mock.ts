@@ -1,10 +1,11 @@
 import * as employeeService from '../api/tenants/src/employee.service';
+import * as tenantsService from '../api/tenants/src/tenants.service';
 import * as configService from '../config.service';
+import * as errorService from '../errors/error.service';
 import * as paginationService from '../pagination/pagination.service';
 import * as hellosignService from '../remote-services/hellosign.service';
 import * as integrationsService from '../remote-services/integrations.service';
 import * as utilService from '../util.service';
-import * as errorService from '../errors/error.service';
 
 export const setup = () => {
     (configService as any).getSecretsAwsEndpoint = jest.fn(() => {
@@ -29,6 +30,14 @@ export const setup = () => {
 
     (configService as any).getFileBucketName = jest.fn(() => {
         return 'FileBucketName';
+    });
+
+    (configService as any).getSignaturePageFontUrl = jest.fn(() => {
+        return 'www.awesomefonts.com';
+    });
+
+    (configService as any).getLegacyClientCutOffDate = jest.fn(() => {
+        return '01/01/2020';
     });
 
     (utilService as any).getSecret = jest.fn((params: any) => {
@@ -117,5 +126,16 @@ export const setup = () => {
 
     (integrationsService as any).eSignatureApiDevModeOn = jest.fn((params: any) => {
         return true;
+    });
+
+    (tenantsService as any).listConnectionStrings = jest.fn((params: any) => {
+        return {
+            Items: [
+                {
+                    TenantID: '1234',
+                    Domain: 'Test',
+                },
+            ],
+        };
     });
 };

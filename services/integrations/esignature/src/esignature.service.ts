@@ -1,12 +1,20 @@
+// Note: there is a linting error here due to the fact that this package does not have a
+// default export. However, webpack will still compile correctly. Using the star import
+// method resolves this error but does not work when deployed because of an issue with the
+// package itself. Therefore, we ignore the linting error.
+import fontkit from '@pdf-lib/fontkit';
 import * as AWS from 'aws-sdk';
 import * as fs from 'fs';
 import Hashids from 'hashids';
 import * as hellosign from 'hellosign-sdk';
 import * as mime from 'mime-types';
+import * as moment from 'moment-timezone';
+import * as fetch from 'request-promise-native';
 import * as uuidV4 from 'uuid/v4';
 
 import * as pSettle from 'p-settle';
 import * as employeeService from '../../../api/tenants/src/employee.service';
+import * as tenantsService from '../../../api/tenants/src/tenants.service';
 import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import * as paginationService from '../../../pagination/pagination.service';
@@ -14,6 +22,7 @@ import * as hellosignService from '../../../remote-services/hellosign.service';
 import * as integrationsService from '../../../remote-services/integrations.service';
 import * as utilService from '../../../util.service';
 
+import { PDFDocument, rgb } from 'pdf-lib';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { EsignatureAction, IBillingEvent, IEsignatureEvent, NotificationEventType } from '../../../internal-api/notification/events';
@@ -23,7 +32,7 @@ import { Queries } from '../../../queries/queries';
 import { Query } from '../../../queries/query';
 import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
 import { InvocationType } from '../../../util.service';
-import { listConnectionStrings } from '../../../api/tenants/src/tenants.service';
+import { BillingReportOptions } from './billing/billingReportOptions';
 import { DocumentCategory, DocumentMetadata } from './documents/document';
 import { EditUrl, SignUrl } from './embedded/url';
 import { Onboarding } from './signature-requests/onboarding';
@@ -36,12 +45,12 @@ import {
     SignatureRequestResponseStatus,
     SignatureStatus,
     SignatureStatusID,
+    SignatureStatusStepNumber,
 } from './signature-requests/signatureRequestResponse';
 import { TemplateDraftResponse } from './template-draft/templateDraftResponse';
 import { TemplateMetadata } from './template-draft/templateMetadata';
 import { ICustomField, Role, TemplateRequest } from './template-draft/templateRequest';
 import { Template } from './template-list/templateListResponse';
-import { BillingReportOptions } from './billing/billingReportOptions';
 
 /**
  * Creates a template under the specified company.
@@ -654,11 +663,11 @@ async function saveEsignatureMetadata(
     }
 }
 
-export async function generateBillingReport(options: any | BillingReportOptions) {
+export async function generateBillingReport(options: any | BillingReportOptions): Promise<string> {
     console.info('esignatureService.generateBillingReport');
 
     // get all tenant IDs
-    const connectionStrings = await listConnectionStrings();
+    const connectionStrings = await tenantsService.listConnectionStrings();
     const tenantIDs = connectionStrings.Items.map((conn) => conn.TenantID);
     const tenantDomains = {};
     connectionStrings.Items.forEach((conn) => (tenantDomains[conn.TenantID] = conn.Domain));
@@ -691,7 +700,7 @@ export async function generateBillingReport(options: any | BillingReportOptions)
                         return result;
                     },
                     (err) => {
-                        tenantErrors.push({ tenantId: tenantId, domain: tenantDomains[tenantId], reason: err });
+                        tenantErrors.push({ tenantId, domain: tenantDomains[tenantId], reason: err });
                         return { error: true, reason: err };
                     },
                 );
@@ -760,10 +769,12 @@ export async function deleteOnboardingDocuments(tenantId: string, companyId: str
             });
         });
         const { signature_requests: signatureRequests } = await hsResponse;
-        if (signatureRequests.length == 0) return;
+        if (signatureRequests.length === 0) {
+            return;
+        }
 
         let requestIds: string;
-        if (signatureRequests.length == 1) {
+        if (signatureRequests.length === 1) {
             requestIds = signatureRequests[0].signature_request_id;
         } else {
             requestIds = signatureRequests.map((e) => e.signature_request_id).join(',');
@@ -911,14 +922,14 @@ async function saveSimpleEsignatureMetadata(
             signatureRequestResponses.push(
                 new SignatureRequestResponse({
                     id: signatureRequestId,
-                    title: '',
+                    title: esignatureResult.recordset[0].Title,
                     status: SignatureRequestResponseStatus.Pending,
                     signatures: [
                         {
                             id: '',
                             signer: new Signatory({
                                 emailAddress: employeeData[code] ? employeeData[code].emailAddress : '',
-                                name: '',
+                                name: employeeData[code] ? `${employeeData[code].firstName} ${employeeData[code].lastName}` : '',
                                 employeeCode: code,
                             }),
                         },
@@ -2316,7 +2327,32 @@ export async function getDocumentPreview(tenantId: string, id: string): Promise<
 
         // if id does not decode properly, assume it's a HelloSign document
         if (decoded.length === 0) {
-            return await getTemplateFiles(id);
+            const query = new ParameterizedQuery('getFileMetadataByEsignatureMetadataId', Queries.getFileMetadataByEsignatureMetadataId);
+            query.setParameter('@id', id);
+            const payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+            // Note: if there is no FileMetadata record associated with the EsignatureMetadata record,
+            // assume it is a HelloSign document.
+            if (result.recordset.length === 0) {
+                return await getTemplateFiles(id);
+            } else {
+                const key = result.recordset[0].Pointer;
+
+                const params = {
+                    Bucket: configService.getFileBucketName(),
+                    Key: key,
+                };
+                const url = s3Client.getSignedUrl('getObject', params);
+                // parse key to get file extension
+                const mimeType = key.split('.')[key.split('.').length - 1];
+        
+                return result ? { data: url, mimeType: `.${mimeType}` } : undefined; 
+            }
         }
 
         const [documentId, type] = decoded;
@@ -2423,6 +2459,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 signatureStatusPriority,
                 signatureStatusStepNumber,
                 isProcessing,
+                isHelloSignDocument,
             } = document;
             updatedDocuments.push({
                 id,
@@ -2442,6 +2479,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 uploadedBy,
                 isLegacyDocument,
                 isEsignatureDocument,
+                isHelloSignDocument,
                 status: {
                     name: signatureStatusName,
                     priority: signatureStatusPriority,
@@ -4089,6 +4127,341 @@ async function deleteEmployeeDocumentRecord(tenantId: string, docType: DocType, 
 
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Creates a specified document record under a company and uploads the file to S3
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {any} request: The company document request.
+ * @param {string} firstName: The first name of the invoking user.
+ * @param {string} lastName: The last name of the invoking user.
+ * @returns {any}: A Promise of a created company document
+ */
+export async function createSimpleSignDocument(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    requestBody: any,
+    ipAddress: string,
+): Promise<any> {
+    console.info('esignature.service.createSimpleSignDocument');
+
+    const { signatureRequestId, timeZone } = requestBody;
+    const tmpFileDir = `/tmp/${uuidV4()}`;
+    let fileName;
+
+    try {
+        // verify that the company and employee exists & get info
+        const [companyInfo, employeeInfo]: any[] = await Promise.all([
+            await utilService.validateCompany(tenantId, companyId),
+            await utilService.validateEmployee(tenantId, employeeId),
+        ]);
+
+        // retrieve pointer from database
+        const documentQuery = new ParameterizedQuery(
+            'getFileMetadataByEsignatureMetadataId',
+            Queries.getFileMetadataByEsignatureMetadataId,
+        );
+        documentQuery.setParameter('@id', signatureRequestId);
+        documentQuery.appendFilter(`e.CompanyID = ${companyId}`, true);
+        documentQuery.appendFilter(`e.EmployeeCode = '${employeeInfo.EmployeeCode}'`, true);
+        let payload = {
+            tenantId,
+            queryName: documentQuery.name,
+            query: documentQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const documentResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (documentResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Signature request with id ${signatureRequestId} not found`);
+        }
+
+        if (Number(documentResult.recordset[0].SignatureStatusID) === SignatureStatusID.Signed) {
+            throw errorService.getErrorResponse(70).setDeveloperMessage('This document has already been signed.');
+        }
+
+        // retrieve file from s3
+        const item = await s3Client
+            .getObject({
+                Bucket: configService.getFileBucketName(),
+                Key: documentResult.recordset[0].Pointer,
+            })
+            .promise();
+        fileName = item.Metadata.filename;
+
+        // Note: we must write the file to the tmp directory on the Lambda container in order to convert it to a pdf.
+        // The file is saved as the specified file name in the payload with a guid attached to it in order to
+        // prevent conflicts.
+        fs.mkdirSync(tmpFileDir);
+        fs.writeFileSync(`${tmpFileDir}/${fileName}`, item.Body.toString('base64'), 'base64');
+
+        // convert to pdf
+        // TODO: (MJ-7051) convert doc and docx to pdf
+        const extension = fileName.split('.').pop();
+        let pdfDoc;
+        if (extension === 'jpg') {
+            pdfDoc = await PDFDocument.create();
+            const imageBytes = fs.readFileSync(`${tmpFileDir}/${fileName}`);
+            const image = await pdfDoc.embedJpg(imageBytes);
+            const imagePage = pdfDoc.addPage([image.width, image.height]);
+            imagePage.drawImage(image);
+        } else if (extension === 'png') {
+            pdfDoc = await PDFDocument.create();
+            const imageBytes = fs.readFileSync(`${tmpFileDir}/${fileName}`);
+            const image = await pdfDoc.embedPng(imageBytes);
+            const imagePage = pdfDoc.addPage([image.width, image.height]);
+            imagePage.drawImage(image);
+        } else {
+            pdfDoc = await PDFDocument.load(fs.readFileSync(`${tmpFileDir}/${fileName}`));
+        }
+
+        // define signature page variables
+        enum FontSize {
+            Header = 16,
+            CompanyName = 14,
+            Normal = 12,
+        }
+        const gray800 = rgb(66 / 255, 66 / 255, 66 / 255);
+        const gray600 = rgb(117 / 255, 117 / 255, 117 / 255);
+        const gray300 = rgb(224 / 255, 224 / 255, 224 / 255);
+        const verticalMargin = 34;
+        const labelHorizontalMargin = 47;
+        const valueHorizontalMargin = 159;
+
+        const { FirstName: firstName, LastName: lastName, EmailAddress: emailAddress, EmployeeCode: employeeCode } = employeeInfo;
+        const { CompanyName: companyName } = companyInfo;
+        let employeeName = `${firstName} ${lastName}`;
+        employeeName = emailAddress ? `${employeeName} (${emailAddress})` : employeeName;
+        const adjustedTimeZone = !!moment.tz.zone(timeZone) ? timeZone : 'UTC';
+        const signDate = moment(new Date())
+            .tz(adjustedTimeZone)
+            .format('MMMM Do, YYYY h:mm A z');
+        const title = documentResult.recordset[0].Title;
+
+        // create signature page - page dimensions defined in UI mocks
+        const page = pdfDoc.addPage([612, 792]);
+        const { width, height } = page.getSize();
+
+        const fontResult = await fetch.get({
+            url: configService.getSignaturePageFontUrl(),
+            encoding: null, // tslint:disable-line:no-null-keyword
+        });
+        pdfDoc.registerFontkit(fontkit);
+        const customFont = await pdfDoc.embedFont(fontResult);
+
+        page.drawText(companyName, {
+            x: width - labelHorizontalMargin - customFont.widthOfTextAtSize(companyName, FontSize.CompanyName),
+            y: height - verticalMargin - customFont.heightAtSize(FontSize.CompanyName),
+            size: FontSize.CompanyName,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText('Signature Page', {
+            x: labelHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Header) - 76,
+            size: FontSize.Header,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText('Title', {
+            x: labelHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 130,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray600,
+        });
+        page.drawText('File name', {
+            x: labelHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 156,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray600,
+        });
+        page.drawText('Document ID', {
+            x: labelHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 182,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray600,
+        });
+        page.drawSvgPath('M 0,0 l 527,0', { x: 42, y: height - 232.25, borderColor: gray300 });
+        page.drawText('E-signed by', {
+            x: labelHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 250,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray600,
+        });
+        page.drawText(title, {
+            x: valueHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 130,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText(`${signatureRequestId}.pdf`, {
+            x: valueHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 156,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText(signatureRequestId, {
+            x: valueHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 182,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText(employeeName, {
+            x: valueHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 250,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText(signDate, {
+            x: valueHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 276,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText(`IP address: ${ipAddress}`, {
+            x: valueHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 302,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText(`Doc ID: ${signatureRequestId}`, {
+            x: width - labelHorizontalMargin - customFont.widthOfTextAtSize(`Doc ID: ${signatureRequestId}`, FontSize.Normal),
+            y: verticalMargin,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray600,
+        });
+
+        const pdfBytes = await pdfDoc.save();
+
+        // upload to s3
+        const newKey = `${tenantId}/${companyId}/${employeeId}/${signatureRequestId}.pdf`;
+        await s3Client
+            .upload({
+                Bucket: configService.getFileBucketName(),
+                Key: newKey,
+                Body: Buffer.from(pdfBytes),
+                Metadata: {
+                    fileName: `${signatureRequestId}.pdf`,
+                },
+                ContentEncoding: 'base64',
+                ContentType: 'application/pdf',
+            })
+            .promise()
+            .catch((e) => {
+                throw new Error(e);
+            });
+
+        // upload to database
+        const { Title, Category } = documentResult.recordset[0];
+        const uploadDate = new Date().toISOString();
+        const fileMetadataQuery = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
+        fileMetadataQuery.setParameter('@companyId', companyId);
+        fileMetadataQuery.setStringParameter('@employeeCode', employeeCode);
+        fileMetadataQuery.setParameter('@title', Title);
+        fileMetadataQuery.setStringParameter('@category', Category);
+        fileMetadataQuery.setParameter('@uploadDate', uploadDate);
+        fileMetadataQuery.setParameter('@pointer', newKey);
+        fileMetadataQuery.setStringParameter('@uploadedBy', `${firstName} ${lastName}`);
+        fileMetadataQuery.setParameter('@isPublishedToEmployee', '1');
+        fileMetadataQuery.setParameter('@esignatureMetadataId', signatureRequestId);
+
+        payload = {
+            tenantId,
+            queryName: fileMetadataQuery.name,
+            query: fileMetadataQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const fileMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        const updateEsignatureMetadataQuery = new ParameterizedQuery('updateEsignatureMetadataById', Queries.updateEsignatureMetadataById);
+        updateEsignatureMetadataQuery.setParameter('@signatureStatusId', SignatureStatusID.Signed);
+        updateEsignatureMetadataQuery.setParameter('@fileName', `${signatureRequestId}.pdf`);
+        updateEsignatureMetadataQuery.setParameter('@fileMetadataId', fileMetadataResult.recordset[0].ID);
+        updateEsignatureMetadataQuery.setParameter('@id', signatureRequestId);
+        const updateEsignatureMetadataPayload = {
+            tenantId,
+            queryName: updateEsignatureMetadataQuery.name,
+            query: updateEsignatureMetadataQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const signatureStatusQuery = new ParameterizedQuery('getSignatureStatusByStepNumber', Queries.getSignatureStatusByStepNumber);
+        signatureStatusQuery.setParameter('@stepNumber', SignatureStatusStepNumber.Signed);
+        const signatureStatusPayload = {
+            tenantId,
+            queryName: signatureStatusQuery.name,
+            query: signatureStatusQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const [signatureStatusResult]: any[] = await Promise.all([
+            await utilService.invokeInternalService('queryExecutor', signatureStatusPayload, InvocationType.RequestResponse),
+            await utilService.invokeInternalService('queryExecutor', updateEsignatureMetadataPayload, InvocationType.RequestResponse),
+        ]);
+
+        const { Name: name, Priority: priority, StepNumber: stepNumber } = signatureStatusResult.recordset[0];
+
+        const response = {
+            id: signatureRequestId,
+            title: Title,
+            fileName: `${signatureRequestId}.pdf`,
+            uploadDate,
+            esignDate: uploadDate,
+            category: Category,
+            isPrivate: false,
+            isPublishedToEmployee: true,
+            isOnboardingDocument: false,
+            employeeId,
+            employeeCode,
+            employeeName: `${firstName} ${lastName}`,
+            companyId,
+            companyName,
+            isSignedDocument: true,
+            uploadedBy: `${firstName} ${lastName}`,
+            isLegacyDocument: false,
+            isEsignatureDocument: false,
+            isHelloSignDocument: false,
+            status: {
+                name,
+                priority,
+                stepNumber,
+                isProcessing: false,
+            },
+        };
+
+        return response;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    } finally {
+        await fs.unlink(`${tmpFileDir}/${fileName}`, (e) => {
+            if (e) {
+                console.log(`Unable to delete temp file: ${fileName}. Reason: ${JSON.stringify(e)}`);
+            }
+        });
+        fs.rmdir(tmpFileDir, (e) => {
+            if (e) {
+                console.log(`Unable to delete temp directory: ${tmpFileDir}. Reason: ${JSON.stringify(e)}`);
+            }
+        });
     }
 }
 

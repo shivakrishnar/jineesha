@@ -6,6 +6,7 @@
     "ssoAccountId": "19ec977c-7472-43b8-a13a-1dbd82ce47b3",
     "companyId": 600351,
     "employeeId": 23312,
+    "employeeCode": "2",
     "user": {
         "username": "direct-deposit-user-staging@sharklasers.com",
         "password": "Demo123!!!"

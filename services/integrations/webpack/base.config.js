@@ -31,8 +31,8 @@ module.exports = {
                 use: [{ loader: 'ts-loader' }],
             },
             {
-                test: /\.json$/,
-                use: [{ loader: 'json-loader' }],
+                test: /\.(png|woff|woff2|eot|ttf|svg)$/,
+                use: [{ loader: 'url-loader?limit=100000' }],
             },
         ],
     },
