@@ -1,6 +1,10 @@
 select
-    *
+    f.*, e.Type
 from
-    dbo.FileMetadata
+    dbo.FileMetadata f
+join
+    dbo.EsignatureMetadata e
+on
+    e.ID = f.EsignatureMetadataID
 where
-    ID = @id
+    f.ID = @id

@@ -2350,8 +2350,8 @@ export async function getDocumentPreview(tenantId: string, id: string): Promise<
                 const url = s3Client.getSignedUrl('getObject', params);
                 // parse key to get file extension
                 const mimeType = key.split('.')[key.split('.').length - 1];
-        
-                return result ? { data: url, mimeType: `.${mimeType}` } : undefined; 
+
+                return result ? { data: url, mimeType: `.${mimeType}` } : undefined;
             }
         }
 
@@ -3634,6 +3634,7 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
             Pointer: oldPointer,
             IsPublishedToEmployee: oldIsPublishedToEmployee,
             UploadDate: oldUploadDate,
+            Type: type,
         } = fileMetadataResult.recordset[0];
         const oldExtension = oldPointer.split('.').pop();
         const oldFileName = oldPointer.split('/').pop();
@@ -3710,7 +3711,7 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
             fileName: newFileName || oldFileName,
             extension: newExtension || oldExtension,
             uploadDate: oldUploadDate,
-            isEsignatureDocument: false,
+            isEsignatureDocument: type != EsignatureMetadataType.NoSignature,
             category: category !== undefined ? category : oldCategory,
             isPublishedToEmployee: isPublishedToEmployee !== undefined ? isPublishedToEmployee : oldIsPublishedToEmployee,
         };
