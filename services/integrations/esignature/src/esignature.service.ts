@@ -3610,7 +3610,7 @@ async function updateEmployeeLegacyDocument(tenantId: string, employeeId: string
 async function updateS3Document(tenantId: string, companyId: string, documentId: number, request: any): Promise<any> {
     console.info('esignature.service.updateS3Document');
 
-    const { fileObject, title, category, isPublishedToEmployee } = request;
+    const { fileObject, title, category, isPublishedToEmployee, isOnboardingDocument } = request;
 
     try {
         // get file metadata / make sure it exists in the database
@@ -3633,6 +3633,7 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
             Category: oldCategory,
             Pointer: oldPointer,
             IsPublishedToEmployee: oldIsPublishedToEmployee,
+            isOnboardingDocument: oldIsOnboardingDocument,
             UploadDate: oldUploadDate,
             Type: type,
         } = fileMetadataResult.recordset[0];
@@ -3684,10 +3685,14 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
                 });
         }
 
-        // update record in database
+        // update records in database
         let published = oldIsPublishedToEmployee ? '1' : '0';
         if (isPublishedToEmployee !== undefined) {
             published = isPublishedToEmployee ? '1' : '0';
+        }
+        let onboarding = oldIsOnboardingDocument ? '1' : '0';
+        if (isOnboardingDocument !== undefined) {
+            onboarding = isOnboardingDocument ? '1' : '0';
         }
         query = new ParameterizedQuery('UpdateFileMetadataById', Queries.updateFileMetadataById);
         query.setParameter('@id', documentId);
@@ -3695,6 +3700,13 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
         query.setParameter('@category', category !== undefined ? `'${category}'` : `'${oldCategory}'`);
         query.setParameter('@pointer', (newKey && newKey.replace(/'/g, "''")) || oldPointer);
         query.setParameter('@isPublishedToEmployee', published);
+
+        const onboardingQuery = new ParameterizedQuery('UpdateOnboardingStatusForEsignatureMetadata', Queries.updateOnboardingStatusForEsignatureMetadata)
+        onboardingQuery.setParameter('@id', documentId);
+        onboardingQuery.setParameter('@isOnboardingDocument', onboarding);
+        
+        query.combineQueries(onboardingQuery, true);
+
         payload = {
             tenantId,
             queryName: query.name,
@@ -3702,7 +3714,7 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
             queryType: QueryType.Simple,
         } as DatabaseEvent;
         await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-
+        
         const encodedId = await encodeId(documentId, DocType.S3Document);
 
         const response = {
@@ -3711,9 +3723,10 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
             fileName: newFileName || oldFileName,
             extension: newExtension || oldExtension,
             uploadDate: oldUploadDate,
-            isEsignatureDocument: type != EsignatureMetadataType.NoSignature,
+            isEsignatureDocument: type !== EsignatureMetadataType.NoSignature,
             category: category !== undefined ? category : oldCategory,
             isPublishedToEmployee: isPublishedToEmployee !== undefined ? isPublishedToEmployee : oldIsPublishedToEmployee,
+            isOnboardingDocument: isOnboardingDocument !== undefined ? isOnboardingDocument : oldIsOnboardingDocument,
         };
 
         return response;
