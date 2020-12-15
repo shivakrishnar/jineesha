@@ -51,6 +51,7 @@ import { TemplateDraftResponse } from './template-draft/templateDraftResponse';
 import { TemplateMetadata } from './template-draft/templateMetadata';
 import { ICustomField, Role, TemplateRequest } from './template-draft/templateRequest';
 import { Template } from './template-list/templateListResponse';
+import { convertTo } from '@shelf/aws-lambda-libreoffice';
 
 /**
  * Creates a template under the specified company.
@@ -2350,8 +2351,8 @@ export async function getDocumentPreview(tenantId: string, id: string): Promise<
                 const url = s3Client.getSignedUrl('getObject', params);
                 // parse key to get file extension
                 const mimeType = key.split('.')[key.split('.').length - 1];
-        
-                return result ? { data: url, mimeType: `.${mimeType}` } : undefined; 
+
+                return result ? { data: url, mimeType: `.${mimeType}` } : undefined;
             }
         }
 
@@ -4149,7 +4150,8 @@ export async function createSimpleSignDocument(
     console.info('esignature.service.createSimpleSignDocument');
 
     const { signatureRequestId, timeZone } = requestBody;
-    const tmpFileDir = `/tmp/${uuidV4()}`;
+    const fileDir = uuidV4();
+    const tmpFileDir = `/tmp/${fileDir}`;
     let fileName;
 
     try {
@@ -4214,6 +4216,9 @@ export async function createSimpleSignDocument(
             const image = await pdfDoc.embedPng(imageBytes);
             const imagePage = pdfDoc.addPage([image.width, image.height]);
             imagePage.drawImage(image);
+        } else if (extension === 'docx' || extension === 'doc') {
+            const pdfDocPath = await convertTo(`${fileDir}/${fileName}`, 'pdf');
+            pdfDoc = await PDFDocument.load(fs.readFileSync(pdfDocPath));
         } else {
             pdfDoc = await PDFDocument.load(fs.readFileSync(`${tmpFileDir}/${fileName}`));
         }

@@ -363,12 +363,15 @@ functions:
 
   createSimpleSignDocument:
     handler: esignature/src/handler.createSimpleSignDocument
+    memorySize: 2048
     events:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents
             method: post
             cors:
               origin: '*'
+    layers:
+        - {Ref: LibreofficeLambdaLayer}
 
   deleteCompanyDocument:
     handler: esignature/src/handler.deleteCompanyDocument
@@ -396,6 +399,10 @@ functions:
             method: delete
             cors:
               origin: '*'
+
+layers:
+  libreoffice:
+    path: layers/libreoffice
 
 resources:
   Resources:
