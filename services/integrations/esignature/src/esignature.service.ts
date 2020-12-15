@@ -2450,6 +2450,89 @@ export async function listEmployeeDocuments(
  * @param {string} id: The unique identifer for the specified document
  * @returns {Promise<any>}: A Promise of a URL or file
  */
+export async function getOnboardingDocumentPreview(tenantId: string, id: string, requestBody: any): Promise<any> {
+    console.info('esignatureService.getDocumentPreview');
+
+    const { onboardingKey } = requestBody;
+
+    try {
+        const decoded = await decodeId(id);
+
+        const taskListQuery = new ParameterizedQuery('getOnboardingByKey', Queries.getOnboardingByKey);
+        taskListQuery.setParameter('@onboardingKey', onboardingKey);
+        let payload = {
+            tenantId,
+            queryName: taskListQuery.name,
+            query: taskListQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const taskListResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (taskListResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`No onboarding found with key ${onboardingKey}`);
+        }
+        if (!taskListResult.recordset[0].IsOn) {
+            throw errorService.getErrorResponse(70).setDeveloperMessage('The Company Documents section is not active on this task list');
+        }
+
+        // if id does not decode properly, assume it's a NoSignature document
+        if (decoded.length === 0) {
+            const fileMetadataQuery = new ParameterizedQuery('getFileMetadataByEsignatureMetadataId', Queries.getFileMetadataByEsignatureMetadataId);
+            fileMetadataQuery.setParameter('@id', id);
+            payload = {
+                tenantId,
+                queryName: fileMetadataQuery.name,
+                query: fileMetadataQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            const fileMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+            if (fileMetadataResult.recordset.length === 0) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(`Document with id ${id} not found`);
+            }
+
+            const key = fileMetadataResult.recordset[0].Pointer;
+
+            const params = {
+                Bucket: configService.getFileBucketName(),
+                Key: key,
+            };
+            const url = s3Client.getSignedUrl('getObject', params);
+            // parse key to get file extension
+            const mimeType = key.split('.')[key.split('.').length - 1];
+    
+            return { data: url, mimeType: `.${mimeType}` }; 
+        }
+
+        const [documentId] = decoded;
+
+        if (!documentId) {
+            throw errorService.getErrorResponse(30).setDeveloperMessage(`Invalid document ID supplied: ${id}`);
+        }
+
+        return await getLegacyDocument(tenantId, documentId);
+    } catch (error) {
+        if (error.message) {
+            if (error.message.includes('Not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Generates a document preview for a specified signed document under a tenant
+ * @param {string} tenantId: The unique identifier for the tenant
+ * @param {string} id: The unique identifer for the specified document
+ * @returns {Promise<any>}: A Promise of a URL or file
+ */
 export async function getDocumentPreview(tenantId: string, id: string): Promise<any> {
     console.info('esignatureService.getDocumentPreview');
 

@@ -400,6 +400,15 @@ functions:
             cors:
               origin: '*'
 
+  getOnboardingDocumentPreview:
+    handler: esignature/src/handler.getOnboardingDocumentPreview
+    events:
+        - http:
+            path: /tenants/{tenantId}/documents/{documentId}/onboarding-preview
+            method: post
+            cors:
+              origin: '*'
+
 layers:
   libreoffice:
     path: layers/libreoffice

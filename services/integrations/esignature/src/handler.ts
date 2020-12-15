@@ -289,6 +289,12 @@ const roleQueryParameterSchema = Yup.object().shape({
     role: Yup.string().oneOf(['manager'], "The role query parameter must be one of the following values: ['manager']"),
 });
 
+const onboardingPreviewValidationSchema = {
+    onboardingKey: { required: true, type: String },
+};
+const onboardingPreviewSchema = Yup.object().shape({
+    onboardingKey: Yup.string().required(),
+});
 /**
  * Creates a new template of a document to be e-signed
  */
@@ -885,6 +891,24 @@ export const listEmployeeDocuments = utilService.gatewayEventHandlerV2(async ({ 
         includePrivateDocs,
         securityContext.principal.email,
     );
+});
+
+export const getOnboardingDocumentPreview = utilService.gatewayEventHandlerV2({
+    allowAnonymous: true,
+    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.getOnboardingDocumentPreview');
+
+        utilService.validateAndThrow(event.pathParameters, tenantResourceUriSchema);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, onboardingPreviewValidationSchema);
+        utilService.checkAdditionalProperties(onboardingPreviewValidationSchema, requestBody, 'Get Onboarding Document Preview');
+        await utilService.validateRequestBody(onboardingPreviewSchema, requestBody);
+
+        const { tenantId, documentId } = event.pathParameters;
+
+        return await esignatureService.getOnboardingDocumentPreview(tenantId, documentId, requestBody);
+    },
 });
 
 /**
