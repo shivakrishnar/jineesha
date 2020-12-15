@@ -2533,6 +2533,130 @@ export async function getOnboardingDocumentPreview(tenantId: string, id: string,
  * @param {string} id: The unique identifer for the specified document
  * @returns {Promise<any>}: A Promise of a URL or file
  */
+export async function saveOnboardingDocuments(tenantId: string, companyId: string, employeeId: string, onboardingKey: string, requestBody: any): Promise<void> {
+    console.info('esignatureService.saveOnboardingDocuments');
+
+    const { taskListId } = requestBody;
+
+    try {
+        const taskListQuery = new ParameterizedQuery('GetTaskListDocuments', Queries.getTaskListDocuments);
+        taskListQuery.setParameter('@companyId', companyId);
+        taskListQuery.setParameter('@taskListId', taskListId);
+        const taskListPayload = {
+            tenantId,
+            queryName: taskListQuery.name,
+            query: taskListQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const onboardingQuery = new ParameterizedQuery('GetOnboardingByEmployeeIDAndKey', Queries.getOnboardingByEmployeeIDAndKey);
+        onboardingQuery.setParameter('@onboardingKey', onboardingKey);
+        onboardingQuery.setParameter('@employeeId', employeeId);
+        const onboardingPayload = {
+            tenantId,
+            queryName: onboardingQuery.name,
+            query: onboardingQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const [employeeInfo, taskListResult, onboardingResult]: any = await Promise.all([
+            utilService.validateEmployee(tenantId, employeeId),
+            utilService.invokeInternalService('queryExecutor', taskListPayload, InvocationType.RequestResponse),
+            utilService.invokeInternalService('queryExecutor', onboardingPayload, InvocationType.RequestResponse),
+            utilService.validateCompany(tenantId, companyId),
+        ]);
+
+        if (onboardingResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`No onboarding found with key ${onboardingKey} for the specified employee.`);
+        }
+
+        if (taskListResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`No onboarding docs found with onboarding key ${onboardingKey}`);
+        }
+
+        const noSignDocs = taskListResult.recordsets[1].filter((doc) => doc.Type === 'NoSignature');
+
+        const invocations: Array<Promise<any>> = [];
+        for (const doc of noSignDocs) {
+            const combine = async () => {
+                const id = uuidV4();
+                const uploadDate = new Date().toISOString();
+                const pointer = `${tenantId}/${companyId}/${employeeId}/${doc.Filename}`;
+                const esignatureQuery = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
+                esignatureQuery.setParameter('@id', id);
+                esignatureQuery.setParameter('@companyId', companyId);
+                esignatureQuery.setParameter('@type', EsignatureMetadataType.NoSignature);
+                esignatureQuery.setParameter('@uploadDate', uploadDate);
+                esignatureQuery.setParameter('@uploadedBy', 'NULL');
+                esignatureQuery.setStringParameter('@title', `'${doc.Title}'`);
+                esignatureQuery.setStringParameter('@fileName', `'${doc.Filename}'`);
+                esignatureQuery.setStringParameter('@category', 'onboarding');
+                esignatureQuery.setParameter('@employeeCode', employeeInfo.EmployeeCode);
+                esignatureQuery.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
+                esignatureQuery.setParameter('@isOnboardingDocument', '0') 
+
+                let payload = {
+                    tenantId,
+                    queryName: esignatureQuery.name,
+                    query: esignatureQuery.value,
+                    queryType: QueryType.Simple,
+                } as DatabaseEvent;
+                await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+                const fileMetadataQuery = new ParameterizedQuery('CreateFileMetadata', Queries.createFileMetadata);
+                fileMetadataQuery.setParameter('@companyId', companyId);
+                fileMetadataQuery.setParameter('@employeeCode', employeeInfo.EmployeeCode);
+                fileMetadataQuery.setStringParameter('@title', doc.Title);
+                fileMetadataQuery.setStringParameter('@category', 'onboarding');
+                fileMetadataQuery.setParameter('@uploadDate', uploadDate);
+                fileMetadataQuery.setParameter('@pointer', pointer);
+                fileMetadataQuery.setParameter('@uploadedBy', 'NULL');
+                fileMetadataQuery.setParameter('@isPublishedToEmployee', '1');
+                fileMetadataQuery.setParameter('@esignatureMetadataId', id);
+
+                payload = {
+                    tenantId,
+                    queryName: fileMetadataQuery.name,
+                    query: fileMetadataQuery.value,
+                    queryType: QueryType.Simple,
+                } as DatabaseEvent;
+                await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+                const params = {
+                    Bucket: configService.getFileBucketName(),
+                    CopySource: `${configService.getFileBucketName()}/${doc.Pointer}`,
+                    Key: pointer,
+                };
+                await s3Client.copyObject(params).promise();
+            };
+            invocations.push(combine());
+        };
+
+        const creations = await pSettle(invocations);
+        creations.forEach((apiInvocation, index) => {
+            if (apiInvocation && apiInvocation.isRejected) {
+                console.log(apiInvocation.reason);
+                throw errorService.getErrorResponse(0).setDeveloperMessage(String(apiInvocation.reason));
+            }
+        });
+
+    } catch (error) {
+        console.error(error);
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Generates a document preview for a specified signed document under a tenant
+ * @param {string} tenantId: The unique identifier for the tenant
+ * @param {string} id: The unique identifer for the specified document
+ * @returns {Promise<any>}: A Promise of a URL or file
+ */
 export async function getDocumentPreview(tenantId: string, id: string): Promise<any> {
     console.info('esignatureService.getDocumentPreview');
 
