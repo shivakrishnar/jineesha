@@ -38,7 +38,7 @@ export const originalDocsTaskListDBResponse = {
             {
                 ID: 4,
                 Filename: '123456',
-                Type: 'Template'
+                Type: 'Template',
             },
         ],
     ],
@@ -80,7 +80,7 @@ export const hellosignDocsTaskListDBResponse = {
                 Filename: 'test.pdf',
                 Title: 'Title',
                 Description: 'Description',
-                Type: 'SimpleSignatureRequest'
+                Type: 'SimpleSignatureRequest',
             },
         ],
     ],
@@ -413,7 +413,7 @@ export const documentFileMetadataDBResponse = {
     recordset: [
         {
             ID: 1,
-            Title: 'test'
+            Title: 'test',
         },
     ],
     output: {},
@@ -464,6 +464,8 @@ export const updateCompanyDocumentRequest = {
     title: 'Title',
     category: 'other',
     isPublishedToEmployee: false,
+    isEsignatureDocument: true,
+    isOnboardingDocument: true,
 };
 
 export const updateNonLegacyCompanyDocumentResponse = {
@@ -471,9 +473,10 @@ export const updateNonLegacyCompanyDocumentResponse = {
     title: 'Title',
     fileName: 'test.png',
     extension: 'png',
-    isEsignatureDocument: false,
+    isEsignatureDocument: true,
     category: 'other',
     isPublishedToEmployee: false,
+    isOnboardingDocument: true,
 };
 
 export const updateLegacyCompanyDocumentResponse = {

@@ -255,11 +255,13 @@ const updateCompanyDocumentValidationSchema = {
     ...updateDocumentValidationSchema,
     category: { required: false, type: String },
     isPublishedToEmployee: { required: false, type: Boolean },
+    isOnboardingDocument: { required: false, type: Boolean },
 };
 const updateCompanyDocumentSchema = Yup.object().shape({
     ...updateDocumentSchema,
     category: Yup.string(),
     isPublishedToEmployee: Yup.bool(),
+    isOnboardingDocument: Yup.bool(),
 });
 const updateEmployeeDocumentValidationSchema = {
     title: { required: false, type: String },
