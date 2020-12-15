@@ -22,6 +22,7 @@ import * as hellosignService from '../../../remote-services/hellosign.service';
 import * as integrationsService from '../../../remote-services/integrations.service';
 import * as utilService from '../../../util.service';
 
+import { convertTo } from '@shelf/aws-lambda-libreoffice';
 import { PDFDocument, rgb } from 'pdf-lib';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
@@ -51,7 +52,6 @@ import { TemplateDraftResponse } from './template-draft/templateDraftResponse';
 import { TemplateMetadata } from './template-draft/templateMetadata';
 import { ICustomField, Role, TemplateRequest } from './template-draft/templateRequest';
 import { Template } from './template-list/templateListResponse';
-import { convertTo } from '@shelf/aws-lambda-libreoffice';
 
 /**
  * Creates a template under the specified company.
@@ -284,6 +284,7 @@ export async function createBatchSignatureRequest(
             pathParameters,
             request.signatories.map((req) => req.employeeCode),
             request.templateId,
+            true,
             invokerEmail,
             token,
         );
@@ -441,6 +442,8 @@ export async function createBatchHSSignatureRequest(
                             id: requestId,
                             title: signatureRequest.title,
                             status: SignatureRequestResponseStatus.Pending,
+                            type: EsignatureMetadataType.SignatureRequest,
+                            isHelloSignDocument: true,
                             signatures,
                         }),
                     );
@@ -653,6 +656,8 @@ async function saveEsignatureMetadata(
             title: signatureRequest.title,
             status: SignatureRequestResponseStatus.Pending,
             signatures,
+            type: EsignatureMetadataType.SignatureRequest,
+            isHelloSignDocument: true,
         });
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -810,8 +815,11 @@ async function saveSimpleEsignatureMetadata(
     pathParameters: any,
     employeeCodes: string[],
     docId: string,
-    invokerEmail: string,
-    token: string,
+    sendEmail: boolean = false,
+    invokerEmail?: string,
+    token?: string,
+    isOnboardingDocument: boolean = false,
+    onboardingData?: any,
 ): Promise<SignatureRequestResponse[]> {
     console.info('esignature.service.saveSimpleEsignatureMetadata');
     try {
@@ -819,7 +827,6 @@ async function saveSimpleEsignatureMetadata(
         const sendToAllEmployees = employeeCodes[0] === 'all';
         const [documentId] = await decodeId(docId);
 
-        console.log(documentId);
         if (!documentId) {
             throw errorService.getErrorResponse(30).setDeveloperMessage(`Provided template id ${docId} is not valid.`);
         }
@@ -846,7 +853,15 @@ async function saveSimpleEsignatureMetadata(
             throw errorService.getErrorResponse(50).setDeveloperMessage(`Provided document ${docId} was not found.`);
         }
 
-        if (!sendToAllEmployees) {
+        if (isOnboardingDocument) {
+            const ee = {
+                firstName: onboardingData.firstName,
+                lastName: onboardingData.lastName,
+                employeeCode: employeeCodes[0],
+                emailAddress: onboardingData.emailAddress,
+            };
+            employeeData[employeeCodes[0]] = ee;
+        } else if (!sendToAllEmployees) {
             await checkEmployeesExistenceByCodes(tenantId, companyId, employeeCodes).then((records) => {
                 records.forEach((record) => {
                     const ee = {
@@ -925,6 +940,8 @@ async function saveSimpleEsignatureMetadata(
                     id: signatureRequestId,
                     title: esignatureResult.recordset[0].Title,
                     status: SignatureRequestResponseStatus.Pending,
+                    type: EsignatureMetadataType.SignatureRequest,
+                    isHelloSignDocument: false,
                     signatures: [
                         {
                             id: '',
@@ -947,31 +964,33 @@ async function saveSimpleEsignatureMetadata(
         } as DatabaseEvent;
         utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
-        // send email
-        const signatureRequestsWithEmailAddresses = signatureRequestResponses.filter((e) => !!e.signatures[0].signer.emailAddress);
-        utilService.sendEventNotification({
-            urlParameters: pathParameters,
-            invokerEmail,
-            type: NotificationEventType.EsignatureEvent,
-            actions: [EsignatureAction.SignatureRequestSubmitted],
-            accessToken: token.replace(/Bearer /i, ''),
-            metadata: {
-                signatureRequests: signatureRequestsWithEmailAddresses,
-            },
-        } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
-        if (employeesWithoutEmailAddresses.length > 0) {
-            // Note: this is currently throwing a 422, which is probably not the most
-            // accurate status code for this scenario. Consider using a 207 here.
-            throw errorService
-                .getErrorResponse(70)
-                .setDeveloperMessage('Some employees do not have email addresses.')
-                .setMoreInfo(
-                    JSON.stringify({
-                        employees: JSON.stringify(employeesWithoutEmailAddresses),
-                        successes: signatureRequestsWithEmailAddresses.length,
-                        failures: employeesWithoutEmailAddresses.length,
-                    }),
-                );
+        if (sendEmail) {
+            // send email
+            const signatureRequestsWithEmailAddresses = signatureRequestResponses.filter((e) => !!e.signatures[0].signer.emailAddress);
+            utilService.sendEventNotification({
+                urlParameters: pathParameters,
+                invokerEmail,
+                type: NotificationEventType.EsignatureEvent,
+                actions: [EsignatureAction.SignatureRequestSubmitted],
+                accessToken: token.replace(/Bearer /i, ''),
+                metadata: {
+                    signatureRequests: signatureRequestsWithEmailAddresses,
+                },
+            } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
+            if (employeesWithoutEmailAddresses.length > 0) {
+                // Note: this is currently throwing a 422, which is probably not the most
+                // accurate status code for this scenario. Consider using a 207 here.
+                throw errorService
+                    .getErrorResponse(70)
+                    .setDeveloperMessage('Some employees do not have email addresses.')
+                    .setMoreInfo(
+                        JSON.stringify({
+                            employees: JSON.stringify(employeesWithoutEmailAddresses),
+                            successes: signatureRequestsWithEmailAddresses.length,
+                            failures: employeesWithoutEmailAddresses.length,
+                        }),
+                    );
+            }
         }
 
         return signatureRequestResponses;
@@ -1286,6 +1305,7 @@ export async function listDocuments(
     path: string,
     useMaxLimit: boolean,
     configuration: EsignatureConfiguration,
+    returnFileMetadataId: boolean = false,
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listDocuments');
 
@@ -1377,6 +1397,7 @@ export async function listDocuments(
                 title: entry.Title,
                 description: entry.Description,
                 type: entry.Type,
+                fileMetadataId: entry.FileMetadataID
             };
         });
 
@@ -1424,12 +1445,27 @@ export async function listDocuments(
                         unfoundDocuments.push(doc);
                     }
                 }
+            } else if (!doc.type) {
+                // encode ids for legacy documents
+                const id = await encodeId(doc.id, DocType.LegacyDocument);
+                doc.id = id;
+            }
+            if (doc.fileMetadataId) {
+                const fileMetadataId = await encodeId(doc.fileMetadataId, DocType.EsignatureDocument);
+                doc.fileMetadataId = fileMetadataId;
             }
         }
 
         // Renove any unfound documents from eventual response
         if (unfoundDocuments.length > 0) {
             documents = documents.filter((doc) => !unfoundDocuments.includes(doc));
+        }
+
+        if (!returnFileMetadataId) {
+            documents = documents.map((doc) => {
+                delete doc.fileMetadataId;
+                return doc;
+            });
         }
 
         const documentsPaginatedResult = await paginationService.createPaginatedResult(documents, baseUrl, totalRecords, page);
@@ -1868,55 +1904,12 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
         const configuration: EsignatureConfiguration = await getConfigurationData(tenantId, companyId);
         const { eSigner } = configuration;
 
-        const { signature_requests: existingSignatureRequests } = await eSigner.signatureRequest.list({
-            query: `metadata:${onboardingKey}`,
-        });
-
-        if (existingSignatureRequests.length > 0) {
-            console.log(`Signature requests were already created for onboarding key: ${onboardingKey}`);
-            const results = existingSignatureRequests.map((request) => {
-                return new SignatureRequestResponse({
-                    id: request.signature_request_id,
-                    title: request.title,
-                    status: request.is_complete ? SignatureRequestResponseStatus.Complete : SignatureRequestResponseStatus.Pending,
-                    signatures: request.signatures.map((signature) => {
-                        let signatureStatus;
-                        switch (signature.status_code) {
-                            case 'signed':
-                                signatureStatus = SignatureRequestResponseStatus.Complete;
-                                break;
-                            case 'awaiting_signature':
-                                signatureStatus = SignatureRequestResponseStatus.Pending;
-                                break;
-                            case 'declined':
-                                signatureStatus = SignatureRequestResponseStatus.Declined;
-                                break;
-                            default:
-                                signatureStatus = SignatureRequestResponseStatus.Unknown;
-                                break;
-                        }
-                        return {
-                            id: signature.signature_id,
-                            status: signatureStatus,
-                            signer: new Signatory({
-                                emailAddress: signature.signer_email_address,
-                                name: signature.signer_name,
-                                role: signature.signer_role,
-                            }),
-                        };
-                    }),
-                });
-            });
-            return new SignatureRequestListResponse({ results });
-        }
-
         const getDocumentsQueryParams = {
             category: 'onboarding',
             categoryId: taskListId.toString(),
-            docType: 'hellosign',
         };
 
-        const taskListTemplates = await listDocuments(
+        const taskListDocuments = await listDocuments(
             tenantId,
             companyId,
             getDocumentsQueryParams,
@@ -1924,52 +1917,189 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
             undefined,
             true,
             configuration,
+            true,
         );
 
-        if (!taskListTemplates) {
+        if (!taskListDocuments) {
             return undefined;
         }
 
+        const checkForExistingHelloSignDocs = async () => {
+            if (taskListDocuments.results.filter((doc) => doc.Type === 'Template')) {
+                const { signature_requests: existingSignatureRequests } = await eSigner.signatureRequest.list({
+                    query: `metadata:${onboardingKey}`,
+                });
+                if (existingSignatureRequests.length > 0) {
+                    console.log(`HelloSign signature requests were already created for onboarding key: ${onboardingKey}`);
+                    return existingSignatureRequests.map((request) => {
+                        return new SignatureRequestResponse({
+                            id: request.signature_request_id,
+                            title: request.title,
+                            status: request.is_complete ? SignatureRequestResponseStatus.Complete : SignatureRequestResponseStatus.Pending,
+                            type: EsignatureMetadataType.SignatureRequest,
+                            isHelloSignDocument: true,
+                            signatures: request.signatures.map((signature) => {
+                                let signatureStatus;
+                                switch (signature.status_code) {
+                                    case 'signed':
+                                        signatureStatus = SignatureRequestResponseStatus.Complete;
+                                        break;
+                                    case 'awaiting_signature':
+                                        signatureStatus = SignatureRequestResponseStatus.Pending;
+                                        break;
+                                    case 'declined':
+                                        signatureStatus = SignatureRequestResponseStatus.Declined;
+                                        break;
+                                    default:
+                                        signatureStatus = SignatureRequestResponseStatus.Unknown;
+                                        break;
+                                }
+                                return {
+                                    id: signature.signature_id,
+                                    status: signatureStatus,
+                                    signer: new Signatory({
+                                        emailAddress: signature.signer_email_address,
+                                        name: signature.signer_name,
+                                        role: signature.signer_role,
+                                    }),
+                                };
+                            }),
+                        });
+                    });
+                } else {
+                    return [];
+                }
+            }
+        }
+
+        const checkForExistingSimpleSignRequests = async () => {
+            if (taskListDocuments.results.filter((doc) => doc.Type === EsignatureMetadataType.SimpleSignatureRequest)) {
+                const query = new ParameterizedQuery('getOnboardingSimpleSignDocuments', Queries.getOnboardingSimpleSignDocuments);
+                query.setParameter('@companyId', companyId);
+                query.setParameter('@employeeCode', employeeCode);
+                const payload = {
+                    tenantId,
+                    queryName: query.name,
+                    query: query.value,
+                    queryType: QueryType.Simple,
+                } as DatabaseEvent;
+                const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+                console.log(result);
+                console.log(result.recordset);
+                if (result.recordset.length > 0) {
+                    console.log(`Simple signature requests were already created for onboarding key: ${onboardingKey}`);
+                    return result.recordset.map((request) => {
+                        let signatureStatus;
+                        switch (Number(request.SignatureStatusID)) {
+                            case SignatureStatusID.Signed:
+                                signatureStatus = SignatureRequestResponseStatus.Complete;
+                                break;
+                            case SignatureStatusID.Pending:
+                                signatureStatus = SignatureRequestResponseStatus.Pending;
+                                break;
+                            default:
+                                signatureStatus = SignatureRequestResponseStatus.Unknown;
+                                break;
+                        }
+                        return new SignatureRequestResponse({
+                            id: request.ID,
+                            title: request.Title,
+                            status: signatureStatus,
+                            type: EsignatureMetadataType.SignatureRequest,
+                            isHelloSignDocument: false,
+                            signatures: [
+                                {
+                                    id: '',
+                                    signer: new Signatory({
+                                        emailAddress,
+                                        name,
+                                        employeeCode,
+                                    }),
+                                },
+                            ],
+                        });
+                    });
+                } else {
+                    return [];
+                }
+            }
+        }
+
+        const [helloSignResults, simpleSignResults] = await Promise.all([
+            checkForExistingHelloSignDocs(),
+            checkForExistingSimpleSignRequests(),
+        ]);
+
+        let docsExist = false;
+        if (helloSignResults.length > 0 || simpleSignResults.length > 0) {
+            docsExist = true;
+        }
+
         const signatureRequestMetadata = { onboardingKey };
-        const signatureRequests: SignatureRequestResponse[] = [];
+        const onboardingDocuments: SignatureRequestResponse[] = [];
 
         const invocations: Array<Promise<SignatureRequestResponse>> = [];
 
-        for (const template of taskListTemplates.results) {
-            const bulkSignRequest: BulkSignatureRequest = {
-                templateId: template.id,
-                employeeCodes: [employeeCode],
-                signatories: [
-                    {
-                        emailAddress,
-                        name,
-                        role: 'OnboardingSignatory',
-                        employeeCode,
-                    },
-                ],
-            };
+        for (const document of taskListDocuments.results) {
+            if (!docsExist && document.type === EsignatureMetadataType.Template) {
+                const bulkSignRequest: BulkSignatureRequest = {
+                    templateId: document.id,
+                    employeeCodes: [employeeCode],
+                    signatories: [
+                        {
+                            emailAddress,
+                            name,
+                            role: 'OnboardingSignatory',
+                            employeeCode,
+                        },
+                    ],
+                };
 
-            const combine = async () => {
-                const templateResponse = await configuration.eSigner.template.get(template.id);
-                const { signatureRequest, category } = await createHelloSignSignatureRequest(
-                    tenantId,
-                    companyId,
-                    bulkSignRequest,
-                    signatureRequestMetadata,
-                    configuration,
-                    templateResponse,
-                );
-                return await saveEsignatureMetadata(tenantId, companyId, category, [employeeCode], signatureRequest);
-            };
-            invocations.push(combine());
+                const combine = async () => {
+                    const templateResponse = await configuration.eSigner.template.get(document.id);
+                    const { signatureRequest, category } = await createHelloSignSignatureRequest(
+                        tenantId,
+                        companyId,
+                        bulkSignRequest,
+                        signatureRequestMetadata,
+                        configuration,
+                        templateResponse,
+                    );
+                    return await saveEsignatureMetadata(tenantId, companyId, category, [employeeCode], signatureRequest);
+                };
+                invocations.push(combine());
+            } else if (!docsExist && document.type === EsignatureMetadataType.SimpleSignatureRequest) {
+                const combine = async () => {
+                    const onboardingData = {
+                        firstName: name.split(' ')[0],
+                        lastName: name.split(' ')[1],
+                        emailAddress,
+                    };
+                    const response = await saveSimpleEsignatureMetadata(
+                        { tenantId, companyId },
+                        [employeeCode],
+                        document.fileMetadataId,
+                        false,
+                        '',
+                        '',
+                        true,
+                        onboardingData,
+                    );
+                    return response[0];
+                }
+                invocations.push(combine());
+            } else if (!document.type || document.type === EsignatureMetadataType.NoSignature) {
+                delete document.fileMetadataId;
+                onboardingDocuments.push(document);
+            }
         }
 
         const creations = await Promise.all(invocations);
         for (const created of creations) {
-            signatureRequests.push(created);
+            onboardingDocuments.push(created);
         }
 
-        return new SignatureRequestListResponse({ results: signatureRequests });
+        return new SignatureRequestListResponse({ results: [...onboardingDocuments, ...helloSignResults, ...simpleSignResults] });
     } catch (error) {
         if (error.message) {
             if (error.message.includes('Template not found') || error.message.includes('Signature not found')) {

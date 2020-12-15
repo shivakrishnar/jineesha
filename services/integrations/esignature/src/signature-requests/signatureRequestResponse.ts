@@ -9,6 +9,8 @@ export class SignatureRequestResponse {
     title: string;
     status?: SignatureRequestResponseStatus;
     signatures: Signature[];
+    type: string;
+    isHelloSignDocument: boolean;
 
     public constructor(init?: Partial<SignatureRequestResponse>) {
         Object.assign(this, init);

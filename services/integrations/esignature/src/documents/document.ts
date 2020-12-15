@@ -4,6 +4,7 @@ export type DocumentMetadata = {
     title: string | undefined;
     description: string | undefined;
     type: string | undefined;
+    fileMetadataId: string | undefined;
 };
 
 export class DocumentMetadataListResponse {
