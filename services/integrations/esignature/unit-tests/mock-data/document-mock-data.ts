@@ -81,6 +81,7 @@ export const hellosignDocsTaskListDBResponse = {
                 Title: 'Title',
                 Description: 'Description',
                 Type: 'SimpleSignatureRequest',
+                FileMetadataID: 1,
             },
         ],
     ],
@@ -414,6 +415,7 @@ export const documentFileMetadataDBResponse = {
         {
             ID: 1,
             Title: 'test',
+            Pointer: 'test.png',
         },
     ],
     output: {},

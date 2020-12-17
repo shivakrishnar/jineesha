@@ -1,9 +1,11 @@
 import 'reflect-metadata'; // required by asure.auth dependency
 
+import * as uuidV4 from 'uuid/v4';
 import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
 import * as esignatureService from '../src/esignature.service';
 import * as mockData from './mock-data';
+jest.mock('uuid/v4');
 
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { setup } from '../../../unit-test-mocks/mock';
@@ -21,10 +23,15 @@ describe('esignatureService.onboarding', () => {
                 return Promise.resolve(mockData.companyInfo);
             } else if (payload.queryName === 'GetTaskListDocuments') {
                 return Promise.resolve(mockData.hellosignDocsTaskListDBResponse);
+            } else if (payload.queryName === 'getOnboardingSimpleSignDocuments') {
+                return Promise.resolve(mockData.emptyDBResponse);
+            } else if (payload.queryName === 'getFileMetadataById') {
+                return Promise.resolve(mockData.documentFileMetadataByIdDBResponse);
             }
         });
         const request = { ...mockData.onboardingRequestBody };
         request.onboardingKey = 'returnNothing';
+        uuidV4.mockImplementation(() => '1234');
         return esignatureService.onboarding(mockData.tenantId, mockData.companyId, request).then((signatureRequests) => {
             expect(signatureRequests).toBeInstanceOf(SignatureRequestListResponse);
             expect(signatureRequests.results).toEqual(mockData.onboardingResponse.results);
@@ -52,6 +59,10 @@ describe('esignatureService.onboarding', () => {
                 return Promise.resolve(mockData.companyInfo);
             } else if (payload.queryName === 'GetTaskListDocuments') {
                 return Promise.resolve(mockData.hellosignDocsTaskListDBResponse);
+            } else if (payload.queryName === 'getOnboardingSimpleSignDocuments') {
+                return Promise.resolve(mockData.onboardingSimpleSignDocumentDBResponse);
+            } else if (payload.queryName === 'getFileMetadataById') {
+                return Promise.resolve(mockData.documentFileMetadataByIdDBResponse);
             }
         });
         return esignatureService
