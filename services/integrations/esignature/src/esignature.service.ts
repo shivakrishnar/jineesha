@@ -3777,7 +3777,7 @@ async function updateEmployeeS3Document(
     try {
         // get file metadata / make sure it exists in the database & belongs to the employee
         let query = new ParameterizedQuery('getFileMetadataById', Queries.getFileMetadataById);
-        query.appendFilter(`EmployeeCode = '${employeeCode}'`);
+        query.appendFilter(`e.EmployeeCode = '${employeeCode}'`);
         query.setParameter('@id', documentId);
         let payload = {
             tenantId,
