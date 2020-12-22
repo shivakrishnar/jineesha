@@ -163,6 +163,12 @@ const onboardingSignatureRequestSchema = Yup.object().shape({
 });
 
 // Onboarding resource URI schema
+const employeeOnboardingResourceUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+    employeeId: { required: true, type: String },
+    onboardingId: { required: true, type: UUID },
+};
 
 const onboardingResourceUriSchema = {
     tenantId: { required: true, type: UUID },
@@ -287,6 +293,20 @@ const fileObjectSchema = Yup.object().shape({
 
 const roleQueryParameterSchema = Yup.object().shape({
     role: Yup.string().oneOf(['manager'], "The role query parameter must be one of the following values: ['manager']"),
+});
+
+const onboardingPreviewValidationSchema = {
+    onboardingKey: { required: true, type: String },
+};
+const onboardingPreviewSchema = Yup.object().shape({
+    onboardingKey: Yup.string().required(),
+});
+
+const saveOnboardingDocumentsValidationSchema = {
+    taskListId: { required: true, type: Number }
+};
+const saveOnboardingDocumentsSchema = Yup.object().shape({
+    taskListId: Yup.number().required(),
 });
 
 /**
@@ -885,6 +905,47 @@ export const listEmployeeDocuments = utilService.gatewayEventHandlerV2(async ({ 
         includePrivateDocs,
         securityContext.principal.email,
     );
+});
+
+export const getOnboardingDocumentPreview = utilService.gatewayEventHandlerV2({
+    allowAnonymous: true,
+    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.getOnboardingDocumentPreview');
+
+        utilService.validateAndThrow(event.pathParameters, tenantResourceUriSchema);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, onboardingPreviewValidationSchema);
+        utilService.checkAdditionalProperties(onboardingPreviewValidationSchema, requestBody, 'Get Onboarding Document Preview');
+        await utilService.validateRequestBody(onboardingPreviewSchema, requestBody);
+
+        const { tenantId, documentId } = event.pathParameters;
+
+        return await esignatureService.getOnboardingDocumentPreview(tenantId, documentId, requestBody);
+    },
+});
+
+export const saveOnboardingDocuments = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.saveOnboardingDocuments');
+
+    utilService.validateAndThrow(event.pathParameters, employeeOnboardingResourceUriSchema);
+
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin || role === Role.hrAdmin;
+    });
+
+    if (!isAuthorized) {
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    await utilService.requirePayload(requestBody);
+    utilService.validateAndThrow(requestBody, saveOnboardingDocumentsValidationSchema);
+    utilService.checkAdditionalProperties(saveOnboardingDocumentsValidationSchema, requestBody, 'Get Onboarding Document Preview');
+    await utilService.validateRequestBody(saveOnboardingDocumentsSchema, requestBody);
+
+    const { tenantId, companyId, employeeId, onboardingId } = event.pathParameters;
+
+    return await esignatureService.saveOnboardingDocuments(tenantId, companyId, employeeId, onboardingId, requestBody);
 });
 
 /**

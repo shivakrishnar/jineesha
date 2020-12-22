@@ -400,6 +400,24 @@ functions:
             cors:
               origin: '*'
 
+  getOnboardingDocumentPreview:
+    handler: esignature/src/handler.getOnboardingDocumentPreview
+    events:
+        - http:
+            path: /tenants/{tenantId}/documents/{documentId}/onboarding-preview
+            method: post
+            cors:
+              origin: '*'
+
+  saveOnboardingDocuments:
+    handler: esignature/src/handler.saveOnboardingDocuments
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/onboarding/{onboardingId}/documents
+            method: post
+            cors:
+              origin: '*'
+
 layers:
   libreoffice:
     path: layers/libreoffice

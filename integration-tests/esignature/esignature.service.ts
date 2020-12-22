@@ -108,3 +108,15 @@ export function createBatchSignRequest(baseUri: string, accessToken: string, isS
             });
     });
 }
+
+export function getValidOnboardingPreviewObject(): any {
+    return {
+        onboardingKey: configs.esignature.onboardingWithCompanyDocumentsActive.key,
+    };
+}
+
+export function getValidSaveOnboardingDocumentObject(): any {
+    return {
+        taskListId: configs.esignature.onboardingWithCompanyDocumentsActive.taskListId,
+    };
+}

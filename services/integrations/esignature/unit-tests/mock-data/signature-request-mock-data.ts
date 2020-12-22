@@ -1,8 +1,12 @@
 import { SignatoryRequest } from '../../src/signature-requests/signatory';
-import { SignatureRequestResponseStatus, SignatureStatus } from '../../src/signature-requests/signatureRequestResponse';
-import { SignatureRequestResponse } from '../../src/signature-requests/signatureRequestResponse';
+import {
+    SignatureRequestResponse,
+    SignatureRequestResponseStatus,
+    SignatureStatus,
+} from '../../src/signature-requests/signatureRequestResponse';
 
 export const signatureId = '12345';
+export const noSignDocId = '4a24ae38-f1d0-45c4-aada-ab49c0eebb2f';
 
 export const helloSignSignUrl = {
     sign_url: 'signurl.com',
@@ -160,6 +164,8 @@ export const signatureRequestResponse: SignatureRequestResponse = {
             status: SignatureStatus.Pending,
         },
     ],
+    type: 'SignatureRequest',
+    isHelloSignDocument: true,
     status: SignatureRequestResponseStatus.Pending,
     title: 'Sig Request',
 };
@@ -169,6 +175,8 @@ export const signatureRequestsResponse: SignatureRequestResponse[] = [
         id: '1234',
         title: 'Sig Request',
         status: SignatureRequestResponseStatus.Pending,
+        type: 'SignatureRequest',
+        isHelloSignDocument: true,
         signatures: [
             {
                 id: '1',
@@ -186,6 +194,8 @@ export const signatureRequestsResponse: SignatureRequestResponse[] = [
         id: '1234',
         title: 'Sig Request',
         status: SignatureRequestResponseStatus.Pending,
+        type: 'SignatureRequest',
+        isHelloSignDocument: true,
         signatures: [
             {
                 id: '1',
@@ -206,6 +216,8 @@ export const SimpleSignatureRequestsResponse: any[] = [
         id: '1234',
         title: 'test',
         status: SignatureRequestResponseStatus.Pending,
+        type: 'SignatureRequest',
+        isHelloSignDocument: false,
         signatures: [
             {
                 id: '',
@@ -221,6 +233,8 @@ export const SimpleSignatureRequestsResponse: any[] = [
         id: '1234',
         title: 'test',
         status: SignatureRequestResponseStatus.Pending,
+        type: 'SignatureRequest',
+        isHelloSignDocument: false,
         signatures: [
             {
                 id: '',

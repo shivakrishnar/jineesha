@@ -27,6 +27,12 @@
     "applicationId": "23e69dde-2260-4def-9032-08360435e210",
     "esignature": {
         "onboardingKey": "b87b65f3-7c27-4eaf-a275-3d1150fbb013",
+        "onboardingWithCompanyDocumentsActive": {
+            "key": "ea2a8058-4d10-4a3f-84d6-65929ec671b3",
+            "nonSignableDocument": "29fd6ff7818a4708b8126cb413a048b7",
+            "legacyDocument": "oEKmur",
+            "taskListId": 119
+        },
         "taskListId": 80,
         "requestId": "7776347627dd3398f826b5ebe62060199b2f0a50",
         "signatureId": "582f1cab06463ca5f8b6e6767ab67673",
