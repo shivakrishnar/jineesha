@@ -30,16 +30,16 @@ describe('esignatureService.simple-sign-document.create', () => {
             return mockData.companyInfo.recordset[0];
         });
         (utilService as any).validateEmployee = jest.fn(() => {
-            return mockData.employeeDBResponse.recordset[0];
+            return mockData.employeeInfoDBResponse.recordset[0];
         });
 
         return esignatureService
             .createSimpleSignDocument(
                 mockData.tenantId,
                 mockData.companyId,
-                mockData.employeeId,
                 mockData.createSimpleSignDocumentRequest,
                 mockData.ipAddress,
+                mockData.employeeId,
             )
             .then((document) => {
                 // we are unable to mock the Date() function unless we pull in another library,
@@ -65,7 +65,7 @@ describe('esignatureService.simple-sign-document.create', () => {
             return mockData.companyInfo.recordset[0];
         });
         (utilService as any).validateEmployee = jest.fn(() => {
-            return mockData.employeeDBResponse.recordset[0];
+            return mockData.employeeInfoDBResponse.recordset[0];
         });
 
         (configService as any).getFileBucketName = jest.fn(() => {
@@ -78,9 +78,9 @@ describe('esignatureService.simple-sign-document.create', () => {
             .createSimpleSignDocument(
                 mockData.tenantId,
                 mockData.companyId,
-                mockData.employeeId,
                 mockData.createSimpleSignDocumentRequest,
                 mockData.ipAddress,
+                mockData.employeeId,
             )
             .then((document) => {
                 // we are unable to mock the Date() function unless we pull in another library,
@@ -106,7 +106,7 @@ describe('esignatureService.simple-sign-document.create', () => {
             return mockData.companyInfo.recordset[0];
         });
         (utilService as any).validateEmployee = jest.fn(() => {
-            return mockData.employeeDBResponse.recordset[0];
+            return mockData.employeeInfoDBResponse.recordset[0];
         });
 
         (configService as any).getFileBucketName = jest.fn(() => {
@@ -117,9 +117,9 @@ describe('esignatureService.simple-sign-document.create', () => {
             .createSimpleSignDocument(
                 mockData.tenantId,
                 mockData.companyId,
-                mockData.employeeId,
                 mockData.createSimpleSignDocumentRequest,
                 mockData.ipAddress,
+                mockData.employeeId,
             )
             .then((document) => {
                 // we are unable to mock the Date() function unless we pull in another library,
@@ -145,16 +145,16 @@ describe('esignatureService.simple-sign-document.create', () => {
             return mockData.companyInfo.recordset[0];
         });
         (utilService as any).validateEmployee = jest.fn(() => {
-            return mockData.employeeDBResponse.recordset[0];
+            return mockData.employeeInfoDBResponse.recordset[0];
         });
 
         return esignatureService
             .createSimpleSignDocument(
                 mockData.tenantId,
                 mockData.companyId,
-                mockData.employeeId,
                 mockData.createSimpleSignDocumentRequest,
                 mockData.ipAddress,
+                mockData.employeeId,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -182,16 +182,16 @@ describe('esignatureService.simple-sign-document.create', () => {
             return mockData.companyInfo.recordset[0];
         });
         (utilService as any).validateEmployee = jest.fn(() => {
-            return mockData.employeeDBResponse.recordset[0];
+            return mockData.employeeInfoDBResponse.recordset[0];
         });
 
         return esignatureService
             .createSimpleSignDocument(
                 mockData.tenantId,
                 mockData.companyId,
-                mockData.employeeId,
                 mockData.createSimpleSignDocumentRequest,
                 mockData.ipAddress,
+                mockData.employeeId,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);

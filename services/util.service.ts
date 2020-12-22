@@ -784,7 +784,12 @@ export async function validateEmployee(tenantId: string, employeeId: string): Pr
         if (result.recordset.length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage(`The employee id: ${employeeId} not found`);
         }
-        return result.recordset[0];
+        return {
+            firstName: result.recordset[0].FirstName,
+            lastName: result.recordset[0].LastName,
+            emailAddress: result.recordset[0].EmailAddress,
+            employeeCode: result.recordset[0].EmployeeCode,
+        };
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

@@ -373,6 +373,18 @@ functions:
     layers:
         - {Ref: LibreofficeLambdaLayer}
 
+  createOnboardingSimpleSignDoc:
+    handler: esignature/src/handler.createOnboardingSimpleSignDocument
+    memorySize: 2048
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/onboarding/{onboardingId}/documents
+            method: post
+            cors:
+              origin: '*'
+    layers:
+        - {Ref: LibreofficeLambdaLayer}
+
   deleteCompanyDocument:
     handler: esignature/src/handler.deleteCompanyDocument
     events:

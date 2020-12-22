@@ -940,7 +940,7 @@ export const saveOnboardingDocuments = utilService.gatewayEventHandlerV2(async (
 
     await utilService.requirePayload(requestBody);
     utilService.validateAndThrow(requestBody, saveOnboardingDocumentsValidationSchema);
-    utilService.checkAdditionalProperties(saveOnboardingDocumentsValidationSchema, requestBody, 'Get Onboarding Document Preview');
+    utilService.checkAdditionalProperties(saveOnboardingDocumentsValidationSchema, requestBody, 'Save Onboarding Documents');
     await utilService.validateRequestBody(saveOnboardingDocumentsSchema, requestBody);
 
     const { tenantId, companyId, employeeId, onboardingId } = event.pathParameters;
@@ -1269,9 +1269,38 @@ export const createSimpleSignDocument = utilService.gatewayEventHandlerV2(
         return await esignatureService.createSimpleSignDocument(
             tenantId,
             companyId,
-            employeeId,
             requestBody,
             event.requestContext.identity.sourceIp,
+            employeeId,
         );
     },
 );
+
+/**
+ * Creates a signed version of an onboarding simple sign document for an employee
+ */
+export const createOnboardingSimpleSignDocument = utilService.gatewayEventHandlerV2({
+    allowAnonymous: true,
+    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.createOnboardingSimpleSignDocument');
+
+        const { tenantId, companyId, onboardingId } = event.pathParameters;
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.pathParameters, onboardingResourceUriSchema);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, createSimpleSignDocumentValidationSchema);
+        utilService.checkAdditionalProperties(createSimpleSignDocumentValidationSchema, requestBody, 'Create Onboarding Simple Sign Document');
+        await utilService.validateRequestBody(createSimpleSignDocumentSchema, requestBody);
+
+        return await esignatureService.createSimpleSignDocument(
+            tenantId,
+            companyId,
+            requestBody,
+            event.requestContext.identity.sourceIp,
+            undefined,
+            onboardingId,
+        );
+    },
+});

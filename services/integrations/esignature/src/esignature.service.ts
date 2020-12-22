@@ -2612,7 +2612,7 @@ export async function saveOnboardingDocuments(
                 esignatureQuery.setStringParameter('@title', `'${doc.Title}'`);
                 esignatureQuery.setStringParameter('@fileName', `'${doc.Filename}'`);
                 esignatureQuery.setStringParameter('@category', 'onboarding');
-                esignatureQuery.setParameter('@employeeCode', employeeInfo.EmployeeCode);
+                esignatureQuery.setParameter('@employeeCode', employeeInfo.employeeCode);
                 esignatureQuery.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
                 esignatureQuery.setParameter('@isOnboardingDocument', '0');
 
@@ -2626,7 +2626,7 @@ export async function saveOnboardingDocuments(
 
                 const fileMetadataQuery = new ParameterizedQuery('CreateFileMetadata', Queries.createFileMetadata);
                 fileMetadataQuery.setParameter('@companyId', companyId);
-                fileMetadataQuery.setParameter('@employeeCode', employeeInfo.EmployeeCode);
+                fileMetadataQuery.setParameter('@employeeCode', employeeInfo.employeeCode);
                 fileMetadataQuery.setStringParameter('@title', doc.Title);
                 fileMetadataQuery.setStringParameter('@category', 'onboarding');
                 fileMetadataQuery.setParameter('@uploadDate', uploadDate);
@@ -2653,7 +2653,7 @@ export async function saveOnboardingDocuments(
             invocations.push(combine());
         }
 
-        //Get and move simpleSign OB docs
+        // Get and move simpleSign OB docs
         const simpleSignDocsQuery = new ParameterizedQuery(
             'GetOnboardingSignedSimpleSignDocuments',
             Queries.getOnboardingSignedSimpleSignDocuments,
@@ -2676,7 +2676,7 @@ export async function saveOnboardingDocuments(
             for (const doc of simpleSignPointers) {
                 const { id, ptr } = doc;
                 const combine = async () => {
-                    const newPointer = ptr.split(`${companyId}/`)[0] + `${companyId}/${employeeId}/` + ptr.split(`${companyId}/`)[1];
+                    const newPointer = ptr.split(`/${companyId}/`)[0] + `/${companyId}/${employeeId}/` + ptr.split(`/${companyId}/`)[1];
 
                     const copyParams = {
                         Bucket: configService.getFileBucketName(),
@@ -4573,9 +4573,10 @@ async function deleteEmployeeDocumentRecord(tenantId: string, docType: DocType, 
 export async function createSimpleSignDocument(
     tenantId: string,
     companyId: string,
-    employeeId: string,
     requestBody: any,
     ipAddress: string,
+    employeeId?: string,
+    onboardingKey?: string,
 ): Promise<any> {
     console.info('esignature.service.createSimpleSignDocument');
 
@@ -4586,10 +4587,32 @@ export async function createSimpleSignDocument(
 
     try {
         // verify that the company and employee exists & get info
-        const [companyInfo, employeeInfo]: any[] = await Promise.all([
-            await utilService.validateCompany(tenantId, companyId),
-            await utilService.validateEmployee(tenantId, employeeId),
-        ]);
+        const invocations: any[] = [await utilService.validateCompany(tenantId, companyId)];
+        if (employeeId) {
+            invocations.push(await utilService.validateEmployee(tenantId, employeeId));
+        } else {
+            const employeeQuery = new ParameterizedQuery(
+                'getEmployeeInfoByOnboardingKey',
+                Queries.getEmployeeInfoByOnboardingKey,
+            );
+            employeeQuery.setParameter('@onboardingKey', onboardingKey);
+            const employeePayload = {
+                tenantId,
+                queryName: employeeQuery.name,
+                query: employeeQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            invocations.push(await utilService.invokeInternalService('queryExecutor', employeePayload, InvocationType.RequestResponse));
+        }
+        const promiseResults: any[] = await Promise.all(invocations);
+        const companyInfo = promiseResults[0];
+        let employeeInfo = promiseResults[1];
+        if (!employeeId) {
+            if (promiseResults[1].recordset.length === 0) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(`Onboarding with key ${onboardingKey} not found.`);
+            }
+            employeeInfo = promiseResults[1].recordset[0];
+        }
 
         // retrieve pointer from database
         const documentQuery = new ParameterizedQuery(
@@ -4598,7 +4621,7 @@ export async function createSimpleSignDocument(
         );
         documentQuery.setParameter('@id', signatureRequestId);
         documentQuery.appendFilter(`e.CompanyID = ${companyId}`, true);
-        documentQuery.appendFilter(`e.EmployeeCode = '${employeeInfo.EmployeeCode}'`, true);
+        documentQuery.appendFilter(`e.EmployeeCode = '${employeeInfo.employeeCode}'`, true);
         let payload = {
             tenantId,
             queryName: documentQuery.name,
@@ -4666,7 +4689,7 @@ export async function createSimpleSignDocument(
         const labelHorizontalMargin = 47;
         const valueHorizontalMargin = 159;
 
-        const { FirstName: firstName, LastName: lastName, EmailAddress: emailAddress, EmployeeCode: employeeCode } = employeeInfo;
+        const { firstName, lastName, emailAddress, employeeCode } = employeeInfo;
         const { CompanyName: companyName } = companyInfo;
         let employeeName = `${firstName} ${lastName}`;
         employeeName = emailAddress ? `${employeeName} (${emailAddress})` : employeeName;
@@ -4783,7 +4806,10 @@ export async function createSimpleSignDocument(
         const pdfBytes = await pdfDoc.save();
 
         // upload to s3
-        const newKey = `${tenantId}/${companyId}/${employeeId}/${signatureRequestId}.pdf`;
+        let newKey = `${tenantId}/${companyId}/${signatureRequestId}.pdf`;
+        if (employeeId) {
+            newKey = `${tenantId}/${companyId}/${employeeId}/${signatureRequestId}.pdf`;
+        }
         await s3Client
             .upload({
                 Bucket: configService.getFileBucketName(),

@@ -151,6 +151,7 @@ export const Queries = {
     getEmployeeForAdminById: fs.readFileSync(path.join(basePath, 'employees/getEmployeeForAdminById.sql')).toString(),
     getEmployeeForManagerById: fs.readFileSync(path.join(basePath, 'employees/getEmployeeForManagerById.sql')).toString(),
     getEmployeeForSbAdminById: fs.readFileSync(path.join(basePath, 'employees/getEmployeeForSbAdminById.sql')).toString(),
+    getEmployeeInfoByOnboardingKey: fs.readFileSync(path.join(basePath, 'employees/getEmployeeInfoByOnboardingKey.sql')).toString(),
 
     // Users
     getUserById: fs.readFileSync(path.join(basePath, 'users/getUserById.sql')).toString(),
