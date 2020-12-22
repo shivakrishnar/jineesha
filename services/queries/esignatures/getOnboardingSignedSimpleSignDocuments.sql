@@ -1,5 +1,6 @@
 select
     f.*,
+    e.ID as SignedEsignatureMetadataId,
     s.Name as SignatureStatusName,
     s.Priority as SignatureStatusPriority,
     s.StepNumber as SignatureStatusStepNumber

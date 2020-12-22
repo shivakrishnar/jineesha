@@ -769,6 +769,7 @@ export async function deleteOnboardingDocuments(tenantId: string, companyId: str
     console.info('esignatureService.deleteOnboardingDocuments');
 
     try {
+        // Get HelloSign docs
         await validateOnboardingForDeletion(tenantId, companyId, onboardingId);
         const hsResponse = getConfigurationData(tenantId, companyId).then((configuration) => {
             const { eSigner } = configuration;
@@ -777,16 +778,66 @@ export async function deleteOnboardingDocuments(tenantId: string, companyId: str
             });
         });
         const { signature_requests: signatureRequests } = await hsResponse;
-        if (signatureRequests.length === 0) {
+
+        // Get info about onboarding
+        const onboardingQuery = new ParameterizedQuery('getNonApprovedOnboardingByKey', Queries.getNonApprovedOnboardingByKey);
+        onboardingQuery.setParameter('@onboardingKey', onboardingId);
+        const onboardingPayload = {
+            tenantId,
+            queryName: onboardingQuery.name,
+            query: onboardingQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const onboardingResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            onboardingPayload,
+            InvocationType.RequestResponse,
+        );
+
+        if (onboardingResult.recordset.length === 0) {
+            throw errorService
+                .getErrorResponse(50)
+                .setDeveloperMessage(`No onboarding found with key ${onboardingId} for the specified employee.`);
+        }
+
+        const employeeCode = onboardingResult.recordset[0].EmployeeCode;
+        // Get simple sign docs
+        const simpleSignDocsQuery = new ParameterizedQuery(
+            'GetOnboardingSimpleSignDocuments',
+            Queries.getOnboardingSimpleSignDocuments,
+        );
+        simpleSignDocsQuery.setStringParameter('@employeeCode', employeeCode);
+        simpleSignDocsQuery.setParameter('@companyId', companyId);
+        const simpleSignPayload = {
+            tenantId,
+            queryName: simpleSignDocsQuery.name,
+            query: simpleSignDocsQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const simpleSignResponse: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            simpleSignPayload,
+            InvocationType.RequestResponse,
+        );
+        // Combine simple & HelloSign eisgnature IDs
+        const esignIds = signatureRequests.map((sr) => sr.signature_request_id);
+        for (const simpleSign of simpleSignResponse.recordset) {
+            esignIds.push(simpleSign.SignedEsignatureMetadataId);
+        }
+
+        if (esignIds.length === 0) {
             return;
         }
 
         let requestIds: string;
-        if (signatureRequests.length === 1) {
-            requestIds = signatureRequests[0].signature_request_id;
+        if (esignIds.length === 1) {
+            requestIds = esignIds[0];
         } else {
-            requestIds = signatureRequests.map((e) => e.signature_request_id).join(',');
+            requestIds = esignIds.join(',');
         }
+
+        // delete all the esignature metadata & associated file metadata
         const query = new ParameterizedQuery('deleteEsignatureMetadataByIdList', Queries.deleteEsignatureMetadataByIdList);
         query.setStringParameter('@idList', requestIds);
         const payload = {
@@ -796,6 +847,27 @@ export async function deleteOnboardingDocuments(tenantId: string, companyId: str
             queryType: QueryType.Simple,
         } as DatabaseEvent;
         await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        // delete all the signed files in s3
+        const invocations: Array<Promise<any>> = [];
+        for (const simpleSign of simpleSignResponse.recordset) {
+            const combine = async () => {
+                const deleteParams = {
+                    Bucket: configService.getFileBucketName(),
+                    Key: simpleSign.Pointer,
+                };
+                await s3Client.deleteObject(deleteParams).promise();
+            };
+            invocations.push(combine());
+        }
+
+        const creations = await pSettle(invocations);
+        creations.forEach((apiInvocation, index) => {
+            if (apiInvocation && apiInvocation.isRejected) {
+                console.log(apiInvocation.reason);
+                throw errorService.getErrorResponse(0).setDeveloperMessage(String(apiInvocation.reason));
+            }
+        });
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

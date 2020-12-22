@@ -129,6 +129,7 @@ export const Queries = {
         .readFileSync(path.join(basePath, 'esignatures/getOnboardingSignedSimpleSignDocuments.sql'))
         .toString(),
     updateFileMetadataPointerById: fs.readFileSync(path.join(basePath, 'esignatures/updateFileMetadataPointerById.sql')).toString(),
+    getNonApprovedOnboardingByKey: fs.readFileSync(path.join(basePath, 'esignatures/getNonApprovedOnboardingByKey.sql')).toString(),
 
     // Companies
     getUserCompaniesById: fs.readFileSync(path.join(basePath, 'companies/getUserCompaniesById.sql')).toString(),
