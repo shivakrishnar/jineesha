@@ -2589,6 +2589,8 @@ export async function saveOnboardingDocuments(
                 .setDeveloperMessage(`No onboarding found with key ${onboardingKey} for the specified employee.`);
         }
 
+        const employeeCode = onboardingResult.recordset[0].EmployeeCode;
+
         if (taskListResult.recordset.length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage(`No onboarding docs found with onboarding key ${onboardingKey}`);
         }
@@ -2649,6 +2651,62 @@ export async function saveOnboardingDocuments(
                 await s3Client.copyObject(params).promise();
             };
             invocations.push(combine());
+        }
+
+        //Get and move simpleSign OB docs
+        const simpleSignDocsQuery = new ParameterizedQuery(
+            'GetOnboardingSignedSimpleSignDocuments',
+            Queries.getOnboardingSignedSimpleSignDocuments,
+        );
+        simpleSignDocsQuery.setStringParameter('@employeeCode', employeeCode);
+        simpleSignDocsQuery.setParameter('@companyId', companyId);
+        const simpleSignPayload = {
+            tenantId,
+            queryName: simpleSignDocsQuery.name,
+            query: simpleSignDocsQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const simpleSignResponse: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            simpleSignPayload,
+            InvocationType.RequestResponse,
+        );
+        if (simpleSignResponse.recordset.length > 0) {
+            const simpleSignPointers: any = simpleSignResponse.recordset.map((record) => ({ ptr: record.Pointer, id: record.ID }));
+            for (const doc of simpleSignPointers) {
+                const { id, ptr } = doc;
+                const combine = async () => {
+                    const newPointer = ptr.split(`${companyId}/`)[0] + `${companyId}/${employeeId}/` + ptr.split(`${companyId}/`)[1];
+
+                    const copyParams = {
+                        Bucket: configService.getFileBucketName(),
+                        CopySource: `${configService.getFileBucketName()}/${ptr}`,
+                        Key: newPointer,
+                    };
+                    await s3Client.copyObject(copyParams).promise();
+
+                    const deleteParams = {
+                        Bucket: configService.getFileBucketName(),
+                        Key: ptr,
+                    };
+                    await s3Client.deleteObject(deleteParams).promise();
+
+                    const updateFileMetadataQuery = new ParameterizedQuery(
+                        'UpdateFileMetadataPointerById',
+                        Queries.updateFileMetadataPointerById,
+                    );
+                    updateFileMetadataQuery.setParameter('@id', id);
+                    updateFileMetadataQuery.setParameter('@pointer', newPointer);
+                    const updateFileMetadataPayload = {
+                        tenantId,
+                        queryName: updateFileMetadataQuery.name,
+                        query: updateFileMetadataQuery.value,
+                        queryType: QueryType.Simple,
+                    } as DatabaseEvent;
+                    await utilService.invokeInternalService('queryExecutor', updateFileMetadataPayload, InvocationType.RequestResponse);
+                };
+                invocations.push(combine());
+            }
         }
 
         const creations = await pSettle(invocations);

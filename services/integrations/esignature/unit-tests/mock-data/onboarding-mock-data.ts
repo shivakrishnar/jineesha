@@ -1,5 +1,6 @@
 import { SignatureRequestListResponse } from '../../src/signature-requests/signatureRequestListResponse';
 import { SignatureRequestResponseStatus } from '../../src/signature-requests/signatureRequestResponse';
+import * as mockData from './mock-data';
 
 export const onboardingRequestBody = {
     onboardingKey: '123',
@@ -159,11 +160,23 @@ export const onboardingDBResponse = {
     recordset: [
         {
             IsOn: 1,
+            EmployeeCode: '100',
         },
     ],
     output: {},
     rowsAffected: [1],
 };
+
+export const onboardingSimpleSignDBResponse = {
+    recordset: [
+        {
+            ID: '1',
+            Pointer: `10/${mockData.companyId}/abc`,
+        }
+    ],
+    output: {},
+    rowsAffected: [0],
+}
 
 export const onboardingCompanyDocsSectionOffDBResponse = {
     recordset: [
