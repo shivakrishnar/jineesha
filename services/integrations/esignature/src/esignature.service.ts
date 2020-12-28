@@ -2048,7 +2048,7 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
             }
         };
 
-        const checkForExistingSimpleSignRequests = async () => {
+        const checkForExistingSimpleSignRequests = async () => {    
             if (taskListDocuments.results.filter((doc) => doc.Type === EsignatureMetadataType.SimpleSignatureRequest)) {
                 const query = new ParameterizedQuery('getOnboardingSimpleSignDocuments', Queries.getOnboardingSimpleSignDocuments);
                 query.setParameter('@companyId', companyId);
@@ -4729,23 +4729,28 @@ export async function createSimpleSignDocument(
         // TODO: (MJ-7051) convert doc and docx to pdf
         const extension = fileName.split('.').pop();
         let pdfDoc;
-        if (extension === 'jpg') {
-            pdfDoc = await PDFDocument.create();
-            const imageBytes = fs.readFileSync(`${tmpFileDir}/${fileName}`);
-            const image = await pdfDoc.embedJpg(imageBytes);
-            const imagePage = pdfDoc.addPage([image.width, image.height]);
-            imagePage.drawImage(image);
-        } else if (extension === 'png') {
-            pdfDoc = await PDFDocument.create();
-            const imageBytes = fs.readFileSync(`${tmpFileDir}/${fileName}`);
-            const image = await pdfDoc.embedPng(imageBytes);
-            const imagePage = pdfDoc.addPage([image.width, image.height]);
-            imagePage.drawImage(image);
-        } else if (extension === 'docx' || extension === 'doc') {
-            const pdfDocPath = await convertTo(`${fileDir}/${fileName}`, 'pdf');
-            pdfDoc = await PDFDocument.load(fs.readFileSync(pdfDocPath));
-        } else {
-            pdfDoc = await PDFDocument.load(fs.readFileSync(`${tmpFileDir}/${fileName}`));
+        try {
+            if (extension === 'jpg') {
+                pdfDoc = await PDFDocument.create();
+                const imageBytes = fs.readFileSync(`${tmpFileDir}/${fileName}`);
+                const image = await pdfDoc.embedJpg(imageBytes);
+                const imagePage = pdfDoc.addPage([image.width, image.height]);
+                imagePage.drawImage(image);
+            } else if (extension === 'png') {
+                pdfDoc = await PDFDocument.create();
+                const imageBytes = fs.readFileSync(`${tmpFileDir}/${fileName}`);
+                const image = await pdfDoc.embedPng(imageBytes);
+                const imagePage = pdfDoc.addPage([image.width, image.height]);
+                imagePage.drawImage(image);
+            } else if (extension === 'docx' || extension === 'doc') {
+                const pdfDocPath = await convertTo(`${fileDir}/${fileName}`, 'pdf');
+                pdfDoc = await PDFDocument.load(fs.readFileSync(pdfDocPath));
+            } else {
+                pdfDoc = await PDFDocument.load(fs.readFileSync(`${tmpFileDir}/${fileName}`));
+            }
+        } catch(error) {
+            console.log(JSON.stringify(error));
+            throw errorService.getErrorResponse(0).setDeveloperMessage('Failed to convert file to PDF.');           
         }
 
         // define signature page variables
