@@ -57,9 +57,19 @@ export function getValidOnboardingObject(): any {
     return {
         onboardingKey: configs.esignature.onboardingKey,
         taskListId: configs.esignature.taskListId,
-        emailAddress: 'cuong.lai@asuresoftware.com',
+        emailAddress: 'manplayinghandball@handball.gov',
         name: 'Cuong Lai',
         employeeCode: '1234',
+    };
+}
+
+export function getValidOnboardingSimpleSignObject(): any {
+    return {
+        onboardingKey: configs.esignature.onboardingWithSimpleSignDocuments.key,
+        taskListId: configs.esignature.onboardingWithSimpleSignDocuments.taskListId,
+        emailAddress: 'manplayinghandball@handball.gov',
+        name: 'Integration Tester',
+        employeeCode: configs.esignature.onboardingWithSimpleSignDocuments.employeeCode,
     };
 }
 
@@ -97,6 +107,43 @@ export function createBatchSignRequest(baseUri: string, accessToken: string, isS
         request
             .post(url)
             .send(document)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .end((error, response) => {
+                if (error) {
+                    reject(response.body);
+                } else {
+                    resolve(response.body);
+                }
+            });
+    });
+}
+
+export function createOnboardingSimpleSignDocs(baseUri: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const url = `${baseUri}/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
+        const document = getValidOnboardingSimpleSignObject();
+        request
+            .post(url)
+            .send(document)
+            .set('Content-Type', 'application/json')
+            .end((error, response) => {
+                if (error) {
+                    reject(response.body);
+                } else {
+                    resolve(response.body.results);
+                }
+            });
+    });
+}
+
+export function deleteOnboardingDocuments(baseUri: string, accessToken: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const url = `${baseUri}/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
+            configs.esignature.onboardingWithSimpleSignDocuments.key
+        }`;
+        request
+            .delete(url)
             .set('Authorization', `Bearer ${accessToken}`)
             .set('Content-Type', 'application/json')
             .end((error, response) => {

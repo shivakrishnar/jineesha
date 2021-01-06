@@ -15,12 +15,15 @@ let createdSignatureRequest: any;
 const errorMessageSchema = JSON.parse(fs.readFileSync('services/api/models/ErrorMessage.json').toString());
 const createSimpleSignDocumentSchema = JSON.parse(fs.readFileSync('services/integrations/models/CreateSimpleSignDocument.json').toString());
 const signatureStatusSchema = JSON.parse(fs.readFileSync('services/integrations/models/SignatureStatus.json').toString());
-
-const schemas = [errorMessageSchema, createSimpleSignDocumentSchema, signatureStatusSchema];
+const createOnboardingSimpleSignDocumentSchema = JSON.parse(
+    fs.readFileSync('services/integrations/models/CreateOnboardingSimpleSignDocument.json').toString(),
+);
+const schemas = [errorMessageSchema, createSimpleSignDocumentSchema, signatureStatusSchema, createOnboardingSimpleSignDocumentSchema];
 
 const enum schemaNames {
     ErrorMessage = 'ErrorMessage',
     CreateSimpleSignDocument = 'CreateSimpleSignDocument',
+    CreateOnboardingSimpleSignDocument = 'CreateOnboardingSimpleSignDocument',
 }
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
@@ -144,7 +147,7 @@ describe('create simple sign document', () => {
 
     test('must return a 400 if a required field is not provided', (done) => {
         const invalidRequest = {
-            timeZone: 'America/New_York'
+            timeZone: 'America/New_York',
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
@@ -424,7 +427,8 @@ describe('create simple sign onboarding document', () => {
             });
     });
 
-    test('must return a 201 when a simple sign document is created', (done) => {
+    // TODO: unskip after fixing MJ-7237
+    test.skip('must return a 201 when a simple sign document is created', (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
             configs.esignature.onboardingWithSimpleSignDocuments.key
         }/documents`;
@@ -441,7 +445,8 @@ describe('create simple sign onboarding document', () => {
             });
     });
 
-    test('must return a 422 if the document has already been signed', (done) => {
+    // TODO: unskip after fixing MJ-7237
+    test.skip('must return a 422 if the document has already been signed', (done) => {
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
             configs.esignature.onboardingWithSimpleSignDocuments.key
         }/documents`;

@@ -14,4 +14,5 @@ export const templateMetadataResponse = {
     isEsignatureDocument: true,
     isPublishedToEmployee: false,
     isOnboardingDocument: true,
+    isHelloSignTemplate: true,
 };

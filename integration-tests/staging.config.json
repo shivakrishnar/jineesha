@@ -33,6 +33,11 @@
             "legacyDocument": "xwyrh0",
             "taskListId": 77
         },
+        "onboardingWithSimpleSignDocuments": {
+            "employeeCode": "75127",
+            "taskListId": 89,
+            "key": "f094109dd-2237-4ded-8105-d37af70cdaf1"
+        },
         "taskListId": 80,
         "requestId": "7776347627dd3398f826b5ebe62060199b2f0a50",
         "signatureId": "582f1cab06463ca5f8b6e6767ab67673",
