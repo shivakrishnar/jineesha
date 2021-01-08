@@ -190,6 +190,28 @@ export const signatureRequestsResponse: SignatureRequestResponse[] = [
             },
         ],
     },
+];
+
+export const someEmployeesSignatureRequestsResponse: SignatureRequestResponse[] = [
+    {
+        id: '1234',
+        title: 'Sig Request',
+        status: SignatureRequestResponseStatus.Pending,
+        type: 'SignatureRequest',
+        isHelloSignDocument: true,
+        signatures: [
+            {
+                id: '1',
+                status: SignatureStatus.Pending,
+                signer: {
+                    emailAddress: 'hugh@jass.com',
+                    name: 'Hugh',
+                    role: 'Employee',
+                    employeeCode: '1',
+                },
+            },
+        ],
+    },
     {
         id: '1234',
         title: 'Sig Request',
@@ -225,23 +247,6 @@ export const SimpleSignatureRequestsResponse: any[] = [
                     emailAddress: 'hugh@jass.com',
                     name: 'Hugh Jass',
                     employeeCode: '1',
-                },
-            },
-        ],
-    },
-    {
-        id: '1234',
-        title: 'test',
-        status: SignatureRequestResponseStatus.Pending,
-        type: 'SignatureRequest',
-        isHelloSignDocument: false,
-        signatures: [
-            {
-                id: '',
-                signer: {
-                    emailAddress: 'matt.yoga@gmail.com',
-                    name: 'Matt Employee',
-                    employeeCode: '2',
                 },
             },
         ],
@@ -348,7 +353,7 @@ export const billableSignRequestDBResponse = {
             {
                 tenantID: '1234',
                 company: 'HRN IT Services (1)',
-                billableDocuments: 2
+                billableDocuments: 2,
             },
         ],
     ],

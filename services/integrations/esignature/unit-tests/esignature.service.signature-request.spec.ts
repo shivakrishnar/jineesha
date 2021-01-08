@@ -291,7 +291,7 @@ describe('esignatureService.signature-requests.create', () => {
             )
             .then((signatureRequests) => {
                 expect(Array.isArray(signatureRequests)).toBe(true);
-                expect(signatureRequests).toEqual(mockData.signatureRequestsResponse);
+                expect(signatureRequests).toEqual(mockData.someEmployeesSignatureRequestsResponse);
             });
     });
 
