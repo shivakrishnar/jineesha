@@ -803,10 +803,7 @@ export async function deleteOnboardingDocuments(tenantId: string, companyId: str
 
         const employeeCode = onboardingResult.recordset[0].EmployeeCode;
         // Get simple sign docs
-        const simpleSignDocsQuery = new ParameterizedQuery(
-            'GetOnboardingSimpleSignDocuments',
-            Queries.getOnboardingSimpleSignDocuments,
-        );
+        const simpleSignDocsQuery = new ParameterizedQuery('GetOnboardingSimpleSignDocuments', Queries.getOnboardingSimpleSignDocuments);
         simpleSignDocsQuery.setStringParameter('@employeeCode', employeeCode);
         simpleSignDocsQuery.setParameter('@companyId', companyId);
         const simpleSignPayload = {
@@ -2048,7 +2045,7 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
             }
         };
 
-        const checkForExistingSimpleSignRequests = async () => {    
+        const checkForExistingSimpleSignRequests = async () => {
             if (taskListDocuments.results.filter((doc) => doc.Type === EsignatureMetadataType.SimpleSignatureRequest)) {
                 const query = new ParameterizedQuery('getOnboardingSimpleSignDocuments', Queries.getOnboardingSimpleSignDocuments);
                 query.setParameter('@companyId', companyId);
@@ -4637,9 +4634,10 @@ async function deleteEmployeeDocumentRecord(tenantId: string, docType: DocType, 
  * Creates a specified document record under a company and uploads the file to S3
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for the company the user belongs to.
- * @param {any} request: The company document request.
- * @param {string} firstName: The first name of the invoking user.
- * @param {string} lastName: The last name of the invoking user.
+ * @param {any} requestBody: The company document request.
+ * @param {string} ipAddress: The first name of the invoking user.
+ * @param {string} [employeeId] : The id of the employee signing the document.
+ * @param {string} [onboardingKey] : Key of the onboarding being completed.
  * @returns {any}: A Promise of a created company document
  */
 export async function createSimpleSignDocument(
@@ -4663,10 +4661,7 @@ export async function createSimpleSignDocument(
         if (employeeId) {
             invocations.push(await utilService.validateEmployee(tenantId, employeeId));
         } else {
-            const employeeQuery = new ParameterizedQuery(
-                'getEmployeeInfoByOnboardingKey',
-                Queries.getEmployeeInfoByOnboardingKey,
-            );
+            const employeeQuery = new ParameterizedQuery('getEmployeeInfoByOnboardingKey', Queries.getEmployeeInfoByOnboardingKey);
             employeeQuery.setParameter('@onboardingKey', onboardingKey);
             const employeePayload = {
                 tenantId,
@@ -4748,9 +4743,9 @@ export async function createSimpleSignDocument(
             } else {
                 pdfDoc = await PDFDocument.load(fs.readFileSync(`${tmpFileDir}/${fileName}`));
             }
-        } catch(error) {
+        } catch (error) {
             console.log(JSON.stringify(error));
-            throw errorService.getErrorResponse(0).setDeveloperMessage('Failed to convert file to PDF.');           
+            throw errorService.getErrorResponse(0).setDeveloperMessage('Failed to convert file to PDF.');
         }
 
         // define signature page variables
