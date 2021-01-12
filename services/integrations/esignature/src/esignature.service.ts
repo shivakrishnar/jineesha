@@ -357,16 +357,18 @@ export async function createBatchHSSignatureRequest(
             }
 
             recordSet.forEach((record) => {
-                const employee = {
-                    firstName: record.FirstName,
-                    lastName: record.LastName,
-                    employeeCode: record.EmployeeCode,
-                    emailAddress: record.EmailAddress,
-                };
-                if (record.EmailAddress) {
-                    employeeData.push(employee);
-                } else {
-                    employeesWithoutEmailAddresses.push(employee);
+                if (record.IsActive) {
+                    const employee = {
+                        firstName: record.FirstName,
+                        lastName: record.LastName,
+                        employeeCode: record.EmployeeCode,
+                        emailAddress: record.EmailAddress,
+                    };
+                    if (record.EmailAddress) {
+                        employeeData.push(employee);
+                    } else {
+                        employeesWithoutEmailAddresses.push(employee);
+                    }
                 }
             });
         }
@@ -902,17 +904,19 @@ async function saveSimpleEsignatureMetadata(
             }
             employeeCodes = [];
             recordSet.forEach((record) => {
-                employeeCodes.push(record.EmployeeCode);
-                const ee = {
-                    firstName: record.FirstName,
-                    lastName: record.LastName,
-                    employeeCode: record.EmployeeCode,
-                    emailAddress: record.EmailAddress,
-                };
-                if (ee.emailAddress) {
-                    employeeData[ee.employeeCode] = ee;
-                } else {
-                    employeesWithoutEmailAddresses.push(ee);
+                if (record.IsActive) {
+                    employeeCodes.push(record.EmployeeCode);
+                    const ee = {
+                        firstName: record.FirstName,
+                        lastName: record.LastName,
+                        employeeCode: record.EmployeeCode,
+                        emailAddress: record.EmailAddress,
+                    };
+                    if (ee.emailAddress) {
+                        employeeData[ee.employeeCode] = ee;
+                    } else {
+                        employeesWithoutEmailAddresses.push(ee);
+                    }
                 }
             });
         }
@@ -1397,7 +1401,7 @@ export async function listDocuments(
                 title: entry.Title,
                 description: entry.Description,
                 type: entry.Type,
-                fileMetadataId: entry.FileMetadataID
+                fileMetadataId: entry.FileMetadataID,
             };
         });
 
@@ -1970,7 +1974,7 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
                     return [];
                 }
             }
-        }
+        };
 
         const checkForExistingSimpleSignRequests = async () => {
             if (taskListDocuments.results.filter((doc) => doc.Type === EsignatureMetadataType.SimpleSignatureRequest)) {
@@ -2023,7 +2027,7 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
                     return [];
                 }
             }
-        }
+        };
 
         const [helloSignResults, simpleSignResults] = await Promise.all([
             checkForExistingHelloSignDocs(),
@@ -2086,7 +2090,7 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
                         onboardingData,
                     );
                     return response[0];
-                }
+                };
                 invocations.push(combine());
             } else if (!document.type || document.type === EsignatureMetadataType.NoSignature) {
                 delete document.fileMetadataId;
@@ -2477,7 +2481,10 @@ export async function getOnboardingDocumentPreview(tenantId: string, id: string,
 
         // if id does not decode properly, assume it's a NoSignature document
         if (decoded.length === 0) {
-            const fileMetadataQuery = new ParameterizedQuery('getFileMetadataByEsignatureMetadataId', Queries.getFileMetadataByEsignatureMetadataId);
+            const fileMetadataQuery = new ParameterizedQuery(
+                'getFileMetadataByEsignatureMetadataId',
+                Queries.getFileMetadataByEsignatureMetadataId,
+            );
             fileMetadataQuery.setParameter('@id', id);
             payload = {
                 tenantId,
@@ -2485,7 +2492,11 @@ export async function getOnboardingDocumentPreview(tenantId: string, id: string,
                 query: fileMetadataQuery.value,
                 queryType: QueryType.Simple,
             } as DatabaseEvent;
-            const fileMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+            const fileMetadataResult: any = await utilService.invokeInternalService(
+                'queryExecutor',
+                payload,
+                InvocationType.RequestResponse,
+            );
 
             if (fileMetadataResult.recordset.length === 0) {
                 throw errorService.getErrorResponse(50).setDeveloperMessage(`Document with id ${id} not found`);
@@ -2500,8 +2511,8 @@ export async function getOnboardingDocumentPreview(tenantId: string, id: string,
             const url = s3Client.getSignedUrl('getObject', params);
             // parse key to get file extension
             const mimeType = key.split('.')[key.split('.').length - 1];
-    
-            return { data: url, mimeType: `.${mimeType}` }; 
+
+            return { data: url, mimeType: `.${mimeType}` };
         }
 
         const [documentId] = decoded;
@@ -2533,7 +2544,13 @@ export async function getOnboardingDocumentPreview(tenantId: string, id: string,
  * @param {string} id: The unique identifer for the specified document
  * @returns {Promise<any>}: A Promise of a URL or file
  */
-export async function saveOnboardingDocuments(tenantId: string, companyId: string, employeeId: string, onboardingKey: string, requestBody: any): Promise<void> {
+export async function saveOnboardingDocuments(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    onboardingKey: string,
+    requestBody: any,
+): Promise<void> {
     console.info('esignatureService.saveOnboardingDocuments');
 
     const { taskListId } = requestBody;
@@ -2567,7 +2584,9 @@ export async function saveOnboardingDocuments(tenantId: string, companyId: strin
         ]);
 
         if (onboardingResult.recordset.length === 0) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`No onboarding found with key ${onboardingKey} for the specified employee.`);
+            throw errorService
+                .getErrorResponse(50)
+                .setDeveloperMessage(`No onboarding found with key ${onboardingKey} for the specified employee.`);
         }
 
         if (taskListResult.recordset.length === 0) {
@@ -2593,7 +2612,7 @@ export async function saveOnboardingDocuments(tenantId: string, companyId: strin
                 esignatureQuery.setStringParameter('@category', 'onboarding');
                 esignatureQuery.setParameter('@employeeCode', employeeInfo.EmployeeCode);
                 esignatureQuery.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
-                esignatureQuery.setParameter('@isOnboardingDocument', '0') 
+                esignatureQuery.setParameter('@isOnboardingDocument', '0');
 
                 let payload = {
                     tenantId,
@@ -2630,7 +2649,7 @@ export async function saveOnboardingDocuments(tenantId: string, companyId: strin
                 await s3Client.copyObject(params).promise();
             };
             invocations.push(combine());
-        };
+        }
 
         const creations = await pSettle(invocations);
         creations.forEach((apiInvocation, index) => {
@@ -2639,7 +2658,6 @@ export async function saveOnboardingDocuments(tenantId: string, companyId: strin
                 throw errorService.getErrorResponse(0).setDeveloperMessage(String(apiInvocation.reason));
             }
         });
-
     } catch (error) {
         console.error(error);
         if (error instanceof ErrorMessage) {
@@ -4039,10 +4057,13 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
         query.setParameter('@pointer', (newKey && newKey.replace(/'/g, "''")) || oldPointer);
         query.setParameter('@isPublishedToEmployee', published);
 
-        const onboardingQuery = new ParameterizedQuery('UpdateOnboardingStatusForEsignatureMetadata', Queries.updateOnboardingStatusForEsignatureMetadata)
+        const onboardingQuery = new ParameterizedQuery(
+            'UpdateOnboardingStatusForEsignatureMetadata',
+            Queries.updateOnboardingStatusForEsignatureMetadata,
+        );
         onboardingQuery.setParameter('@id', documentId);
         onboardingQuery.setParameter('@isOnboardingDocument', onboarding);
-        
+
         query.combineQueries(onboardingQuery, true);
 
         payload = {
@@ -4052,7 +4073,7 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
             queryType: QueryType.Simple,
         } as DatabaseEvent;
         await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-        
+
         const encodedId = await encodeId(documentId, DocType.S3Document);
 
         const response = {

@@ -11,15 +11,16 @@ where
     concat(FirstName, LastName, EmployeeCode) like @_search
 
 select
-    ID,
-    CompanyID,
+    ee.ID,
+    ee.CompanyID,
     EmployeeCode,
     FirstName,
     LastName,
-    EmailAddress
+    EmailAddress,
+    s.IndicatesActiveEmployee as IsActive
 from
-    dbo.Employee
+    dbo.Employee ee left join dbo.StatusType s on ee.CurrentStatusTypeID = s.ID
 where
-    CompanyID = @_companyId and
+    ee.CompanyID = @_companyId and
     concat(FirstName, LastName, EmployeeCode) like @_search
 order by ID

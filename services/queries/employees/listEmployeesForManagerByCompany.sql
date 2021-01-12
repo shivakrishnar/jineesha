@@ -7,7 +7,8 @@ declare @employeeList table (
     CompanyID int,
     EmployeeCode nvarchar(50),
     FirstName nvarchar(max),
-    LastName nvarchar(max)
+    LastName nvarchar(max),
+    IsActive bit
 );
 declare @_search as nvarchar(max) = '%' + @search + '%';
 
@@ -49,9 +50,10 @@ ManagedEmployees as
 		ee.CompanyID,
         ee.EmployeeCode,
 		ee.FirstName,
-        ee.LastName
+        ee.LastName,
+        s.IndicatesActiveEmployee as IsActive
 	from
-		dbo.Employee ee,
+		dbo.Employee ee left join dbo.StatusType s on ee.CurrentStatusTypeID = s.ID,
 		ManagerEmployee me
 	where 
 		me.EmployeeID in (ee.CurrentSupervisor1ID, ee.CurrentSupervisor2ID, ee.CurrentSupervisor3ID)
@@ -66,7 +68,8 @@ select
     CompanyID,
     EmployeeCode,
     FirstName,
-    LastName
+    LastName,
+    IsActive
 from
     ManagedEmployees
 
@@ -81,7 +84,8 @@ select
     CompanyID,
     EmployeeCode,
     FirstName,
-    LastName
+    LastName,
+    IsActive
 from
     @employeeList
 order by CompanyID

@@ -5,7 +5,8 @@ declare @employeeList table (
     CompanyID int,
     EmployeeCode nvarchar(50),
     FirstName nvarchar(max),
-    LastName nvarchar(max)
+    LastName nvarchar(max),
+    IsActive bit
 )
 declare @_search as nvarchar(max) = '%' + @search + '%';
 
@@ -26,9 +27,10 @@ select
     ee.CompanyID,
     ee.EmployeeCode,
     ee.FirstName,
-    ee.LastName
+    ee.LastName,
+    s.IndicatesActiveEmployee as IsActive
 from
-    dbo.Employee ee
+    dbo.Employee ee left join dbo.StatusType s on ee.CurrentStatusTypeID = s.ID
 where
     ee.CompanyID = @_companyId and
     concat(FirstName, LastName, EmployeeCode) like @_search
@@ -47,7 +49,8 @@ select
     CompanyID,
     EmployeeCode,
     FirstName,
-    LastName
+    LastName,
+    IsActive
 from
     @employeeList
 order by CompanyID
