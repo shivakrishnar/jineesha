@@ -614,6 +614,7 @@ async function saveEsignatureMetadata(
     category: string,
     employeeCodes: string[],
     signatureRequest: any,
+    isOnboardingDocument: boolean = false,
 ): Promise<SignatureRequestResponse> {
     try {
         const signatures: Signature[] = signatureRequest.signatures.map((signature) => ({
@@ -641,7 +642,7 @@ async function saveEsignatureMetadata(
             query.setParameter('@category', category ? `'${category}'` : 'NULL');
             query.setParameter('@employeeCode', `'${code}'`);
             query.setParameter('@signatureStatusId', SignatureStatusID.Pending);
-            query.setParameter('@isOnboardingDocument', 0);
+            query.setParameter('@isOnboardingDocument', isOnboardingDocument ? '1' : '0');
             esignatureMetadataQuery.combineQueries(query, false);
         }
 
@@ -1005,7 +1006,7 @@ async function saveSimpleEsignatureMetadata(
             query.setParameter('@fileName', 'NULL');
             query.setParameter('@employeeCode', `'${code}'`);
             query.setParameter('@signatureStatusId', SignatureStatusID.Pending);
-            query.setParameter('@isOnboardingDocument', 0);
+            query.setParameter('@isOnboardingDocument', isOnboardingDocument ? '1' : '0');
             esignatureMetadataQuery.combineQueries(query, false);
 
             signatureRequestResponses.push(
@@ -2138,7 +2139,7 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
                         configuration,
                         templateResponse,
                     );
-                    return await saveEsignatureMetadata(tenantId, companyId, category, [employeeCode], signatureRequest);
+                    return await saveEsignatureMetadata(tenantId, companyId, category, [employeeCode], signatureRequest, true);
                 };
                 invocations.push(combine());
             } else if (!docsExist && document.type === EsignatureMetadataType.SimpleSignatureRequest) {
