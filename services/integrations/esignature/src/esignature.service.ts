@@ -2905,15 +2905,12 @@ async function getEmployeeLegacyAndSignedDocuments(
             // note: default to false if value is null for isPublishedToEmployee and isPrivate flags
             let isPublishedToEmployee = document.isPublishedToEmployee !== null ? document.isPublishedToEmployee : false;
             let isPrivate = document.isPrivateDocument !== null ? document.isPrivateDocument : false;
-            let isSignedDocument = false;
             let docType = DocType.EsignatureDocument;
             let id = document.id;
             if (document.isLegacyDocument) {
-                isSignedDocument = document.esignDate ? true : false;
                 docType = DocType.LegacyDocument;
                 id = hashids.encode(Number(id), docType);
             } else if (document.isSignedOrUploadedDocument) {
-                isSignedDocument = !document.uploadedBy && document.category === 'onboarding';
                 if (document.employeeCode) {
                     isPublishedToEmployee = false;
                     isPrivate = document.isPublishedToEmployee !== null ? !document.isPublishedToEmployee : false;
@@ -2944,6 +2941,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 signatureStatusStepNumber,
                 isProcessing,
                 isHelloSignDocument,
+                isOnboarding,
             } = document;
             updatedDocuments.push({
                 id,
@@ -2959,11 +2957,11 @@ async function getEmployeeLegacyAndSignedDocuments(
                 employeeName: firstName && lastName ? `${firstName} ${lastName}` : undefined,
                 companyId,
                 companyName,
-                isSignedDocument,
                 uploadedBy,
                 isLegacyDocument,
                 isEsignatureDocument,
                 isHelloSignDocument,
+                isOnboarding,
                 status: {
                     name: signatureStatusName,
                     priority: signatureStatusPriority,
@@ -4964,10 +4962,9 @@ export async function createSimpleSignDocument(
             employeeName: `${firstName} ${lastName}`,
             companyId,
             companyName,
-            isSignedDocument: true,
             uploadedBy: `${firstName} ${lastName}`,
             isLegacyDocument: false,
-            isEsignatureDocument: false,
+            isEsignatureDocument: true,
             isHelloSignDocument: false,
             status: {
                 name,
