@@ -24,6 +24,11 @@ AWS = {
             return { promise };
         }
 
+        copyObject() {
+            console.log('copyObject');
+            return { promise };
+        }
+
         headObject(objectInfo) {
             return objectInfo.Bucket
                 ? {

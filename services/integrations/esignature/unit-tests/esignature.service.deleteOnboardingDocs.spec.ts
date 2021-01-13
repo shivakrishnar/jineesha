@@ -12,7 +12,7 @@ import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { Queries } from '../../../queries/queries';
 
-describe('esignatureService.deleteOnboardingDcouments', () => {
+describe('esignatureService.deleteOnboardingDocuments', () => {
     beforeEach(() => {
         setup();
     });
@@ -25,6 +25,12 @@ describe('esignatureService.deleteOnboardingDcouments', () => {
             if (payload.queryName === 'getIncompleteOnboardingsByCompanyIdAndKey') {
                 return Promise.resolve({ recordset: [true] }); //just need a non-empty recordset
             }
+            if (payload.queryName === 'GetOnboardingSimpleSignDocuments') {
+                return Promise.resolve(mockData.onboardingSimpleSignDBResponse);
+            }
+            if (payload.queryName === 'getNonApprovedOnboardingByKey') {
+                return Promise.resolve(mockData.employeeDBResponse);
+            }
         });
         const expectedNumberOfMockSigRequestIds = 2;
         if (mockData.helloSignSignatureRequestsIdList.length != expectedNumberOfMockSigRequestIds) {
@@ -35,7 +41,7 @@ describe('esignatureService.deleteOnboardingDcouments', () => {
         if (mockData.helloSignSignatureRequestsIdList.length != mockData.helloSignSignatureRequests.length) {
             throw new Error('Ensure that all the mock signature requests have a matching ID in mockData.helloSignSignatureRequestIdList');
         }
-        const requestIds = `${mockData.helloSignSignatureRequestsIdList[0]},${mockData.helloSignSignatureRequestsIdList[1]}`;
+        const requestIds = `${mockData.helloSignSignatureRequestsIdList[0]},${mockData.helloSignSignatureRequestsIdList[1]},`;
         const query = new ParameterizedQuery('deleteEsignatureMetadataByIdList', Queries.deleteEsignatureMetadataByIdList);
         query.setStringParameter('@idList', requestIds);
         const payload = {
@@ -59,6 +65,12 @@ describe('esignatureService.deleteOnboardingDcouments', () => {
             if (payload.queryName === 'getIncompleteOnboardingsByCompanyIdAndKey') {
                 return Promise.resolve({ recordset: [true] }); //just need a non-empty recordset
             }
+            if (payload.queryName === 'GetOnboardingSimpleSignDocuments') {
+                return Promise.resolve(mockData.onboardingSimpleSignDBResponse);
+            }
+            if (payload.queryName === 'getNonApprovedOnboardingByKey') {
+                return Promise.resolve(mockData.employeeDBResponse);
+            }
         });
         if (mockData.helloSignSignatureRequestsIdList[0] != mockData.helloSignSignatureRequests[0].signature_request_id) {
             throw new Error(
@@ -66,7 +78,7 @@ describe('esignatureService.deleteOnboardingDcouments', () => {
             );
         }
 
-        const requestIds = `${mockData.helloSignSignatureRequestsIdList[0]}`;
+        const requestIds = `${mockData.helloSignSignatureRequestsIdList[0]},`;
         const query = new ParameterizedQuery('deleteEsignatureMetadataByIdList', Queries.deleteEsignatureMetadataByIdList);
         query.setStringParameter('@idList', requestIds);
         const payload = {

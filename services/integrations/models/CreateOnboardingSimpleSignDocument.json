@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
-    "title": "Create Simple Sign Document Schema",
-    "$id": "CreateSimpleSignDocument",
+    "title": "Create Onboarding Simple Sign Document Schema",
+    "$id": "CreateOnboardingSimpleSignDocument",
     "type": "object",
     "properties": {
         "id": {
@@ -40,10 +40,6 @@
             "description": "Determines if the document is an onboarding document.",
             "type": ["boolean"]
         },
-        "employeeId": {
-            "description": "The unique identifier for the employee.",
-            "type": ["number", "null", "string"]
-        },
         "employeeCode": {
             "description": "The code for the employee.",
             "type": ["string"]
@@ -59,6 +55,10 @@
         "companyName": {
             "description": "The name of the company.",
             "type": ["string"]
+        },
+        "isSignedDocument": {
+            "description": "Determines if the document was e-signed.",
+            "type": ["boolean"]
         },
         "uploadedBy": {
             "description": "The name of the user that uploaded the document.",
@@ -88,11 +88,11 @@
         "isPrivate",
         "isPublishedToEmployee",
         "isOnboardingDocument",
-        "employeeId",
         "employeeCode",
         "employeeName",
         "companyId",
         "companyName",
+        "isSignedDocument",
         "uploadedBy",
         "isLegacyDocument",
         "isEsignatureDocument",

@@ -15,9 +15,11 @@ describe('esignatureService.saveOnboardingDocuments', () => {
     test('saves onboarding documents successfully', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetTaskListDocuments') {
-                return Promise.resolve(mockData.originalDocsTaskListDBResponse);
+                return Promise.resolve(mockData.obDocsTaskListDBResponse);
             } else if (payload.queryName === 'GetOnboardingByEmployeeIDAndKey') {
                 return Promise.resolve(mockData.onboardingDBResponse);
+            } else if (payload.queryName === 'GetOnboardingSignedSimpleSignDocuments') {
+                return Promise.resolve(mockData.onboardingSimpleSignDBResponse);
             }
         });
 

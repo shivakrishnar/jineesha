@@ -27,6 +27,11 @@
     "applicationId": "23e69dde-2260-4def-9032-08360435e210",
     "esignature": {
         "onboardingKey": "b87b65f3-7c27-4eaf-a275-3d1150fbb013",
+        "onboardingWithSimpleSignDocuments": {
+            "employeeCode": "888",
+            "taskListId": 189,
+            "key": "ee13e894-772b-4339-b2eb-e5c8846e384a"
+        },
         "onboardingWithCompanyDocumentsActive": {
             "key": "ea2a8058-4d10-4a3f-84d6-65929ec671b3",
             "nonSignableDocument": "29fd6ff7818a4708b8126cb413a048b7",

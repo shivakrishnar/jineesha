@@ -12,6 +12,19 @@ export const employeeDBResponse = {
     rowsAffected: [1],
 };
 
+export const employeeInfoDBResponse = {
+    recordset: [
+        {
+            emailAddress: 'user@test.com',
+            firstName: 'Test',
+            lastName: 'User',
+            employeeCode: '1',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
 export const employeeEmailsByManagerDBResponse = {
     recordset: [
         {
