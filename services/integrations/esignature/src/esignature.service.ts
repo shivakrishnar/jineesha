@@ -245,6 +245,7 @@ export async function saveTemplateMetadata(
             fileName,
             category,
             isEsignatureDocument: true,
+            isHelloSignTemplate: true,
             isPublishedToEmployee: false,
             isOnboardingDocument,
         } as TemplateMetadata;
