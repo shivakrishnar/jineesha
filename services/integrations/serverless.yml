@@ -458,6 +458,15 @@ functions:
             cors:
               origin: '*'
 
+  updateEsignatureProductTier:
+    handler: esignature/src/handler.updateEsignatureProductTier
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/esignatures
+            method: put
+            cors:
+              origin: '*'
+
 layers:
   libreoffice:
     path: layers/libreoffice

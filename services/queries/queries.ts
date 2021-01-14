@@ -130,6 +130,8 @@ export const Queries = {
         .toString(),
     updateFileMetadataPointerById: fs.readFileSync(path.join(basePath, 'esignatures/updateFileMetadataPointerById.sql')).toString(),
     getNonApprovedOnboardingByKey: fs.readFileSync(path.join(basePath, 'esignatures/getNonApprovedOnboardingByKey.sql')).toString(),
+    updateCompanyEsignatureProductTier: fs.readFileSync(path.join(basePath, 'esignatures/updateCompanyEsignatureProductTier.sql')).toString(),
+    getEsignatureProductTierById: fs.readFileSync(path.join(basePath, 'esignatures/getEsignatureProductTierById.sql')).toString(),
 
     // Companies
     getUserCompaniesById: fs.readFileSync(path.join(basePath, 'companies/getUserCompaniesById.sql')).toString(),

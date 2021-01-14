@@ -25,6 +25,7 @@ import * as utilService from '../../../util.service';
 import { convertTo } from '@shelf/aws-lambda-libreoffice';
 import { PDFDocument, rgb } from 'pdf-lib';
 import { ErrorMessage } from '../../../errors/errorMessage';
+import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { EsignatureAction, IBillingEvent, IEsignatureEvent, NotificationEventType } from '../../../internal-api/notification/events';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
@@ -5004,9 +5005,7 @@ export async function createSimpleSignDocument(
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @returns {any}: A Promise of a tenants e-signature data.
  */
-export async function getTenantEsignatureData(
-    tenantId: string,
-): Promise<any> {
+export async function getTenantEsignatureData(tenantId: string): Promise<any> {
     console.info('esignature.service.getTenantEsignatureData');
 
     try {
@@ -5025,7 +5024,7 @@ export async function getTenantEsignatureData(
         if (Items.length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage('Connection string not found for tenant');
         }
-        
+
         const isDirectClient = Items[0].IsDirectClient;
 
         // Get pricing data
@@ -5040,6 +5039,69 @@ export async function getTenantEsignatureData(
         return {
             isDirectClient: isDirectClient || false,
             pricingData: JSON.parse(ssmResult.Parameter.Value),
+        };
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Retrieves all e-signature data related to a tenant.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {any} requestBody: The product tier request.
+ * @returns {any}: A Promise of a company's product tier.
+ */
+export async function updateEsignatureProductTier(tenantId: string, companyId: string, email: string, requestBody: any): Promise<any> {
+    console.info('esignature.service.updateEsignatureProductTier');
+
+    const { productTierId } = requestBody;
+
+    try {
+        await utilService.validateCompany(tenantId, companyId);
+
+        const getQuery = new ParameterizedQuery('getEsignatureProductTierById', Queries.getEsignatureProductTierById);
+        getQuery.setParameter('@id', productTierId);
+        const getPayload = {
+            tenantId,
+            queryName: getQuery.name,
+            query: getQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const getResult: any = await utilService.invokeInternalService('queryExecutor', getPayload, InvocationType.RequestResponse);
+
+        if (getResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`E-Signature product tier with ID ${productTierId} not found.`);
+        }
+
+        const updateQuery = new ParameterizedQuery('updateCompanyEsignatureProductTier', Queries.updateCompanyEsignatureProductTier);
+        updateQuery.setParameter('@esignatureProductTierId', productTierId);
+        updateQuery.setParameter('@companyId', companyId);
+        const updatePayload = {
+            tenantId,
+            queryName: updateQuery.name,
+            query: updateQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const updateResult: any = await utilService.invokeInternalService('queryExecutor', updatePayload, InvocationType.RequestResponse);
+
+        utilService.logToAuditTrail({
+            userEmail: email,
+            newFields: updateResult.recordset[0],
+            type: AuditActionType.Update,
+            companyId,
+            areaOfChange: AuditAreaOfChange.Company,
+            tenantId,
+        } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
+
+        return {
+            id: productTierId,
+            name: getResult.recordset[0].Name,
         };
     } catch (error) {
         if (error instanceof ErrorMessage) {
