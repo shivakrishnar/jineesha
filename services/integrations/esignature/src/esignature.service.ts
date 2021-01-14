@@ -5000,6 +5000,58 @@ export async function createSimpleSignDocument(
 }
 
 /**
+ * Retrieves all e-signature data related to a tenant.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @returns {any}: A Promise of a tenants e-signature data.
+ */
+export async function getTenantEsignatureData(
+    tenantId: string,
+): Promise<any> {
+    console.info('esignature.service.getTenantEsignatureData');
+
+    try {
+        // Get direct client status
+        const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+        const params = {
+            TableName: 'ConnectionStrings',
+            IndexName: 'tenantId-index',
+            KeyConditionExpression: 'TenantID = :TenantID',
+            ExpressionAttributeValues: {
+                ':TenantID': tenantId,
+            },
+        };
+        const { Items } = await dynamoDbClient.query(params).promise();
+
+        if (Items.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage('Connection string not found for tenant');
+        }
+        
+        const isDirectClient = Items[0].IsDirectClient;
+
+        // Get pricing data
+        const resourceName = isDirectClient ? 'directClientPricingData' : 'indirectClientPricingData';
+        const ssm = new AWS.SSM({ region: configService.getAwsRegion() });
+        const ssmParams = {
+            Name: `/hr/esignature/simplesign/${resourceName}`,
+            WithDecryption: false,
+        };
+        const ssmResult = await ssm.getParameter(ssmParams).promise();
+
+        return {
+            isDirectClient: isDirectClient || false,
+            pricingData: JSON.parse(ssmResult.Parameter.Value),
+        };
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Validates a given query string collection.
  * @param {string []} validInputs - Validate query string parameters
  * @param {any} queryParameters - The query string parameters

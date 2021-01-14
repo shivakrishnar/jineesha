@@ -1304,3 +1304,34 @@ export const createOnboardingSimpleSignDocument = utilService.gatewayEventHandle
         );
     },
 });
+
+/**
+ * Returns all e-signature data related to a tenant.
+ */
+export const getTenantEsignatureData = utilService.gatewayEventHandlerV2(
+    async ({ securityContext, event }: IGatewayEventInput) => {
+        console.info('esignature.handler.getTenantEsignatureData');
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, tenantResourceUriSchema);
+        utilService.checkBoundedIntegralValues(event.pathParameters);
+
+        const { tenantId } = event.pathParameters;
+        const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+            return (
+                role === Role.globalAdmin ||
+                role === Role.serviceBureauAdmin ||
+                role === Role.superAdmin ||
+                role === Role.hrAdmin ||
+                role === Role.hrRestrictedAdmin
+            );
+        });
+
+        if (!isAuthorized) {
+            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        }
+
+        return await esignatureService.getTenantEsignatureData(tenantId);
+    },
+);
