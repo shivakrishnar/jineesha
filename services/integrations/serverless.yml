@@ -363,7 +363,17 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents/{documentId}
             method: delete
             cors:
+              origin: '*' 
+  
+  applicantTrackingWebhook:
+    handler: applicant-tracking/src/handler.applicantDataImport
+    events:
+        - http:
+            path: /applicants
+            method: post
+            cors:
               origin: '*'
+  
 
   deleteOnboardingDocuments:
     handler: esignature/src/handler.deleteOnboardingDocuments
