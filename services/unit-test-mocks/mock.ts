@@ -2,6 +2,7 @@ import * as employeeService from '../api/tenants/src/employee.service';
 import * as tenantsService from '../api/tenants/src/tenants.service';
 import * as configService from '../config.service';
 import * as errorService from '../errors/error.service';
+import * as mockData from '../integrations/esignature/unit-tests/mock-data';
 import * as paginationService from '../pagination/pagination.service';
 import * as hellosignService from '../remote-services/hellosign.service';
 import * as integrationsService from '../remote-services/integrations.service';
@@ -38,6 +39,14 @@ export const setup = () => {
 
     (configService as any).getLegacyClientCutOffDate = jest.fn(() => {
         return '01/01/2020';
+    });
+
+    (configService as any).getDirectClientPricingData = jest.fn(() => {
+        return mockData.directClientPricingData;
+    });
+
+    (configService as any).getIndirectClientPricingData = jest.fn(() => {
+        return mockData.indirectClientPricingData;
     });
 
     (utilService as any).getSecret = jest.fn((params: any) => {

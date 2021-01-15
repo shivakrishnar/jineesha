@@ -1,0 +1,17 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Pricing Data Schema",
+    "$id": "PricingData",
+    "type": "object",
+    "properties": {
+        "monthlyCost": {
+            "description": "The monthly cost for enhanced e-signature.",
+            "type": ["number"]
+        },
+        "costPerRequest": {
+            "description": "The cost per signature request.",
+            "type": ["number"]
+        }
+    },
+    "required": ["monthlyCost", "costPerRequest"]
+}
