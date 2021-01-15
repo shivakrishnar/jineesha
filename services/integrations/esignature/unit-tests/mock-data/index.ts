@@ -10,3 +10,4 @@ export * from './onboarding-mock-data';
 export * from './configure-mock-data';
 export * from './preview-mock-data';
 export * from './signature-status-mock-data';
+export * from './product-tier-mock-data';

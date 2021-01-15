@@ -167,3 +167,9 @@ export function getValidSaveOnboardingDocumentObject(): any {
         taskListId: configs.esignature.onboardingWithCompanyDocumentsActive.taskListId,
     };
 }
+
+export function getValidPutProductTierObject(productTierId: number): any {
+    return {
+        productTierId,
+    };
+}
