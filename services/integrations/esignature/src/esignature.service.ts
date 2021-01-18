@@ -849,7 +849,9 @@ export async function deleteOnboardingDocuments(tenantId: string, companyId: str
 
         // delete all the signed files in s3
         const invocations: Array<Promise<any>> = [];
-        for (const simpleSign of simpleSignResponse.recordset) {
+        for (const simpleSign of simpleSignResponse.recordset.filter(
+            (record) => record.SignatureStatusStepNumber >= SignatureStatusStepNumber.Signed,
+        )) {
             const combine = async () => {
                 const deleteParams = {
                     Bucket: configService.getFileBucketName(),
@@ -4718,7 +4720,7 @@ export async function createSimpleSignDocument(
         // The file is saved as the specified file name in the payload with a guid attached to it in order to
         // prevent conflicts.
         fs.mkdirSync(tmpFileDir);
-        fs.writeFileSync(`${tmpFileDir}/${fileName}`, item.Body.toString('base64'), 'base64');
+        fs.writeFileSync(`${tmpFileDir}/${fileName}`, (item.Body as Buffer).toString('base64'), 'base64');
 
         // convert to pdf
         // TODO: (MJ-7051) convert doc and docx to pdf
