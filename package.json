@@ -1,6 +1,6 @@
 {
     "name": "asure.hr.services",
-    "version": "1.14.4",
+    "version": "1.14.7",
     "description": "Collection of HR-related services for Asure Software Evolution HCM suite",
     "main": "index.js",
     "scripts": {
@@ -96,6 +96,7 @@
         "@smallwins/validate": "^4.3.0",
         "@types/hashids": "^1.0.30",
         "aws-sdk": "^2.307.0",
+        "class-transformer": "^0.2.3",
         "hashids": "^1.2.2",
         "jsonwebtoken": "^8.4.0",
         "moment-timezone": "^0.5.32",

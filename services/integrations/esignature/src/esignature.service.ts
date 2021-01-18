@@ -556,7 +556,7 @@ async function createHelloSignSignatureRequest(
             metadata,
             signers: request.signatories.map((signer: Signatory) => {
                 return {
-                    email_address: signer.emailAddress,
+                    email_address: signer.emailAddress.toLowerCase(),
                     name: signer.name,
                     role: signer.role,
                 };
