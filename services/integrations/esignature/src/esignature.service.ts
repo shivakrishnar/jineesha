@@ -1172,7 +1172,10 @@ export async function listTemplates(
                         ? document.FirstName // Note: the query returns the full name as the FirstName field
                         : `${document.FirstName} ${document.LastName}`;
                 // GUIDs are strings so we can't encode them; we'll set those to document.ID while legacy documents' IDs need to  be encoded
-                let id = hashids.encode(document.ID, document.Type === 'legacy' ? DocType.LegacyDocument : DocType.S3Document);
+                let id;
+                if (!queryParams || !queryParams.onboarding) {
+                    id = hashids.encode(document.ID, document.Type === 'legacy' ? DocType.LegacyDocument : DocType.S3Document);
+                }
                 if (!id) id = document.ID;
 
                 memo.push({
@@ -1522,10 +1525,6 @@ export async function listDocuments(
                         unfoundDocuments.push(doc);
                     }
                 }
-            } else if (!doc.type) {
-                // encode ids for legacy documents
-                const id = await encodeId(doc.id, DocType.LegacyDocument);
-                doc.id = id;
             }
             if (doc.fileMetadataId) {
                 const fileMetadataId = await encodeId(doc.fileMetadataId, DocType.EsignatureDocument);
@@ -2533,7 +2532,8 @@ export async function getOnboardingDocumentPreview(tenantId: string, id: string,
     const { onboardingKey } = requestBody;
 
     try {
-        const decoded = await decodeId(id);
+        // encoded GUIDs should be longer than 8, we do not expect sequential IDs to exceed 10 million
+        const decoded = parseInt(id) && id.length < 9 ? [parseInt(id)] : await decodeId(id);
 
         const taskListQuery = new ParameterizedQuery('getOnboardingByKey', Queries.getOnboardingByKey);
         taskListQuery.setParameter('@onboardingKey', onboardingKey);
