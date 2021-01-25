@@ -19,8 +19,8 @@ begin
     select
         ID,
         CompanyName,
-        ESignatureProductTierId,
-        EsignatureProductTierName = (select Name from dbo.EsignatureProductTier where ID = ESignatureProductTierId),
+        EsignatureProductTierID,
+        EsignatureProductTierName = (select Name from dbo.EsignatureProductTier where ID = EsignatureProductTierID),
         CreateDate
     from
         dbo.Company
@@ -33,7 +33,7 @@ begin
         ID,
         CompanyName,
         EsignatureProductTierID,
-        EsignatureProductTierName = (select Name from dbo.EsignatureProductTier where ID = ESignatureProductTierId),
+        EsignatureProductTierName = (select Name from dbo.EsignatureProductTier where ID = EsignatureProductTierID),
         CreateDate
     from
         dbo.Company
@@ -54,7 +54,7 @@ begin
         ID,
         CompanyName,
         EsignatureProductTierID,
-        EsignatureProductTierName = (select Name from dbo.EsignatureProductTier where ID = ESignatureProductTierId),
+        EsignatureProductTierName = (select Name from dbo.EsignatureProductTier where ID = EsignatureProductTierID),
         CreateDate
     from
         dbo.Company
