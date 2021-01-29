@@ -63,6 +63,64 @@ AWS = {
             };
         }
     },
+    DynamoDB: {
+        DocumentClient: class {
+            constructor() {
+                return this;
+            }
+
+            query(params) {
+                if (params.ExpressionAttributeValues[':TenantID'] === mockData.nonExistentTenantId) {
+                    return {
+                        promise: () => {
+                            return {
+                                catch: catchMethod,
+                                Items: [],
+                            };
+                        },
+                    }
+                }
+
+                let IsDirectClient = false;
+                if (params.ExpressionAttributeValues[':TenantID'] === mockData.directClientTenantId) {
+                    IsDirectClient = true;
+                }
+                return {
+                    promise: () => {
+                        return {
+                            catch: catchMethod,
+                            Items: [
+                                {
+                                    IsDirectClient,
+                                },
+                            ],
+                        };
+                    },
+                }
+            }
+        }
+    },
+    SSM: class {
+        constructor() {
+            return this;
+        }
+
+        getParameter(params) {
+            let pricingData = mockData.directClientPricingData;
+            if (params.Name.includes('indirectClientPricingData')) {
+                pricingData = mockData.indirectClientPricingData;
+            }
+            return {
+                promise: () => {
+                    return {
+                        Parameter: {
+                            Value: pricingData,
+                        }
+                    }
+                }
+            }
+        }
+    }
 };
 
 const promise = () => {

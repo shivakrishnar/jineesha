@@ -50,7 +50,8 @@
         "nonExistingDocumentId": "v7Xbv3hX",
         "searchQueryParam": "onboarding",
         "signableDocument": "527tD",
-        "nonExistentSignableDocument": "W6oy6tb"
+        "nonExistentSignableDocument": "W6oy6tb",
+        "companyIdForProductTier": 600213
     },
     "documentsBucket": "staging.hr.files",
     "logo": {

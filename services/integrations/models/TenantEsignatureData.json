@@ -1,0 +1,14 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Tenant Esignature Data Schema",
+    "$id": "TenantEsignatureData",
+    "type": "object",
+    "properties": {
+        "isDirectClient": {
+            "description": "Determines if the tenant is a direct client",
+            "type": ["boolean"]
+        },
+        "pricingData": { "$ref": "PricingData" }
+    },
+    "required": ["isDirectClient", "pricingData"]
+}

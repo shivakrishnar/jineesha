@@ -152,7 +152,7 @@ export async function getById(tenantId: string, companyId: string, email: string
             id: company.ID,
             name: company.CompanyName,
             esignatureProductTier: {
-                id: company.ESignatureProductTierId,
+                id: company.EsignatureProductTierID,
                 name: company.EsignatureProductTierName,
             },
             isEsignatureLegacyCompany,

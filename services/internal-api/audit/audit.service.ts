@@ -1,13 +1,13 @@
 import { ParameterizedQuery } from '../../queries/parameterizedQuery';
 import { Queries } from '../../queries/queries';
 
+import * as AWS from 'aws-sdk';
+import * as uuidV4 from 'uuid/v4';
+import * as configService from '../../config.service';
 import * as utilService from '../../util.service';
-import { InvocationType, CompanyInfo } from '../../util.service';
+import { CompanyInfo, InvocationType } from '../../util.service';
 import { DatabaseEvent, QueryType } from '../database/events';
 import { IAudit } from './audit';
-import * as AWS from 'aws-sdk';
-import * as configService from '../../config.service';
-import * as uuidV4 from 'uuid/v4';
 
 /**
  *  Logs a message to cloud watch
@@ -70,7 +70,10 @@ export async function logAudit(audit: IAudit): Promise<boolean> {
         const auditId = await createAuditEntry(tenantId, transactionName, userEmail);
 
         if (auditId && !isEvoCall) {
-            const employeeDisplayName = await getEmployeeDisplayName(tenantId, employeeId);
+            let employeeDisplayName;
+            if (employeeId) {
+                employeeDisplayName = await getEmployeeDisplayName(tenantId, employeeId);
+            }
             await createAuditDetailEntries(tenantId, auditId, audit, employeeDisplayName);
         }
 
@@ -147,7 +150,7 @@ async function getEmployeeDisplayName(tenantId: string, employeeId: string): Pro
  * @param {IAudit} audit: The audit information to log.
  * @param {string} employeeDisplayName: The employee's display name.
  */
-async function createAuditDetailEntries(tenantId: string, auditId: number, audit: IAudit, employeeDisplayName: string): Promise<void> {
+async function createAuditDetailEntries(tenantId: string, auditId: number, audit: IAudit, employeeDisplayName?: string): Promise<void> {
     const { oldFields, newFields, type, companyId, areaOfChange } = audit;
 
     const fieldKeys = Object.keys(oldFields || newFields);
@@ -158,7 +161,7 @@ async function createAuditDetailEntries(tenantId: string, auditId: number, audit
         const fieldQuery = new ParameterizedQuery(`CreateAuditDetailFor${fieldKeys[i]}`, Queries.createAuditDetailEntry);
         fieldQuery.setParameter('@auditId', auditId);
         fieldQuery.setParameter('@companyId', companyId);
-        fieldQuery.setParameter('@affectedEmployee', employeeDisplayName);
+        fieldQuery.setParameter('@affectedEmployee', employeeDisplayName || 'NULL');
         fieldQuery.setParameter('@actionType', type);
         fieldQuery.setParameter('@fieldChanged', fieldKeys[i]);
         // tslint:disable no-null-keyword
