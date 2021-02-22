@@ -3178,7 +3178,7 @@ export async function getTemplateFiles(templateId: any): Promise<any> {
 export async function generateDocumentUploadUrl(tenantId: string, companyId: string, invoker: string, requestPayload: any): Promise<any> {
     console.info('esignature.service.generateDocumentUploadUrl');
 
-    const { employeeId, fileName: filename, title, isPrivate = false, documentId, category, isOnboardingDocument } = requestPayload;
+    const { employeeId, fileName: filename, title, isPrivate = false, documentId, category } = requestPayload;
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -3323,7 +3323,6 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
         }
     } else {
         if (!documentId && !employeeId && companyId) {
-            documentMetadata.isOnboardingDocument = isOnboardingDocument ? 'true' : 'false';
             documentMetadata.category = category;
             documentMetadata.esignatureMetadataId = esignatureMetadataId;
         }
@@ -3458,7 +3457,7 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
             isprivate,
             isesigneddocument,
             category,
-            isonboardingdocument,
+            isonboardingdocument = false,
             filename,
             esignaturemetadataid,
         } = metadata;
