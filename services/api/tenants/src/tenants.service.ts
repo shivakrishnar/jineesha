@@ -107,7 +107,7 @@ export async function rdsDatabasePlacement(): Promise<string> {
         region: configService.getAwsRegion(),
     });
 
-    const maxDatabasesPerRdsInstance = 30;
+    const maxDatabasesPerRdsInstance = 100;
 
     try {
         const response = await rdsClient.describeDBInstances().promise();
@@ -130,14 +130,14 @@ export async function rdsDatabasePlacement(): Promise<string> {
         Note: By default, AWS customers are allowed to have up to a total of 40
               Amazon RDS DB instances. Of those 40, up to 10 can be Oracle or
               SQL Server DB Instances under the "License Included" model.
-              Each RDS instance can contain a max of 30 databases.
+              Each RDS instance can contain a max of 100 databases.
               https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_SQLServer.html
         */
         if (chosenInstanceDbCount === maxDatabasesPerRdsInstance) {
             throw errorService
                 .getErrorResponse(0)
                 .setDeveloperMessage('Max database count reached')
-                .setMoreInfo('RDS (SQL Server) supports a max of 30 databases per instance');
+                .setMoreInfo(`RDS (SQL Server) supports a max of ${maxDatabasesPerRdsInstance} databases per instance`);
         }
 
         return chosenInstance;
