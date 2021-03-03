@@ -135,6 +135,8 @@ export const templateListResponse: any[] = [
         existsInTaskList: false,
         isLegacyDocument: true,
         isHelloSignTemplate: false,
+        esignID: '',
+        isOnboardingDocument: undefined,
     },
     {
         id: 'N57UV',
@@ -148,6 +150,8 @@ export const templateListResponse: any[] = [
         existsInTaskList: true,
         isLegacyDocument: false,
         isHelloSignTemplate: false,
+        esignID: '',
+        isOnboardingDocument: undefined,
     },
 ];
 

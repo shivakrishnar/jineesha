@@ -1197,6 +1197,7 @@ export async function listTemplates(
                     existsInTaskList: document.ExistsInTaskList,
                     isLegacyDocument: document.Type === 'legacy',
                     isOnboardingDocument: document.IsOnboardingDocument,
+                    esignID: document.esignID || '',
                 });
             }
             return memo;
@@ -1395,7 +1396,7 @@ export async function listDocuments(
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listDocuments');
 
-    const validQueryStringParameters: string[] = ['category', 'categoryId', 'docType', 'pageToken'];
+    const validQueryStringParameters: string[] = ['categoryId', 'category', 'docType', 'pageToken'];
 
     // Currently, the presence of query string parameters with the api call is enforced
     //  to ensure that the functionality is restricted to retrieving onboarding-related
@@ -1411,7 +1412,7 @@ export async function listDocuments(
     // Check for unsupported or missing query string parameters
     if (
         !Object.keys(queryParams).every((param) => validQueryStringParameters.includes(param)) ||
-        !validQueryStringParameters.slice(0, 2).every((requiredParam) => Object.keys(queryParams).includes(requiredParam))
+        !validQueryStringParameters.slice(0, 1).every((requiredParam) => Object.keys(queryParams).includes(requiredParam))
     ) {
         const error: ErrorMessage = errorService.getErrorResponse(30);
         error
@@ -1424,7 +1425,7 @@ export async function listDocuments(
      * Note: At this time, this endpoint is only supports retrieving documents associated with onboarding
      *       and thus the category is restricted to that.
      */
-    if (queryParams['category'] !== 'onboarding') {
+    if (queryParams['category'] && queryParams['category'] !== 'onboarding') {
         const error: ErrorMessage = errorService.getErrorResponse(30);
         error
             .setDeveloperMessage(`Unsupported value: ${queryParams['category']}`)
@@ -1441,12 +1442,21 @@ export async function listDocuments(
     if (
         queryParams['docType'] &&
         queryParams['docType'].toLowerCase() !== 'hellosign' &&
-        queryParams['docType'].toLowerCase() !== 'original'
+        queryParams['docType'].toLowerCase() !== 'original' &&
+        queryParams['docType'].toLowerCase() !== 'all'
     ) {
         const error: ErrorMessage = errorService.getErrorResponse(30);
         error
             .setDeveloperMessage(`Unsupported value: ${queryParams['docType']}`)
             .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(',')}. See documentation for usage.`);
+        throw error;
+    }
+
+    if (!queryParams['category'] && queryParams['docType'] !== 'all') {
+        const error: ErrorMessage = errorService.getErrorResponse(30);
+        error
+            .setDeveloperMessage(`Unsupported value: ${queryParams['docType']} for parameter 'docType'`)
+            .setMoreInfo(`If no 'category' parameter is set 'docType' must have the value 'all'`);
         throw error;
     }
 
