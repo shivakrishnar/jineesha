@@ -11,7 +11,8 @@ declare @tmp table
     Type nvarchar(max),
     IsPublishedToEmployee bit,
     ExistsInTaskList bit,
-    IsOnboardingDocument bit
+    IsOnboardingDocument bit,
+    esignID nvarchar(450)
 );
 declare @_search nvarchar(max) = '%' + @search + '%';
 
@@ -39,10 +40,13 @@ select
             else 0
         end
     ),
-    IsOnboardingDocument = case
-        when d.DocumentCategory = 'onboarding' then 1
-        else 0
-    end
+    IsOnboardingDocument = (
+        case
+            when d.DocumentCategory = 'onboarding' then 1
+            else 0
+        end
+    ),
+    esignID = ''
 from 
     dbo.Document d
     left join dbo.HRnextUser u
@@ -75,7 +79,8 @@ select
             else 0
         end
     ),
-    e.IsOnboardingDocument
+    e.IsOnboardingDocument,
+    esignID = e.ID
 from
     dbo.EsignatureMetadata e
 where
@@ -101,7 +106,8 @@ select
     ),
     IsPublishedToEmployee,
     ExistsInTaskList = ( e.IsOnboardingDocument ),
-    e.IsOnboardingDocument
+    e.IsOnboardingDocument,
+    esignID = e.ID
 from
     dbo.FileMetadata f join dbo.EsignatureMetadata e on f.EsignatureMetadataID = e.ID
 where
