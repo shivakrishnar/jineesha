@@ -43,7 +43,7 @@ _To execute the unit tests and see code coverage, run: `jest --coverage`_
 2. Install the correct dependencies: `npm install`
 3. Install the requisite node depedencies in `services/api` and `services/internal-api' sub-directories with the previous command
 4. Change the `apiDomain` value in the `development.config.json` file to your deployed service URL.
-5. Run the integration tests: `npm run test:local`
+5. Run the integration tests: `npm run test:dev`
 
 _To execute the integration tests and see code coverage, run: `jest -c jest.integration.test.config.json`_
 

@@ -6,7 +6,7 @@
     "properties": {
         "monthlyCost": {
             "description": "The monthly cost for enhanced e-signature.",
-            "type": ["number"]
+            "type": ["string"]
         },
         "costPerRequest": {
             "description": "The cost per signature request.",
