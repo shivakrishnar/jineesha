@@ -1263,6 +1263,14 @@ export async function listTemplates(
         });
 
         consolidatedDocuments.sort((a, b) => (new Date(a.uploadDate).getTime() > new Date(b.uploadDate).getTime() ? -1 : 1));
+
+        // TODO: (MJ-7560) remove work introduced by MJ-7505 when simple sign beta is completed.
+        if (queryParams && queryParams.onboarding) {
+            consolidatedDocuments = consolidatedDocuments.filter(
+                (doc) => doc.category && doc.category.toLowerCase() === 'onboarding' && doc.isEsignatureDocument,
+            );
+        }
+
         const paginatedResult = await paginationService.createPaginatedResult(consolidatedDocuments, baseUrl, totalRecords, page);
         return consolidatedDocuments.length === 0 ? undefined : paginatedResult;
     } catch (error) {

@@ -42,24 +42,18 @@ from
     on u.Username = d.UploadByUsername
 where
     CompanyID = @_companyId and
-    (lower(isnull(d.DocumentCategory, '')) like @_search or lower(isnull(d.Title, '')) like @_search) and
-    lower(d.DocumentCategory) = 'onboarding'
+    (lower(isnull(d.DocumentCategory, '')) like @_search or lower(isnull(d.Title, '')) like @_search)
 
 insert into @tmp
 select
     e.ID,
     e.UploadDate,
-	e.UploadedBy,
-    NULL,
-    Filename,
-    Title,
-    Category,
-    Type = 
-        case
-            when Type='SimpleSignatureRequest' then 'simpleSign'
-			when Type='NoSignature' then 'non-signature'
-			else 'esignature'
-		end,
+    null,
+    null,
+    null,
+    null,
+    null,
+    'esignature',
     ExistsInTaskList = (
         case
             when (
@@ -77,9 +71,8 @@ from
     dbo.EsignatureMetadata e
 where
     e.CompanyID = @_companyId and
-    (lower(isnull(e.Category, '')) like @_search or lower(isnull(e.Title, '')) like @_search) and
-    isOnboardingDocument = 1 and 
-    Type<>'SignatureRequest'
+    e.Type = '@type' and
+    (lower(isnull(e.Category, '')) like @_search or lower(isnull(e.Title, '')) like @_search)
 
 -- get total count for pagination
 select count(*) as totalCount from @tmp
