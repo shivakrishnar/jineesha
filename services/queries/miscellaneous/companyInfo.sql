@@ -1,7 +1,8 @@
 select 
 	CompanyName,
 	ClientID = iif(PRIntegration_ClientID IS NULL, 0, PRIntegration_ClientID),
-	MatchingUrls
+	MatchingUrls,
+	CreateDate
 from
 	dbo.Company
 	cross apply (

@@ -713,6 +713,7 @@ export type CompanyInfo = {
     CompanyName: string;
     ClientID: string;
     MatchingUrls: string;
+    CreateDate: string;
 };
 
 /**
