@@ -127,6 +127,10 @@ provider:
       Action:
         - ssm:GetParameter
       Resource: arn:aws:ssm:us-east-1:*:parameter/hr/esignature/simplesign/indirectClientPricingData
+    - Effect: Allow
+      Action:
+        - ssm:GetParameter
+      Resource: arn:aws:ssm:us-east-1:*:parameter/hr/esignature/simplesign/legacyClientCutOffDate
 
 functions:
   createTemplate:
