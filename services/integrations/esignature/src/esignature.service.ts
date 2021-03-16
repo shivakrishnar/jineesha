@@ -1082,6 +1082,53 @@ async function saveSimpleEsignatureMetadata(
     }
 }
 
+export async function sendReminderEmail(pathParameters: any, accessToken: string, invokerEmail: string, signInUrl: string): Promise<void> {
+    console.info('esignature.sendReminderEmail');
+
+    try {
+        const [employeeInfo]: any[] = await Promise.all([
+            utilService.validateEmployee(pathParameters.tenantId, pathParameters.employeeId), 
+            utilService.validateCompany(pathParameters.tenantId, pathParameters.companyId)
+        ])
+        const query = new ParameterizedQuery('GetEsignatureMetadataByIdAndCompanyId', Queries.getEsignatureMetadataByIdAndCompanyId);
+        query.setParameter('@id', pathParameters.documentId);
+        query.setParameter('@companyId', pathParameters.companyId);
+        query.appendFilter(`EmployeeCode=${employeeInfo.employeeCode}`,true);
+        const payload = {
+            tenantId: pathParameters.tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const documentResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+    if(documentResult.recordset.length === 0) {
+        throw errorService.getErrorResponse(50).setDeveloperMessage(`cannot find document with id ${pathParameters.documentId}`);
+    }
+    if(!employeeInfo.emailAddress) {
+        throw errorService.getErrorResponse(70).setDeveloperMessage(`user does not have an email address`);
+    }
+    utilService.sendEventNotification({
+        urlParameters: pathParameters,
+        invokerEmail,
+        type: NotificationEventType.EsignatureReminderEvent,
+        actions: [EsignatureAction.ReminderEmailSent],
+        accessToken: accessToken.replace(/Bearer /i, ''),
+        metadata: {
+         employeeCode: employeeInfo.employeeCode,
+         signInUrl,
+         },
+    } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
+    }
+    catch(error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
 /**
  * Lists all templates under a specified company.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
@@ -2958,6 +3005,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 employeeCode,
                 firstName,
                 lastName,
+                emailAddress,
                 companyId,
                 companyName,
                 uploadedBy,
@@ -2982,6 +3030,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 employeeId,
                 employeeCode,
                 employeeName: firstName && lastName ? `${firstName} ${lastName}` : undefined,
+                emailAddress,
                 companyId,
                 companyName,
                 uploadedBy,

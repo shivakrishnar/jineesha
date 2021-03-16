@@ -25,6 +25,19 @@ export const employeeInfoDBResponse = {
     rowsAffected: [1],
 };
 
+export const employeeInfoWithoutEmailDBResponse = {
+    recordset: [
+        {
+            emailAddress: null,
+            firstName: 'Test',
+            lastName: 'User',
+            employeeCode: '1',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
 export const employeeEmailsByManagerDBResponse = {
     recordset: [
         {

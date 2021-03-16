@@ -325,6 +325,15 @@ functions:
             cors:
               origin: '*'
 
+  sendReminderEmail:
+    handler: esignature/src/handler.sendReminderEmail
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents/{documentId}/remind
+            method: post
+            cors:
+              origin: '*'
+
   generateDocumentUploadUrl:
     handler: esignature/src/handler.generateDocumentUploadUrl
     events:

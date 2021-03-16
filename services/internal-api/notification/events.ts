@@ -10,6 +10,7 @@ export enum NotificationEventType {
     DirectDepositEvent = 'DirectDepositEvent',
     EsignatureEvent = 'EsignatureEvent',
     BillingEvent = 'BillingEvent',
+    EsignatureReminderEvent= 'EsignatureReminderEvent'
 }
 
 export enum AlertCategory {
@@ -42,9 +43,12 @@ export interface IBillingEvent extends INotificationEvent {
 }
 
 export interface IESignatureMetadata {
-    signatureRequests: SignatureRequestResponse[];
+    employeeCode?: string;
+    signatureRequests?: SignatureRequestResponse[];
+    signInUrl?: string;
 }
 
 export enum EsignatureAction {
     SignatureRequestSubmitted = 'Request Submitted',
+    ReminderEmailSent = 'Reminder Email Sent',
 }

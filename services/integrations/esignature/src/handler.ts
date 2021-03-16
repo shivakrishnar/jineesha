@@ -501,6 +501,38 @@ export const createEditUrl = utilService.gatewayEventHandlerV2(async ({ security
 });
 
 /**
+ * Generates an email to remind employee to sign documents
+ * NOTE: If endpoint is tested through postman url will be undefined in the email
+ */
+export const sendReminderEmail = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.sendReminderEmail');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.pathParameters, employeeDocumentResourceUriSchema);
+
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return (
+            role === Role.hrManager ||
+            role === Role.globalAdmin ||
+            role === Role.serviceBureauAdmin ||
+            role === Role.superAdmin ||
+            role === Role.hrAdmin ||
+            role === Role.hrRestrictedAdmin
+        );
+    });
+
+    if (!isAuthorized) {
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
+    const emailAddress: string = securityContext.principal.email;
+    const signInUrl = event.headers.origin;
+
+    return await esignatureService.sendReminderEmail(event.pathParameters, accessToken, emailAddress, signInUrl);
+});
+
+/**
  *  List documents uploaded for E-Signing
  */
 export const listDocuments = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
