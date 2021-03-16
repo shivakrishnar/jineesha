@@ -127,33 +127,10 @@ async function submitEsignatureEventNotification(event: IEsignatureEvent): Promi
     const { tenantId, companyId } = event.urlParameters;
 
     for (const action of event.actions) {
-        // TODO: get alert from database
-        // const alert: Alert = await getAlertByCategoryAndAction(tenantId, companyId, AlertCategory.Esignature, action);
-        // if (alert === undefined) {
-        //     continue;
-        // }
-        const alert: any = {
-            emailSubjectTemplate: `[COMPANYNAME] - Action Required - Sign [DOCUMENTNAME]`,
-            emailBodyTemplate: `
-                <html xmlns="http://www.w3.org/1999/xhtml">
-                    <head>
-                        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet">
-                        <title>E-Signature Action Required</title>
-                    </head>
-                    <body style="font-family: 'Roboto', sans-serif;">
-                        <div style="background-color: White; padding: 10px;">
-                            <div style="margin-bottom: 10px;"><b>[COMPANYNAME]</b></div>
-                            <br/>
-                            <div style="margin-bottom: 10px;">Hi [NAME],</div>
-                            <br/>
-                            <div style="margin-bottom: 10px;">A new document needs your signature. Please review and sign "[DOCUMENTNAME]" in your employee portal.</div>
-                            <br/>
-                        </div>
-                        <br/><br/>
-                    </body>
-                </html>
-            `,
-        };
+        const alert: Alert = await getAlertByCategoryAndAction(tenantId, companyId, AlertCategory.Esignature, action);
+        if (alert === undefined) {
+            continue;
+        }
 
         const invocations: Array<Promise<any>> = [];
         const emailMessages: EmailMessage[] = [];
@@ -165,6 +142,7 @@ async function submitEsignatureEventNotification(event: IEsignatureEvent): Promi
                         documentName: esignatureMetadata.title,
                         companyName: esignatureMetadata.companyName,
                         name: esignatureMetadata.firstName,
+                        signInUrl: event.metadata.signInUrl,
                     };
                     const emailMessage = new EmailMessage(
                         applyMetadata(metadata, alert.emailSubjectTemplate),
@@ -196,35 +174,11 @@ async function submitEsignatureReminderEventNotification(event: IEsignatureEvent
     const { tenantId, companyId, documentId } = event.urlParameters;
 
     for (const action of event.actions) {
-        // TODO: get alert from database
-        // const alert: Alert = await getAlertByCategoryAndAction(tenantId, companyId, AlertCategory.Esignature, action);
-        // if (alert === undefined) {
-        //     continue;
-        // }
-        const alert: any = {
-            emailSubjectTemplate: `[COMPANYNAME] - Action Required - Sign [DOCUMENTNAME]`,
-            emailBodyTemplate: `
-                <html xmlns="http://www.w3.org/1999/xhtml">
-                    <head>
-                        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet">
-                        <title>Just a reminder...</title>
-                    </head>
-                    <body style="font-family: 'Roboto', sans-serif;">
-                        <div style="background-color: White; padding: 10px;">
-                            <div style="margin-bottom: 10px;"><b>[COMPANYNAME]</b></div>
-                            <br/>
-                            <div style="margin-bottom: 10px;">Hi [NAME],</div>
-                            <br/>
-                            <div style="margin-bottom: 10px;">The following document still needs your signature: "[DOCUMENTNAME]"</div>
-                            <br/>
-                            <a href="[SIGNINURL]" target="_blank" style="background-color:#068fbe; text-decoration:none; color: #ffffff; padding: 8px 20px 8px 20px; font-weight:700; font-size:16px; border-radius:4px;">Log in to sign</a>
-                        </div>
-                        <br/><br/>
-                    </body>
-                </html>
-            `,
-        };
-
+        const alert: Alert = await getAlertByCategoryAndAction(tenantId, companyId, AlertCategory.Esignature, action);
+        if (alert === undefined) {
+            continue;
+        }
+    
         const esignatureMetadata = await getEsignatureMetadata(tenantId, companyId, event.metadata.employeeCode, documentId);
         const metadata: IESignatureMetadataKeys = {
             signInUrl: event.metadata.signInUrl,
