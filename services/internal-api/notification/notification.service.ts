@@ -537,7 +537,6 @@ async function getEsignatureMetadata(
         } as DatabaseEvent;
 
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-
         return (result.recordset || []).map((record) => ({
             firstName: record.FirstName,
             companyName: record.CompanyName,

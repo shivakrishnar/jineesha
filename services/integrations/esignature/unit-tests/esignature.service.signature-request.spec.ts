@@ -288,6 +288,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 '123',
+                mockData.domainName,
             )
             .then((signatureRequests) => {
                 expect(Array.isArray(signatureRequests)).toBe(true);
@@ -311,6 +312,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 '123',
+                mockData.domainName,
             )
             .then((signatureRequests) => {
                 expect(Array.isArray(signatureRequests)).toBe(true);
@@ -337,6 +339,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 '123',
+                mockData.domainName,
             )
             .then((signatureRequests) => {
                 expect(Array.isArray(signatureRequests)).toBe(true);
@@ -360,6 +363,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 '123',
+                mockData.domainName,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -388,6 +392,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 '123',
+                mockData.domainName,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -414,6 +419,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 '123',
+                mockData.domainName,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -442,6 +448,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 '123',
+                mockData.domainName,
             )
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -472,6 +479,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 '123',
+                mockData.domainName,
             )
             .catch((error) => {
                 console.log(error);
@@ -505,6 +513,7 @@ describe('esignatureService.signature-requests.create', () => {
                 {},
                 mockData.userEmail,
                 '123',
+                mockData.domainName,
             )
             .catch((error) => {
                 console.log('here', error);

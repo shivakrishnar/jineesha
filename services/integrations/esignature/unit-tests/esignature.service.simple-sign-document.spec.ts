@@ -9,6 +9,7 @@ import { ErrorMessage } from '../../../errors/errorMessage';
 import { setup } from '../../../unit-test-mocks/mock';
 
 jest.mock('shortid');
+jest.mock('fs');
 
 describe('esignatureService.simple-sign-document.create', () => {
     beforeEach(() => {
