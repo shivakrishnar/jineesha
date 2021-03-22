@@ -31,17 +31,14 @@ _Deployment order is important!: deploy services in `services/internal-api` firs
 #### How to Run Unit Tests
 
 1. Clone this repository
-2. Install the correct dependencies: `npm install`
-3. Install the requisite node depedencies in `services/api` and `services/internal-api' sub-directories with the previous command
-4. Run unit tests: `npm run test`
-
-_To execute the unit tests and see code coverage, run: `jest --coverage`_
+2. Install the correct dependencies: `npm install` (or, to install all run: `./npm_install_all.sh`)
+3. Run unit tests: `npm run test`
+4. Code coverage can be found in coverage\index.html
 
 #### How to Run Integration Tests
 
 1. Clone this repository
-2. Install the correct dependencies: `npm install`
-3. Install the requisite node depedencies in `services/api` and `services/internal-api' sub-directories with the previous command
+2. Install the correct dependencies ()
 4. Change the `apiDomain` value in the `development.config.json` file to your deployed service URL.
 5. Run the integration tests: `npm run test:dev`
 
