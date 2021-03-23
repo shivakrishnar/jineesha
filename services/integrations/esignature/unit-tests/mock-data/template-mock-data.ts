@@ -86,7 +86,18 @@ export const helloSignTemplate = {
     documents: [{ name: 'test.pdf' }],
     metadata: { uploadDate: '12/31/2019', uploadedBy: 'Hugh', category: 'test' },
 };
-
+export const helloSignTemplate2 = {
+    template_id: 2,
+    title: 'hi',
+    message: 'template',
+    can_edit: true,
+    is_locked: true,
+    signer_roles: [{ name: 'Hugh' }],
+    cc_roles: [{ name: 'Hugh' }],
+    custom_fields: [{ name: 'money', type: 'text' }],
+    documents: [{ name: 'test.pdf' }],
+    metadata: { uploadDate: '12/31/2019', uploadedBy: 'Hugh', category: 'test' },
+};
 export const helloSignOnboardingTemplate = {
     template_id: 1000,
     title: 'hi',
