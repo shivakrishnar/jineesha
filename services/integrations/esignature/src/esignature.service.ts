@@ -23,6 +23,7 @@ import * as integrationsService from '../../../remote-services/integrations.serv
 import * as utilService from '../../../util.service';
 
 import { convertTo } from '@shelf/aws-lambda-libreoffice';
+import { PromiseResult } from 'p-settle';
 import { PDFDocument, rgb } from 'pdf-lib';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
@@ -1087,13 +1088,13 @@ export async function sendReminderEmail(pathParameters: any, accessToken: string
 
     try {
         const [employeeInfo]: any[] = await Promise.all([
-            utilService.validateEmployee(pathParameters.tenantId, pathParameters.employeeId), 
-            utilService.validateCompany(pathParameters.tenantId, pathParameters.companyId)
-        ])
+            utilService.validateEmployee(pathParameters.tenantId, pathParameters.employeeId),
+            utilService.validateCompany(pathParameters.tenantId, pathParameters.companyId),
+        ]);
         const query = new ParameterizedQuery('GetEsignatureMetadataByIdAndCompanyId', Queries.getEsignatureMetadataByIdAndCompanyId);
         query.setParameter('@id', pathParameters.documentId);
         query.setParameter('@companyId', pathParameters.companyId);
-        query.appendFilter(`EmployeeCode=${employeeInfo.employeeCode}`,true);
+        query.appendFilter(`EmployeeCode=${employeeInfo.employeeCode}`, true);
         const payload = {
             tenantId: pathParameters.tenantId,
             queryName: query.name,
@@ -1101,25 +1102,24 @@ export async function sendReminderEmail(pathParameters: any, accessToken: string
             queryType: QueryType.Simple,
         } as DatabaseEvent;
         const documentResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-    if(documentResult.recordset.length === 0) {
-        throw errorService.getErrorResponse(50).setDeveloperMessage(`cannot find document with id ${pathParameters.documentId}`);
-    }
-    if(!employeeInfo.emailAddress) {
-        throw errorService.getErrorResponse(70).setDeveloperMessage(`user does not have an email address`);
-    }
-    utilService.sendEventNotification({
-        urlParameters: pathParameters,
-        invokerEmail,
-        type: NotificationEventType.EsignatureReminderEvent,
-        actions: [EsignatureAction.ReminderEmailSent],
-        accessToken: accessToken.replace(/Bearer /i, ''),
-        metadata: {
-         employeeCode: employeeInfo.employeeCode,
-         signInUrl,
-         },
-    } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
-    }
-    catch(error) {
+        if (documentResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`cannot find document with id ${pathParameters.documentId}`);
+        }
+        if (!employeeInfo.emailAddress) {
+            throw errorService.getErrorResponse(70).setDeveloperMessage(`user does not have an email address`);
+        }
+        utilService.sendEventNotification({
+            urlParameters: pathParameters,
+            invokerEmail,
+            type: NotificationEventType.EsignatureReminderEvent,
+            actions: [EsignatureAction.ReminderEmailSent],
+            accessToken: accessToken.replace(/Bearer /i, ''),
+            metadata: {
+                employeeCode: employeeInfo.employeeCode,
+                signInUrl,
+            },
+        } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
+    } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
         }
@@ -1429,6 +1429,27 @@ export async function createEditUrl(tenantId: string, companyId: string, templat
 }
 
 /**
+ * Iterates through a list of documents, filters out and returns failed HelloSign document requests
+ * @param {DocumentMetadata[]} documents: A list of documentMetadata records to check
+ * @param {Array<PromiseResult<any>>} apiResults: A list of pSettle results containing HelloSign API request statuses and responses.
+ */
+export function retrieveFailedHellosignResults(
+    documents: DocumentMetadata[],
+    apiResults: Array<PromiseResult<any>>,
+): Set<DocumentMetadata> {
+    const failedResults = new Set(documents.filter((doc) => doc.type === 'Template'));
+
+    for (const apiResult of apiResults) {
+        if (apiResult && apiResult.isFulfilled && apiResult.value) {
+            const document = documents.filter((doc) => doc.id === apiResult.value.template.template_id)[0];
+            failedResults.delete(document);
+        }
+    }
+
+    return failedResults;
+}
+
+/**
  * Lists all documents for E-Signature under a specified company.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for the company the user belongs to.
@@ -1565,8 +1586,6 @@ export async function listDocuments(
             documents = documents.filter((doc) => doc.type === 'Template');
         }
 
-        const unfoundDocuments: DocumentMetadata[] = [];
-
         const invocations: Array<Promise<any>> = [];
 
         for (const doc of documents) {
@@ -1577,46 +1596,25 @@ export async function listDocuments(
 
         // Run template api calls in parallel
         const templateApiResults = await pSettle(invocations);
+        const failedResults = await retrieveFailedHellosignResults(documents, templateApiResults);
 
-        // Extract template file information for document metadata
+        // Remove any unfound documents from eventual response and encode ids
+        const docsToReturn = [];
         for (let index = 0; index < documents.length; index++) {
             const doc = documents[index];
-            if (doc.type === 'Template') {
-                const templateApiInvocation = templateApiResults[index];
-
-                if (templateApiInvocation) {
-                    if (templateApiInvocation.isFulfilled) {
-                        const apiResponse = templateApiInvocation.value;
-                        doc.filename = apiResponse.template.documents[0].name;
-                        doc.title = apiResponse.template.title;
-                    }
-
-                    if (templateApiInvocation.isRejected) {
-                        console.error(`issue accessing template id: ${doc.id}`);
-                        unfoundDocuments.push(doc);
-                    }
+            if (!Array.from(failedResults).includes(doc)) {
+                if (!returnFileMetadataId) {
+                    delete doc.fileMetadataId;
+                } else if (doc.fileMetadataId) {
+                    const fileMetadataId = await encodeId(doc.fileMetadataId, DocType.EsignatureDocument);
+                    doc.fileMetadataId = fileMetadataId;
                 }
-            }
-            if (doc.fileMetadataId) {
-                const fileMetadataId = await encodeId(doc.fileMetadataId, DocType.EsignatureDocument);
-                doc.fileMetadataId = fileMetadataId;
+                docsToReturn.push(doc);
             }
         }
 
-        // Renove any unfound documents from eventual response
-        if (unfoundDocuments.length > 0) {
-            documents = documents.filter((doc) => !unfoundDocuments.includes(doc));
-        }
-
-        if (!returnFileMetadataId) {
-            documents = documents.map((doc) => {
-                delete doc.fileMetadataId;
-                return doc;
-            });
-        }
-
-        const documentsPaginatedResult = await paginationService.createPaginatedResult(documents, baseUrl, totalRecords, page);
-        return documents.length === 0 ? undefined : documentsPaginatedResult;
+        const documentsPaginatedResult = await paginationService.createPaginatedResult(docsToReturn, baseUrl, totalRecords, page);
+        return docsToReturn.length === 0 ? undefined : documentsPaginatedResult;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
