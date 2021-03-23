@@ -172,11 +172,11 @@ export const onboardingSimpleSignDBResponse = {
         {
             ID: '1',
             Pointer: `10/${mockData.companyId}/abc`,
-        }
+        },
     ],
     output: {},
     rowsAffected: [0],
-}
+};
 
 export const onboardingCompanyDocsSectionOffDBResponse = {
     recordset: [

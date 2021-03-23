@@ -107,14 +107,14 @@ export const hellosignDocsTaskListDBResponse = {
         ],
         [
             {
-                ID: 4,
+                ID: 1,
                 Filename: '12345',
                 Title: 'Title',
                 Description: 'Description',
                 Type: 'Template',
             },
             {
-                ID: 5,
+                ID: 2,
                 Filename: '67890',
                 Title: 'Title',
                 Description: 'Description',
@@ -293,16 +293,16 @@ export const companyOriginalDocumentListResponse = [
 
 export const companyHellosignDocumentListResponse = [
     {
-        id: 4,
-        filename: 'test.pdf',
-        title: 'hi',
+        id: 1,
+        filename: '12345',
+        title: 'Title',
         description: 'Description',
         type: 'Template',
     },
     {
-        id: 5,
-        filename: 'test.pdf',
-        title: 'hi',
+        id: 2,
+        filename: '67890',
+        title: 'Title',
         description: 'Description',
         type: 'Template',
     },
