@@ -106,15 +106,18 @@ AWS = {
         }
 
         getParameter(params) {
-            let pricingData = mockData.directClientPricingData;
+            let response = mockData.directClientPricingData;
             if (params.Name.includes('indirectClientPricingData')) {
-                pricingData = mockData.indirectClientPricingData;
+                response = mockData.indirectClientPricingData;
+            }
+            else if (params.Name.includes('legacyClientCutOffDate')) {
+                response = mockData.legacyClientCutOffDate;
             }
             return {
                 promise: () => {
                     return {
                         Parameter: {
-                            Value: pricingData,
+                            Value: response,
                         }
                     }
                 }

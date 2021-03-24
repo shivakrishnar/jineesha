@@ -12,6 +12,8 @@ export const indirectClientPricingData = JSON.stringify({
     costPerRequest: '0.55',
 });
 
+export const legacyClientCutOffDate = '10/22/2020';
+
 export const directClientResponse = {
     isDirectClient: true,
     pricingData: JSON.parse(directClientPricingData),

@@ -51,7 +51,7 @@
         "searchQueryParam": "onboarding",
         "signableDocument": "7XMVCW",
         "nonExistentSignableDocument": "W6oy6tb",
-        "companyIdForProductTier": 600256
+        "companyIdForProductTier": 600430
     },
     "documentsBucket": "development.hr.files",
     "logo": {
