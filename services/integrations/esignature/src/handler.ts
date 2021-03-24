@@ -383,12 +383,15 @@ export const createBatchSignatureRequest = utilService.gatewayEventHandlerV2(
         await utilService.validateRequestBody(batchSignatureRequestSchema, requestBody);
         await utilService.validateCollection(signatorySchema, requestBody.signatories);
 
+        const signInUrl = event.headers.origin;
+
         const response: SignatureRequestResponse[] = await esignatureService.createBatchSignatureRequest(
             event.pathParameters,
             requestBody,
             {},
             securityContext.principal.email,
             event.headers.authorization,
+            signInUrl,
         );
 
         return {

@@ -1,3 +1,4 @@
+import { IPayrollApiCredentials } from '../api/models/IPayrollApiCredentials';
 import * as employeeService from '../api/tenants/src/employee.service';
 import * as tenantsService from '../api/tenants/src/tenants.service';
 import * as configService from '../config.service';
@@ -7,6 +8,7 @@ import * as paginationService from '../pagination/pagination.service';
 import * as hellosignService from '../remote-services/hellosign.service';
 import * as integrationsService from '../remote-services/integrations.service';
 import * as utilService from '../util.service';
+import * as ssoService from '../remote-services/sso.service';
 
 export const setup = () => {
     (configService as any).getSecretsAwsEndpoint = jest.fn(() => {
@@ -47,6 +49,22 @@ export const setup = () => {
 
     (configService as any).getIndirectClientPricingData = jest.fn(() => {
         return mockData.indirectClientPricingData;
+    });
+    (configService as any).getFromEmailAddress = jest.fn(() => {
+        return 'random@email.com'
+    });
+    (configService as any).getSesSmtpCredentials = jest.fn(() => {
+        return 'Mail Credents'
+    });
+    (configService as any).getSesSmtpServerHost = jest.fn(() => {
+        return 'Mail Host'
+    });
+    (configService as any).getSesSmtpServerPort = jest.fn(() => {
+        return '12345'
+    });
+    
+    (utilService as any).getPayrollApiCredentials = jest.fn(() => {
+        return { evoApiUsername: 'username', evoApiPassword: 'pass' } as IPayrollApiCredentials
     });
 
     (utilService as any).getSecret = jest.fn((params: any) => {
@@ -135,6 +153,10 @@ export const setup = () => {
 
     (integrationsService as any).eSignatureApiDevModeOn = jest.fn((params: any) => {
         return true;
+    });
+
+    (ssoService as any).getAccessToken = jest.fn((params: any) => {
+        return 'randomaccessmemory'
     });
 
     (tenantsService as any).listConnectionStrings = jest.fn((params: any) => {

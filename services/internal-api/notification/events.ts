@@ -49,6 +49,6 @@ export interface IESignatureMetadata {
 }
 
 export enum EsignatureAction {
-    SignatureRequestSubmitted = 'Request Submitted',
-    ReminderEmailSent = 'Reminder Email Sent',
+    EsignatureReminder = 'E-Signature Reminder',
+    EsignatureRequest = 'E-Signature Request',
 }

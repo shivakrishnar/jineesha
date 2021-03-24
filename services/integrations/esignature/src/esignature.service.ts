@@ -280,6 +280,7 @@ export async function createBatchSignatureRequest(
     suppliedMetadata: any,
     invokerEmail: string,
     token: string,
+    signInUrl: string,
 ): Promise<SignatureRequestResponse[]> {
     console.info('esignature.service.createBatchSignatureRequest');
     if (request.isSimpleSign) {
@@ -290,9 +291,12 @@ export async function createBatchSignatureRequest(
             true,
             invokerEmail,
             token,
+            false,
+            {},
+            signInUrl,
         );
     }
-    return createBatchHSSignatureRequest(pathParameters, request, suppliedMetadata, invokerEmail, token);
+    return createBatchHSSignatureRequest(pathParameters, request, suppliedMetadata, invokerEmail, token, signInUrl);
 }
 
 /**
@@ -308,6 +312,7 @@ export async function createBatchHSSignatureRequest(
     suppliedMetadata: any,
     invokerEmail: string,
     token: string,
+    signInUrl: string,
 ): Promise<SignatureRequestResponse[]> {
     console.info('esignature.handler.createBatchHSSignatureRequest');
 
@@ -473,10 +478,11 @@ export async function createBatchHSSignatureRequest(
             urlParameters: pathParameters,
             invokerEmail,
             type: NotificationEventType.EsignatureEvent,
-            actions: [EsignatureAction.SignatureRequestSubmitted],
+            actions: [EsignatureAction.EsignatureRequest],
             accessToken: token.replace(/Bearer /i, ''),
             metadata: {
                 signatureRequests,
+                signInUrl,
             },
         } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
 
@@ -906,6 +912,7 @@ async function saveSimpleEsignatureMetadata(
     token?: string,
     isOnboardingDocument: boolean = false,
     onboardingData?: any,
+    signInUrl?: string,
 ): Promise<SignatureRequestResponse[]> {
     console.info('esignature.service.saveSimpleEsignatureMetadata');
     try {
@@ -1059,10 +1066,11 @@ async function saveSimpleEsignatureMetadata(
                 urlParameters: pathParameters,
                 invokerEmail,
                 type: NotificationEventType.EsignatureEvent,
-                actions: [EsignatureAction.SignatureRequestSubmitted],
+                actions: [EsignatureAction.EsignatureRequest],
                 accessToken: token.replace(/Bearer /i, ''),
                 metadata: {
                     signatureRequests: signatureRequestsWithEmailAddresses,
+                    signInUrl,
                 },
             } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
             if (employeesWithoutEmailAddresses.length > 0) {
@@ -1121,7 +1129,7 @@ export async function sendReminderEmail(pathParameters: any, accessToken: string
             urlParameters: pathParameters,
             invokerEmail,
             type: NotificationEventType.EsignatureReminderEvent,
-            actions: [EsignatureAction.ReminderEmailSent],
+            actions: [EsignatureAction.EsignatureReminder],
             accessToken: accessToken.replace(/Bearer /i, ''),
             metadata: {
                 employeeCode: employeeInfo.employeeCode,

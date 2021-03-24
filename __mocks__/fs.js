@@ -28,10 +28,16 @@ function mkdir(path, cb) {
     }
     return;
 }
+function mkdirSync(path) {
+    return;
+}
 function writeFile(path, file, encoding, cb) {
     if (forceError && forceError === 'writeFile') {
         cb('Force an error');
     }
+    return;
+}
+function writeFileSync(path, file, encoding) {
     return;
 }
 function unlink(path, cb) {
