@@ -684,12 +684,21 @@ export async function generateBillingReport(options: any | BillingReportOptions)
     const tenantDomains = {};
     connectionStrings.Items.forEach((conn) => (tenantDomains[conn.TenantID] = conn.Domain));
 
+    // get esign legacy cutoff date
+    const ssm = new AWS.SSM({ region: configService.getAwsRegion() });
+    const params = {
+        Name: '/hr/esignature/simplesign/legacyClientCutOffDate',
+        WithDecryption: false,
+    };
+    const ssmResult = await ssm.getParameter(params).promise();
+    const legacyClientCutOffDate = ssmResult.Parameter.Value;
+
     // run query for every tenant
     const getBillableSignRequests: ParameterizedQuery = new ParameterizedQuery('getBillableSignRequests', Queries.getBillableSignRequests);
     const today = new Date();
     getBillableSignRequests.setParameter('@month', today.getUTCMonth() || 12); // UTC months are 0-11, mssql months are 1-12, we want last month's records
     getBillableSignRequests.setParameter('@year', today.getUTCMonth() ? today.getUTCFullYear() : today.getUTCFullYear() - 1); // if month is 0 (Jan) we're doing December of last year
-    getBillableSignRequests.setStringParameter('@esignLegacyCutoff', configService.getLegacyClientCutOffDate());
+    getBillableSignRequests.setStringParameter('@esignLegacyCutoff', legacyClientCutOffDate);
 
     const payload = {
         tenantId: '',
