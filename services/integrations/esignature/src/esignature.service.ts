@@ -5128,6 +5128,11 @@ export async function getTenantEsignatureData(tenantId: string): Promise<any> {
     }
 }
 
+enum ProductTierName {
+    HelloSign= "E-Sign",
+    SimpleSign= "Simple Sign"
+}
+
 /**
  * Retrieves all e-signature data related to a tenant.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
@@ -5135,13 +5140,14 @@ export async function getTenantEsignatureData(tenantId: string): Promise<any> {
  * @param {any} requestBody: The product tier request.
  * @returns {any}: A Promise of a company's product tier.
  */
+
 export async function updateEsignatureProductTier(tenantId: string, companyId: string, email: string, requestBody: any): Promise<any> {
     console.info('esignature.service.updateEsignatureProductTier');
 
     const { productTierId } = requestBody;
 
     try {
-        await utilService.validateCompany(tenantId, companyId);
+        const companyInfo = await utilService.validateCompany(tenantId, companyId);
 
         const getQuery = new ParameterizedQuery('getEsignatureProductTierById', Queries.getEsignatureProductTierById);
         getQuery.setParameter('@id', productTierId);
@@ -5167,6 +5173,27 @@ export async function updateEsignatureProductTier(tenantId: string, companyId: s
             queryType: QueryType.Simple,
         } as DatabaseEvent;
         const updateResult: any = await utilService.invokeInternalService('queryExecutor', updatePayload, InvocationType.RequestResponse);
+
+        // retrieve legacy client cut off date
+        const ssm = new AWS.SSM({ region: configService.getAwsRegion() });
+        const params = {
+            Name: '/hr/esignature/simplesign/legacyClientCutOffDate',
+            WithDecryption: false,
+        };
+        const ssmResult = await ssm.getParameter(params).promise();
+        const isEsignatureLegacyCompany = new Date(companyInfo.CreateDate) < new Date(ssmResult.Parameter.Value);
+
+        if (getResult.recordset[0].Name === ProductTierName.SimpleSign && !isEsignatureLegacyCompany) {
+        const taskListQuery = new ParameterizedQuery('removeHelloSignTemplatesFromTaskList', Queries.removeHelloSignTemplatesFromTaskList);
+            taskListQuery.setParameter('@companyId', companyId);
+        const taskListPayload = {
+                tenantId,
+                queryName: taskListQuery.name,
+                query: taskListQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+        await utilService.invokeInternalService('queryExecutor', taskListPayload, InvocationType.RequestResponse);
+        }
 
         utilService.logToAuditTrail({
             userEmail: email,

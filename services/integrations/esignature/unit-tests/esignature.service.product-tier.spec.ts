@@ -12,13 +12,40 @@ describe('esignatureService.product-tier.update', () => {
         setup();
     });
 
-    test('updates the e-signature product tier for a company', () => {
+    test('updates the e-signature product tier for a legacy company', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'getEsignatureProductTierById') {
                 return Promise.resolve(mockData.esignatureProductTierDBResponse);
             } else if (payload.queryName === 'updateCompanyEsignatureProductTier') {
                 return Promise.resolve(mockData.updateEsignatureProductTierDBResponse);
             }
+        });
+        (utilService as any).validateCompany = jest.fn((tenantId, companyId) => {
+            return mockData.legacyCompanyInfo.recordset[0]
+        });
+
+        return esignatureService.updateEsignatureProductTier(
+            mockData.tenantId,
+            mockData.companyId,
+            mockData.userEmail,
+            mockData.esignatureProductTierRequest,
+        ).then((productTier) => {
+            expect(productTier).toEqual(mockData.esignatureProductTierResponse);
+        });
+    });
+
+    test('removes hellosign documents for a non-legacy company from task list when e-signature is disabled', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'getEsignatureProductTierById') {
+                return Promise.resolve(mockData.esignatureProductTierDBResponse);
+            } else if (payload.queryName === 'updateCompanyEsignatureProductTier') {
+                return Promise.resolve(mockData.updateEsignatureProductTierDBResponse);
+            }
+            else if (payload.queryName === 'removeHelloSignTemplatesFromTaskList') {
+                return Promise.resolve(mockData.esignatureProductTierDBResponse);
+        }});
+        (utilService as any).validateCompany = jest.fn((tenantId, companyId) => {
+            return mockData.companyInfo.recordset[0]
         });
 
         return esignatureService.updateEsignatureProductTier(

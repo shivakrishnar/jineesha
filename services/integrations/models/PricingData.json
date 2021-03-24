@@ -10,7 +10,7 @@
         },
         "costPerRequest": {
             "description": "The cost per signature request.",
-            "type": ["number"]
+            "type": ["string"]
         }
     },
     "required": ["monthlyCost", "costPerRequest"]
