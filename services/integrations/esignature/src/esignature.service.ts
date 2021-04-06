@@ -4026,6 +4026,62 @@ export async function createCompanyDocument(
 }
 
 /**
+ * Deletes a specified signature request directed to an employee.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {string} employeeId: The unique identifier for the employee.
+ * @param {string} documentId: The unique identifier for the document to be updated.
+ */
+export async function deleteSignatureRequest(tenantId: string, companyId: string, employeeId: string, documentId: string): Promise<void> {
+    console.info('esignature.service.deleteSignatureRequest');
+    try {
+        await Promise.all([utilService.validateCompany(tenantId, companyId), validateEmployeeId(tenantId, companyId, employeeId)]);
+
+        // get the document if it exists
+        let query = new ParameterizedQuery('GetEsignatureMetadataById', Queries.getEsignatureMetadataById);
+        query.setStringParameter('@id', documentId);
+        let payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const signatureRequest: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (signatureRequest.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Could not find a signature request with id: ${documentId}`);
+        }
+
+        // (Mar. 2021) cannot currently delete signature requests since we count them to calculate billing, updating status to canceled instead
+        query = new ParameterizedQuery('CancelSignatureRequestById', Queries.cancelSignatureRequestById);
+        query.setStringParameter('@documentId', documentId);
+        payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        // if it is a HelloSign doc cancel the request with HelloSign
+        if (signatureRequest.recordset[0].Type === EsignatureMetadataType.SignatureRequest) {
+            const configuration = await getConfigurationData(tenantId, companyId);
+            const { eSigner } = configuration;
+            console.info('Cancel HelloSign Signature Request');
+            eSigner.signatureRequest.cancel(documentId);
+        }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+    return;
+}
+
+/**
  * Updates a specified HelloSign record under a company
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for the company the user belongs to.

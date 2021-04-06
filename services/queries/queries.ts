@@ -113,6 +113,7 @@ export const Queries = {
     deleteEsignatureMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/deleteEsignatureMetadataById.sql')).toString(),
     deleteEsignatureMetadataByIdList: fs.readFileSync(path.join(basePath, 'esignatures/deleteEsignatureMetadataByIdList.sql')).toString(),
     deleteDocumentById: fs.readFileSync(path.join(basePath, 'esignatures/deleteDocumentById.sql')).toString(),
+    cancelSignatureRequestById: fs.readFileSync(path.join(basePath, 'esignatures/cancelSignatureRequestById.sql')).toString(),
     getFileMetadataByIdAndCompanyId: fs.readFileSync(path.join(basePath, 'esignatures/getFileMetadataByIdAndCompanyId.sql')).toString(),
     getEsignatureMetadataByIdAndCompanyId: fs
         .readFileSync(path.join(basePath, 'esignatures/getEsignatureMetadataByIdAndCompanyId.sql'))
