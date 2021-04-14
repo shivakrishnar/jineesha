@@ -6,6 +6,7 @@
     "ssoAccountId": "fc6026e1-be04-4f85-a912-5ff2c338d3d1",
     "companyId": 600036,
     "employeeId": 1435,
+    "employeeCode": "601",
     "user": {
         "username": "direct-deposit-tester-prod@sharklasers.com",
         "password": "Demo123!"
@@ -26,6 +27,12 @@
     "applicationId": "b205c02c-873b-4807-a694-9c5f1062f6bb",
     "esignature": {
         "onboardingKey": "b87b65f3-7c27-4eaf-a275-3d1150fbb013",
+        "onboardingWithCompanyDocumentsActive": {
+            "key": "ea2a8058-4d10-4a3f-84d6-65929ec671b3",
+            "nonSignableDocument": "29fd6ff7818a4708b8126cb413a048b7",
+            "legacyDocument": "oEKmur",
+            "taskListId": 119
+        },
         "taskListId": 80,
         "requestId": "7776347627dd3398f826b5ebe62060199b2f0a50",
         "signatureId": "582f1cab06463ca5f8b6e6767ab67673",
@@ -36,7 +43,9 @@
         "documentId": "47fk",
         "legacyCompanyDocumentId": "Nx6mI0",
         "nonExistingDocumentId": "v7Xbv3hX",
-        "searchQueryParam": "onboarding"
+        "searchQueryParam": "onboarding",
+        "signableDocument": "7XMVCW",
+        "nonExistentSignableDocument": "W6oy6tb"
     },
     "documentsBucket": "production.hr.files",
     "logo": {

@@ -2,6 +2,7 @@ export const templateMetadataRequestBody = {
     title: 'metadata title',
     fileName: 'metadata.jpg',
     category: 'unit tests',
+    isOnboardingDocument: true,
 };
 
 export const templateMetadataResponse = {
@@ -12,4 +13,6 @@ export const templateMetadataResponse = {
     category: 'unit tests',
     isEsignatureDocument: true,
     isPublishedToEmployee: false,
+    isOnboardingDocument: true,
+    isHelloSignTemplate: true,
 };

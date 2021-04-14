@@ -1,6 +1,8 @@
 select
     ee.FirstName,
-    c.CompanyName
+    c.CompanyName,
+    em.Title,
+    ee.EmailAddress
 from
     dbo.EsignatureMetadata em
 inner join dbo.Employee ee on ee.EmployeeCode = em.EmployeeCode

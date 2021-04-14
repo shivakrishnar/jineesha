@@ -8,7 +8,7 @@ export interface IAudit {
     evoCompanyId?: string;
     areaOfChange: AuditAreaOfChange;
     tenantId: string;
-    employeeId: string;
+    employeeId?: string;
 }
 
 export enum AuditActionType {
@@ -19,4 +19,5 @@ export enum AuditActionType {
 
 export enum AuditAreaOfChange {
     EmployeeDirectDeposit = 'EE Direct Deposit',
+    Company = 'Company',
 }

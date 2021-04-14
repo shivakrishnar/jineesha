@@ -64,6 +64,11 @@ describe('esignatureService.preview.get', () => {
     });
 
     test('returns a HelloSign document preview url', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'getFileMetadataByEsignatureMetadataId') {
+                return Promise.resolve(mockData.emptyDBResponse);
+            }
+        });
         return esignatureService.getDocumentPreview(mockData.tenantId, '123').then((previewUrl) => {
             expect(previewUrl).toEqual(mockData.hellosignDocumentPreviewUrlResponse);
         });
@@ -108,6 +113,11 @@ describe('esignatureService.preview.get', () => {
     });
 
     test('throws a HelloSign error if one occurs while getting a HelloSign document preview', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'getFileMetadataByEsignatureMetadataId') {
+                return Promise.resolve(mockData.emptyDBResponse);
+            }
+        });
         (hellosignService as any).getTemplateFilesById = jest.fn((params: any) => {
             throw { message: 'Template not found' };
         });
@@ -122,6 +132,11 @@ describe('esignatureService.preview.get', () => {
     });
 
     test('throws a custom error if one occurs while getting a HelloSign document preview', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'getFileMetadataByEsignatureMetadataId') {
+                return Promise.resolve(mockData.emptyDBResponse);
+            }
+        });
         (hellosignService as any).getTemplateFilesById = jest.fn((params: any) => {
             throw errorService
                 .getErrorResponse(40)
@@ -136,6 +151,20 @@ describe('esignatureService.preview.get', () => {
             expect(error.message).toEqual('Conflict. The provided request object already exists.');
             expect(error.developerMessage).toEqual('Force this error');
             expect(error.moreInfo).toEqual('More info');
+        });
+    });
+    
+    test('returns a simple sign preview url', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'getFileMetadataByEsignatureMetadataId') {
+                const signedDocument = { ...mockData.documentFileMetadataByIdDBResponse };
+                signedDocument.recordset[0].SignatureStatusID = 1;
+                return Promise.resolve(signedDocument);
+            }
+        });
+
+        return esignatureService.getDocumentPreview(mockData.tenantId, '123').then((previewUrl) => {
+            expect(previewUrl).toEqual(mockData.nonLegacyDocumentPreviewUrlResponse);
         });
     });
 });

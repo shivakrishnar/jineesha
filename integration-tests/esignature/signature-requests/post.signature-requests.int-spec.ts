@@ -93,6 +93,7 @@ describe('create bulk signature requests', () => {
                     role: 'OnboardingSignatory',
                 },
             ],
+            isSimpleSign: false,
         };
         const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
@@ -176,11 +177,11 @@ describe('create bulk signature requests', () => {
     });
 });
 
-describe('create signature requests', () => {
+describe('create bulk simple signature requests', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken();
-            signatureRequest = esignatureService.getValidSignatureRequestObject();
+            signatureRequest = esignatureService.getValidBulkSimpleSignatureRequestObject();
             done();
         } catch (error) {
             done.fail(error);
@@ -188,9 +189,7 @@ describe('create signature requests', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-            configs.employeeId
-        }/esignatures/requests`;
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -204,30 +203,9 @@ describe('create signature requests', () => {
             });
     });
 
-    test.skip('must return a 400 if tenantID is invalid', (done) => {
-        const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
-            configs.employeeId
-        }/esignatures/requests`;
-        request(baseUri)
-            .post(uri)
-            .set('Authorization', `Bearer ${accessToken}`)
-            .set('Content-Type', 'application/json')
-            .send(signatureRequest)
-            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(400)
-            .end((error, response) => {
-                utils.testResponse(error, response, done, () => {
-                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
-                });
-            });
-    });
-
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${
-            configs.employeeId
-        }/esignatures/requests`;
+        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -244,9 +222,7 @@ describe('create signature requests', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${
-            configs.employeeId
-        }/esignatures/requests`;
+        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -263,14 +239,18 @@ describe('create signature requests', () => {
 
     test('must return a 404 if the template ID does not exist', (done) => {
         const invalidRequest = {
-            templateId: 'this definitely does not exist',
-            subject: 'This is a signature request',
-            message: 'This is a signature request message',
-            role: 'OnboardingSignatory',
+            templateId: configs.esignature.nonExistentSignableDocument,
+            subject: 'This is a test request',
+            message: 'This is a test request message',
+            signatories: [
+                {
+                    employeeCode: '445',
+                    role: 'OnboardingSignatory',
+                },
+            ],
+            isSimpleSign: true,
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-            configs.employeeId
-        }/esignatures/requests`;
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -287,13 +267,11 @@ describe('create signature requests', () => {
 
     test('must return a 400 if a required field is not provided', (done) => {
         const invalidRequest = {
-            templateId: configs.esignature.templateId,
-            title: 'This is a signature request',
-            role: 'OnboardingSignatory',
+            templateId: 'this definitely does not exist',
+            subject: 'This is a test request',
+            message: 'This is a test request message',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-            configs.employeeId
-        }/esignatures/requests`;
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -308,10 +286,37 @@ describe('create signature requests', () => {
             });
     });
 
-    test.skip('must return a 201 when a request is created', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-            configs.employeeId
-        }/esignatures/requests`;
+    test('must return a 404 if employees are not found', (done) => {
+        const invalidRequest = {
+            ...signatureRequest,
+            signatories: [
+                {
+                    employeeCode: '99999',
+                    role: 'Employee',
+                },
+                {
+                    employeeCode: '1234567',
+                    role: 'Employee',
+                },
+            ],
+        };
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        request(baseUri)
+            .post(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Content-Type', 'application/json')
+            .send(invalidRequest)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(404)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 201 when a request is created', (done) => {
+        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)

@@ -9,6 +9,8 @@ export class SignatureRequestResponse {
     title: string;
     status?: SignatureRequestResponseStatus;
     signatures: Signature[];
+    type: string;
+    isHelloSignDocument: boolean;
 
     public constructor(init?: Partial<SignatureRequestResponse>) {
         Object.assign(this, init);
@@ -31,6 +33,12 @@ export enum SignatureStatusID {
     Signed = 1,
     Pending = 2,
     NotRequired = 3,
+}
+
+export enum SignatureStatusStepNumber {
+    Signed = 2,
+    Pending = 1,
+    NotRequired = 0,
 }
 
 export type Signature = {

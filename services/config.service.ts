@@ -78,6 +78,14 @@ export const getAuditLogGroupName = () => process.env.AuditLogGroupName;
 
 export const getTenantAdminCredentialsId = () => process.env.tenantAdminCredentialsId;
 
+export const getBillingRecipient = () => process.env.billingRecipient;
+
+export const getLegacyClientCutOffDate = () => process.env.legacyClientCutOffDate;
+
+export const getDirectClientPricingData = () => process.env.directClientPricingData;
+
+export const getIndirectClientPricingData = () => process.env.indirectClientPricingData;
+
 // We need to support at least two keys concurrently, and each has keyId / publicKey attributes.
 // If/when config moves to dynamo, this can be stored as an array of objects. But env vars must
 // be strings, so for now this method converts two delimited strings into an array of objects.
@@ -86,3 +94,5 @@ export const getSsoPublicKeys = () => {
     const key2 = process.env.ssoPublicKey2.split('|');
     return [ { keyId: key1[0], publicKey: key1[1] }, { keyId: key2[0], publicKey: key2[1] } ];
 }
+
+export const getSignaturePageFontUrl = () => process.env.signaturePageFontUrl;

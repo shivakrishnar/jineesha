@@ -98,12 +98,14 @@ const saveTemplateMetadataValidationSchema = {
     fileName: { required: true, type: String },
     title: { required: true, type: String },
     category: { required: false, type: String },
+    isOnboardingDocument: { required: false, type: Boolean },
 };
 
 const saveTemplateMetadataSchema = Yup.object().shape({
     fileName: Yup.string().required(),
     category: Yup.string(),
     title: Yup.string().required(),
+    isOnboardingDocument: Yup.bool(),
 });
 
 //   Bulk Signature Request schemas
@@ -112,6 +114,7 @@ const batchSignatureRequestValidationSchema = {
     subject: { required: false, type: String },
     message: { required: false, type: String },
     signatories: { required: true, type: Array },
+    isSimpleSign: { required: true, type: Boolean },
 };
 
 const batchSignatureRequestSchema = Yup.object().shape({
@@ -123,6 +126,7 @@ const batchSignatureRequestSchema = Yup.object().shape({
         .max(250, 'You can only send 250 signatories at a time, consider batching your requests')
         .of(Yup.object())
         .required(),
+    isSimpleSign: Yup.boolean().required(),
 });
 
 const signatorySchema = Yup.object().shape({
@@ -130,19 +134,15 @@ const signatorySchema = Yup.object().shape({
     role: Yup.string().required(),
 });
 
-// Signature Request schemas
-const signatureRequestValidationSchema = {
-    templateId: { required: true, type: String },
-    subject: { required: false, type: String },
-    message: { required: false, type: String },
-    role: { required: true, type: String },
+// Signature Request Billing schemas
+const billingValidationSchema = {
+    returnReport: { required: false, type: Boolean },
+    targetEmail: { required: false, type: String },
 };
 
-const signatureRequestSchema = Yup.object().shape({
-    templateId: Yup.string().required(),
-    subject: Yup.string(),
-    message: Yup.string(),
-    role: Yup.string().required(),
+const billingSchema = Yup.object().shape({
+    returnReport: Yup.boolean(),
+    targetEmail: Yup.string(),
 });
 
 // Onboarding Signature Request schemas
@@ -163,6 +163,12 @@ const onboardingSignatureRequestSchema = Yup.object().shape({
 });
 
 // Onboarding resource URI schema
+const employeeOnboardingResourceUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+    employeeId: { required: true, type: String },
+    onboardingId: { required: true, type: UUID },
+};
 
 const onboardingResourceUriSchema = {
     tenantId: { required: true, type: UUID },
@@ -207,6 +213,7 @@ const createCompanyDocumentValidationSchema = {
     title: { required: true, type: String },
     category: { required: false, type: String },
     isPublishedToEmployee: { required: true, type: Boolean },
+    isOnboardingDocument: { required: false, type: Boolean },
 };
 
 const createCompanyDocumentSchema = Yup.object().shape({
@@ -215,6 +222,7 @@ const createCompanyDocumentSchema = Yup.object().shape({
     title: Yup.string().required(),
     category: Yup.string(),
     isPublishedToEmployee: Yup.bool().required(),
+    isOnboardingDocument: Yup.bool(),
 });
 
 // Update signature request status schemas
@@ -224,6 +232,17 @@ const updateSignatureRequestStatusValidationSchema = {
 
 const updateSignatureRequestStatusSchema = Yup.object().shape({
     stepNumber: Yup.number().required(),
+});
+
+// Create simple sign document schemas
+const createSimpleSignDocumentValidationSchema = {
+    signatureRequestId: { required: true, type: String },
+    timeZone: { required: false, type: String },
+};
+
+const createSimpleSignDocumentSchema = Yup.object().shape({
+    signatureRequestId: Yup.string().required(),
+    timeZone: Yup.string(),
 });
 
 // Update Document schemas
@@ -240,11 +259,13 @@ const updateCompanyDocumentValidationSchema = {
     ...updateDocumentValidationSchema,
     category: { required: false, type: String },
     isPublishedToEmployee: { required: false, type: Boolean },
+    isOnboardingDocument: { required: false, type: Boolean },
 };
 const updateCompanyDocumentSchema = Yup.object().shape({
     ...updateDocumentSchema,
     category: Yup.string(),
     isPublishedToEmployee: Yup.bool(),
+    isOnboardingDocument: Yup.bool(),
 });
 const updateEmployeeDocumentValidationSchema = {
     title: { required: false, type: String },
@@ -270,6 +291,27 @@ const fileObjectSchema = Yup.object().shape({
 
 const roleQueryParameterSchema = Yup.object().shape({
     role: Yup.string().oneOf(['manager'], "The role query parameter must be one of the following values: ['manager']"),
+});
+
+const onboardingPreviewValidationSchema = {
+    onboardingKey: { required: true, type: String },
+};
+const onboardingPreviewSchema = Yup.object().shape({
+    onboardingKey: Yup.string().required(),
+});
+
+const saveOnboardingDocumentsValidationSchema = {
+    taskListId: { required: true, type: Number },
+};
+const saveOnboardingDocumentsSchema = Yup.object().shape({
+    taskListId: Yup.number().required(),
+});
+
+const updateCompanyEsignatureProductTierValidationSchema = {
+    productTierId: { required: true, type: Number },
+};
+const updateCompanyEsignatureProductTierSchema = Yup.object().shape({
+    productTierId: Yup.number().required(),
 });
 
 /**
@@ -341,16 +383,15 @@ export const createBatchSignatureRequest = utilService.gatewayEventHandlerV2(
         await utilService.validateRequestBody(batchSignatureRequestSchema, requestBody);
         await utilService.validateCollection(signatorySchema, requestBody.signatories);
 
-        const { tenantId, companyId } = event.pathParameters;
+        const signInUrl = event.headers.origin;
 
         const response: SignatureRequestResponse[] = await esignatureService.createBatchSignatureRequest(
-            tenantId,
-            companyId,
+            event.pathParameters,
             requestBody,
             {},
             securityContext.principal.email,
-            event.pathParameters,
             event.headers.authorization,
+            signInUrl,
         );
 
         return {
@@ -360,24 +401,44 @@ export const createBatchSignatureRequest = utilService.gatewayEventHandlerV2(
     },
 );
 
-export const createSignatureRequest = utilService.gatewayEventHandlerV2(
+export const generateBillingReport = utilService.gatewayEventHandlerV2(
     async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.createSignatureRequest');
+        console.info('esignature.handler.generateBillingReport');
 
         utilService.normalizeHeaders(event);
         utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.checkBoundedIntegralValues(event.pathParameters);
+
+        const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+            return role === Role.globalAdmin;
+        });
+
+        if (!isAuthorized) {
+            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        }
+
+        // default the request body if nothing was passed or default optional params if only some were passed
+        requestBody = requestBody || {};
+        requestBody = {
+            returnReport: requestBody.returnReport || false,
+            targetEmail: requestBody.targetEmail || '',
+        };
 
         await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, signatureRequestValidationSchema);
-        utilService.checkAdditionalProperties(signatureRequestValidationSchema, requestBody, 'Signature Request');
-        await utilService.validateRequestBody(signatureRequestSchema, requestBody);
+        utilService.validateAndThrow(requestBody, billingValidationSchema);
+        utilService.checkAdditionalProperties(billingValidationSchema, requestBody, 'Billing Options');
+        await utilService.validateRequestBody(billingSchema, requestBody);
 
-        const { tenantId, companyId, employeeId } = event.pathParameters;
-
-        return await esignatureService.createSignatureRequest(tenantId, companyId, employeeId, requestBody);
+        return await esignatureService.generateBillingReport(requestBody);
     },
 );
+
+export const generateInternalBillingReport = utilService.gatewayEventHandlerV2({
+    allowAnonymous: true,
+    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.generateInternalBillingReport');
+        return await esignatureService.generateBillingReport({ returnReport: false, targetEmail: '' });
+    },
+});
 
 /**
  * Lists all templates under a given company
@@ -440,6 +501,38 @@ export const createEditUrl = utilService.gatewayEventHandlerV2(async ({ security
     const { tenantId, companyId, templateId } = event.pathParameters;
 
     return await esignatureService.createEditUrl(tenantId, companyId, templateId);
+});
+
+/**
+ * Generates an email to remind employee to sign documents
+ * NOTE: If endpoint is tested through postman url will be undefined in the email
+ */
+export const sendReminderEmail = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.sendReminderEmail');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.pathParameters, employeeDocumentResourceUriSchema);
+
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return (
+            role === Role.hrManager ||
+            role === Role.globalAdmin ||
+            role === Role.serviceBureauAdmin ||
+            role === Role.superAdmin ||
+            role === Role.hrAdmin ||
+            role === Role.hrRestrictedAdmin
+        );
+    });
+
+    if (!isAuthorized) {
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    const accessToken = event.headers.authorization.replace(/Bearer /i, '');
+    const emailAddress: string = securityContext.principal.email;
+    const signInUrl = event.headers.origin;
+
+    return await esignatureService.sendReminderEmail(event.pathParameters, accessToken, emailAddress, signInUrl);
 });
 
 /**
@@ -854,6 +947,49 @@ export const listEmployeeDocuments = utilService.gatewayEventHandlerV2(async ({ 
     );
 });
 
+export const getOnboardingDocumentPreview = utilService.gatewayEventHandlerV2({
+    allowAnonymous: true,
+    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.getOnboardingDocumentPreview');
+
+        utilService.validateAndThrow(event.pathParameters, tenantResourceUriSchema);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, onboardingPreviewValidationSchema);
+        utilService.checkAdditionalProperties(onboardingPreviewValidationSchema, requestBody, 'Get Onboarding Document Preview');
+        await utilService.validateRequestBody(onboardingPreviewSchema, requestBody);
+
+        const { tenantId, documentId } = event.pathParameters;
+
+        return await esignatureService.getOnboardingDocumentPreview(tenantId, documentId, requestBody);
+    },
+});
+
+export const saveOnboardingDocuments = utilService.gatewayEventHandlerV2(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.saveOnboardingDocuments');
+
+        utilService.validateAndThrow(event.pathParameters, employeeOnboardingResourceUriSchema);
+
+        const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+            return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin || role === Role.hrAdmin;
+        });
+
+        if (!isAuthorized) {
+            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        }
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, saveOnboardingDocumentsValidationSchema);
+        utilService.checkAdditionalProperties(saveOnboardingDocumentsValidationSchema, requestBody, 'Save Onboarding Documents');
+        await utilService.validateRequestBody(saveOnboardingDocumentsSchema, requestBody);
+
+        const { tenantId, companyId, employeeId, onboardingId } = event.pathParameters;
+
+        return await esignatureService.saveOnboardingDocuments(tenantId, companyId, employeeId, onboardingId, requestBody);
+    },
+);
+
 /**
  * Generates a preview of an employee's saved document under a tenant
  */
@@ -1153,3 +1289,135 @@ export const deleteEmployeeDocument = utilService.gatewayEventHandlerV2(async ({
         securityContext.roleMemberships,
     );
 });
+
+/**
+ * Creates a signed version of a simple sign document for an employee
+ */
+export const createSimpleSignDocument = utilService.gatewayEventHandlerV2(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.createSimpleSignDocument');
+
+        const { tenantId, companyId, employeeId } = event.pathParameters;
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, createSimpleSignDocumentValidationSchema);
+        utilService.checkAdditionalProperties(createSimpleSignDocumentValidationSchema, requestBody, 'Create Simple Sign Document');
+        await utilService.validateRequestBody(createSimpleSignDocumentSchema, requestBody);
+
+        return await esignatureService.createSimpleSignDocument(
+            tenantId,
+            companyId,
+            requestBody,
+            event.requestContext.identity.sourceIp,
+            employeeId,
+        );
+    },
+);
+
+/**
+ * Creates a signed version of an onboarding simple sign document for an employee
+ */
+export const createOnboardingSimpleSignDocument = utilService.gatewayEventHandlerV2({
+    allowAnonymous: true,
+    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('esignature.handler.createOnboardingSimpleSignDocument');
+
+        const { tenantId, companyId, onboardingId } = event.pathParameters;
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.pathParameters, onboardingResourceUriSchema);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, createSimpleSignDocumentValidationSchema);
+        utilService.checkAdditionalProperties(
+            createSimpleSignDocumentValidationSchema,
+            requestBody,
+            'Create Onboarding Simple Sign Document',
+        );
+        await utilService.validateRequestBody(createSimpleSignDocumentSchema, requestBody);
+
+        return await esignatureService.createSimpleSignDocument(
+            tenantId,
+            companyId,
+            requestBody,
+            event.requestContext.identity.sourceIp,
+            undefined,
+            onboardingId,
+        );
+    },
+});
+
+/**
+ * Returns all e-signature data related to a tenant.
+ */
+export const getTenantEsignatureData = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.getTenantEsignatureData');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, tenantResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId } = event.pathParameters;
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return (
+            role === Role.globalAdmin ||
+            role === Role.serviceBureauAdmin ||
+            role === Role.superAdmin ||
+            role === Role.hrAdmin ||
+            role === Role.hrRestrictedAdmin
+        );
+    });
+
+    if (!isAuthorized) {
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    return await esignatureService.getTenantEsignatureData(tenantId);
+});
+
+/**
+ * Updates the e-signature product tier for a company.
+ */
+export const updateEsignatureProductTier = utilService.gatewayEventHandlerV2(
+    async ({ securityContext, requestBody, event }: IGatewayEventInput) => {
+        console.info('esignature.handler.updateEsignatureProductTier');
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+        utilService.checkBoundedIntegralValues(event.pathParameters);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, updateCompanyEsignatureProductTierValidationSchema);
+        utilService.checkAdditionalProperties(
+            updateCompanyEsignatureProductTierValidationSchema,
+            requestBody,
+            'Update Company Esignature Product Tier',
+        );
+        await utilService.validateRequestBody(updateCompanyEsignatureProductTierSchema, requestBody);
+
+        const { tenantId, companyId } = event.pathParameters;
+        const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+            return (
+                role === Role.globalAdmin ||
+                role === Role.serviceBureauAdmin ||
+                role === Role.superAdmin ||
+                role === Role.hrAdmin ||
+                role === Role.hrRestrictedAdmin
+            );
+        });
+
+        if (!isAuthorized) {
+            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+        }
+
+        const { email } = securityContext.principal;
+
+        return await esignatureService.updateEsignatureProductTier(tenantId, companyId, email, requestBody);
+    },
+);

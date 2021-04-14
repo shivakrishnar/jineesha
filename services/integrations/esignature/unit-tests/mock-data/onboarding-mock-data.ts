@@ -1,5 +1,6 @@
 import { SignatureRequestListResponse } from '../../src/signature-requests/signatureRequestListResponse';
 import { SignatureRequestResponseStatus } from '../../src/signature-requests/signatureRequestResponse';
+import * as mockData from './mock-data';
 
 export const onboardingRequestBody = {
     onboardingKey: '123',
@@ -13,12 +14,22 @@ export const obKey = 'BDDB913D-231F-4F0F-A33D-66E057686DD8';
 
 export const obKeyOneResult = '00000000-0000-0000-0000-000000000001';
 
+export const onboardingDocumentPreviewRequest = {
+    onboardingKey: obKey,
+};
+
+export const saveOnboardingDocumentRequest = {
+    taskListId: 1,
+};
+
 export const onboardingResponse: SignatureRequestListResponse = {
     results: [
         {
             id: '1234',
             title: 'Sig Request',
             status: SignatureRequestResponseStatus.Pending,
+            type: 'SignatureRequest',
+            isHelloSignDocument: true,
             signatures: [
                 {
                     id: '1',
@@ -35,6 +46,8 @@ export const onboardingResponse: SignatureRequestListResponse = {
             id: '1234',
             title: 'Sig Request',
             status: SignatureRequestResponseStatus.Pending,
+            type: 'SignatureRequest',
+            isHelloSignDocument: true,
             signatures: [
                 {
                     id: '1',
@@ -43,6 +56,23 @@ export const onboardingResponse: SignatureRequestListResponse = {
                         emailAddress: 'hugh@jass.com',
                         name: 'Hugh',
                         role: 'Employee',
+                    },
+                } as any,
+            ],
+        },
+        {
+            id: '1234',
+            title: 'Title',
+            status: SignatureRequestResponseStatus.Pending,
+            type: 'SignatureRequest',
+            isHelloSignDocument: false,
+            signatures: [
+                {
+                    id: '',
+                    signer: {
+                        emailAddress: 'user@test.com',
+                        employeeCode: '1',
+                        name: 'Test User',
                     },
                 } as any,
             ],
@@ -56,6 +86,8 @@ export const existingOnboardingResponse: SignatureRequestListResponse = {
             id: '1234',
             title: 'Sig Request',
             status: SignatureRequestResponseStatus.Complete,
+            type: 'SignatureRequest',
+            isHelloSignDocument: true,
             signatures: [
                 {
                     id: '1',
@@ -81,6 +113,8 @@ export const existingOnboardingResponse: SignatureRequestListResponse = {
             id: '1235',
             title: 'Sig Request 2',
             status: SignatureRequestResponseStatus.Pending,
+            type: 'SignatureRequest',
+            isHelloSignDocument: true,
             signatures: [
                 {
                     id: '1',
@@ -102,5 +136,66 @@ export const existingOnboardingResponse: SignatureRequestListResponse = {
                 } as any,
             ],
         },
+        {
+            id: '1234',
+            isHelloSignDocument: false,
+            signatures: [
+                {
+                    id: '',
+                    signer: {
+                        emailAddress: 'user@test.com',
+                        employeeCode: '1',
+                        name: 'Test User',
+                    } as any,
+                },
+            ],
+            status: SignatureRequestResponseStatus.Complete,
+            title: 'Test',
+            type: 'SignatureRequest',
+        },
     ],
+};
+
+export const onboardingDBResponse = {
+    recordset: [
+        {
+            IsOn: 1,
+            EmployeeCode: '100',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const onboardingSimpleSignDBResponse = {
+    recordset: [
+        {
+            ID: '1',
+            Pointer: `10/${mockData.companyId}/abc`,
+        },
+    ],
+    output: {},
+    rowsAffected: [0],
+};
+
+export const onboardingCompanyDocsSectionOffDBResponse = {
+    recordset: [
+        {
+            IsOn: 0,
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const onboardingSimpleSignDocumentDBResponse = {
+    recordset: [
+        {
+            SignatureStatusID: 1,
+            ID: '1234',
+            Title: 'Test',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
 };

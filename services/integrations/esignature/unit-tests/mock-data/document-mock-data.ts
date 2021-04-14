@@ -38,6 +38,52 @@ export const originalDocsTaskListDBResponse = {
             {
                 ID: 4,
                 Filename: '123456',
+                Type: 'Template',
+            },
+        ],
+    ],
+    recordset: [
+        {
+            totalCount: 3,
+        },
+    ],
+    output: {},
+    rowsAffected: [3],
+};
+
+export const obDocsTaskListDBResponse = {
+    recordsets: [
+        [
+            [
+                {
+                    totalCount: 3,
+                },
+            ],
+        ],
+        [
+            {
+                ID: 1,
+                Filename: 'file-1.png',
+                Title: 'Title',
+                Description: 'Description',
+            },
+            {
+                ID: 2,
+                Filename: 'file-2.jpg',
+                Title: 'Title',
+                Description: 'Description',
+                Type: 'NoSignature',
+            },
+            {
+                ID: 3,
+                Filename: 'file-3.jpg',
+                Title: 'Title',
+                Description: 'Description',
+            },
+            {
+                ID: 4,
+                Filename: '123456',
+                Type: 'Template',
             },
         ],
     ],
@@ -61,22 +107,26 @@ export const hellosignDocsTaskListDBResponse = {
         ],
         [
             {
-                ID: 4,
+                ID: 1,
                 Filename: '12345',
                 Title: 'Title',
                 Description: 'Description',
+                Type: 'Template',
             },
             {
-                ID: 5,
+                ID: 2,
                 Filename: '67890',
                 Title: 'Title',
                 Description: 'Description',
+                Type: 'Template',
             },
             {
                 ID: 6,
                 Filename: 'test.pdf',
                 Title: 'Title',
                 Description: 'Description',
+                Type: 'SimpleSignatureRequest',
+                FileMetadataID: 1,
             },
         ],
     ],
@@ -243,16 +293,18 @@ export const companyOriginalDocumentListResponse = [
 
 export const companyHellosignDocumentListResponse = [
     {
-        id: 4,
-        filename: 'test.pdf',
-        title: 'hi',
+        id: 1,
+        filename: '12345',
+        title: 'Title',
         description: 'Description',
+        type: 'Template',
     },
     {
-        id: 5,
-        filename: 'test.pdf',
-        title: 'hi',
+        id: 2,
+        filename: '67890',
+        title: 'Title',
         description: 'Description',
+        type: 'Template',
     },
 ];
 
@@ -272,7 +324,6 @@ export const employeeDocumentListResponse = [
         employeeName: 'Test User',
         companyId: 1,
         companyName: 'Test Company',
-        isSignedDocument: true,
         uploadedBy: 'Test User',
         isLegacyDocument: true,
         status: {
@@ -295,7 +346,6 @@ export const employeeDocumentListResponse = [
         employeeName: 'Test User',
         companyId: 1,
         companyName: 'Test Company',
-        isSignedDocument: true,
         uploadedBy: 'Test User',
         isLegacyDocument: true,
         status: {
@@ -318,7 +368,6 @@ export const employeeDocumentListResponse = [
         employeeName: 'Employee User',
         companyId: 2,
         companyName: 'Other Test Company',
-        isSignedDocument: true,
         uploadedBy: 'Manager User',
         isLegacyDocument: true,
         status: {
@@ -341,7 +390,6 @@ export const employeeDocumentListResponse = [
         employeeName: 'Employee User',
         companyId: 2,
         companyName: 'Other Test Company',
-        isSignedDocument: false,
         uploadedBy: 'Manager User',
         isLegacyDocument: false,
         status: {
@@ -364,7 +412,6 @@ export const employeeDocumentListResponse = [
         employeeName: 'Employee User',
         companyId: 2,
         companyName: 'Other Test Company',
-        isSignedDocument: true,
         uploadedBy: 'Manager User',
         isLegacyDocument: false,
         status: {
@@ -380,6 +427,7 @@ export const companyDocumentRequest = {
     title: 'Title',
     category: 'onboarding',
     isPublishedToEmployee: false,
+    isOnboardingDocument: true,
 };
 
 export const companyDocumentResponse = {
@@ -390,6 +438,7 @@ export const companyDocumentResponse = {
     isEsignatureDocument: false,
     category: 'onboarding',
     isPublishedToEmployee: false,
+    isOnboardingDocument: true,
 };
 
 export const fileExistenceResponseArray = ['test.png', 'path/to/object'];
@@ -405,6 +454,8 @@ export const documentFileMetadataDBResponse = {
     recordset: [
         {
             ID: 1,
+            Title: 'test',
+            Pointer: 'test.png',
         },
     ],
     output: {},
@@ -425,6 +476,7 @@ export const documentFileMetadataByIdDBResponse = {
             UploadedByUsername: 'Test User',
             Extension: 'png',
             Filename: 'file',
+            SignatureStatusID: 2,
         },
     ],
     output: {},
@@ -441,7 +493,6 @@ export const employeeDocumentResponse = {
     employeeName: 'Test User',
     companyId: 600013,
     companyName: 'HRN IT Services',
-    isSignedDocument: false,
     isPrivate: false,
     isPublishedToEmployee: false,
 };
@@ -454,6 +505,8 @@ export const updateCompanyDocumentRequest = {
     title: 'Title',
     category: 'other',
     isPublishedToEmployee: false,
+    isEsignatureDocument: true,
+    isOnboardingDocument: true,
 };
 
 export const updateNonLegacyCompanyDocumentResponse = {
@@ -461,9 +514,10 @@ export const updateNonLegacyCompanyDocumentResponse = {
     title: 'Title',
     fileName: 'test.png',
     extension: 'png',
-    isEsignatureDocument: false,
+    isEsignatureDocument: true,
     category: 'other',
     isPublishedToEmployee: false,
+    isOnboardingDocument: true,
 };
 
 export const updateLegacyCompanyDocumentResponse = {
@@ -480,6 +534,11 @@ export const updateEmployeeDocumentRequest = {
     title: 'Title',
     isPrivate: false,
     category: 'test',
+};
+
+export const createSimpleSignDocumentRequest = {
+    signatureRequestId: '42dcb821-d91f-4b54-be47-16819128f845',
+    timeZone: 'EST',
 };
 
 export const updateNonLegacyEmployeeDocumentResponse = {
@@ -558,4 +617,30 @@ export const documentMetadataS3Response = {
     islegacydocument: true,
     isprivate: false,
     isesigneddocument: false,
+    filename: 'test.pdf',
+};
+
+export const createSimpleSignDocumentResponse = {
+    category: 'other',
+    companyId: '600013',
+    companyName: 'HRN IT Services',
+    employeeCode: '1',
+    employeeId: '113',
+    employeeName: 'Test User',
+    fileName: '42dcb821-d91f-4b54-be47-16819128f845.pdf',
+    id: '42dcb821-d91f-4b54-be47-16819128f845',
+    isEsignatureDocument: true,
+    isHelloSignDocument: false,
+    isLegacyDocument: false,
+    isOnboardingDocument: false,
+    isPrivate: false,
+    isPublishedToEmployee: true,
+    status: {
+        isProcessing: false,
+        name: 'Signed',
+        priority: 1,
+        stepNumber: 2,
+    },
+    title: 'Title',
+    uploadedBy: 'Test User',
 };

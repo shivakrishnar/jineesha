@@ -1,3 +1,4 @@
+import * as AWS from 'aws-sdk';
 import { Queries } from '../../../queries/queries';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
@@ -103,6 +104,69 @@ export async function list(tenantId: string, email: string, domainName: string, 
 }
 
 /**
+ * Returns a listing of companies for a specific user within a tenant
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} email: The email address of the user.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @param {any} queryParams: The query parameters that were specified by the user.
+ * @returns {Promise<Companies>}: Promise of an array of companies
+ */
+export async function getById(tenantId: string, companyId: string, email: string): Promise<any> {
+    console.info('companyService.getById');
+
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    try {
+        const query = new ParameterizedQuery('GetCompanyByID', Queries.getCompanyById);
+        query.setParameter('@email', email);
+        query.setParameter('@companyId', companyId);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        if (result.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Company with ID ${companyId} not found.`);
+        }
+
+        const company: any = result.recordset[0];
+
+        // retrieve legacy client cut off date
+        const ssm = new AWS.SSM({ region: configService.getAwsRegion() });
+        const params = {
+            Name: '/hr/esignature/simplesign/legacyClientCutOffDate',
+            WithDecryption: false,
+        };
+        const ssmResult = await ssm.getParameter(params).promise();
+        const isEsignatureLegacyCompany = new Date(company.CreateDate) < new Date(ssmResult.Parameter.Value);
+
+        return {
+            id: company.ID,
+            name: company.CompanyName,
+            esignatureProductTier: {
+                id: company.EsignatureProductTierID,
+                name: company.EsignatureProductTierName,
+            },
+            isEsignatureLegacyCompany,
+        };
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Retrieves a company logo document.
  * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
  * @param {string} companyId: The unique (numeric) identifier for the company
@@ -183,7 +247,8 @@ export async function listEmployeeCompaniesBySsoAccount(tenantId: string, ssoAcc
             return [];
         }
 
-        const buildLogoUrl = (companyId: string) => `${configService.getHrServicesDomain()}/internal/tenants/${tenantId}/companies/${companyId}/logo`;
+        const buildLogoUrl = (companyId: string) =>
+            `${configService.getHrServicesDomain()}/internal/tenants/${tenantId}/companies/${companyId}/logo`;
 
         return result.recordset.map((record: any) => {
             const { companyId, companyName, evoClientId, evoCompanyId, evoCompanyCode, hasLogo } = record;
@@ -193,7 +258,7 @@ export async function listEmployeeCompaniesBySsoAccount(tenantId: string, ssoAcc
                 evoClientId: evoClientId || undefined,
                 evoCompanyId: evoCompanyId || undefined,
                 evoCompanyCode: evoCompanyCode || undefined,
-                logoUrl: hasLogo ? buildLogoUrl(companyId) : undefined
+                logoUrl: hasLogo ? buildLogoUrl(companyId) : undefined,
             };
         });
     } catch (error) {

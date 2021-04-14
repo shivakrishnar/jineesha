@@ -6,9 +6,10 @@
     "ssoAccountId": "19ec977c-7472-43b8-a13a-1dbd82ce47b3",
     "companyId": 600351,
     "employeeId": 23312,
+    "employeeCode": "2",
     "user": {
         "username": "direct-deposit-user-staging@sharklasers.com",
-        "password": "Demo123!"
+        "password": "Demo123!!!"
     },
     "sbAdminUser": {
         "username": "bdyer@sharklasers.com",
@@ -26,6 +27,17 @@
     "applicationId": "23e69dde-2260-4def-9032-08360435e210",
     "esignature": {
         "onboardingKey": "b87b65f3-7c27-4eaf-a275-3d1150fbb013",
+        "onboardingWithCompanyDocumentsActive": {
+            "key": "56bb1db7-6d51-4290-aeb6-9ff8cad19b20",
+            "nonSignableDocument": "31770e77cfab4eb0a7ef9555d779b0c6",
+            "legacyDocument": "xwyrh0",
+            "taskListId": 77
+        },
+        "onboardingWithSimpleSignDocuments": {
+            "employeeCode": "75127",
+            "taskListId": 89,
+            "key": "f094109dd-2237-4ded-8105-d37af70cdaf1"
+        },
         "taskListId": 80,
         "requestId": "7776347627dd3398f826b5ebe62060199b2f0a50",
         "signatureId": "582f1cab06463ca5f8b6e6767ab67673",
@@ -36,7 +48,10 @@
         "documentId": "47fk",
         "legacyCompanyDocumentId": "oExGcr",
         "nonExistingDocumentId": "v7Xbv3hX",
-        "searchQueryParam": "onboarding"
+        "searchQueryParam": "onboarding",
+        "signableDocument": "527tD",
+        "nonExistentSignableDocument": "W6oy6tb",
+        "companyIdForProductTier": 600213
     },
     "documentsBucket": "staging.hr.files",
     "logo": {

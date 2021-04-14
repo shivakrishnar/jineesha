@@ -17,6 +17,7 @@ type Employee = {
     lastName: string;
     eeCode: string;
     companyName: string;
+    isActive: boolean;
 };
 
 /**
@@ -237,6 +238,7 @@ async function getEmployees(tenantId: string, query: Query, baseUrl: string, pag
             lastName: record.LastName,
             eeCode: record.EmployeeCode,
             companyName: record.CompanyName,
+            isActive: record.IsActive,
         } as Employee;
     });
 

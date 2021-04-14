@@ -8,9 +8,13 @@ hellosign = (params) => {
     return {
         template: {
             get: (id) => {
-                if (id == 1000) {
+                if (id === 1000) {
                     return {
                         template: mockData.helloSignOnboardingTemplate,
+                    };
+                } else if (id === 2) {
+                    return {
+                        template: mockData.helloSignTemplate2,
                     };
                 }
                 return {

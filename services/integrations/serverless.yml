@@ -52,6 +52,8 @@ provider:
     lambdaPerfMonitorApiKey: ${file(${self:custom.configFile}):lambdaPerfMonitorApiKey}
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
     tenantAdminCredentialsId: ${file(${self:custom.configFile}):tenantAdminCredentialsId}
+    legacyClientCutOffDate: ${ssm:/hr/esignature/simplesign/legacyClientCutOffDate}
+    signaturePageFontUrl: ${file(${self:custom.configFile}):signaturePageFontUrl}
 
   iamRoleStatements:
     - Effect: Allow
@@ -102,6 +104,33 @@ provider:
         - s3:PutObject
         - s3:DeleteObject
       Resource: "arn:aws:s3:::*"
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+      Resource: "arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings"
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+      Resource: "arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings/*"
+    
+    - Effect: Allow
+      Action:
+        - ssm:GetParameter
+      Resource: arn:aws:ssm:us-east-1:*:parameter/hr/esignature/simplesign/directClientPricingData
+    - Effect: Allow
+      Action:
+        - ssm:GetParameter
+      Resource: arn:aws:ssm:us-east-1:*:parameter/hr/esignature/simplesign/indirectClientPricingData
+    - Effect: Allow
+      Action:
+        - ssm:GetParameter
+      Resource: arn:aws:ssm:us-east-1:*:parameter/hr/esignature/simplesign/legacyClientCutOffDate
 
 functions:
   createTemplate:
@@ -127,15 +156,6 @@ functions:
     events:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures/requests
-            method: post
-            cors:
-              origin: '*'
-  
-  createSignRequest:
-    handler: esignature/src/handler.createSignatureRequest
-    events:
-        - http:
-            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/esignatures/requests
             method: post
             cors:
               origin: '*'
@@ -239,6 +259,20 @@ functions:
             cors:
               origin: '*'
 
+  generateBilling:
+    handler: esignature/src/handler.generateBillingReport
+    events:
+      - http:
+          path: /esignatures/billing
+          method: post
+          cors:
+            origin: '*'
+  
+  scheduledGenerateBilling:
+    handler: esignature/src/handler.generateInternalBillingReport
+    events:
+      - schedule: cron(59, 11, 1, *, ?, *)
+
   configure:
     handler: esignature/src/handler.configure
     events:
@@ -302,6 +336,15 @@ functions:
             cors:
               origin: '*'
 
+  sendReminderEmail:
+    handler: esignature/src/handler.sendReminderEmail
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents/{documentId}/remind
+            method: post
+            cors:
+              origin: '*'
+
   generateDocumentUploadUrl:
     handler: esignature/src/handler.generateDocumentUploadUrl
     events:
@@ -347,6 +390,30 @@ functions:
             cors:
               origin: '*'
 
+  createSimpleSignDocument:
+    handler: esignature/src/handler.createSimpleSignDocument
+    memorySize: 2048
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents
+            method: post
+            cors:
+              origin: '*'
+    layers:
+        - {Ref: LibreofficeLambdaLayer}
+
+  createOnboardingSimpleSignDoc:
+    handler: esignature/src/handler.createOnboardingSimpleSignDocument
+    memorySize: 2048
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/onboarding/{onboardingId}/documents
+            method: post
+            cors:
+              origin: '*'
+    layers:
+        - {Ref: LibreofficeLambdaLayer}
+
   deleteCompanyDocument:
     handler: esignature/src/handler.deleteCompanyDocument
     events:
@@ -383,6 +450,46 @@ functions:
             method: delete
             cors:
               origin: '*'
+
+  getOnboardingDocumentPreview:
+    handler: esignature/src/handler.getOnboardingDocumentPreview
+    events:
+        - http:
+            path: /tenants/{tenantId}/documents/{documentId}/onboarding-preview
+            method: post
+            cors:
+              origin: '*'
+
+  saveOnboardingDocuments:
+    handler: esignature/src/handler.saveOnboardingDocuments
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/onboarding/{onboardingId}/documents
+            method: post
+            cors:
+              origin: '*'
+
+  getTenantEsignatureData:
+    handler: esignature/src/handler.getTenantEsignatureData
+    events:
+        - http:
+            path: /tenants/{tenantId}/esignatures
+            method: get
+            cors:
+              origin: '*'
+
+  updateEsignatureProductTier:
+    handler: esignature/src/handler.updateEsignatureProductTier
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/esignatures
+            method: put
+            cors:
+              origin: '*'
+
+layers:
+  libreoffice:
+    path: layers/libreoffice
 
 resources:
   Resources:

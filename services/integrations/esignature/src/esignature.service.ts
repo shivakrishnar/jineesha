@@ -1,12 +1,20 @@
+// Note: there is a linting error here due to the fact that this package does not have a
+// default export. However, webpack will still compile correctly. Using the star import
+// method resolves this error but does not work when deployed because of an issue with the
+// package itself. Therefore, we ignore the linting error.
+import fontkit from '@pdf-lib/fontkit';
 import * as AWS from 'aws-sdk';
 import * as fs from 'fs';
 import Hashids from 'hashids';
 import * as hellosign from 'hellosign-sdk';
 import * as mime from 'mime-types';
+import * as moment from 'moment-timezone';
+import * as fetch from 'request-promise-native';
 import * as uuidV4 from 'uuid/v4';
 
 import * as pSettle from 'p-settle';
 import * as employeeService from '../../../api/tenants/src/employee.service';
+import * as tenantsService from '../../../api/tenants/src/tenants.service';
 import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import * as paginationService from '../../../pagination/pagination.service';
@@ -14,20 +22,25 @@ import * as hellosignService from '../../../remote-services/hellosign.service';
 import * as integrationsService from '../../../remote-services/integrations.service';
 import * as utilService from '../../../util.service';
 
+import { convertTo } from '@shelf/aws-lambda-libreoffice';
+import { PromiseResult } from 'p-settle';
+import { PDFDocument, rgb } from 'pdf-lib';
 import { ErrorMessage } from '../../../errors/errorMessage';
+import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
-import { EsignatureAction, IEsignatureEvent, NotificationEventType } from '../../../internal-api/notification/events';
+import { EsignatureAction, IBillingEvent, IEsignatureEvent, NotificationEventType } from '../../../internal-api/notification/events';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { Query } from '../../../queries/query';
 import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
 import { InvocationType } from '../../../util.service';
+import { BillingReportOptions } from './billing/billingReportOptions';
 import { DocumentCategory, DocumentMetadata } from './documents/document';
 import { EditUrl, SignUrl } from './embedded/url';
 import { Onboarding } from './signature-requests/onboarding';
-import { Signatory, SignatoryRequest } from './signature-requests/signatory';
-import { BatchSignatureRequest, BulkSignatureRequest, SignatureRequest } from './signature-requests/signatureRequest';
+import { Signatory } from './signature-requests/signatory';
+import { BatchSignatureRequest, BulkSignatureRequest } from './signature-requests/signatureRequest';
 import { SignatureRequestListResponse } from './signature-requests/signatureRequestListResponse';
 import {
     Signature,
@@ -35,6 +48,7 @@ import {
     SignatureRequestResponseStatus,
     SignatureStatus,
     SignatureStatusID,
+    SignatureStatusStepNumber,
 } from './signature-requests/signatureRequestResponse';
 import { TemplateDraftResponse } from './template-draft/templateDraftResponse';
 import { TemplateMetadata } from './template-draft/templateMetadata';
@@ -156,6 +170,8 @@ export async function createTemplate(
 enum EsignatureMetadataType {
     Template = 'Template',
     SignatureRequest = 'SignatureRequest',
+    SimpleSignatureRequest = 'SimpleSignatureRequest',
+    NoSignature = 'NoSignature',
 }
 
 /**
@@ -176,7 +192,7 @@ export async function saveTemplateMetadata(
 ): Promise<TemplateMetadata> {
     console.info('esignatureService.saveTemplateMetadata');
 
-    const { title, fileName, category } = requestBody;
+    const { title, fileName, category, isOnboardingDocument = false } = requestBody;
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -214,6 +230,7 @@ export async function saveTemplateMetadata(
         query.setParameter('@category', category ? `'${category}'` : 'NULL');
         query.setParameter('@employeeCode', 'NULL');
         query.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
+        query.setParameter('@isOnboardingDocument', isOnboardingDocument ? 1 : 0);
         payload = {
             tenantId,
             queryName: query.name,
@@ -230,7 +247,9 @@ export async function saveTemplateMetadata(
             fileName,
             category,
             isEsignatureDocument: true,
+            isHelloSignTemplate: true,
             isPublishedToEmployee: false,
+            isOnboardingDocument,
         } as TemplateMetadata;
     } catch (error) {
         if (error.message) {
@@ -250,24 +269,55 @@ export async function saveTemplateMetadata(
 
 /**
  *  Creates signature requests for a group of employees under the specified company
- * @param {string} tenantId: The unique identifier for  a tenant
- * @param {string} companyId: The unique identifier for a company within a tenant
+ * @param {any} pathParameters: An object containing tenant & company ID, as well as any other parameter passed as part of the path
  * @param {BatchSignatureRequest} request: A batch e-signature request for employees within the company
  * @param {any} suppliedMetadata: The metadata to be associated with the signature requests
  * @returns {SignatureRequestResponse[]}: Promise of a collection of signature requests.
  */
 export async function createBatchSignatureRequest(
-    tenantId: string,
-    companyId: string,
+    pathParameters: any,
     request: BatchSignatureRequest,
     suppliedMetadata: any,
     invokerEmail: string,
-    pathParameters: any,
     token: string,
+    signInUrl: string,
 ): Promise<SignatureRequestResponse[]> {
-    console.info('esignature.handler.createBatchSignatureRequest');
+    console.info('esignature.service.createBatchSignatureRequest');
+    if (request.isSimpleSign) {
+        return saveSimpleEsignatureMetadata(
+            pathParameters,
+            request.signatories.map((req) => req.employeeCode),
+            request.templateId,
+            true,
+            invokerEmail,
+            token,
+            false,
+            {},
+            signInUrl,
+        );
+    }
+    return createBatchHSSignatureRequest(pathParameters, request, suppliedMetadata, invokerEmail, token, signInUrl);
+}
+
+/**
+ *  Creates signature requests for a group of employees under the specified company
+ * @param {any} pathParameters: An object containing tenant & company ID, as well as any other parameter passed as part of the path
+ * @param {BatchSignatureRequest} request: A batch e-signature request for employees within the company
+ * @param {any} suppliedMetadata: The metadata to be associated with the signature requests
+ * @returns {SignatureRequestResponse[]}: Promise of a collection of signature requests.
+ */
+export async function createBatchHSSignatureRequest(
+    pathParameters: any,
+    request: BatchSignatureRequest,
+    suppliedMetadata: any,
+    invokerEmail: string,
+    token: string,
+    signInUrl: string,
+): Promise<SignatureRequestResponse[]> {
+    console.info('esignature.handler.createBatchHSSignatureRequest');
 
     try {
+        const { tenantId, companyId } = pathParameters;
         // TODO: remove this when MJ-6709 is implemented
         const sendToAllEmployees = request.signatories[0].employeeCode === 'all';
         const employeesWithoutEmailAddresses: any[] = [];
@@ -276,7 +326,11 @@ export async function createBatchSignatureRequest(
         await utilService.validateCompany(tenantId, companyId);
 
         if (!sendToAllEmployees) {
-            const employees = await checkEmployeesExistenceByCodes(tenantId, companyId, request.signatories);
+            const employees = await checkEmployeesExistenceByCodes(
+                tenantId,
+                companyId,
+                request.signatories.map((signatory) => signatory.employeeCode),
+            );
             // Note: we chose to use a forEach loop and if statements here because it was the most readable
             // implementation. If performance becomes an issue, we should consider using a filter statement.
             employees.forEach((employee) => {
@@ -311,16 +365,18 @@ export async function createBatchSignatureRequest(
             }
 
             recordSet.forEach((record) => {
-                const employee = {
-                    firstName: record.FirstName,
-                    lastName: record.LastName,
-                    employeeCode: record.EmployeeCode,
-                    emailAddress: record.EmailAddress,
-                };
-                if (record.EmailAddress) {
-                    employeeData.push(employee);
-                } else {
-                    employeesWithoutEmailAddresses.push(employee);
+                if (record.IsActive) {
+                    const employee = {
+                        firstName: record.FirstName,
+                        lastName: record.LastName,
+                        employeeCode: record.EmployeeCode,
+                        emailAddress: record.EmailAddress,
+                    };
+                    if (record.EmailAddress) {
+                        employeeData.push(employee);
+                    } else {
+                        employeesWithoutEmailAddresses.push(employee);
+                    }
                 }
             });
         }
@@ -388,6 +444,7 @@ export async function createBatchSignatureRequest(
                     );
                     query.setParameter('@employeeCode', `'${signatureRequest.metadata.employeeCodes[0]}'`);
                     query.setParameter('@signatureStatusId', SignatureStatusID.Pending);
+                    query.setParameter('@isOnboardingDocument', 0);
                     esignatureMetadataQuery.combineQueries(query, false);
 
                     signatureRequests.push(
@@ -395,6 +452,8 @@ export async function createBatchSignatureRequest(
                             id: requestId,
                             title: signatureRequest.title,
                             status: SignatureRequestResponseStatus.Pending,
+                            type: EsignatureMetadataType.SignatureRequest,
+                            isHelloSignDocument: true,
                             signatures,
                         }),
                     );
@@ -419,10 +478,11 @@ export async function createBatchSignatureRequest(
             urlParameters: pathParameters,
             invokerEmail,
             type: NotificationEventType.EsignatureEvent,
-            actions: [EsignatureAction.SignatureRequestSubmitted],
+            actions: [EsignatureAction.EsignatureRequest],
             accessToken: token.replace(/Bearer /i, ''),
             metadata: {
                 signatureRequests,
+                signInUrl,
             },
         } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
 
@@ -448,93 +508,6 @@ export async function createBatchSignatureRequest(
         }
 
         return signatureRequests;
-    } catch (error) {
-        if (error.message) {
-            if (error.message.includes('Template not found')) {
-                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
-            }
-        }
-
-        if (error instanceof ErrorMessage) {
-            throw error;
-        }
-
-        console.error(JSON.stringify(error));
-        throw errorService.getErrorResponse(0);
-    }
-}
-
-/**
- * Creates a signature request for an employee under the specified company.
- * @param {string} tenantId: The unique identifier for  a tenant
- * @param {string} companyId: The unique identifier for a company within a tenant
- * @param {string} employeeId: The unique identifer for the employee
- * @param {SignatureRequest} request: A signature request for a specific employee
- * @returns {SignatureRequestResponse}: Promise of a signature request.
- */
-export async function createSignatureRequest(
-    tenantId: string,
-    companyId: string,
-    employeeId: string,
-    request: SignatureRequest,
-): Promise<SignatureRequestResponse> {
-    console.info('esignature.handler.createSignatureRequest');
-
-    try {
-        const query = new ParameterizedQuery('GetEmployeeInfoById', Queries.getEmployeeInfoById);
-        query.setParameter('@employeeId', employeeId);
-        const payload = {
-            tenantId,
-            queryName: query.name,
-            query: query.value,
-            queryType: QueryType.Simple,
-        } as DatabaseEvent;
-        const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-
-        const employeeRecord = (result.recordset || []).map((entry) => {
-            return {
-                emailAddress: entry.EmailAddress,
-                name: entry.CurrentDisplayName,
-                employeeCode: entry.EmployeeCode,
-            };
-        });
-
-        if (employeeRecord.length === 0 || !employeeRecord[0].emailAddress) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage('Employee record not found');
-        }
-
-        const bulkSignRequest = new BulkSignatureRequest({
-            templateId: request.templateId,
-            employeeCodes: [employeeRecord[0].employeeCode],
-            signatories: [
-                {
-                    emailAddress: employeeRecord[0].emailAddress,
-                    name: employeeRecord[0].name,
-                    role: request.role,
-                    employeeCode: employeeRecord[0].employeeCode,
-                },
-            ],
-        });
-
-        if (request.subject) {
-            bulkSignRequest.subject = request.subject;
-        }
-
-        if (request.message) {
-            bulkSignRequest.message = request.message;
-        }
-
-        const configuration: EsignatureConfiguration = await getConfigurationData(tenantId, companyId);
-        const templateResponse = await configuration.eSigner.template.get(request.templateId);
-        const { signatureRequest, category }: any = await createHelloSignSignatureRequest(
-            tenantId,
-            companyId,
-            bulkSignRequest,
-            {},
-            configuration,
-            templateResponse,
-        );
-        return await saveEsignatureMetadata(tenantId, companyId, category, [employeeRecord[0].employeeCode], signatureRequest);
     } catch (error) {
         if (error.message) {
             if (error.message.includes('Template not found')) {
@@ -650,6 +623,7 @@ async function saveEsignatureMetadata(
     category: string,
     employeeCodes: string[],
     signatureRequest: any,
+    isOnboardingDocument: boolean = false,
 ): Promise<SignatureRequestResponse> {
     try {
         const signatures: Signature[] = signatureRequest.signatures.map((signature) => ({
@@ -677,6 +651,7 @@ async function saveEsignatureMetadata(
             query.setParameter('@category', category ? `'${category}'` : 'NULL');
             query.setParameter('@employeeCode', `'${code}'`);
             query.setParameter('@signatureStatusId', SignatureStatusID.Pending);
+            query.setParameter('@isOnboardingDocument', isOnboardingDocument ? '1' : '0');
             esignatureMetadataQuery.combineQueries(query, false);
         }
 
@@ -693,6 +668,8 @@ async function saveEsignatureMetadata(
             title: signatureRequest.title,
             status: SignatureRequestResponseStatus.Pending,
             signatures,
+            type: EsignatureMetadataType.SignatureRequest,
+            isHelloSignDocument: true,
         });
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -701,6 +678,103 @@ async function saveEsignatureMetadata(
 
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
+    }
+}
+
+export async function generateBillingReport(options: any | BillingReportOptions): Promise<string> {
+    console.info('esignatureService.generateBillingReport');
+
+    // get all tenant IDs
+    const connectionStrings = await tenantsService.listConnectionStrings();
+    const tenantIDs = connectionStrings.Items.map((conn) => conn.TenantID);
+    const tenantDomains = {};
+    connectionStrings.Items.forEach((conn) => (tenantDomains[conn.TenantID] = conn.Domain));
+
+    // get esign legacy cutoff date
+    const ssm = new AWS.SSM({ region: configService.getAwsRegion() });
+    const params = {
+        Name: '/hr/esignature/simplesign/legacyClientCutOffDate',
+        WithDecryption: false,
+    };
+    const ssmResult = await ssm.getParameter(params).promise();
+    const legacyClientCutOffDate = ssmResult.Parameter.Value;
+
+    // run query for every tenant
+    const getBillableSignRequests: ParameterizedQuery = new ParameterizedQuery('getBillableSignRequests', Queries.getBillableSignRequests);
+    const today = new Date();
+    getBillableSignRequests.setParameter('@month', today.getUTCMonth() || 12); // UTC months are 0-11, mssql months are 1-12, we want last month's records
+    getBillableSignRequests.setParameter('@year', today.getUTCMonth() ? today.getUTCFullYear() : today.getUTCFullYear() - 1); // if month is 0 (Jan) we're doing December of last year
+    getBillableSignRequests.setStringParameter('@esignLegacyCutoff', legacyClientCutOffDate);
+
+    const payload = {
+        tenantId: '',
+        queryName: getBillableSignRequests.name,
+        query: getBillableSignRequests.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+
+    let queryResultPromises = [];
+    let tenantErrors = [];
+
+    let csvOut = 'Domain,Company,Billable Documents\r\n';
+    for (const tenantId of tenantIDs) {
+        payload.tenantId = tenantId;
+        queryResultPromises.push(
+            utilService.withTimeout(() => {
+                return utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse).then(
+                    (result: any) => {
+                        result.tenantId = tenantId;
+                        return result;
+                    },
+                    (err) => {
+                        tenantErrors.push({ tenantId, domain: tenantDomains[tenantId], reason: err });
+                        return { error: true, reason: err };
+                    },
+                );
+            }, 17500),
+        );
+    }
+    const queryResults = await pSettle(queryResultPromises);
+    let successfulTenants = [];
+    queryResults.forEach((queryResult: any) => {
+        if (queryResult.isFulfilled && !queryResult.value.error) {
+            successfulTenants.push(queryResult.value.tenantId);
+            queryResult.value.recordsets[0].forEach((row) => {
+                csvOut += `${tenantDomains[row.tenantID]},${row.company},${row.billableDocuments}\r\n`;
+            });
+        }
+    });
+
+    const failedTenants = tenantIDs.filter((id) => {
+        return !successfulTenants.includes(id);
+    });
+    let additionalMessage = '';
+    if (failedTenants.length) {
+        console.info(
+            `failed executions without error messages: ${JSON.stringify(
+                failedTenants.filter((id) => !tenantErrors.map((err) => err.tenantId).includes(id)),
+            )}`,
+        );
+        console.info(`failed executions with error messages: ${JSON.stringify(tenantErrors)}`);
+        additionalMessage = `Billing report incomplete, errors occurred when trying to get esign info for the following tenant(s):\n${failedTenants
+            .map((id) => tenantDomains[id])
+            .join('\r\n')}`;
+    }
+
+    // send email
+    utilService.sendEventNotification({
+        urlParameters: {},
+        invokerEmail: '',
+        type: NotificationEventType.BillingEvent,
+        reportCsv: csvOut,
+        recipient: options.targetEmail || '',
+        additionalMessage,
+    } as IBillingEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
+
+    console.info(`successful executions ${tenantIDs.length - failedTenants.length}`);
+
+    if (options.returnReport) {
+        return csvOut;
     }
 }
 
@@ -714,6 +788,7 @@ export async function deleteOnboardingDocuments(tenantId: string, companyId: str
     console.info('esignatureService.deleteOnboardingDocuments');
 
     try {
+        // Get HelloSign docs
         await validateOnboardingForDeletion(tenantId, companyId, onboardingId);
         const hsResponse = getConfigurationData(tenantId, companyId).then((configuration) => {
             const { eSigner } = configuration;
@@ -722,14 +797,63 @@ export async function deleteOnboardingDocuments(tenantId: string, companyId: str
             });
         });
         const { signature_requests: signatureRequests } = await hsResponse;
-        if (signatureRequests.length == 0) return;
+
+        // Get info about onboarding
+        const onboardingQuery = new ParameterizedQuery('getNonApprovedOnboardingByKey', Queries.getNonApprovedOnboardingByKey);
+        onboardingQuery.setParameter('@onboardingKey', onboardingId);
+        const onboardingPayload = {
+            tenantId,
+            queryName: onboardingQuery.name,
+            query: onboardingQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const onboardingResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            onboardingPayload,
+            InvocationType.RequestResponse,
+        );
+
+        if (onboardingResult.recordset.length === 0) {
+            throw errorService
+                .getErrorResponse(50)
+                .setDeveloperMessage(`No onboarding found with key ${onboardingId} for the specified employee.`);
+        }
+
+        const employeeCode = onboardingResult.recordset[0].EmployeeCode;
+        // Get simple sign docs
+        const simpleSignDocsQuery = new ParameterizedQuery('GetOnboardingSimpleSignDocuments', Queries.getOnboardingSimpleSignDocuments);
+        simpleSignDocsQuery.setStringParameter('@employeeCode', employeeCode);
+        simpleSignDocsQuery.setParameter('@companyId', companyId);
+        const simpleSignPayload = {
+            tenantId,
+            queryName: simpleSignDocsQuery.name,
+            query: simpleSignDocsQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const simpleSignResponse: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            simpleSignPayload,
+            InvocationType.RequestResponse,
+        );
+        // Combine simple & HelloSign eisgnature IDs
+        const esignIds = signatureRequests.map((sr) => sr.signature_request_id);
+        for (const simpleSign of simpleSignResponse.recordset) {
+            esignIds.push(simpleSign.SignedEsignatureMetadataId);
+        }
+
+        if (esignIds.length === 0) {
+            return;
+        }
 
         let requestIds: string;
-        if (signatureRequests.length == 1) {
-            requestIds = signatureRequests[0].signature_request_id;
+        if (esignIds.length === 1) {
+            requestIds = esignIds[0];
         } else {
-            requestIds = signatureRequests.map((e) => e.signature_request_id).join(',');
+            requestIds = esignIds.join(',');
         }
+
+        // delete all the esignature metadata & associated file metadata
         const query = new ParameterizedQuery('deleteEsignatureMetadataByIdList', Queries.deleteEsignatureMetadataByIdList);
         query.setStringParameter('@idList', requestIds);
         const payload = {
@@ -739,6 +863,279 @@ export async function deleteOnboardingDocuments(tenantId: string, companyId: str
             queryType: QueryType.Simple,
         } as DatabaseEvent;
         await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        // delete all the signed files in s3
+        const invocations: Array<Promise<any>> = [];
+        for (const simpleSign of simpleSignResponse.recordset.filter(
+            (record) => record.SignatureStatusStepNumber >= SignatureStatusStepNumber.Signed,
+        )) {
+            const combine = async () => {
+                const deleteParams = {
+                    Bucket: configService.getFileBucketName(),
+                    Key: simpleSign.Pointer,
+                };
+                await s3Client.deleteObject(deleteParams).promise();
+            };
+            invocations.push(combine());
+        }
+
+        const creations = await pSettle(invocations);
+        creations.forEach((apiInvocation, index) => {
+            if (apiInvocation && apiInvocation.isRejected) {
+                console.log(apiInvocation.reason);
+                throw errorService.getErrorResponse(0).setDeveloperMessage(String(apiInvocation.reason));
+            }
+        });
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ *  Creates signature requests for a group of employees under the specified company
+ * @param {any} pathParameters: An object containing tenant & company ID, as well as any other parameter passed as part of the path
+ * @param {string[]} employeeCodes: List of employee codes of doc signers
+ * @param {string} docId: ID of the FileMetatdata entry that the signature request is based on
+ * @returns {SignatureRequestResponse[]}: Promise of a collection of signature requests.
+ */
+async function saveSimpleEsignatureMetadata(
+    pathParameters: any,
+    employeeCodes: string[],
+    docId: string,
+    sendEmail: boolean = false,
+    invokerEmail?: string,
+    token?: string,
+    isOnboardingDocument: boolean = false,
+    onboardingData?: any,
+    signInUrl?: string,
+): Promise<SignatureRequestResponse[]> {
+    console.info('esignature.service.saveSimpleEsignatureMetadata');
+    try {
+        const { tenantId, companyId } = pathParameters;
+        const sendToAllEmployees = employeeCodes[0] === 'all';
+        const [documentId] = await decodeId(docId);
+
+        if (!documentId) {
+            throw errorService.getErrorResponse(30).setDeveloperMessage(`Provided template id ${docId} is not valid.`);
+        }
+
+        const signatureRequestResponses: SignatureRequestResponse[] = [];
+        let employeeData: any = {};
+        let employeesWithoutEmailAddresses: any[] = [];
+
+        const esignatureQuery = new ParameterizedQuery('getFileMetadataById', Queries.getFileMetadataById);
+        esignatureQuery.setParameter('@id', documentId);
+        const esignaturePayload = {
+            tenantId,
+            queryName: esignatureQuery.name,
+            query: esignatureQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const esignatureResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            esignaturePayload,
+            utilService.InvocationType.RequestResponse,
+        );
+
+        if (esignatureResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Provided document ${docId} was not found.`);
+        }
+
+        if (isOnboardingDocument) {
+            const ee = {
+                firstName: onboardingData.firstName,
+                lastName: onboardingData.lastName,
+                employeeCode: employeeCodes[0],
+                emailAddress: onboardingData.emailAddress,
+            };
+            employeeData[employeeCodes[0]] = ee;
+        } else if (!sendToAllEmployees) {
+            await checkEmployeesExistenceByCodes(tenantId, companyId, employeeCodes).then((records) => {
+                records.forEach((record) => {
+                    const ee = {
+                        firstName: record.firstName,
+                        lastName: record.lastName,
+                        employeeCode: record.employeeCode,
+                        emailAddress: record.emailAddress,
+                    };
+                    if (ee.emailAddress) {
+                        employeeData[ee.employeeCode] = ee;
+                    } else {
+                        employeesWithoutEmailAddresses.push(ee);
+                    }
+                });
+            });
+        } else {
+            const employeeQuery = new ParameterizedQuery('listEmployeesByCompany', Queries.listEmployeesByCompany);
+            employeeQuery.setParameter('@companyId', companyId);
+            employeeQuery.setParameter('@search', '');
+            const employeePayload = {
+                tenantId,
+                queryName: employeeQuery.name,
+                query: employeeQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            const result: any = await utilService.invokeInternalService(
+                'queryExecutor',
+                employeePayload,
+                utilService.InvocationType.RequestResponse,
+            );
+
+            const recordSet = result.recordsets[1];
+
+            if (recordSet.length === 0) {
+                throw errorService
+                    .getErrorResponse(50)
+                    .setDeveloperMessage(`No employees were found under the provided company ${companyId}`);
+            }
+            employeeCodes = [];
+            recordSet.forEach((record) => {
+                if (record.IsActive) {
+                    employeeCodes.push(record.EmployeeCode);
+                    const ee = {
+                        firstName: record.FirstName,
+                        lastName: record.LastName,
+                        employeeCode: record.EmployeeCode,
+                        emailAddress: record.EmailAddress,
+                    };
+                    if (ee.emailAddress) {
+                        employeeData[ee.employeeCode] = ee;
+                    } else {
+                        employeesWithoutEmailAddresses.push(ee);
+                    }
+                }
+            });
+        }
+
+        // Save signature request metadata to the database
+        const esignatureMetadataQuery: ParameterizedQuery = new ParameterizedQuery(
+            'CreateSimpleSignMetadata',
+            `declare @_fileMetadataID bigint = ${documentId};`,
+        );
+        for (const code of employeeCodes) {
+            const signatureRequestId = uuidV4();
+            const query = new ParameterizedQuery('CreateSimpleSignMetadata', Queries.createSimpleSignMetadata);
+            query.setStringParameter('@id', signatureRequestId);
+            query.setParameter('@companyId', companyId);
+            query.setParameter('@type', EsignatureMetadataType.SignatureRequest);
+            query.setParameter('@uploadedBy', 'NULL');
+            query.setParameter('@fileName', 'NULL');
+            query.setParameter('@employeeCode', `'${code}'`);
+            query.setParameter('@signatureStatusId', SignatureStatusID.Pending);
+            query.setParameter('@isOnboardingDocument', isOnboardingDocument ? '1' : '0');
+            esignatureMetadataQuery.combineQueries(query, false);
+
+            signatureRequestResponses.push(
+                new SignatureRequestResponse({
+                    id: signatureRequestId,
+                    title: esignatureResult.recordset[0].Title,
+                    status: SignatureRequestResponseStatus.Pending,
+                    type: EsignatureMetadataType.SignatureRequest,
+                    isHelloSignDocument: false,
+                    signatures: [
+                        {
+                            id: '',
+                            signer: new Signatory({
+                                emailAddress: employeeData[code] ? employeeData[code].emailAddress : '',
+                                name: employeeData[code] ? `${employeeData[code].firstName} ${employeeData[code].lastName}` : '',
+                                employeeCode: code,
+                            }),
+                        },
+                    ],
+                }),
+            );
+        }
+
+        const payload = {
+            tenantId,
+            queryName: esignatureMetadataQuery.name,
+            query: esignatureMetadataQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (sendEmail) {
+            // send email
+            const signatureRequestsWithEmailAddresses = signatureRequestResponses.filter((e) => !!e.signatures[0].signer.emailAddress);
+            utilService.sendEventNotification({
+                urlParameters: pathParameters,
+                invokerEmail,
+                type: NotificationEventType.EsignatureEvent,
+                actions: [EsignatureAction.EsignatureRequest],
+                accessToken: token.replace(/Bearer /i, ''),
+                metadata: {
+                    signatureRequests: signatureRequestsWithEmailAddresses,
+                    signInUrl,
+                },
+            } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
+            if (employeesWithoutEmailAddresses.length > 0) {
+                // Note: this is currently throwing a 422, which is probably not the most
+                // accurate status code for this scenario. Consider using a 207 here.
+                throw errorService
+                    .getErrorResponse(70)
+                    .setDeveloperMessage('Some employees do not have email addresses.')
+                    .setMoreInfo(
+                        JSON.stringify({
+                            employees: JSON.stringify(employeesWithoutEmailAddresses),
+                            successes: signatureRequestsWithEmailAddresses.length,
+                            failures: employeesWithoutEmailAddresses.length,
+                        }),
+                    );
+            }
+        }
+
+        return signatureRequestResponses;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+export async function sendReminderEmail(pathParameters: any, accessToken: string, invokerEmail: string, signInUrl: string): Promise<void> {
+    console.info('esignature.sendReminderEmail');
+
+    try {
+        const [employeeInfo]: any[] = await Promise.all([
+            utilService.validateEmployee(pathParameters.tenantId, pathParameters.employeeId),
+            utilService.validateCompany(pathParameters.tenantId, pathParameters.companyId),
+        ]);
+        const query = new ParameterizedQuery('GetEsignatureMetadataByIdAndCompanyId', Queries.getEsignatureMetadataByIdAndCompanyId);
+        query.setParameter('@id', pathParameters.documentId);
+        query.setParameter('@companyId', pathParameters.companyId);
+        query.appendFilter(`EmployeeCode=${employeeInfo.employeeCode}`, true);
+        const payload = {
+            tenantId: pathParameters.tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const documentResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        if (documentResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`cannot find document with id ${pathParameters.documentId}`);
+        }
+        if (!employeeInfo.emailAddress) {
+            throw errorService.getErrorResponse(70).setDeveloperMessage(`user does not have an email address`);
+        }
+        utilService.sendEventNotification({
+            urlParameters: pathParameters,
+            invokerEmail,
+            type: NotificationEventType.EsignatureReminderEvent,
+            actions: [EsignatureAction.EsignatureReminder],
+            accessToken: accessToken.replace(/Bearer /i, ''),
+            metadata: {
+                employeeCode: employeeInfo.employeeCode,
+                signInUrl,
+            },
+        } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -767,7 +1164,7 @@ export async function listTemplates(
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listTemplates');
 
-    const validQueryStringParameters = ['pageToken', 'consolidated', 'onboarding', 'search'];
+    const validQueryStringParameters = ['pageToken', 'consolidated', 'onboarding', 'search', 'encodeIds'];
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -779,6 +1176,11 @@ export async function listTemplates(
     if (queryParams && queryParams.consolidated && queryParams.onboarding) {
         const errorMessage = 'Query params may contain either consolidated=true or onboarding=true, not both';
         throw errorService.getErrorResponse(60).setDeveloperMessage(errorMessage);
+    }
+
+    //default encodeIds = true if not set as query param
+    if (queryParams) {
+        queryParams.encodeIds = queryParams.encodeIds !== 'false' && queryParams.encodeIds !== '0';
     }
 
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
@@ -832,27 +1234,34 @@ export async function listTemplates(
 
         const reducer = async (memoPromise, document) => {
             const memo = await memoPromise;
-            if (document.Type === 'non-signature' || document.Type === 'legacy') {
+            if (document.Type === 'non-signature' || document.Type === 'legacy' || document.Type === 'simpleSign') {
                 const filename =
-                    document.Type === 'non-signature'
-                        ? document.Filename.split('/')[document.Filename.split('/').length - 1]
-                        : document.Filename;
+                    document.Type !== 'legacy' ? document.Filename.split('/')[document.Filename.split('/').length - 1] : document.Filename;
                 const uploadedBy =
-                    document.Type === 'non-signature'
+                    document.Type !== 'legacy'
                         ? document.FirstName // Note: the query returns the full name as the FirstName field
                         : `${document.FirstName} ${document.LastName}`;
-                const id = hashids.encode(document.ID, document.Type === 'non-signature' ? DocType.S3Document : DocType.LegacyDocument);
+                // GUIDs are strings so we can't encode them; we'll set those to document.ID while legacy documents' IDs need to  be encoded
+                let id;
+                if (!queryParams || queryParams.encodeIds) {
+                    id = hashids.encode(document.ID, document.Type === 'legacy' ? DocType.LegacyDocument : DocType.S3Document);
+                }
+                if (!id) id = document.ID;
+
                 memo.push({
                     id,
                     title: document.Title,
                     filename,
                     uploadDate: document.UploadDate,
-                    isEsignatureDocument: false,
+                    isEsignatureDocument: document.Type === 'simpleSign',
+                    isHelloSignTemplate: false,
                     uploadedBy,
                     category: document.Category,
                     isPublishedToEmployee: document.IsPublishedToEmployee,
                     existsInTaskList: document.ExistsInTaskList,
                     isLegacyDocument: document.Type === 'legacy',
+                    isOnboardingDocument: document.IsOnboardingDocument,
+                    esignID: document.esignID || '',
                 });
             }
             return memo;
@@ -903,6 +1312,7 @@ export async function listTemplates(
                             uploadDate,
                             uploadedBy,
                             isEsignatureDocument: true,
+                            isHelloSignTemplate: true,
                             category,
                             existsInTaskList: nonLegacyDocuments[index].ID === id ? nonLegacyDocuments[index].ExistsInTaskList : undefined,
                         }),
@@ -918,6 +1328,7 @@ export async function listTemplates(
 
         consolidatedDocuments.sort((a, b) => (new Date(a.uploadDate).getTime() > new Date(b.uploadDate).getTime() ? -1 : 1));
 
+        // TODO: (MJ-7560) remove work introduced by MJ-7505 when simple sign beta is completed.
         if (queryParams && queryParams.onboarding) {
             consolidatedDocuments = consolidatedDocuments.filter(
                 (doc) => doc.category && doc.category.toLowerCase() === 'onboarding' && doc.isEsignatureDocument,
@@ -1035,6 +1446,27 @@ export async function createEditUrl(tenantId: string, companyId: string, templat
 }
 
 /**
+ * Iterates through a list of documents, filters out and returns failed HelloSign document requests
+ * @param {DocumentMetadata[]} documents: A list of documentMetadata records to check
+ * @param {Array<PromiseResult<any>>} apiResults: A list of pSettle results containing HelloSign API request statuses and responses.
+ */
+export function retrieveFailedHellosignResults(
+    documents: DocumentMetadata[],
+    apiResults: Array<PromiseResult<any>>,
+): Set<DocumentMetadata> {
+    const failedResults = new Set(documents.filter((doc) => doc.type === 'Template'));
+
+    for (const apiResult of apiResults) {
+        if (apiResult && apiResult.isFulfilled && apiResult.value) {
+            const document = documents.filter((doc) => doc.id === apiResult.value.template.template_id)[0];
+            failedResults.delete(document);
+        }
+    }
+
+    return failedResults;
+}
+
+/**
  * Lists all documents for E-Signature under a specified company.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for the company the user belongs to.
@@ -1053,10 +1485,11 @@ export async function listDocuments(
     path: string,
     useMaxLimit: boolean,
     configuration: EsignatureConfiguration,
+    returnFileMetadataId: boolean = false,
 ): Promise<PaginatedResult> {
     console.info('esignatureService.listDocuments');
 
-    const validQueryStringParameters: string[] = ['category', 'categoryId', 'docType', 'pageToken'];
+    const validQueryStringParameters: string[] = ['categoryId', 'category', 'docType', 'pageToken'];
 
     // Currently, the presence of query string parameters with the api call is enforced
     //  to ensure that the functionality is restricted to retrieving onboarding-related
@@ -1072,7 +1505,7 @@ export async function listDocuments(
     // Check for unsupported or missing query string parameters
     if (
         !Object.keys(queryParams).every((param) => validQueryStringParameters.includes(param)) ||
-        !validQueryStringParameters.slice(0, 2).every((requiredParam) => Object.keys(queryParams).includes(requiredParam))
+        !validQueryStringParameters.slice(0, 1).every((requiredParam) => Object.keys(queryParams).includes(requiredParam))
     ) {
         const error: ErrorMessage = errorService.getErrorResponse(30);
         error
@@ -1085,7 +1518,7 @@ export async function listDocuments(
      * Note: At this time, this endpoint is only supports retrieving documents associated with onboarding
      *       and thus the category is restricted to that.
      */
-    if (queryParams['category'] !== 'onboarding') {
+    if (queryParams['category'] && queryParams['category'] !== 'onboarding') {
         const error: ErrorMessage = errorService.getErrorResponse(30);
         error
             .setDeveloperMessage(`Unsupported value: ${queryParams['category']}`)
@@ -1102,12 +1535,21 @@ export async function listDocuments(
     if (
         queryParams['docType'] &&
         queryParams['docType'].toLowerCase() !== 'hellosign' &&
-        queryParams['docType'].toLowerCase() !== 'original'
+        queryParams['docType'].toLowerCase() !== 'original' &&
+        queryParams['docType'].toLowerCase() !== 'all'
     ) {
         const error: ErrorMessage = errorService.getErrorResponse(30);
         error
             .setDeveloperMessage(`Unsupported value: ${queryParams['docType']}`)
             .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(',')}. See documentation for usage.`);
+        throw error;
+    }
+
+    if (!queryParams['category'] && queryParams['docType'] !== 'all') {
+        const error: ErrorMessage = errorService.getErrorResponse(30);
+        error
+            .setDeveloperMessage(`Unsupported value: ${queryParams['docType']} for parameter 'docType'`)
+            .setMoreInfo(`If no 'category' parameter is set 'docType' must have the value 'all'`);
         throw error;
     }
 
@@ -1143,11 +1585,13 @@ export async function listDocuments(
                 filename: entry.Filename,
                 title: entry.Title,
                 description: entry.Description,
+                type: entry.Type,
+                fileMetadataId: entry.FileMetadataID,
             };
         });
 
         if (filterByOriginalDocuments) {
-            const originalDocs = documents.filter((doc) => doc.filename.includes('.'));
+            const originalDocs = documents.filter((doc) => !doc.type);
             const paginatedResult =
                 originalDocs.length === 0
                     ? undefined
@@ -1156,50 +1600,38 @@ export async function listDocuments(
         }
 
         if (filterByHelloSignDocuments) {
-            documents = documents.filter((doc) => !doc.filename.includes('.'));
+            documents = documents.filter((doc) => doc.type === 'Template');
         }
-
-        const unfoundDocuments: DocumentMetadata[] = [];
 
         const invocations: Array<Promise<any>> = [];
 
         for (const doc of documents) {
-            if (!doc.filename.includes('.')) {
-                invocations.push(eSigner.template.get(doc.filename));
+            if (doc.type === 'Template') {
+                invocations.push(eSigner.template.get(doc.id));
             }
         }
 
         // Run template api calls in parallel
         const templateApiResults = await pSettle(invocations);
+        const failedResults = await retrieveFailedHellosignResults(documents, templateApiResults);
 
-        // Extract template file information for document metadata
+        // Remove any unfound documents from eventual response and encode ids
+        const docsToReturn = [];
         for (let index = 0; index < documents.length; index++) {
             const doc = documents[index];
-            if (!doc.filename.includes('.')) {
-                const templateApiInvocation = templateApiResults[index];
-
-                if (templateApiInvocation) {
-                    if (templateApiInvocation.isFulfilled) {
-                        const apiResponse = templateApiInvocation.value;
-                        doc.filename = apiResponse.template.documents[0].name;
-                        doc.title = apiResponse.template.title;
-                    }
-
-                    if (templateApiInvocation.isRejected) {
-                        console.error(`issue accessing template id: ${doc.filename}`);
-                        unfoundDocuments.push(doc);
-                    }
+            if (!Array.from(failedResults).includes(doc)) {
+                if (!returnFileMetadataId) {
+                    delete doc.fileMetadataId;
+                } else if (doc.fileMetadataId) {
+                    const fileMetadataId = await encodeId(doc.fileMetadataId, DocType.EsignatureDocument);
+                    doc.fileMetadataId = fileMetadataId;
                 }
+                docsToReturn.push(doc);
             }
         }
 
-        // Renove any unfound documents from eventual response
-        if (unfoundDocuments.length > 0) {
-            documents = documents.filter((doc) => !unfoundDocuments.includes(doc));
-        }
-
-        const documentsPaginatedResult = await paginationService.createPaginatedResult(documents, baseUrl, totalRecords, page);
-        return documents.length === 0 ? undefined : documentsPaginatedResult;
+        const documentsPaginatedResult = await paginationService.createPaginatedResult(docsToReturn, baseUrl, totalRecords, page);
+        return docsToReturn.length === 0 ? undefined : documentsPaginatedResult;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -1634,55 +2066,12 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
         const configuration: EsignatureConfiguration = await getConfigurationData(tenantId, companyId);
         const { eSigner } = configuration;
 
-        const { signature_requests: existingSignatureRequests } = await eSigner.signatureRequest.list({
-            query: `metadata:${onboardingKey}`,
-        });
-
-        if (existingSignatureRequests.length > 0) {
-            console.log(`Signature requests were already created for onboarding key: ${onboardingKey}`);
-            const results = existingSignatureRequests.map((request) => {
-                return new SignatureRequestResponse({
-                    id: request.signature_request_id,
-                    title: request.title,
-                    status: request.is_complete ? SignatureRequestResponseStatus.Complete : SignatureRequestResponseStatus.Pending,
-                    signatures: request.signatures.map((signature) => {
-                        let signatureStatus;
-                        switch (signature.status_code) {
-                            case 'signed':
-                                signatureStatus = SignatureRequestResponseStatus.Complete;
-                                break;
-                            case 'awaiting_signature':
-                                signatureStatus = SignatureRequestResponseStatus.Pending;
-                                break;
-                            case 'declined':
-                                signatureStatus = SignatureRequestResponseStatus.Declined;
-                                break;
-                            default:
-                                signatureStatus = SignatureRequestResponseStatus.Unknown;
-                                break;
-                        }
-                        return {
-                            id: signature.signature_id,
-                            status: signatureStatus,
-                            signer: new Signatory({
-                                emailAddress: signature.signer_email_address,
-                                name: signature.signer_name,
-                                role: signature.signer_role,
-                            }),
-                        };
-                    }),
-                });
-            });
-            return new SignatureRequestListResponse({ results });
-        }
-
         const getDocumentsQueryParams = {
             category: 'onboarding',
             categoryId: taskListId.toString(),
-            docType: 'hellosign',
         };
 
-        const taskListTemplates = await listDocuments(
+        const taskListDocuments = await listDocuments(
             tenantId,
             companyId,
             getDocumentsQueryParams,
@@ -1690,52 +2079,189 @@ export async function onboarding(tenantId: string, companyId: string, requestBod
             undefined,
             true,
             configuration,
+            true,
         );
 
-        if (!taskListTemplates) {
+        if (!taskListDocuments) {
             return undefined;
         }
 
+        const checkForExistingHelloSignDocs = async () => {
+            if (taskListDocuments.results.filter((doc) => doc.Type === 'Template')) {
+                const { signature_requests: existingSignatureRequests } = await eSigner.signatureRequest.list({
+                    query: `metadata:${onboardingKey}`,
+                });
+                if (existingSignatureRequests.length > 0) {
+                    console.log(`HelloSign signature requests were already created for onboarding key: ${onboardingKey}`);
+                    return existingSignatureRequests.map((request) => {
+                        return new SignatureRequestResponse({
+                            id: request.signature_request_id,
+                            title: request.title,
+                            status: request.is_complete ? SignatureRequestResponseStatus.Complete : SignatureRequestResponseStatus.Pending,
+                            type: EsignatureMetadataType.SignatureRequest,
+                            isHelloSignDocument: true,
+                            signatures: request.signatures.map((signature) => {
+                                let signatureStatus;
+                                switch (signature.status_code) {
+                                    case 'signed':
+                                        signatureStatus = SignatureRequestResponseStatus.Complete;
+                                        break;
+                                    case 'awaiting_signature':
+                                        signatureStatus = SignatureRequestResponseStatus.Pending;
+                                        break;
+                                    case 'declined':
+                                        signatureStatus = SignatureRequestResponseStatus.Declined;
+                                        break;
+                                    default:
+                                        signatureStatus = SignatureRequestResponseStatus.Unknown;
+                                        break;
+                                }
+                                return {
+                                    id: signature.signature_id,
+                                    status: signatureStatus,
+                                    signer: new Signatory({
+                                        emailAddress: signature.signer_email_address,
+                                        name: signature.signer_name,
+                                        role: signature.signer_role,
+                                    }),
+                                };
+                            }),
+                        });
+                    });
+                } else {
+                    return [];
+                }
+            }
+        };
+
+        const checkForExistingSimpleSignRequests = async () => {
+            if (taskListDocuments.results.filter((doc) => doc.Type === EsignatureMetadataType.SimpleSignatureRequest)) {
+                const query = new ParameterizedQuery('getOnboardingSimpleSignDocuments', Queries.getOnboardingSimpleSignDocuments);
+                query.setParameter('@companyId', companyId);
+                query.setParameter('@employeeCode', employeeCode);
+                const payload = {
+                    tenantId,
+                    queryName: query.name,
+                    query: query.value,
+                    queryType: QueryType.Simple,
+                } as DatabaseEvent;
+                const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+                console.log(result);
+                console.log(result.recordset);
+                if (result.recordset.length > 0) {
+                    console.log(`Simple signature requests were already created for onboarding key: ${onboardingKey}`);
+                    return result.recordset.map((request) => {
+                        let signatureStatus;
+                        switch (Number(request.SignatureStatusID)) {
+                            case SignatureStatusID.Signed:
+                                signatureStatus = SignatureRequestResponseStatus.Complete;
+                                break;
+                            case SignatureStatusID.Pending:
+                                signatureStatus = SignatureRequestResponseStatus.Pending;
+                                break;
+                            default:
+                                signatureStatus = SignatureRequestResponseStatus.Unknown;
+                                break;
+                        }
+                        return new SignatureRequestResponse({
+                            id: request.ID,
+                            title: request.Title,
+                            status: signatureStatus,
+                            type: EsignatureMetadataType.SignatureRequest,
+                            isHelloSignDocument: false,
+                            signatures: [
+                                {
+                                    id: '',
+                                    signer: new Signatory({
+                                        emailAddress,
+                                        name,
+                                        employeeCode,
+                                    }),
+                                },
+                            ],
+                        });
+                    });
+                } else {
+                    return [];
+                }
+            }
+        };
+
+        const [helloSignResults, simpleSignResults] = await Promise.all([
+            checkForExistingHelloSignDocs(),
+            checkForExistingSimpleSignRequests(),
+        ]);
+
+        let docsExist = false;
+        if (helloSignResults.length > 0 || simpleSignResults.length > 0) {
+            docsExist = true;
+        }
+
         const signatureRequestMetadata = { onboardingKey };
-        const signatureRequests: SignatureRequestResponse[] = [];
+        const onboardingDocuments: SignatureRequestResponse[] = [];
 
         const invocations: Array<Promise<SignatureRequestResponse>> = [];
 
-        for (const template of taskListTemplates.results) {
-            const bulkSignRequest: BulkSignatureRequest = {
-                templateId: template.id,
-                employeeCodes: [employeeCode],
-                signatories: [
-                    {
-                        emailAddress,
-                        name,
-                        role: 'OnboardingSignatory',
-                        employeeCode,
-                    },
-                ],
-            };
+        for (const document of taskListDocuments.results) {
+            if (!docsExist && document.type === EsignatureMetadataType.Template) {
+                const bulkSignRequest: BulkSignatureRequest = {
+                    templateId: document.id,
+                    employeeCodes: [employeeCode],
+                    signatories: [
+                        {
+                            emailAddress,
+                            name,
+                            role: 'OnboardingSignatory',
+                            employeeCode,
+                        },
+                    ],
+                };
 
-            const combine = async () => {
-                const templateResponse = await configuration.eSigner.template.get(template.id);
-                const { signatureRequest, category } = await createHelloSignSignatureRequest(
-                    tenantId,
-                    companyId,
-                    bulkSignRequest,
-                    signatureRequestMetadata,
-                    configuration,
-                    templateResponse,
-                );
-                return await saveEsignatureMetadata(tenantId, companyId, category, [employeeCode], signatureRequest);
-            };
-            invocations.push(combine());
+                const combine = async () => {
+                    const templateResponse = await configuration.eSigner.template.get(document.id);
+                    const { signatureRequest, category } = await createHelloSignSignatureRequest(
+                        tenantId,
+                        companyId,
+                        bulkSignRequest,
+                        signatureRequestMetadata,
+                        configuration,
+                        templateResponse,
+                    );
+                    return await saveEsignatureMetadata(tenantId, companyId, category, [employeeCode], signatureRequest, true);
+                };
+                invocations.push(combine());
+            } else if (!docsExist && document.type === EsignatureMetadataType.SimpleSignatureRequest) {
+                const combine = async () => {
+                    const onboardingData = {
+                        firstName: name.split(' ')[0],
+                        lastName: name.split(' ')[1],
+                        emailAddress,
+                    };
+                    const response = await saveSimpleEsignatureMetadata(
+                        { tenantId, companyId },
+                        [employeeCode],
+                        document.fileMetadataId,
+                        false,
+                        '',
+                        '',
+                        true,
+                        onboardingData,
+                    );
+                    return response[0];
+                };
+                invocations.push(combine());
+            } else if (!document.type || document.type === EsignatureMetadataType.NoSignature) {
+                delete document.fileMetadataId;
+                onboardingDocuments.push(document);
+            }
         }
 
         const creations = await Promise.all(invocations);
         for (const created of creations) {
-            signatureRequests.push(created);
+            onboardingDocuments.push(created);
         }
 
-        return new SignatureRequestListResponse({ results: signatureRequests });
+        return new SignatureRequestListResponse({ results: [...onboardingDocuments, ...helloSignResults, ...simpleSignResults] });
     } catch (error) {
         if (error.message) {
             if (error.message.includes('Template not found') || error.message.includes('Signature not found')) {
@@ -2086,6 +2612,286 @@ export async function listEmployeeDocuments(
  * @param {string} id: The unique identifer for the specified document
  * @returns {Promise<any>}: A Promise of a URL or file
  */
+export async function getOnboardingDocumentPreview(tenantId: string, id: string, requestBody: any): Promise<any> {
+    console.info('esignatureService.getDocumentPreview');
+
+    const { onboardingKey } = requestBody;
+
+    try {
+        // encoded GUIDs should be longer than 8, we do not expect sequential IDs to exceed 10 million
+        const decoded = parseInt(id) && id.length < 9 ? [parseInt(id)] : await decodeId(id);
+
+        const taskListQuery = new ParameterizedQuery('getOnboardingByKey', Queries.getOnboardingByKey);
+        taskListQuery.setParameter('@onboardingKey', onboardingKey);
+        let payload = {
+            tenantId,
+            queryName: taskListQuery.name,
+            query: taskListQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const taskListResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (taskListResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`No onboarding found with key ${onboardingKey}`);
+        }
+        if (!taskListResult.recordset[0].IsOn) {
+            throw errorService.getErrorResponse(70).setDeveloperMessage('The Company Documents section is not active on this task list');
+        }
+
+        // if id does not decode properly, assume it's a NoSignature document
+        if (decoded.length === 0) {
+            const fileMetadataQuery = new ParameterizedQuery(
+                'getFileMetadataByEsignatureMetadataId',
+                Queries.getFileMetadataByEsignatureMetadataId,
+            );
+            fileMetadataQuery.setParameter('@id', id);
+            payload = {
+                tenantId,
+                queryName: fileMetadataQuery.name,
+                query: fileMetadataQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            const fileMetadataResult: any = await utilService.invokeInternalService(
+                'queryExecutor',
+                payload,
+                InvocationType.RequestResponse,
+            );
+
+            if (fileMetadataResult.recordset.length === 0) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(`Document with id ${id} not found`);
+            }
+
+            const key = fileMetadataResult.recordset[0].Pointer;
+
+            const params = {
+                Bucket: configService.getFileBucketName(),
+                Key: key,
+            };
+            const url = s3Client.getSignedUrl('getObject', params);
+            // parse key to get file extension
+            const mimeType = key.split('.')[key.split('.').length - 1];
+
+            return { data: url, mimeType: `.${mimeType}` };
+        }
+
+        const [documentId] = decoded;
+
+        if (!documentId) {
+            throw errorService.getErrorResponse(30).setDeveloperMessage(`Invalid document ID supplied: ${id}`);
+        }
+
+        return await getLegacyDocument(tenantId, documentId);
+    } catch (error) {
+        if (error.message) {
+            if (error.message.includes('Not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Generates a document preview for a specified signed document under a tenant
+ * @param {string} tenantId: The unique identifier for the tenant
+ * @param {string} id: The unique identifer for the specified document
+ * @returns {Promise<any>}: A Promise of a URL or file
+ */
+export async function saveOnboardingDocuments(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    onboardingKey: string,
+    requestBody: any,
+): Promise<void> {
+    console.info('esignatureService.saveOnboardingDocuments');
+
+    const { taskListId } = requestBody;
+
+    try {
+        const taskListQuery = new ParameterizedQuery('GetTaskListDocuments', Queries.getTaskListDocuments);
+        taskListQuery.setParameter('@companyId', companyId);
+        taskListQuery.setParameter('@taskListId', taskListId);
+        const taskListPayload = {
+            tenantId,
+            queryName: taskListQuery.name,
+            query: taskListQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const onboardingQuery = new ParameterizedQuery('GetOnboardingByEmployeeIDAndKey', Queries.getOnboardingByEmployeeIDAndKey);
+        onboardingQuery.setParameter('@onboardingKey', onboardingKey);
+        onboardingQuery.setParameter('@employeeId', employeeId);
+        const onboardingPayload = {
+            tenantId,
+            queryName: onboardingQuery.name,
+            query: onboardingQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const [employeeInfo, taskListResult, onboardingResult]: any = await Promise.all([
+            utilService.validateEmployee(tenantId, employeeId),
+            utilService.invokeInternalService('queryExecutor', taskListPayload, InvocationType.RequestResponse),
+            utilService.invokeInternalService('queryExecutor', onboardingPayload, InvocationType.RequestResponse),
+            utilService.validateCompany(tenantId, companyId),
+        ]);
+
+        if (onboardingResult.recordset.length === 0) {
+            throw errorService
+                .getErrorResponse(50)
+                .setDeveloperMessage(`No onboarding found with key ${onboardingKey} for the specified employee.`);
+        }
+
+        const employeeCode = onboardingResult.recordset[0].EmployeeCode;
+
+        if (taskListResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`No onboarding docs found with onboarding key ${onboardingKey}`);
+        }
+
+        const noSignDocs = taskListResult.recordsets[1].filter((doc) => doc.Type === 'NoSignature');
+
+        const invocations: Array<Promise<any>> = [];
+        for (const doc of noSignDocs) {
+            const combine = async () => {
+                const id = uuidV4();
+                const uploadDate = new Date().toISOString();
+                const pointer = `${tenantId}/${companyId}/${employeeId}/${doc.Filename}`;
+                const esignatureQuery = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
+                esignatureQuery.setParameter('@id', id);
+                esignatureQuery.setParameter('@companyId', companyId);
+                esignatureQuery.setParameter('@type', EsignatureMetadataType.NoSignature);
+                esignatureQuery.setParameter('@uploadDate', uploadDate);
+                esignatureQuery.setParameter('@uploadedBy', 'NULL');
+                esignatureQuery.setStringParameter('@title', `'${doc.Title}'`);
+                esignatureQuery.setStringParameter('@fileName', `'${doc.Filename}'`);
+                esignatureQuery.setStringParameter('@category', 'onboarding');
+                esignatureQuery.setParameter('@employeeCode', employeeInfo.employeeCode);
+                esignatureQuery.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
+                esignatureQuery.setParameter('@isOnboardingDocument', '0');
+
+                let payload = {
+                    tenantId,
+                    queryName: esignatureQuery.name,
+                    query: esignatureQuery.value,
+                    queryType: QueryType.Simple,
+                } as DatabaseEvent;
+                await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+                const fileMetadataQuery = new ParameterizedQuery('CreateFileMetadata', Queries.createFileMetadata);
+                fileMetadataQuery.setParameter('@companyId', companyId);
+                fileMetadataQuery.setParameter('@employeeCode', employeeInfo.employeeCode);
+                fileMetadataQuery.setStringParameter('@title', doc.Title);
+                fileMetadataQuery.setStringParameter('@category', 'onboarding');
+                fileMetadataQuery.setParameter('@uploadDate', uploadDate);
+                fileMetadataQuery.setParameter('@pointer', pointer);
+                fileMetadataQuery.setParameter('@uploadedBy', 'NULL');
+                fileMetadataQuery.setParameter('@isPublishedToEmployee', '1');
+                fileMetadataQuery.setParameter('@esignatureMetadataId', id);
+
+                payload = {
+                    tenantId,
+                    queryName: fileMetadataQuery.name,
+                    query: fileMetadataQuery.value,
+                    queryType: QueryType.Simple,
+                } as DatabaseEvent;
+                await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+                const params = {
+                    Bucket: configService.getFileBucketName(),
+                    CopySource: `${configService.getFileBucketName()}/${doc.Pointer}`,
+                    Key: pointer,
+                };
+                await s3Client.copyObject(params).promise();
+            };
+            invocations.push(combine());
+        }
+
+        // Get and move simpleSign OB docs
+        const simpleSignDocsQuery = new ParameterizedQuery(
+            'GetOnboardingSignedSimpleSignDocuments',
+            Queries.getOnboardingSignedSimpleSignDocuments,
+        );
+        simpleSignDocsQuery.setStringParameter('@employeeCode', employeeCode);
+        simpleSignDocsQuery.setParameter('@companyId', companyId);
+        const simpleSignPayload = {
+            tenantId,
+            queryName: simpleSignDocsQuery.name,
+            query: simpleSignDocsQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const simpleSignResponse: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            simpleSignPayload,
+            InvocationType.RequestResponse,
+        );
+        if (simpleSignResponse.recordset.length > 0) {
+            const simpleSignPointers: any = simpleSignResponse.recordset.map((record) => ({ ptr: record.Pointer, id: record.ID }));
+            for (const doc of simpleSignPointers) {
+                const { id, ptr } = doc;
+                const combine = async () => {
+                    const newPointer = ptr.split(`/${companyId}/`)[0] + `/${companyId}/${employeeId}/` + ptr.split(`/${companyId}/`)[1];
+
+                    const copyParams = {
+                        Bucket: configService.getFileBucketName(),
+                        CopySource: `${configService.getFileBucketName()}/${ptr}`,
+                        Key: newPointer,
+                    };
+                    await s3Client.copyObject(copyParams).promise();
+
+                    const deleteParams = {
+                        Bucket: configService.getFileBucketName(),
+                        Key: ptr,
+                    };
+                    await s3Client.deleteObject(deleteParams).promise();
+
+                    const updateFileMetadataQuery = new ParameterizedQuery(
+                        'UpdateFileMetadataPointerById',
+                        Queries.updateFileMetadataPointerById,
+                    );
+                    updateFileMetadataQuery.setParameter('@id', id);
+                    updateFileMetadataQuery.setParameter('@pointer', newPointer);
+                    const updateFileMetadataPayload = {
+                        tenantId,
+                        queryName: updateFileMetadataQuery.name,
+                        query: updateFileMetadataQuery.value,
+                        queryType: QueryType.Simple,
+                    } as DatabaseEvent;
+                    await utilService.invokeInternalService('queryExecutor', updateFileMetadataPayload, InvocationType.RequestResponse);
+                };
+                invocations.push(combine());
+            }
+        }
+
+        const creations = await pSettle(invocations);
+        creations.forEach((apiInvocation, index) => {
+            if (apiInvocation && apiInvocation.isRejected) {
+                console.log(apiInvocation.reason);
+                throw errorService.getErrorResponse(0).setDeveloperMessage(String(apiInvocation.reason));
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Generates a document preview for a specified signed document under a tenant
+ * @param {string} tenantId: The unique identifier for the tenant
+ * @param {string} id: The unique identifer for the specified document
+ * @returns {Promise<any>}: A Promise of a URL or file
+ */
 export async function getDocumentPreview(tenantId: string, id: string): Promise<any> {
     console.info('esignatureService.getDocumentPreview');
 
@@ -2094,7 +2900,32 @@ export async function getDocumentPreview(tenantId: string, id: string): Promise<
 
         // if id does not decode properly, assume it's a HelloSign document
         if (decoded.length === 0) {
-            return await getTemplateFiles(id);
+            const query = new ParameterizedQuery('getFileMetadataByEsignatureMetadataId', Queries.getFileMetadataByEsignatureMetadataId);
+            query.setParameter('@id', id);
+            const payload = {
+                tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+            // Note: if there is no FileMetadata record associated with the EsignatureMetadata record,
+            // assume it is a HelloSign document.
+            if (result.recordset.length === 0) {
+                return await getTemplateFiles(id);
+            } else {
+                const key = result.recordset[0].Pointer;
+
+                const params = {
+                    Bucket: configService.getFileBucketName(),
+                    Key: key,
+                };
+                const url = s3Client.getSignedUrl('getObject', params);
+                // parse key to get file extension
+                const mimeType = key.split('.')[key.split('.').length - 1];
+
+                return result ? { data: url, mimeType: `.${mimeType}` } : undefined;
+            }
         }
 
         const [documentId, type] = decoded;
@@ -2163,15 +2994,12 @@ async function getEmployeeLegacyAndSignedDocuments(
             // note: default to false if value is null for isPublishedToEmployee and isPrivate flags
             let isPublishedToEmployee = document.isPublishedToEmployee !== null ? document.isPublishedToEmployee : false;
             let isPrivate = document.isPrivateDocument !== null ? document.isPrivateDocument : false;
-            let isSignedDocument = false;
             let docType = DocType.EsignatureDocument;
             let id = document.id;
             if (document.isLegacyDocument) {
-                isSignedDocument = document.esignDate ? true : false;
                 docType = DocType.LegacyDocument;
                 id = hashids.encode(Number(id), docType);
             } else if (document.isSignedOrUploadedDocument) {
-                isSignedDocument = !document.uploadedBy && document.category === 'onboarding';
                 if (document.employeeCode) {
                     isPublishedToEmployee = false;
                     isPrivate = document.isPublishedToEmployee !== null ? !document.isPublishedToEmployee : false;
@@ -2192,6 +3020,7 @@ async function getEmployeeLegacyAndSignedDocuments(
                 employeeCode,
                 firstName,
                 lastName,
+                emailAddress,
                 companyId,
                 companyName,
                 uploadedBy,
@@ -2201,6 +3030,8 @@ async function getEmployeeLegacyAndSignedDocuments(
                 signatureStatusPriority,
                 signatureStatusStepNumber,
                 isProcessing,
+                isHelloSignDocument,
+                isOnboarding,
             } = document;
             updatedDocuments.push({
                 id,
@@ -2214,12 +3045,14 @@ async function getEmployeeLegacyAndSignedDocuments(
                 employeeId,
                 employeeCode,
                 employeeName: firstName && lastName ? `${firstName} ${lastName}` : undefined,
+                emailAddress,
                 companyId,
                 companyName,
-                isSignedDocument,
                 uploadedBy,
                 isLegacyDocument,
                 isEsignatureDocument,
+                isHelloSignDocument,
+                isOnboarding,
                 status: {
                     name: signatureStatusName,
                     priority: signatureStatusPriority,
@@ -2435,7 +3268,17 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
         throw errorService.getErrorResponse(30).setDeveloperMessage('fileName should have an extension');
     }
 
-    const uploadS3Filename = filename.replace(/[^a-zA-Z0-9.]/g, '');
+    // handle company documents
+    let newFileName = filename;
+    let esignatureMetadataId;
+    if (!documentId && !employeeId && companyId) {
+        esignatureMetadataId = uuidV4().replace(/-/g, '');
+        // we are using the generated id as the filename to avoid duplicates
+        // pull off the file extension and append it to the id
+        newFileName = `${esignatureMetadataId}${filename.substring(filename.lastIndexOf('.'))}`;
+    }
+
+    const uploadS3Filename = newFileName.replace(/[^a-zA-Z0-9.]/g, '');
 
     let key = employeeId ? `${tenantId}/${companyId}/${employeeId}/${filename}` : `${tenantId}/${companyId}/${uploadS3Filename}`;
     key = utilService.sanitizeForS3(key);
@@ -2549,6 +3392,11 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
             if (oldCategory) {
                 documentMetadata.category = oldCategory;
             }
+        }
+    } else {
+        if (!documentId && !employeeId && companyId) {
+            documentMetadata.category = category;
+            documentMetadata.esignatureMetadataId = esignatureMetadataId;
         }
     }
 
@@ -2681,6 +3529,9 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
             isprivate,
             isesigneddocument,
             category,
+            isonboardingdocument = false,
+            filename,
+            esignaturemetadataid,
         } = metadata;
 
         // Don't handle documents generated when e-signed. Their metadata has already been persisted to the database
@@ -2693,6 +3544,29 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
 
         // Employee document creation
         if (employeeid && !documentid) {
+            const esignatureMetadataId = uuidV4().replace(/-/g, '');
+            query = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
+            query.setParameter('@id', esignatureMetadataId);
+            query.setParameter('@companyId', companyid);
+            query.setParameter('@type', EsignatureMetadataType.NoSignature);
+            query.setParameter('@uploadDate', uploadTime);
+            query.setParameter('@uploadedBy', `'${uploadedby}'`);
+            query.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
+            query.setParameter('@fileName', `'${filename.replace(/'/g, "''")}'`);
+            query.setParameter('@category', category ? `'${category}'` : 'NULL');
+            query.setParameter('@employeeCode', `'${employeecode}'`);
+            query.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
+            query.setParameter('@isOnboardingDocument', isonboardingdocument === 'true' ? '1' : '0');
+
+            payload = {
+                tenantId: tenantid,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+
+            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
             query = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
             query.setParameter('@companyId', companyid);
             query.setParameter('@employeeCode', `'${employeecode}'`);
@@ -2702,7 +3576,7 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
             query.setParameter('@pointer', uploadedItemS3Key.replace(/'/g, "''"));
             query.setParameter('@uploadedBy', `'${uploadedby}'`);
             query.setParameter('@isPublishedToEmployee', isprivate === 'true' ? '0' : '1');
-            query.setParameter('@esignatureMetadataId', 'NULL');
+            query.setParameter('@esignatureMetadataId', esignatureMetadataId);
         }
 
         // Employee document updates
@@ -2760,6 +3634,44 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
             }
         }
 
+        // Company document creation
+        if (companyid && !employeeid && !documentid) {
+            // create esignature metadata
+            query = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
+            query.setParameter('@id', esignaturemetadataid);
+            query.setParameter('@companyId', companyid);
+            query.setParameter('@type', EsignatureMetadataType.SimpleSignatureRequest);
+            query.setParameter('@uploadDate', uploadTime);
+            query.setParameter('@uploadedBy', `'${uploadedby}'`);
+            query.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
+            query.setParameter('@fileName', `'${filename.replace(/'/g, "''")}'`);
+            query.setParameter('@category', category ? `'${category}'` : 'NULL');
+            query.setParameter('@employeeCode', 'NULL');
+            query.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
+            query.setParameter('@isOnboardingDocument', isonboardingdocument === 'true' ? '1' : '0');
+
+            payload = {
+                tenantId: tenantid,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+
+            await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+            // create file metadata
+            query = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
+            query.setParameter('@companyId', companyid);
+            query.setParameter('@employeeCode', 'NULL');
+            query.setParameter('@title', `${title.replace(/'/g, "''")}`);
+            query.setStringParameter('@category', category || '');
+            query.setParameter('@uploadDate', uploadTime);
+            query.setParameter('@pointer', uploadedItemS3Key.replace(/'/g, "''"));
+            query.setParameter('@uploadedBy', `'${uploadedby}'`);
+            query.setParameter('@isPublishedToEmployee', isprivate === 'true' ? '0' : '1');
+            query.setParameter('@esignatureMetadataId', esignaturemetadataid);
+        }
+
         if (!query) {
             return;
         }
@@ -2795,7 +3707,7 @@ export async function createCompanyDocument(
 ): Promise<any> {
     console.info('esignature.service.createCompanyDocument');
 
-    const { file, fileName, title, category, isPublishedToEmployee } = request;
+    const { file, fileName, title, category, isPublishedToEmployee, isOnboardingDocument = false } = request;
 
     try {
         // verify that the company exists
@@ -2831,22 +3743,48 @@ export async function createCompanyDocument(
                 throw new Error(e);
             });
 
-        // create file metadata
         const uploadDate = new Date().toISOString();
-        const query = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
-        query.setParameter('@companyId', companyId);
-        query.setParameter('@employeeCode', 'NULL');
-        query.setParameter('@title', `${title.replace(/'/g, "''")}`);
-        query.setParameter('@category', category ? `'${category}'` : 'NULL');
-        query.setParameter('@uploadDate', uploadDate);
-        query.setParameter('@pointer', key.replace(/'/g, "''"));
-        query.setParameter('@uploadedBy', `'${firstName} ${lastName}'`);
-        query.setParameter('@isPublishedToEmployee', isPublishedToEmployee ? '1' : '0');
-        query.setParameter('@esignatureMetadataId', 'NULL');
-        const payload = {
+        const esignatureMetadataId = uuidV4().replace(/-/g, '');
+        const uploadedBy = `'${firstName} ${lastName}'`;
+
+        // create esignature metadata
+        const esignatureMetadataQuery = new ParameterizedQuery('createEsignatureMetadata', Queries.createEsignatureMetadata);
+        esignatureMetadataQuery.setParameter('@id', esignatureMetadataId);
+        esignatureMetadataQuery.setParameter('@companyId', companyId);
+        esignatureMetadataQuery.setParameter('@type', EsignatureMetadataType.NoSignature);
+        esignatureMetadataQuery.setParameter('@uploadDate', uploadDate);
+        esignatureMetadataQuery.setParameter('@uploadedBy', uploadedBy);
+        esignatureMetadataQuery.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
+        esignatureMetadataQuery.setParameter('@fileName', `'${fileName.replace(/'/g, "''")}'`);
+        esignatureMetadataQuery.setParameter('@category', category ? `'${category}'` : 'NULL');
+        esignatureMetadataQuery.setParameter('@employeeCode', 'NULL');
+        esignatureMetadataQuery.setParameter('@signatureStatusId', SignatureStatusID.NotRequired);
+        esignatureMetadataQuery.setParameter('@isOnboardingDocument', isOnboardingDocument ? 1 : 0);
+
+        let payload = {
             tenantId,
-            queryName: query.name,
-            query: query.value,
+            queryName: esignatureMetadataQuery.name,
+            query: esignatureMetadataQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        // create file metadata
+        const fileMetadataQuery = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
+        fileMetadataQuery.setParameter('@companyId', companyId);
+        fileMetadataQuery.setParameter('@employeeCode', 'NULL');
+        fileMetadataQuery.setParameter('@title', `${title.replace(/'/g, "''")}`);
+        fileMetadataQuery.setParameter('@category', category ? `'${category}'` : 'NULL');
+        fileMetadataQuery.setParameter('@uploadDate', uploadDate);
+        fileMetadataQuery.setParameter('@pointer', key.replace(/'/g, "''"));
+        fileMetadataQuery.setParameter('@uploadedBy', uploadedBy);
+        fileMetadataQuery.setParameter('@isPublishedToEmployee', isPublishedToEmployee ? '1' : '0');
+        fileMetadataQuery.setParameter('@esignatureMetadataId', esignatureMetadataId);
+
+        payload = {
+            tenantId,
+            queryName: fileMetadataQuery.name,
+            query: fileMetadataQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
         const fileMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
@@ -2862,6 +3800,7 @@ export async function createCompanyDocument(
             isEsignatureDocument: false,
             category,
             isPublishedToEmployee,
+            isOnboardingDocument,
         };
 
         return response;
@@ -3072,7 +4011,7 @@ async function updateEmployeeS3Document(
     try {
         // get file metadata / make sure it exists in the database & belongs to the employee
         let query = new ParameterizedQuery('getFileMetadataById', Queries.getFileMetadataById);
-        query.appendFilter(`EmployeeCode = '${employeeCode}'`);
+        query.appendFilter(`e.EmployeeCode = '${employeeCode}'`);
         query.setParameter('@id', documentId);
         let payload = {
             tenantId,
@@ -3243,7 +4182,7 @@ async function updateEmployeeLegacyDocument(tenantId: string, employeeId: string
 async function updateS3Document(tenantId: string, companyId: string, documentId: number, request: any): Promise<any> {
     console.info('esignature.service.updateS3Document');
 
-    const { fileObject, title, category, isPublishedToEmployee } = request;
+    const { fileObject, title, category, isPublishedToEmployee, isOnboardingDocument } = request;
 
     try {
         // get file metadata / make sure it exists in the database
@@ -3266,7 +4205,9 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
             Category: oldCategory,
             Pointer: oldPointer,
             IsPublishedToEmployee: oldIsPublishedToEmployee,
+            isOnboardingDocument: oldIsOnboardingDocument,
             UploadDate: oldUploadDate,
+            Type: type,
         } = fileMetadataResult.recordset[0];
         const oldExtension = oldPointer.split('.').pop();
         const oldFileName = oldPointer.split('/').pop();
@@ -3316,10 +4257,14 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
                 });
         }
 
-        // update record in database
+        // update records in database
         let published = oldIsPublishedToEmployee ? '1' : '0';
         if (isPublishedToEmployee !== undefined) {
             published = isPublishedToEmployee ? '1' : '0';
+        }
+        let onboarding = oldIsOnboardingDocument ? '1' : '0';
+        if (isOnboardingDocument !== undefined) {
+            onboarding = isOnboardingDocument ? '1' : '0';
         }
         query = new ParameterizedQuery('UpdateFileMetadataById', Queries.updateFileMetadataById);
         query.setParameter('@id', documentId);
@@ -3327,6 +4272,16 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
         query.setParameter('@category', category !== undefined ? `'${category}'` : `'${oldCategory}'`);
         query.setParameter('@pointer', (newKey && newKey.replace(/'/g, "''")) || oldPointer);
         query.setParameter('@isPublishedToEmployee', published);
+
+        const onboardingQuery = new ParameterizedQuery(
+            'UpdateOnboardingStatusForEsignatureMetadata',
+            Queries.updateOnboardingStatusForEsignatureMetadata,
+        );
+        onboardingQuery.setParameter('@id', documentId);
+        onboardingQuery.setParameter('@isOnboardingDocument', onboarding);
+
+        query.combineQueries(onboardingQuery, true);
+
         payload = {
             tenantId,
             queryName: query.name,
@@ -3343,9 +4298,10 @@ async function updateS3Document(tenantId: string, companyId: string, documentId:
             fileName: newFileName || oldFileName,
             extension: newExtension || oldExtension,
             uploadDate: oldUploadDate,
-            isEsignatureDocument: false,
+            isEsignatureDocument: type !== EsignatureMetadataType.NoSignature,
             category: category !== undefined ? category : oldCategory,
             isPublishedToEmployee: isPublishedToEmployee !== undefined ? isPublishedToEmployee : oldIsPublishedToEmployee,
+            isOnboardingDocument: isOnboardingDocument !== undefined ? isOnboardingDocument : oldIsOnboardingDocument,
         };
 
         return response;
@@ -3764,6 +4720,513 @@ async function deleteEmployeeDocumentRecord(tenantId: string, docType: DocType, 
 }
 
 /**
+ * Creates a specified document record under a company and uploads the file to S3
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {any} requestBody: The company document request.
+ * @param {string} ipAddress: The first name of the invoking user.
+ * @param {string} [employeeId] : The id of the employee signing the document.
+ * @param {string} [onboardingKey] : Key of the onboarding being completed.
+ * @returns {any}: A Promise of a created company document
+ */
+export async function createSimpleSignDocument(
+    tenantId: string,
+    companyId: string,
+    requestBody: any,
+    ipAddress: string,
+    employeeId?: string,
+    onboardingKey?: string,
+): Promise<any> {
+    console.info('esignature.service.createSimpleSignDocument');
+
+    const { signatureRequestId, timeZone } = requestBody;
+    const fileDir = uuidV4();
+    const tmpFileDir = `/tmp/${fileDir}`;
+    let fileName;
+
+    try {
+        // verify that the company and employee exists & get info
+        const invocations: any[] = [await utilService.validateCompany(tenantId, companyId)];
+        if (employeeId) {
+            invocations.push(await utilService.validateEmployee(tenantId, employeeId));
+        } else {
+            const employeeQuery = new ParameterizedQuery('getEmployeeInfoByOnboardingKey', Queries.getEmployeeInfoByOnboardingKey);
+            employeeQuery.setParameter('@onboardingKey', onboardingKey);
+            const employeePayload = {
+                tenantId,
+                queryName: employeeQuery.name,
+                query: employeeQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            invocations.push(await utilService.invokeInternalService('queryExecutor', employeePayload, InvocationType.RequestResponse));
+        }
+        const promiseResults: any[] = await Promise.all(invocations);
+        const companyInfo = promiseResults[0];
+        let employeeInfo = promiseResults[1];
+        if (!employeeId) {
+            if (promiseResults[1].recordset.length === 0) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(`Onboarding with key ${onboardingKey} not found.`);
+            }
+            employeeInfo = promiseResults[1].recordset[0];
+        }
+
+        // retrieve pointer from database
+        const documentQuery = new ParameterizedQuery(
+            'getFileMetadataByEsignatureMetadataId',
+            Queries.getFileMetadataByEsignatureMetadataId,
+        );
+        documentQuery.setParameter('@id', signatureRequestId);
+        documentQuery.appendFilter(`e.CompanyID = ${companyId}`, true);
+        documentQuery.appendFilter(`e.EmployeeCode = '${employeeInfo.employeeCode}'`, true);
+        let payload = {
+            tenantId,
+            queryName: documentQuery.name,
+            query: documentQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const documentResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (documentResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Signature request with id ${signatureRequestId} not found`);
+        }
+
+        if (Number(documentResult.recordset[0].SignatureStatusID) === SignatureStatusID.Signed) {
+            throw errorService.getErrorResponse(70).setDeveloperMessage('This document has already been signed.');
+        }
+
+        // retrieve file from s3
+        const item = await s3Client
+            .getObject({
+                Bucket: configService.getFileBucketName(),
+                Key: documentResult.recordset[0].Pointer,
+            })
+            .promise();
+        fileName = item.Metadata.filename;
+
+        // Note: we must write the file to the tmp directory on the Lambda container in order to convert it to a pdf.
+        // The file is saved as the specified file name in the payload with a guid attached to it in order to
+        // prevent conflicts.
+        fs.mkdirSync(tmpFileDir);
+        fs.writeFileSync(`${tmpFileDir}/${fileName}`, (item.Body as Buffer).toString('base64'), 'base64');
+
+        // convert to pdf
+        // TODO: (MJ-7051) convert doc and docx to pdf
+        const extension = fileName.split('.').pop();
+        let pdfDoc;
+        try {
+            if (extension === 'jpg') {
+                pdfDoc = await PDFDocument.create();
+                const imageBytes = fs.readFileSync(`${tmpFileDir}/${fileName}`);
+                const image = await pdfDoc.embedJpg(imageBytes);
+                const imagePage = pdfDoc.addPage([image.width, image.height]);
+                imagePage.drawImage(image);
+            } else if (extension === 'png') {
+                pdfDoc = await PDFDocument.create();
+                const imageBytes = fs.readFileSync(`${tmpFileDir}/${fileName}`);
+                const image = await pdfDoc.embedPng(imageBytes);
+                const imagePage = pdfDoc.addPage([image.width, image.height]);
+                imagePage.drawImage(image);
+            } else if (extension === 'docx' || extension === 'doc') {
+                const pdfDocPath = await convertTo(`${fileDir}/${fileName}`, 'pdf');
+                pdfDoc = await PDFDocument.load(fs.readFileSync(pdfDocPath));
+            } else {
+                pdfDoc = await PDFDocument.load(fs.readFileSync(`${tmpFileDir}/${fileName}`));
+            }
+        } catch (error) {
+            console.log(JSON.stringify(error));
+            throw errorService.getErrorResponse(0).setDeveloperMessage('Failed to convert file to PDF.');
+        }
+
+        // define signature page variables
+        enum FontSize {
+            Header = 16,
+            CompanyName = 14,
+            Normal = 12,
+        }
+        const gray800 = rgb(66 / 255, 66 / 255, 66 / 255);
+        const gray600 = rgb(117 / 255, 117 / 255, 117 / 255);
+        const gray300 = rgb(224 / 255, 224 / 255, 224 / 255);
+        const verticalMargin = 34;
+        const labelHorizontalMargin = 47;
+        const valueHorizontalMargin = 159;
+
+        const { firstName, lastName, emailAddress, employeeCode } = employeeInfo;
+        const { CompanyName: companyName } = companyInfo;
+        let employeeName = `${firstName} ${lastName}`;
+        employeeName = emailAddress ? `${employeeName} (${emailAddress})` : employeeName;
+        const adjustedTimeZone = !!moment.tz.zone(timeZone) ? timeZone : 'UTC';
+        const signDate = moment(new Date())
+            .tz(adjustedTimeZone)
+            .format('MMMM Do, YYYY h:mm A z');
+        const title = documentResult.recordset[0].Title;
+
+        // create signature page - page dimensions defined in UI mocks
+        const page = pdfDoc.addPage([612, 792]);
+        const { width, height } = page.getSize();
+
+        const fontResult = await fetch.get({
+            url: configService.getSignaturePageFontUrl(),
+            encoding: null, // tslint:disable-line:no-null-keyword
+        });
+        pdfDoc.registerFontkit(fontkit);
+        const customFont = await pdfDoc.embedFont(fontResult);
+
+        page.drawText(companyName, {
+            x: width - labelHorizontalMargin - customFont.widthOfTextAtSize(companyName, FontSize.CompanyName),
+            y: height - verticalMargin - customFont.heightAtSize(FontSize.CompanyName),
+            size: FontSize.CompanyName,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText('Signature Page', {
+            x: labelHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Header) - 76,
+            size: FontSize.Header,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText('Title', {
+            x: labelHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 130,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray600,
+        });
+        page.drawText('File name', {
+            x: labelHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 156,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray600,
+        });
+        page.drawText('Document ID', {
+            x: labelHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 182,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray600,
+        });
+        page.drawSvgPath('M 0,0 l 527,0', { x: 42, y: height - 232.25, borderColor: gray300 });
+        page.drawText('E-signed by', {
+            x: labelHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 250,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray600,
+        });
+        page.drawText(title, {
+            x: valueHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 130,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText(`${signatureRequestId}.pdf`, {
+            x: valueHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 156,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText(signatureRequestId, {
+            x: valueHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 182,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText(employeeName, {
+            x: valueHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 250,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText(signDate, {
+            x: valueHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 276,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText(`IP address: ${ipAddress}`, {
+            x: valueHorizontalMargin,
+            y: height - customFont.heightAtSize(FontSize.Normal) - 302,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray800,
+        });
+        page.drawText(`Doc ID: ${signatureRequestId}`, {
+            x: width - labelHorizontalMargin - customFont.widthOfTextAtSize(`Doc ID: ${signatureRequestId}`, FontSize.Normal),
+            y: verticalMargin,
+            size: FontSize.Normal,
+            font: customFont,
+            color: gray600,
+        });
+
+        const pdfBytes = await pdfDoc.save();
+
+        // upload to s3
+        let newKey = `${tenantId}/${companyId}/${signatureRequestId}.pdf`;
+        if (employeeId) {
+            newKey = `${tenantId}/${companyId}/${employeeId}/${signatureRequestId}.pdf`;
+        }
+        await s3Client
+            .upload({
+                Bucket: configService.getFileBucketName(),
+                Key: newKey,
+                Body: Buffer.from(pdfBytes),
+                Metadata: {
+                    fileName: `${signatureRequestId}.pdf`,
+                },
+                ContentEncoding: 'base64',
+                ContentType: 'application/pdf',
+            })
+            .promise()
+            .catch((e) => {
+                throw new Error(e);
+            });
+
+        // upload to database
+        const { Title, Category } = documentResult.recordset[0];
+        const uploadDate = new Date().toISOString();
+        const fileMetadataQuery = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
+        fileMetadataQuery.setParameter('@companyId', companyId);
+        fileMetadataQuery.setStringParameter('@employeeCode', employeeCode);
+        fileMetadataQuery.setParameter('@title', Title);
+        fileMetadataQuery.setStringParameter('@category', Category);
+        fileMetadataQuery.setParameter('@uploadDate', uploadDate);
+        fileMetadataQuery.setParameter('@pointer', newKey);
+        fileMetadataQuery.setStringParameter('@uploadedBy', `${firstName} ${lastName}`);
+        fileMetadataQuery.setParameter('@isPublishedToEmployee', '1');
+        fileMetadataQuery.setParameter('@esignatureMetadataId', signatureRequestId);
+
+        payload = {
+            tenantId,
+            queryName: fileMetadataQuery.name,
+            query: fileMetadataQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const fileMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        const updateEsignatureMetadataQuery = new ParameterizedQuery('updateEsignatureMetadataById', Queries.updateEsignatureMetadataById);
+        updateEsignatureMetadataQuery.setParameter('@signatureStatusId', SignatureStatusID.Signed);
+        updateEsignatureMetadataQuery.setParameter('@fileName', `${signatureRequestId}.pdf`);
+        updateEsignatureMetadataQuery.setParameter('@fileMetadataId', fileMetadataResult.recordset[0].ID);
+        updateEsignatureMetadataQuery.setParameter('@id', signatureRequestId);
+        const updateEsignatureMetadataPayload = {
+            tenantId,
+            queryName: updateEsignatureMetadataQuery.name,
+            query: updateEsignatureMetadataQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const signatureStatusQuery = new ParameterizedQuery('getSignatureStatusByStepNumber', Queries.getSignatureStatusByStepNumber);
+        signatureStatusQuery.setParameter('@stepNumber', SignatureStatusStepNumber.Signed);
+        const signatureStatusPayload = {
+            tenantId,
+            queryName: signatureStatusQuery.name,
+            query: signatureStatusQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const [signatureStatusResult]: any[] = await Promise.all([
+            await utilService.invokeInternalService('queryExecutor', signatureStatusPayload, InvocationType.RequestResponse),
+            await utilService.invokeInternalService('queryExecutor', updateEsignatureMetadataPayload, InvocationType.RequestResponse),
+        ]);
+
+        const { Name: name, Priority: priority, StepNumber: stepNumber } = signatureStatusResult.recordset[0];
+
+        const response = {
+            id: signatureRequestId,
+            title: Title,
+            fileName: `${signatureRequestId}.pdf`,
+            uploadDate,
+            esignDate: uploadDate,
+            category: Category,
+            isPrivate: false,
+            isPublishedToEmployee: true,
+            isOnboardingDocument: false,
+            employeeId,
+            employeeCode,
+            employeeName: `${firstName} ${lastName}`,
+            companyId,
+            companyName,
+            uploadedBy: `${firstName} ${lastName}`,
+            isLegacyDocument: false,
+            isEsignatureDocument: true,
+            isHelloSignDocument: false,
+            status: {
+                name,
+                priority,
+                stepNumber,
+                isProcessing: false,
+            },
+        };
+
+        return response;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    } finally {
+        await fs.unlink(`${tmpFileDir}/${fileName}`, (e) => {
+            if (e) {
+                console.log(`Unable to delete temp file: ${fileName}. Reason: ${JSON.stringify(e)}`);
+            }
+        });
+        fs.rmdir(tmpFileDir, (e) => {
+            if (e) {
+                console.log(`Unable to delete temp directory: ${tmpFileDir}. Reason: ${JSON.stringify(e)}`);
+            }
+        });
+    }
+}
+
+/**
+ * Retrieves all e-signature data related to a tenant.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @returns {any}: A Promise of a tenants e-signature data.
+ */
+export async function getTenantEsignatureData(tenantId: string): Promise<any> {
+    console.info('esignature.service.getTenantEsignatureData');
+
+    try {
+        // Get direct client status
+        const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+        const params = {
+            TableName: 'ConnectionStrings',
+            IndexName: 'tenantId-index',
+            KeyConditionExpression: 'TenantID = :TenantID',
+            ExpressionAttributeValues: {
+                ':TenantID': tenantId,
+            },
+        };
+        const { Items } = await dynamoDbClient.query(params).promise();
+
+        if (Items.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage('Connection string not found for tenant');
+        }
+
+        const isDirectClient = Items[0].IsDirectClient;
+
+        // Get pricing data
+        const resourceName = isDirectClient ? 'directClientPricingData' : 'indirectClientPricingData';
+        const ssm = new AWS.SSM({ region: configService.getAwsRegion() });
+        const ssmParams = {
+            Name: `/hr/esignature/simplesign/${resourceName}`,
+            WithDecryption: false,
+        };
+        const ssmResult = await ssm.getParameter(ssmParams).promise();
+
+        return {
+            isDirectClient: isDirectClient || false,
+            pricingData: JSON.parse(ssmResult.Parameter.Value),
+        };
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+enum ProductTierName {
+    HelloSign= "E-Sign",
+    SimpleSign= "Simple Sign"
+}
+
+/**
+ * Retrieves all e-signature data related to a tenant.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {any} requestBody: The product tier request.
+ * @returns {any}: A Promise of a company's product tier.
+ */
+
+export async function updateEsignatureProductTier(tenantId: string, companyId: string, email: string, requestBody: any): Promise<any> {
+    console.info('esignature.service.updateEsignatureProductTier');
+
+    const { productTierId } = requestBody;
+
+    try {
+        const companyInfo = await utilService.validateCompany(tenantId, companyId);
+
+        const getQuery = new ParameterizedQuery('getEsignatureProductTierById', Queries.getEsignatureProductTierById);
+        getQuery.setParameter('@id', productTierId);
+        const getPayload = {
+            tenantId,
+            queryName: getQuery.name,
+            query: getQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const getResult: any = await utilService.invokeInternalService('queryExecutor', getPayload, InvocationType.RequestResponse);
+
+        if (getResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`E-Signature product tier with ID ${productTierId} not found.`);
+        }
+
+        const updateQuery = new ParameterizedQuery('updateCompanyEsignatureProductTier', Queries.updateCompanyEsignatureProductTier);
+        updateQuery.setParameter('@esignatureProductTierId', productTierId);
+        updateQuery.setParameter('@companyId', companyId);
+        const updatePayload = {
+            tenantId,
+            queryName: updateQuery.name,
+            query: updateQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const updateResult: any = await utilService.invokeInternalService('queryExecutor', updatePayload, InvocationType.RequestResponse);
+
+        // retrieve legacy client cut off date
+        const ssm = new AWS.SSM({ region: configService.getAwsRegion() });
+        const params = {
+            Name: '/hr/esignature/simplesign/legacyClientCutOffDate',
+            WithDecryption: false,
+        };
+        const ssmResult = await ssm.getParameter(params).promise();
+        const isEsignatureLegacyCompany = new Date(companyInfo.CreateDate) < new Date(ssmResult.Parameter.Value);
+
+        if (getResult.recordset[0].Name === ProductTierName.SimpleSign && !isEsignatureLegacyCompany) {
+        const taskListQuery = new ParameterizedQuery('removeHelloSignTemplatesFromTaskList', Queries.removeHelloSignTemplatesFromTaskList);
+            taskListQuery.setParameter('@companyId', companyId);
+        const taskListPayload = {
+                tenantId,
+                queryName: taskListQuery.name,
+                query: taskListQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+        await utilService.invokeInternalService('queryExecutor', taskListPayload, InvocationType.RequestResponse);
+        }
+
+        utilService.logToAuditTrail({
+            userEmail: email,
+            newFields: updateResult.recordset[0],
+            type: AuditActionType.Update,
+            companyId,
+            areaOfChange: AuditAreaOfChange.Company,
+            tenantId,
+        } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
+
+        return {
+            id: productTierId,
+            name: getResult.recordset[0].Name,
+        };
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Validates a given query string collection.
  * @param {string []} validInputs - Validate query string parameters
  * @param {any} queryParameters - The query string parameters
@@ -3874,14 +5337,13 @@ async function validateEmployeeId(tenantId: string, companyId: string, employeeI
  * Checks that a collection of employee codes exist in the database.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for the company the user belongs to.
- * @param {SignatoryRequest[]} signatories: The specified signatories for the signature request.
+ * @param {string[]} employeeCodes: The list of employee codes to check for existance of a matching employee
  * @returns {Promise<any[]>}: Promise of a collection of employee metadata
  */
-async function checkEmployeesExistenceByCodes(tenantId: string, companyId: string, signatories: SignatoryRequest[]): Promise<any[]> {
+async function checkEmployeesExistenceByCodes(tenantId: string, companyId: string, employeeCodes: string[]): Promise<any[]> {
     console.info('esignature.service.checkEmployeesExistenceByCodes');
 
     try {
-        const employeeCodes: string[] = signatories.map((signatory) => signatory.employeeCode);
         const employeeCodesFilter: string = employeeCodes.map((code) => `'${code}'`).join(',');
         const query: ParameterizedQuery = new ParameterizedQuery('GetEmployeeByCompanyIdAndCode', Queries.getEmployeeByCompanyIdAndCode);
         query.setParameter('@companyId', companyId);

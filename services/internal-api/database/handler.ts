@@ -17,6 +17,8 @@ import { DatabaseEvent, QueryType } from './events';
 export const execute = async (event: DatabaseEvent, context: Context, callback: ProxyCallback): Promise<void> => {
     console.info('database.handler.executeQuery');
 
+    context.callbackWaitsForEmptyEventLoop = false;
+
     console.info(`received event: ${JSON.stringify(event)}`);
 
     const { tenantId, queryName, query, queryType, saveToS3 } = event;

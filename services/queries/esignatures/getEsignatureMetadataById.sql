@@ -4,7 +4,8 @@ select
     UploadedBy,
     Title,
     Filename,
-    Category
+    Category,
+    Type
 from
     dbo.EsignatureMetadata
 where

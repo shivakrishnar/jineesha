@@ -47,6 +47,7 @@ export const Queries = {
     // E-Signatures
     checkForDuplicateFileMetadata: fs.readFileSync(path.join(basePath, 'esignatures/checkForDuplicateFileMetadata.sql')).toString(),
     createEsignatureMetadata: fs.readFileSync(path.join(basePath, 'esignatures/createEsignatureMetadata.sql')).toString(),
+    createSimpleSignMetadata: fs.readFileSync(path.join(basePath, 'esignatures/createSimpleSignMetadata.sql')).toString(),
     createFileMetadata: fs.readFileSync(path.join(basePath, 'esignatures/createFileMetadata.sql')).toString(),
     getConsolidatedCompanyDocumentsByCompanyId: fs
         .readFileSync(path.join(basePath, 'esignatures/getConsolidatedCompanyDocumentsByCompanyId.sql'))
@@ -65,6 +66,7 @@ export const Queries = {
     updateEsignatureMetadataSignatureStatusById: fs
         .readFileSync(path.join(basePath, 'esignatures/updateEsignatureMetadataSignatureStatusById.sql'))
         .toString(),
+    updateEsignatureMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/updateEsignatureMetadataById.sql')).toString(),
     getEmployeeLegacyAndSignedDocuments: fs
         .readFileSync(path.join(basePath, 'esignatures/getEmployeeLegacyAndSignedDocuments.sql'))
         .toString(),
@@ -113,12 +115,31 @@ export const Queries = {
     getDocumentByIdAndEmployeeId: fs.readFileSync(path.join(basePath, 'esignatures/getDocumentByIdAndEmployeeId.sql')).toString(),
     removeDocumentFromTaskList: fs.readFileSync(path.join(basePath, 'esignatures/removeDocumentFromTaskList.sql')).toString(),
     getSignatureStatusByStepNumber: fs.readFileSync(path.join(basePath, 'esignatures/getSignatureStatusByStepNumber.sql')).toString(),
+    getBillableSignRequests: fs.readFileSync(path.join(basePath, 'esignatures/getBillableSignRequests.sql')).toString(),
+    getFileMetadataByEsignatureMetadataId: fs
+        .readFileSync(path.join(basePath, 'esignatures/getFileMetadataByEsignatureMetadataId.sql'))
+        .toString(),
+    updateOnboardingStatusForEsignatureMetadata: fs
+        .readFileSync(path.join(basePath, 'esignatures/updateOnboardingStatusForEsignatureMetadata.sql'))
+        .toString(),
+    getOnboardingSimpleSignDocuments: fs.readFileSync(path.join(basePath, 'esignatures/getOnboardingSimpleSignDocuments.sql')).toString(),
+    getOnboardingByKey: fs.readFileSync(path.join(basePath, 'esignatures/getOnboardingByKey.sql')).toString(),
+    getOnboardingByEmployeeIDAndKey: fs.readFileSync(path.join(basePath, 'esignatures/getOnboardingByEmployeeIDAndKey.sql')).toString(),
+    getOnboardingSignedSimpleSignDocuments: fs
+        .readFileSync(path.join(basePath, 'esignatures/getOnboardingSignedSimpleSignDocuments.sql'))
+        .toString(),
+    updateFileMetadataPointerById: fs.readFileSync(path.join(basePath, 'esignatures/updateFileMetadataPointerById.sql')).toString(),
+    getNonApprovedOnboardingByKey: fs.readFileSync(path.join(basePath, 'esignatures/getNonApprovedOnboardingByKey.sql')).toString(),
+    updateCompanyEsignatureProductTier: fs.readFileSync(path.join(basePath, 'esignatures/updateCompanyEsignatureProductTier.sql')).toString(),
+    getEsignatureProductTierById: fs.readFileSync(path.join(basePath, 'esignatures/getEsignatureProductTierById.sql')).toString(),
+    removeHelloSignTemplatesFromTaskList: fs.readFileSync(path.join(basePath, 'esignatures/removeHelloSignTemplatesFromTaskList.sql')).toString(),
 
     // Companies
     getUserCompaniesById: fs.readFileSync(path.join(basePath, 'companies/getUserCompaniesById.sql')).toString(),
     listCompanies: fs.readFileSync(path.join(basePath, 'companies/listCompanies.sql')).toString(),
     getCompanyLogo: fs.readFileSync(path.join(basePath, 'companies/getCompanyLogo.sql')).toString(),
     listEmployeeCompaniesBySsoAccount: fs.readFileSync(path.join(basePath, 'companies/listEmployeeCompaniesBySsoAccount.sql')).toString(),
+    getCompanyById: fs.readFileSync(path.join(basePath, 'companies/getCompanyById.sql')).toString(),
 
     // Employees
     getEmployeeByCompanyIdAndId: fs.readFileSync(path.join(basePath, 'employees/getEmployeeByCompanyIdAndId.sql')).toString(),
@@ -134,6 +155,7 @@ export const Queries = {
     getEmployeeForAdminById: fs.readFileSync(path.join(basePath, 'employees/getEmployeeForAdminById.sql')).toString(),
     getEmployeeForManagerById: fs.readFileSync(path.join(basePath, 'employees/getEmployeeForManagerById.sql')).toString(),
     getEmployeeForSbAdminById: fs.readFileSync(path.join(basePath, 'employees/getEmployeeForSbAdminById.sql')).toString(),
+    getEmployeeInfoByOnboardingKey: fs.readFileSync(path.join(basePath, 'employees/getEmployeeInfoByOnboardingKey.sql')).toString(),
 
     // Users
     getUserById: fs.readFileSync(path.join(basePath, 'users/getUserById.sql')).toString(),

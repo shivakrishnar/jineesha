@@ -1,8 +1,12 @@
 import { SignatoryRequest } from '../../src/signature-requests/signatory';
-import { SignatureRequestResponseStatus, SignatureStatus } from '../../src/signature-requests/signatureRequestResponse';
-import { SignatureRequestResponse } from '../../src/signature-requests/signatureRequestResponse';
+import {
+    SignatureRequestResponse,
+    SignatureRequestResponseStatus,
+    SignatureStatus,
+} from '../../src/signature-requests/signatureRequestResponse';
 
 export const signatureId = '12345';
+export const noSignDocId = '4a24ae38-f1d0-45c4-aada-ab49c0eebb2f';
 
 export const helloSignSignUrl = {
     sign_url: 'signurl.com',
@@ -101,6 +105,24 @@ export const bulkSignatureRequestRequestBody = {
             role: 'Employee',
         }),
     ],
+    isSimpleSign: false,
+};
+
+export const bulkSimpleSignatureRequestRequestBody = {
+    templateId: 'X4j1Ta',
+    subject: 'Signature request subject',
+    message: 'Signature request message',
+    signatories: [
+        new SignatoryRequest({
+            employeeCode: '1',
+            role: 'Employee',
+        }),
+        new SignatoryRequest({
+            employeeCode: '2',
+            role: 'Employee',
+        }),
+    ],
+    isSimpleSign: true,
 };
 
 export const allEmployeesBulkSignatureRequestRequestBody = {
@@ -113,6 +135,20 @@ export const allEmployeesBulkSignatureRequestRequestBody = {
             role: 'Employee',
         }),
     ],
+    isSimpleSign: false,
+};
+
+export const allEmployeesBulkSimpleSignatureRequestRequestBody = {
+    templateId: 'X4j1Ta',
+    subject: 'Signature request subject',
+    message: 'Signature request message',
+    signatories: [
+        new SignatoryRequest({
+            employeeCode: 'all',
+            role: 'Employee',
+        }),
+    ],
+    isSimpleSign: true,
 };
 
 export const signatureRequestResponse: SignatureRequestResponse = {
@@ -128,6 +164,8 @@ export const signatureRequestResponse: SignatureRequestResponse = {
             status: SignatureStatus.Pending,
         },
     ],
+    type: 'SignatureRequest',
+    isHelloSignDocument: true,
     status: SignatureRequestResponseStatus.Pending,
     title: 'Sig Request',
 };
@@ -137,6 +175,30 @@ export const signatureRequestsResponse: SignatureRequestResponse[] = [
         id: '1234',
         title: 'Sig Request',
         status: SignatureRequestResponseStatus.Pending,
+        type: 'SignatureRequest',
+        isHelloSignDocument: true,
+        signatures: [
+            {
+                id: '1',
+                status: SignatureStatus.Pending,
+                signer: {
+                    emailAddress: 'hugh@jass.com',
+                    name: 'Hugh',
+                    role: 'Employee',
+                    employeeCode: '1',
+                },
+            },
+        ],
+    },
+];
+
+export const someEmployeesSignatureRequestsResponse: SignatureRequestResponse[] = [
+    {
+        id: '1234',
+        title: 'Sig Request',
+        status: SignatureRequestResponseStatus.Pending,
+        type: 'SignatureRequest',
+        isHelloSignDocument: true,
         signatures: [
             {
                 id: '1',
@@ -154,6 +216,8 @@ export const signatureRequestsResponse: SignatureRequestResponse[] = [
         id: '1234',
         title: 'Sig Request',
         status: SignatureRequestResponseStatus.Pending,
+        type: 'SignatureRequest',
+        isHelloSignDocument: true,
         signatures: [
             {
                 id: '1',
@@ -162,6 +226,26 @@ export const signatureRequestsResponse: SignatureRequestResponse[] = [
                     emailAddress: 'hugh@jass.com',
                     name: 'Hugh',
                     role: 'Employee',
+                    employeeCode: '1',
+                },
+            },
+        ],
+    },
+];
+
+export const SimpleSignatureRequestsResponse: any[] = [
+    {
+        id: '1234',
+        title: 'test',
+        status: SignatureRequestResponseStatus.Pending,
+        type: 'SignatureRequest',
+        isHelloSignDocument: false,
+        signatures: [
+            {
+                id: '',
+                signer: {
+                    emailAddress: 'hugh@jass.com',
+                    name: 'Hugh Jass',
                     employeeCode: '1',
                 },
             },
@@ -258,6 +342,20 @@ export const esignatureMetadataDBResponse = {
             Filename: 'test.png',
             Category: 'test',
         },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const billableSignRequestDBResponse = {
+    recordsets: [
+        [
+            {
+                tenantID: '1234',
+                company: 'HRN IT Services (1)',
+                billableDocuments: 2,
+            },
+        ],
     ],
     output: {},
     rowsAffected: [1],

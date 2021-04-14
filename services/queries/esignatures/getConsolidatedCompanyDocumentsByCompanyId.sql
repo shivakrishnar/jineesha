@@ -10,7 +10,9 @@ declare @tmp table
     Category nvarchar(max),
     Type nvarchar(max),
     IsPublishedToEmployee bit,
-    ExistsInTaskList bit
+    ExistsInTaskList bit,
+    IsOnboardingDocument bit,
+    esignID nvarchar(450)
 );
 declare @_search nvarchar(max) = '%' + @search + '%';
 
@@ -37,7 +39,14 @@ select
             ) > 0 then 1
             else 0
         end
-    )
+    ),
+    IsOnboardingDocument = (
+        case
+            when d.DocumentCategory = 'onboarding' then 1
+            else 0
+        end
+    ),
+    esignID = ''
 from 
     dbo.Document d
     left join dbo.HRnextUser u
@@ -69,7 +78,9 @@ select
             ) > 0 then 1
             else 0
         end
-    )
+    ),
+    e.IsOnboardingDocument,
+    esignID = e.ID
 from
     dbo.EsignatureMetadata e
 where
@@ -79,22 +90,30 @@ where
 
 insert into @tmp
 select
-    ID,
-    UploadDate,
-    UploadedBy,
+    f.ID,
+    f.UploadDate,
+    f.UploadedBy,
     null,
     Pointer,
-    Title,
-    Category,
-    'non-signature',
+    f.Title,
+    f.Category,
+    [Type] = (
+        case
+            when e.[Type] = 'SimpleSignatureRequest'
+            then 'simpleSign'
+            else 'non-signature'
+        end
+    ),
     IsPublishedToEmployee,
-    ExistsInTaskList = 0 -- documents in FileMetadata should never show up in a task list
+    ExistsInTaskList = ( e.IsOnboardingDocument ),
+    e.IsOnboardingDocument,
+    esignID = e.ID
 from
-    dbo.FileMetadata
+    dbo.FileMetadata f join dbo.EsignatureMetadata e on f.EsignatureMetadataID = e.ID
 where
-    CompanyID = @_companyId and
-    EmployeeCode is null and
-    (lower(isnull(Category, '')) like @_search or lower(isnull(Title, '')) like @_search)
+    f.CompanyID = @_companyId and
+    f.EmployeeCode is null and
+    (lower(isnull(f.Category, '')) like @_search or lower(isnull(f.Title, '')) like @_search)
 
 -- get total count for pagination
 select count(*) as totalCount from @tmp

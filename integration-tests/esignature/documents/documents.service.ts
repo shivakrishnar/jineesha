@@ -126,6 +126,13 @@ export function getValidPostCompanyDocumentObject(): any {
     };
 }
 
+export function getValidPostSimpleSignDocumentObject(signatureRequestId: string): any {
+    return {
+        signatureRequestId,
+        timeZone: 'America/New_York',
+    };
+}
+
 export function getValidPatchCompanyDocumentObject(): any {
     return {
         fileObject: {

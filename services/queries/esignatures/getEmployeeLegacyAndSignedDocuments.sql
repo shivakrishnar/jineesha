@@ -27,11 +27,14 @@ declare @tmp table
     EmployeeID int,
     FirstName nvarchar(max),
     LastName nvarchar(max),
+    EmailAddress nvarchar(max),
     UploadedBy nvarchar(max),
     SignatureStatusName nvarchar(max),
     SignatureStatusPriority int,
     SignatureStatusStepNumber int,
-    IsProcessing bit
+    IsProcessing bit,
+    IsHelloSignDocument bit,
+    IsOnboarding bit
 )
 
 ;with LegacyDocuments as
@@ -51,10 +54,13 @@ declare @tmp table
         EmployeeID = e.ID,
         e.FirstName,
         e.LastName,
+        e.EmailAddress,
         UploadedBy = d.UploadbyUsername,
         SignatureStatusName = (select Name from dbo.SignatureStatus where ID = 3),
         SignatureStatusPriority = (select Priority from dbo.SignatureStatus where ID = 3),
-        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3)
+        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3),
+        IsHelloSignDocument = 0,
+        IsOnboarding = iif(d.UploadByUsername = 'Onboarding', 1, 0)
     from
         dbo.Document d
         inner join dbo.Employee e on d.EmployeeID = e.ID
@@ -81,6 +87,7 @@ SignatureRequests as
             EmployeeID = e.ID,
             e.FirstName,
             e.LastName,
+            e.EmailAddress,
             d.UploadedBy,
             SignatureStatusName = ss.Name,
             SignatureStatusPriority = ss.Priority,
@@ -88,7 +95,12 @@ SignatureRequests as
             IsProcessing = case
 				when d.SignatureStatusID = 1 and (select count(*) from dbo.FileMetadata where EsignatureMetadataID = d.ID) = 0 then 1
 				else 0
-			end
+			end,
+            IsHelloSignDocument = case
+                when d.FileMetadataID is null then 1
+                else 0
+            end,
+            d.IsOnboardingDocument as IsOnboarding
         from
             dbo.EsignatureMetadata d
             left join dbo.Employee e on d.EmployeeCode = e.EmployeeCode and d.CompanyID = e.CompanyID
@@ -120,10 +132,13 @@ SignedDocuments as
         EmployeeID = e.ID,
         e.FirstName,
         e.LastName,
+        e.EmailAddress,
         d.UploadedBy,
         SignatureStatusName = s.Name,
         SignatureStatusPriority = s.Priority,
-        SignatureStatusStepNumber = s.StepNumber
+        SignatureStatusStepNumber = s.StepNumber,
+        IsHelloSignDocument = 0,
+        em.IsOnboardingDocument as IsOnboarding
     from
         dbo.FileMetadata d
         inner join dbo.Employee e on
@@ -151,10 +166,13 @@ SignedDocuments as
         EmployeeID = null,
         FirstName = null,
         LastName = null,
+        EmailAddress = null,
         f.UploadedBy,
         SignatureStatusName = s.Name,
         SignatureStatusPriority = s.Priority,
-        SignatureStatusStepNumber = s.StepNumber
+        SignatureStatusStepNumber = s.StepNumber,
+        IsHelloSignDocument = 0,
+        em.IsOnboardingDocument as IsOnboarding
     from
         dbo.FileMetadata f
         inner join dbo.Company c on
@@ -183,10 +201,13 @@ UploadedDocuments as
         EmployeeID = e.ID,
         e.FirstName,
         e.LastName,
+        e.EmailAddress,
         d.UploadedBy,
         SignatureStatusName = (select Name from dbo.SignatureStatus where ID = 3),
         SignatureStatusPriority = (select Priority from dbo.SignatureStatus where ID = 3),
-        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3)
+        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3),
+        IsHelloSignDocument = 0,
+        em.IsOnboardingDocument as IsOnboarding
     from
         dbo.FileMetadata d
         inner join dbo.Employee e on
@@ -194,6 +215,8 @@ UploadedDocuments as
             e.CompanyID = d.CompanyID
         inner join dbo.Company c on
             c.ID = d.CompanyID
+        inner join dbo.EsignatureMetadata em on
+            em.ID = d.EsignatureMetadataID
     where
         d.EsignatureMetadataID is null
     union
@@ -212,14 +235,19 @@ UploadedDocuments as
         EmployeeID = null,
         FirstName = null,
         LastName = null,
+        EmailAddress = null,
         f.UploadedBy,
         SignatureStatusName = (select Name from dbo.SignatureStatus where ID = 3),
         SignatureStatusPriority = (select Priority from dbo.SignatureStatus where ID = 3),
-        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3)
+        SignatureStatusStepNumber = (select StepNumber from dbo.SignatureStatus where ID = 3),
+        IsHelloSignDocument = 0,
+        em.IsOnboardingDocument as IsOnboarding
     from
         dbo.FileMetadata f
         inner join dbo.Company c on
             c.ID = f.CompanyID
+        inner join dbo.EsignatureMetadata em on
+            em.ID = f.EsignatureMetadataID
     where
         f.EmployeeCode is null
         and f.EsignatureMetadataID is null
@@ -254,11 +282,14 @@ CollatedDocuments as
         EmployeeID,
         FirstName,
         LastName,
+        EmailAddress,
         UploadedBy,
         SignatureStatusName,
         SignatureStatusPriority,
         SignatureStatusStepNumber,
-        IsProcessing = 0
+        IsProcessing = 0,
+        IsHelloSignDocument,
+        IsOnboarding
     from
         LegacyDocuments
     union 
@@ -280,11 +311,14 @@ CollatedDocuments as
         EmployeeID,
         FirstName,
         LastName,
+        EmailAddress,
         UploadedBy,
         SignatureStatusName,
         SignatureStatusPriority,
         SignatureStatusStepNumber,
-        IsProcessing
+        IsProcessing,
+        IsHelloSignDocument,
+        IsOnboarding
     from
         SignatureRequests
     union 
@@ -306,11 +340,14 @@ CollatedDocuments as
         EmployeeID,
         FirstName,
         LastName,
+        EmailAddress,
         UploadedBy,
         SignatureStatusName,
         SignatureStatusPriority,
         SignatureStatusStepNumber,
-        IsProcessing = 0
+        IsProcessing = 0,
+        IsHelloSignDocument,
+        IsOnboarding
     from
         SignedDocuments
     union
@@ -332,11 +369,14 @@ CollatedDocuments as
         EmployeeID,
         FirstName,
         LastName,
+        EmailAddress,
         UploadedBy,
         SignatureStatusName,
         SignatureStatusPriority,
         SignatureStatusStepNumber,
-        IsProcessing = 0
+        IsProcessing = 0,
+        IsHelloSignDocument,
+        IsOnboarding
     from
         UploadedDocuments
 )
@@ -378,11 +418,14 @@ select
     employeeId = EmployeeID,
     firstName = FirstName,
     lastName = LastName,
+    emailAddress = EmailAddress,
     uploadedBy = UploadedBy,
     signatureStatusName = SignatureStatusName,
     signatureStatusPriority = SignatureStatusPriority,
     signatureStatusStepNumber = SignatureStatusStepNumber,
-    isProcessing = IsProcessing
+    isProcessing = IsProcessing,
+    isHelloSignDocument = IsHelloSignDocument,
+    isOnboarding = IsOnboarding
 from 
     @tmp
 order by uploadDate desc

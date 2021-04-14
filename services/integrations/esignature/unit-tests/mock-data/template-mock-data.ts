@@ -86,7 +86,18 @@ export const helloSignTemplate = {
     documents: [{ name: 'test.pdf' }],
     metadata: { uploadDate: '12/31/2019', uploadedBy: 'Hugh', category: 'test' },
 };
-
+export const helloSignTemplate2 = {
+    template_id: 2,
+    title: 'hi',
+    message: 'template',
+    can_edit: true,
+    is_locked: true,
+    signer_roles: [{ name: 'Hugh' }],
+    cc_roles: [{ name: 'Hugh' }],
+    custom_fields: [{ name: 'money', type: 'text' }],
+    documents: [{ name: 'test.pdf' }],
+    metadata: { uploadDate: '12/31/2019', uploadedBy: 'Hugh', category: 'test' },
+};
 export const helloSignOnboardingTemplate = {
     template_id: 1000,
     title: 'hi',
@@ -121,6 +132,7 @@ export const templateListResponse: any[] = [
         isEsignatureDocument: true,
         category: 'test',
         existsInTaskList: true,
+        isHelloSignTemplate: true,
     },
     {
         id: 'z6etP',
@@ -133,6 +145,9 @@ export const templateListResponse: any[] = [
         isPublishedToEmployee: false,
         existsInTaskList: false,
         isLegacyDocument: true,
+        isHelloSignTemplate: false,
+        esignID: '',
+        isOnboardingDocument: undefined,
     },
     {
         id: 'N57UV',
@@ -145,6 +160,9 @@ export const templateListResponse: any[] = [
         isPublishedToEmployee: true,
         existsInTaskList: true,
         isLegacyDocument: false,
+        isHelloSignTemplate: false,
+        esignID: '',
+        isOnboardingDocument: undefined,
     },
 ];
 
@@ -164,6 +182,7 @@ export const templateOnboardingListResponse = [
         isEsignatureDocument: true,
         category: 'onboarding',
         existsInTaskList: true,
+        isHelloSignTemplate: true,
     },
 ];
 

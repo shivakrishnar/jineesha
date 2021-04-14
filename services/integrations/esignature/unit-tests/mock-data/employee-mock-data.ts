@@ -5,6 +5,33 @@ export const employeeDBResponse = {
             CurrentDisplayName: 'Charles Bartowski',
             FirstName: 'Test',
             LastName: 'User',
+            EmployeeCode: '1',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const employeeInfoDBResponse = {
+    recordset: [
+        {
+            emailAddress: 'user@test.com',
+            firstName: 'Test',
+            lastName: 'User',
+            employeeCode: '1',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const employeeInfoWithoutEmailDBResponse = {
+    recordset: [
+        {
+            emailAddress: null,
+            firstName: 'Test',
+            lastName: 'User',
+            employeeCode: '1',
         },
     ],
     output: {},
@@ -90,12 +117,14 @@ export const paginatedEmployeesDBResponse = {
                 EmailAddress: 'hugh@jass.com',
                 FirstName: 'Hugh',
                 LastName: 'Jass',
+                IsActive: true,
             },
             {
                 EmployeeCode: '2',
                 EmailAddress: 'matt.yoga@gmail.com',
                 FirstName: 'Matt',
                 LastName: 'Employee',
+                IsActive: false,
             },
         ],
     ],

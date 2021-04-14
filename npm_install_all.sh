@@ -1,0 +1,1 @@
+find . ! -path "*/node_modules/*" -name "package.json" -execdir pwd \; -execdir npm install \;
