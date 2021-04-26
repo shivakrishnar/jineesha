@@ -140,6 +140,7 @@ export const Queries = {
     getCompanyLogo: fs.readFileSync(path.join(basePath, 'companies/getCompanyLogo.sql')).toString(),
     listEmployeeCompaniesBySsoAccount: fs.readFileSync(path.join(basePath, 'companies/listEmployeeCompaniesBySsoAccount.sql')).toString(),
     getCompanyById: fs.readFileSync(path.join(basePath, 'companies/getCompanyById.sql')).toString(),
+    getCompanyInfoByEvoCompanyCode: fs.readFileSync(path.join(basePath, 'companies/getCompanyInfoByEvoCompanyCode.sql')).toString(),
 
     // Employees
     getEmployeeByCompanyIdAndId: fs.readFileSync(path.join(basePath, 'employees/getEmployeeByCompanyIdAndId.sql')).toString(),

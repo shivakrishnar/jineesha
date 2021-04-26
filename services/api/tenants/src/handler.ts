@@ -247,6 +247,31 @@ export const getCompanyById = utilService.gatewayEventHandlerV2(async ({ securit
 });
 
 /**
+ * Perform requested patch op(s) if valid on the company
+ * Note per RFC 5798 patch documents are atomic
+ */
+export const companyUpdate = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('tenants.handler.companyUpdate');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyUriSchema);
+
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        return role === Role.globalAdmin;
+    });
+
+    if (!isAuthorized) {
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    const { patch } = requestBody;
+    const { tenantId, companyId: companyCode } = event.pathParameters;
+
+    return await companyService.companyUpdate(tenantId, companyCode, patch);
+});
+
+/**
  * Returns a listing of the employees a user has access to under a tenant.
  */
 export const listEmployeesByTenant = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
