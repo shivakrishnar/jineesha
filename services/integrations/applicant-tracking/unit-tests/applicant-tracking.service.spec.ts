@@ -7,65 +7,57 @@ import { setup } from '../../../unit-test-mocks/mock';
 import * as request from 'request-promise-native';
 import { ErrorMessage } from '../../../errors/errorMessage';
 
-                 
-describe('applicantTrackingService.applicantDataImport',()=> {
+describe('applicantTrackingService.applicantDataImport', () => {
     beforeEach(() => {
         setup();
     });
-    
-    test('creates applicant data',async () => {
-        (request as any).get = jest.fn((url: any)=> {
+
+    test('creates applicant data', async () => {
+        (request as any).get = jest.fn((url: any) => {
             return Promise.resolve(JSON.stringify(mockData.documentResponse));
         });
 
-
-        (utilService as any).invokeInternalService = jest.fn((serviceName,payload) => {
+        (utilService as any).invokeInternalService = jest.fn((serviceName, payload) => {
             if (payload.queryName === 'ApplicantCreate') {
                 return Promise.resolve(mockData.outputResponseObject);
-            } else if (payload.queryName === 'DocumentCreate'){
+            } else if (payload.queryName === 'DocumentCreate') {
                 return Promise.resolve(mockData.emptyDBResponse);
             }
         });
 
-        expect(await applicantTrackingService
-            .createApplicantData(
-                 mockData.tenantId
-                ,mockData.companyId
-                ,mockData.postObject
-            )).toBeUndefined()
-            
+        expect(
+            await applicantTrackingService.createApplicantData(mockData.tenantId, mockData.companyId, mockData.postObject),
+        ).toBeUndefined();
     });
 });
 
-describe('applicantTrackingService.validateCompanySecret',()=> {
+describe('applicantTrackingService.validateCompanySecret', () => {
     test('accepts valid company secret in signature', async () => {
-        (utilService as any).invokeInternalService = jest.fn((serviceName,payload) => {
+        (utilService as any).invokeInternalService = jest.fn((serviceName, payload) => {
             if (payload.queryName === 'GetJazzhrSecretKeyByCompanyId') {
                 return Promise.resolve(mockData.jazzhrSecretKeyDBResponse);
-            } 
+            }
         });
 
-        expect(await applicantTrackingService.validateCompanySecret(
-                 mockData.tenantId
-                ,mockData.companyId
-                ,mockData.verifyContent
-                ,mockData.incomingValidSignature
-            )).toBeUndefined()
+        expect(
+            await applicantTrackingService.validateCompanySecret(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.verifyContent,
+                mockData.incomingValidSignature,
+            ),
+        ).toBeUndefined();
     });
-    
+
     test('returns 401 error.Not authorized when company secret in signature is invalid', async () => {
-        (utilService as any).invokeInternalService = jest.fn((serviceName,payload) => {
+        (utilService as any).invokeInternalService = jest.fn((serviceName, payload) => {
             if (payload.queryName === 'GetJazzhrSecretKeyByCompanyId') {
                 return Promise.resolve(mockData.jazzhrSecretKeyDBResponse);
-            } 
+            }
         });
 
-        return await applicantTrackingService.validateCompanySecret(
-                 mockData.tenantId
-                ,mockData.companyId
-                ,mockData.verifyContent
-                ,mockData.incomingInvalidSignature
-            )
+        return await applicantTrackingService
+            .validateCompanySecret(mockData.tenantId, mockData.companyId, mockData.verifyContent, mockData.incomingInvalidSignature)
             .catch((error: any) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(401);
@@ -73,6 +65,6 @@ describe('applicantTrackingService.validateCompanySecret',()=> {
                 expect(error.message).toEqual('User is not authorized.');
                 const developerMessage = 'The user does not have authorization to use this endpoint.';
                 expect(error.developerMessage).toEqual(developerMessage);
-            });    
+            });
     });
 });

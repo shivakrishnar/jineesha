@@ -33,7 +33,7 @@ describe('get onboarding preview', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/documents/${configs.esignature.documentId}/onboarding-preview`;
+        const uri = `/tenants/${invalidTenantId}/documents/${configs.esignature.documentId}/onboarding-preview`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -49,7 +49,7 @@ describe('get onboarding preview', () => {
 
     test('must return a 404 if document ID is not found', async (done) => {
         const unknownDocumentId = '9999999';
-        const uri: string = `/tenants/${configs.tenantId}/documents/${unknownDocumentId}/onboarding-preview`;
+        const uri = `/tenants/${configs.tenantId}/documents/${unknownDocumentId}/onboarding-preview`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -64,7 +64,7 @@ describe('get onboarding preview', () => {
     });
 
     test('must return a 422 if the Company Documents step is not active on the onboarding', async (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/documents/${configs.esignature.documentId}/onboarding-preview`;
+        const uri = `/tenants/${configs.tenantId}/documents/${configs.esignature.documentId}/onboarding-preview`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -81,7 +81,9 @@ describe('get onboarding preview', () => {
     });
 
     test('returns an onboarding non-sign document preview', async (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/documents/${configs.esignature.onboardingWithCompanyDocumentsActive.nonSignableDocument}/onboarding-preview`;
+        const uri = `/tenants/${configs.tenantId}/documents/${
+            configs.esignature.onboardingWithCompanyDocumentsActive.nonSignableDocument
+        }/onboarding-preview`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -94,9 +96,11 @@ describe('get onboarding preview', () => {
                 });
             });
     });
-    
+
     test('returns an onboarding legacy document preview', async (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/documents/${configs.esignature.onboardingWithCompanyDocumentsActive.legacyDocument}/onboarding-preview`;
+        const uri = `/tenants/${configs.tenantId}/documents/${
+            configs.esignature.onboardingWithCompanyDocumentsActive.legacyDocument
+        }/onboarding-preview`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')

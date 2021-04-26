@@ -27,9 +27,17 @@ describe('esignatureService.saveOnboardingDocuments', () => {
             return mockData.employeeDBResponse.recordset[0];
         });
 
-        return esignatureService.saveOnboardingDocuments(mockData.tenantId, mockData.companyId, mockData.employeeId, mockData.obKey, mockData.saveOnboardingDocumentRequest).then((doc) => {
-            expect(doc).toEqual(undefined);
-        });
+        return esignatureService
+            .saveOnboardingDocuments(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                mockData.obKey,
+                mockData.saveOnboardingDocumentRequest,
+            )
+            .then((doc) => {
+                expect(doc).toEqual(undefined);
+            });
     });
 
     test('returns a 404 if the onboarding does not exist', () => {
@@ -45,13 +53,21 @@ describe('esignatureService.saveOnboardingDocuments', () => {
             return mockData.employeeDBResponse.recordset[0];
         });
 
-        return esignatureService.saveOnboardingDocuments(mockData.tenantId, mockData.companyId, mockData.employeeId, mockData.obKey, mockData.saveOnboardingDocumentRequest).catch((error) => {
-            expect(error).toBeInstanceOf(ErrorMessage);
-            expect(error.statusCode).toEqual(404);
-            expect(error.code).toEqual(50);
-            expect(error.message).toEqual('The requested resource does not exist.');
-            expect(error.developerMessage).toEqual(`No onboarding found with key ${mockData.obKey} for the specified employee.`);
-        });
+        return esignatureService
+            .saveOnboardingDocuments(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                mockData.obKey,
+                mockData.saveOnboardingDocumentRequest,
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toEqual(`No onboarding found with key ${mockData.obKey} for the specified employee.`);
+            });
     });
 
     test('returns a 404 if there are no documents on the task list', () => {
@@ -67,12 +83,20 @@ describe('esignatureService.saveOnboardingDocuments', () => {
             return mockData.employeeDBResponse.recordset[0];
         });
 
-        return esignatureService.saveOnboardingDocuments(mockData.tenantId, mockData.companyId, mockData.employeeId, mockData.obKey, mockData.saveOnboardingDocumentRequest).catch((error) => {
-            expect(error).toBeInstanceOf(ErrorMessage);
-            expect(error.statusCode).toEqual(404);
-            expect(error.code).toEqual(50);
-            expect(error.message).toEqual('The requested resource does not exist.');
-            expect(error.developerMessage).toEqual(`No onboarding docs found with onboarding key ${mockData.obKey}`);
-        });
+        return esignatureService
+            .saveOnboardingDocuments(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                mockData.obKey,
+                mockData.saveOnboardingDocumentRequest,
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toEqual(`No onboarding docs found with onboarding key ${mockData.obKey}`);
+            });
     });
 });

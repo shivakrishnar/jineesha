@@ -6,7 +6,7 @@ const baseUri = configs.nonProxiedApiDomain;
 
 let accessToken: string;
 
-const esignatureBillingUri: string = `/integrations/esignatures/billing`;
+const esignatureBillingUri = `/integrations/esignatures/billing`;
 
 const requestOptions = { returnReport: true };
 

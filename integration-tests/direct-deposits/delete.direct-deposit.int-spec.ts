@@ -74,7 +74,7 @@ describe('delete direct deposit', () => {
 
     test('must return a 404 when the tenant id is non-existent', (done) => {
         const invalidTenantId = uuidV4();
-        const unknownTenantUri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
+        const unknownTenantUri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
             configs.employeeId
         }/direct-deposits`;
         request(baseUri)

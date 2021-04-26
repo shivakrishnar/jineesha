@@ -1,0 +1,21 @@
+module.exports = {
+    root: true,
+    parser: '@typescript-eslint/parser',
+    plugins: ['@typescript-eslint'],
+    extends: ['plugin:@typescript-eslint/recommended'],
+    rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/ban-types': 'off',
+        '@typescript-eslint/object-curly-spacing': ['warn', 'always'],
+        '@typescript-eslint/no-unused-vars': 'warn',
+        '@typescript-eslint/explicit-module-boundary-types': 'off',
+        '@typescript-eslint/no-useless-constructor': 'warn',
+        '@typescript-eslint/no-invalid-this': 'warn',
+        '@typescript-eslint/no-shadow': 'warn',
+        '@typescript-eslint/no-unused-expressions': 'warn',
+        '@typescript-eslint/no-use-before-define': 'warn',
+        '@typescript-eslint/no-require-imports': 'warn',
+        '@typescript-eslint/no-inferrable-types': 'off',
+        '@typescript-eslint/no-var-requires': 'off',
+    },
+};

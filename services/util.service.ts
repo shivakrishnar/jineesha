@@ -38,7 +38,7 @@ export type ApiInvocationEvent = APIGatewayEvent | ScheduledEvent;
  * @param value An JSON string to parse.
  * @param rethrowOnError Indicates whether to rethrow a parsing error or return the original value.
  */
-export function parseJson(value: any, rethrowOnError: boolean = false): any {
+export function parseJson(value: any, rethrowOnError = false): any {
     try {
         return JSON.parse(value);
     } catch (error) {
@@ -56,6 +56,7 @@ export function executionTimeString(serviceName: string, functionName: string, h
 
 export function isEmpty(obj: object): boolean {
     for (const key in obj) {
+        // eslint-disable-next-line no-prototype-builtins
         if (obj.hasOwnProperty(key)) {
             return false;
         }
@@ -351,7 +352,6 @@ export function makeSerializable(error: any): any {
     }
     const serializableError: { [name: string]: any } = {};
     Object.getOwnPropertyNames(error).forEach((key: string) => {
-        // @ts-ignore
         const value: any = error[key];
         serializableError[key] = value;
     });
@@ -428,7 +428,6 @@ export function hasAllKeysDefined(object: any): boolean {
 
     if (object !== undefined) {
         const vals = Object.values(object);
-        // tslint:disable prefer-for-of
         for (let i = 0; i < vals.length; i++) {
             if (!vals[i]) {
                 return false;
@@ -441,7 +440,6 @@ export function hasAllKeysDefined(object: any): boolean {
                 }
             }
         }
-        // tslint:enable prefer-for-of
         return true;
     }
     return false;
@@ -563,7 +561,7 @@ export async function invokeInternalService(serviceName: string, payload: any, i
  * @return {string}: A string representation of the formatted date; empty string if
  * provided date was null or undefined.
  */
-export function formatDateToLocale(date: string, locale: string = 'en-US'): string {
+export function formatDateToLocale(date: string, locale = 'en-US'): string {
     if (!date) {
         return '';
     }
@@ -885,6 +883,7 @@ export async function generateAdminToken(): Promise<string> {
  */
 export function sanitizeForS3(key: string): string {
     console.info('utilService.sanitizeForS3');
+    // eslint-disable-next-line no-useless-escape
     const charactersToReplace = /[\\{^}%`\]">\[~<#\| ]/g;
     return key.replace(charactersToReplace, '');
 }

@@ -33,7 +33,7 @@ describe('save template metadata', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/templates/${
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/templates/${
             configs.esignature.templateId
         }/save-metadata`;
         request(baseUri)
@@ -52,7 +52,7 @@ describe('save template metadata', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/templates/${
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/templates/${
             configs.esignature.templateId
         }/save-metadata`;
         request(baseUri)
@@ -71,7 +71,7 @@ describe('save template metadata', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/templates/${
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/templates/${
             configs.esignature.templateId
         }/save-metadata`;
         request(baseUri)
@@ -90,9 +90,7 @@ describe('save template metadata', () => {
 
     test.skip('must return a 404 if templateID is not found', (done) => {
         const unknownTemplateId = 'this definitely does not exist';
-        const uri: string = `/tenants/${configs.tenantId}/companies/${
-            configs.companyId
-        }/esignatures/templates/${unknownTemplateId}/save-metadata`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates/${unknownTemplateId}/save-metadata`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -112,7 +110,7 @@ describe('save template metadata', () => {
             fileName: 'test.pdf',
             category: 'onboarding',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates/${
             configs.esignature.templateId
         }/save-metadata`;
         request(baseUri)
@@ -130,7 +128,7 @@ describe('save template metadata', () => {
     });
 
     test.skip('must return a 201 when onboarding signature requests are created', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates/${
             configs.esignature.templateId
         }/save-metadata`;
         request(baseUri)

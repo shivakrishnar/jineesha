@@ -56,6 +56,7 @@ export async function processEvent(event: INotificationEvent): Promise<boolean> 
                 return true;
             case NotificationEventType.BillingEvent:
                 await submitBillingEventNotification(event as IBillingEvent);
+                break;
             default:
                 return false;
         }
@@ -178,7 +179,7 @@ async function submitEsignatureReminderEventNotification(event: IEsignatureEvent
         if (alert === undefined) {
             continue;
         }
-    
+
         const esignatureMetadata = await getEsignatureMetadata(tenantId, companyId, event.metadata.employeeCode, documentId);
         const metadata: IESignatureMetadataKeys = {
             signInUrl: event.metadata.signInUrl,
@@ -461,7 +462,7 @@ async function getDirectDepositMetadata(tenantId: string, directDepositId: numbe
     console.info('notification.service.getDirectDepositMetadata');
 
     try {
-        const directDepositPageLinkUrlSuffix: string = 'Secure/Employee/EmployeeDirectDepositList.aspx?menu=ESS';
+        const directDepositPageLinkUrlSuffix = 'Secure/Employee/EmployeeDirectDepositList.aspx?menu=ESS';
 
         const query = new ParameterizedQuery('directDepositMetadata', Queries.directDepositMetadata);
         query.setParameter('@directDepositId', directDepositId);

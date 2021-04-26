@@ -33,7 +33,7 @@ describe('list document categories', () => {
         });
 
         test('must return a 401 if a token is not provided', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/categories`;
             request(baseUri)
                 .get(uri)
                 .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -47,7 +47,7 @@ describe('list document categories', () => {
 
         test('must return a 400 if tenantID is invalid', (done) => {
             const invalidTenantId = '99999999';
-            const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/categories`;
+            const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/categories`;
             request(baseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -62,7 +62,7 @@ describe('list document categories', () => {
 
         test('must return a 404 if tenantID is not found', (done) => {
             const unknownTenantId = uuidV4();
-            const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/categories`;
+            const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/categories`;
             request(baseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -77,7 +77,7 @@ describe('list document categories', () => {
 
         test('must return a 404 if companyID is not found', (done) => {
             const unknownCompanyId = 999999999;
-            const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/categories`;
             request(baseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -92,7 +92,7 @@ describe('list document categories', () => {
 
         test.skip('must return a 204 if no categories are available', (done) => {
             const noCategoryCompanyId = 600050;
-            const uri: string = `/tenants/${configs.tenantId}/companies/${noCategoryCompanyId}/esignatures/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${noCategoryCompanyId}/esignatures/categories`;
             request(baseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -106,7 +106,7 @@ describe('list document categories', () => {
         });
 
         test('must return a 200 when categories are found', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/categories`;
             request(baseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -130,7 +130,7 @@ describe('list document categories', () => {
         });
 
         test('must return a 401 if a token is not provided', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -144,7 +144,7 @@ describe('list document categories', () => {
 
         test('must return a 400 if tenantID is invalid', (done) => {
             const invalidTenantId = '99999999';
-            const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents/categories`;
+            const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -159,7 +159,7 @@ describe('list document categories', () => {
 
         test('must return a 404 if tenantID is not found', (done) => {
             const unknownTenantId = uuidV4();
-            const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents/categories`;
+            const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -174,7 +174,7 @@ describe('list document categories', () => {
 
         test('must return a 404 if companyID is not found', (done) => {
             const unknownCompanyId = 999999999;
-            const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/documents/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -188,7 +188,7 @@ describe('list document categories', () => {
         });
 
         test('must return a 200 when categories are found', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -212,9 +212,7 @@ describe('list document categories', () => {
         });
 
         test('must return a 401 if a token is not provided', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-                configs.employeeId
-            }/documents/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -228,9 +226,7 @@ describe('list document categories', () => {
 
         test('must return a 400 if tenantID is invalid', (done) => {
             const invalidTenantId = '99999999';
-            const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
-                configs.employeeId
-            }/documents/categories`;
+            const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -245,9 +241,7 @@ describe('list document categories', () => {
 
         test('must return a 404 if tenantID is not found', (done) => {
             const unknownTenantId = uuidV4();
-            const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${
-                configs.employeeId
-            }/documents/categories`;
+            const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -262,9 +256,7 @@ describe('list document categories', () => {
 
         test('must return a 404 if companyID is not found', (done) => {
             const unknownCompanyId = 999999999;
-            const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${
-                configs.employeeId
-            }/documents/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -278,9 +270,7 @@ describe('list document categories', () => {
         });
 
         test('must return a 200 when categories are found', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-                configs.employeeId
-            }/documents/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -304,9 +294,7 @@ describe('list document categories', () => {
         });
 
         test('must return a 401 if a token is not provided', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-                configs.employeeId
-            }/documents/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -320,9 +308,7 @@ describe('list document categories', () => {
 
         test('must return a 400 if tenantID is invalid', (done) => {
             const invalidTenantId = '99999999';
-            const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
-                configs.employeeId
-            }/documents/categories`;
+            const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -337,9 +323,7 @@ describe('list document categories', () => {
 
         test('must return a 404 if tenantID is not found', (done) => {
             const unknownTenantId = uuidV4();
-            const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${
-                configs.employeeId
-            }/documents/categories`;
+            const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -354,9 +338,7 @@ describe('list document categories', () => {
 
         test('must return a 404 if companyID is not found', (done) => {
             const unknownCompanyId = 999999999;
-            const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${
-                configs.employeeId
-            }/documents/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -371,9 +353,7 @@ describe('list document categories', () => {
 
         test('must return a 404 if employeeID is not found', (done) => {
             const unknownEmployeeId = 99999999;
-            const uri: string = `/tenants/${configs.tenantId}/companies/${
-                configs.companyId
-            }/employees/${unknownEmployeeId}/documents/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${unknownEmployeeId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -387,9 +367,7 @@ describe('list document categories', () => {
         });
 
         test('must return a 200 when categories are found', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-                configs.employeeId
-            }/documents/categories`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/categories`;
             request(nonProxiedBaseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)

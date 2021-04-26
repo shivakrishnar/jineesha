@@ -100,7 +100,7 @@ export function getValidCompanyDocumentObject(): any {
     };
 }
 
-export function createBatchSignRequest(baseUri: string, accessToken: string, isSimpleSign: boolean = false): Promise<any> {
+export function createBatchSignRequest(baseUri: string, accessToken: string, isSimpleSign = false): Promise<any> {
     return new Promise((resolve, reject) => {
         const url = `${baseUri}/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         const document = isSimpleSign ? getValidBulkSimpleSignatureRequestObject() : getValidBulkSignatureRequestObject();

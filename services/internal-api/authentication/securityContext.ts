@@ -12,7 +12,7 @@ import { ApplicationRoleLevel } from './ApplicationRoleLevelEnum';
 /**
  * SecurityContext represents data pulled from the token when it is verified,
  * and is passed to the lambda handler code.
- * 
+ *
  * This class extends SecurityContext from the asure.auth package, adding
  * functionality specific to hr-services.
  */
@@ -31,13 +31,15 @@ export class SecurityContext extends BaseSecurityContext {
      * @param {string} tenantId: the sso tenantId from the endpoint path.
      * @param {string} accountId: the sso accountId from the endpoint path.
      */
-    requireSelf = ({ tenantId, accountId }: { tenantId: string, accountId: string }) => {
-      try {
-          super.requireSelf({ tenantId, accountId });
-      } catch (e) {
-          throw errorService.getErrorResponse(20).setMoreInfo(`This endpoint can only be used by a user with an admin role, or to request the authenticated user's data.`);
-      }
-    }
+    requireSelf = ({ tenantId, accountId }: { tenantId: string; accountId: string }) => {
+        try {
+            super.requireSelf({ tenantId, accountId });
+        } catch (e) {
+            throw errorService
+                .getErrorResponse(20)
+                .setMoreInfo(`This endpoint can only be used by a user with an admin role, or to request the authenticated user's data.`);
+        }
+    };
 
     /**
      * Invoked in any handler that must be restricted to users with a specific policy rule; throws a 403 if not.
@@ -51,7 +53,7 @@ export class SecurityContext extends BaseSecurityContext {
         } catch (e) {
             throw errorService.getErrorResponse(20).setMoreInfo(e.moreInfo);
         }
-    }
+    };
 
     /**
      * This should be invoked at the start of a handler that must be restricted to users with the

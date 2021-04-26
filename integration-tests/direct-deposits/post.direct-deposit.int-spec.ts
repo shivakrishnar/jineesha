@@ -66,7 +66,7 @@ describe('post direct deposits', () => {
 
     test('must return a 401 when an employee attempts to create a direct deposit for another employee', (done) => {
         const anotherEmployeeId = 1;
-        const restrictedAccessUri: string = `/tenants/${configs.tenantId}/companies/${
+        const restrictedAccessUri = `/tenants/${configs.tenantId}/companies/${
             configs.companyId
         }/employees/${anotherEmployeeId}/direct-deposits`;
 
@@ -86,7 +86,7 @@ describe('post direct deposits', () => {
 
     test('must return a 404 when the tenant id is non-existent', (done) => {
         const invalidTenantId = uuidV4();
-        const unknownTenantUri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
+        const unknownTenantUri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
             configs.employeeId
         }/direct-deposits`;
         request(baseUri)

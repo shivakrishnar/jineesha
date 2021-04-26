@@ -32,7 +32,7 @@ describe('list signature requests', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .get(uri)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -46,7 +46,7 @@ describe('list signature requests', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -61,7 +61,7 @@ describe('list signature requests', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -76,7 +76,7 @@ describe('list signature requests', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/requests`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -91,7 +91,7 @@ describe('list signature requests', () => {
 
     describe('list HelloSign templates', () => {
         test.skip('must return a 204 when no requests exist', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyWithNoData}/esignatures/requests`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyWithNoData}/esignatures/requests`;
             request(baseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -105,7 +105,7 @@ describe('list signature requests', () => {
         });
 
         test.skip('must return a 200 when requests exist', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
             request(baseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -121,7 +121,7 @@ describe('list signature requests', () => {
 
     describe('list consolidated templates', () => {
         test('must return a 200 when requests and legacy documents exist', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests?consolidated=true`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests?consolidated=true`;
             request(baseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)

@@ -12,7 +12,7 @@ const TTenant = t.exact(
     'Tenant',
 );
 
-export interface ITenant extends t.TypeOf<typeof TTenant> {}
+export type ITenant = t.TypeOf<typeof TTenant>;
 
 const TTenantUnsaved = t.interface(
     {
@@ -24,4 +24,4 @@ const TTenantUnsaved = t.interface(
     'TenantUnsaved',
 );
 
-export interface ITenantUnsaved extends t.TypeOf<typeof TTenantUnsaved> {}
+export type ITenantUnsaved = t.TypeOf<typeof TTenantUnsaved>;

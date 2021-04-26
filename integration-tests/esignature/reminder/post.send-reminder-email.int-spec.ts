@@ -33,7 +33,7 @@ describe('send reminder email', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             configs.esignature.requestId
         }/remind`;
         request(baseUri)
@@ -49,7 +49,7 @@ describe('send reminder email', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             configs.esignature.requestId
         }/remind`;
         request(baseUri)
@@ -66,7 +66,7 @@ describe('send reminder email', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/documents/${
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/documents/${
             configs.esignature.requestId
         }/remind`;
         request(baseUri)
@@ -83,7 +83,7 @@ describe('send reminder email', () => {
 
     test('must return a 404 if employeeID is not found', (done) => {
         const unknownEmployeeId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${unknownEmployeeId}/documents/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${unknownEmployeeId}/documents/${
             configs.esignature.requestId
         }/remind`;
         request(baseUri)
@@ -100,7 +100,7 @@ describe('send reminder email', () => {
 
     test('must return a 404 if documentID is not found', (done) => {
         const unknownDocumentId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
             configs.employeeId
         }/documents/${unknownDocumentId}/remind`;
         request(baseUri)
@@ -116,7 +116,7 @@ describe('send reminder email', () => {
     });
 
     test('must return a 401 when sent by an employee', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             configs.esignature.requestId
         }/remind`;
         request(baseUri)
@@ -131,7 +131,7 @@ describe('send reminder email', () => {
             });
     });
     test('must return a 204 when a request is sent', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             configs.esignature.requestId
         }/remind`;
         request(baseUri)

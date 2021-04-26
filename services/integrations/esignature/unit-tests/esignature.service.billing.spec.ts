@@ -18,13 +18,9 @@ describe('esignatureService.billing.generate-report', () => {
             }
         });
 
-        return esignatureService
-            .generateBillingReport(
-                { returnReport: true, targetEmail: 'test@test.com'},
-            )
-            .then((results) => {
-                expect(typeof results).toBe('string');
-                expect(results).toEqual('Domain,Company,Billable Documents\r\nTest,HRN IT Services (1),2\r\n');
-            });
+        return esignatureService.generateBillingReport({ returnReport: true, targetEmail: 'test@test.com' }).then((results) => {
+            expect(typeof results).toBe('string');
+            expect(results).toEqual('Domain,Company,Billable Documents\r\nTest,HRN IT Services (1),2\r\n');
+        });
     });
 });

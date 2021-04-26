@@ -34,7 +34,7 @@ describe('create bulk signature requests', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -50,7 +50,7 @@ describe('create bulk signature requests', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -67,7 +67,7 @@ describe('create bulk signature requests', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -95,7 +95,7 @@ describe('create bulk signature requests', () => {
             ],
             isSimpleSign: false,
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -116,7 +116,7 @@ describe('create bulk signature requests', () => {
             subject: 'This is a test request',
             message: 'This is a test request message',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -145,7 +145,7 @@ describe('create bulk signature requests', () => {
                 },
             ],
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -161,7 +161,7 @@ describe('create bulk signature requests', () => {
     });
 
     test('must return a 201 when a request is created', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -189,7 +189,7 @@ describe('create bulk simple signature requests', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -205,7 +205,7 @@ describe('create bulk simple signature requests', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -222,7 +222,7 @@ describe('create bulk simple signature requests', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -250,7 +250,7 @@ describe('create bulk simple signature requests', () => {
             ],
             isSimpleSign: true,
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -271,7 +271,7 @@ describe('create bulk simple signature requests', () => {
             subject: 'This is a test request',
             message: 'This is a test request message',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -300,7 +300,7 @@ describe('create bulk simple signature requests', () => {
                 },
             ],
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -316,7 +316,7 @@ describe('create bulk simple signature requests', () => {
     });
 
     test('must return a 201 when a request is created', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)

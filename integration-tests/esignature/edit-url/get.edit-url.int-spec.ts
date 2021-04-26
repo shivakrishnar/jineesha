@@ -32,7 +32,7 @@ describe('get edit url', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates/${
             configs.esignature.templateId
         }/edit-url`;
         request(baseUri)
@@ -48,7 +48,7 @@ describe('get edit url', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/templates/${
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/templates/${
             configs.esignature.templateId
         }/edit-url`;
         request(baseUri)
@@ -65,7 +65,7 @@ describe('get edit url', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/templates/${
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/templates/${
             configs.esignature.templateId
         }/edit-url`;
         request(baseUri)
@@ -82,7 +82,7 @@ describe('get edit url', () => {
 
     test('must return a 404 if CompanyID is not found', (done) => {
         const unknownCompanyId = 99999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/templates/${
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/templates/${
             configs.esignature.templateId
         }/edit-url`;
         request(baseUri)
@@ -99,9 +99,7 @@ describe('get edit url', () => {
 
     test('must return a 404 if template ID is not found', (done) => {
         const unknownTemplateId = 99999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${
-            configs.companyId
-        }/esignatures/templates/${unknownTemplateId}/edit-url`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates/${unknownTemplateId}/edit-url`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -115,7 +113,7 @@ describe('get edit url', () => {
     });
 
     test.skip('must return a 200 when the template exists', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates/${
             configs.esignature.templateId
         }/edit-url`;
         request(baseUri)

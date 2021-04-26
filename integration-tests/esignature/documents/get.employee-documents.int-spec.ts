@@ -33,7 +33,7 @@ describe('list employee documents by tenant', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/documents`;
         request(baseUri)
             .get(uri)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -47,7 +47,7 @@ describe('list employee documents by tenant', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/documents`;
+        const uri = `/tenants/${invalidTenantId}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -62,7 +62,7 @@ describe('list employee documents by tenant', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/documents`;
+        const uri = `/tenants/${unknownTenantId}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -76,7 +76,7 @@ describe('list employee documents by tenant', () => {
     });
 
     test('must return a 200 when documents exist', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -103,7 +103,7 @@ describe('list employee documents by company', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .get(uri)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -117,7 +117,7 @@ describe('list employee documents by company', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -132,7 +132,7 @@ describe('list employee documents by company', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -147,7 +147,7 @@ describe('list employee documents by company', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -161,7 +161,7 @@ describe('list employee documents by company', () => {
     });
 
     test('must return a 204 when documents do not exist', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyWithNoDocuments}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyWithNoDocuments}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -175,7 +175,7 @@ describe('list employee documents by company', () => {
     });
 
     test('must return a 200 when documents exist', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -202,7 +202,7 @@ describe('list employee documents by employee', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .get(uri)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -216,7 +216,7 @@ describe('list employee documents by employee', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -231,7 +231,7 @@ describe('list employee documents by employee', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -246,7 +246,7 @@ describe('list employee documents by employee', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -261,7 +261,7 @@ describe('list employee documents by employee', () => {
 
     test('must return a 404 if employeeID is not found', (done) => {
         const unknownEmployeeId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${unknownEmployeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${unknownEmployeeId}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -275,7 +275,7 @@ describe('list employee documents by employee', () => {
     });
 
     test('must return a 204 when documents do not exist', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyWithNoDocuments}/employees/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyWithNoDocuments}/employees/${
             configs.esignature.employeeWithNoDocuments
         }/documents`;
         request(baseUri)
@@ -291,7 +291,7 @@ describe('list employee documents by employee', () => {
     });
 
     test('must return a 200 when documents exist', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -318,7 +318,7 @@ describe('list employee documents by company as a manager', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents?role=manager`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents?role=manager`;
         request(baseUri)
             .get(uri)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -332,7 +332,7 @@ describe('list employee documents by company as a manager', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents?role=manager`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents?role=manager`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -347,7 +347,7 @@ describe('list employee documents by company as a manager', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents?role=manager`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents?role=manager`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -362,7 +362,7 @@ describe('list employee documents by company as a manager', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/documents?role=manager`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/documents?role=manager`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -376,7 +376,7 @@ describe('list employee documents by company as a manager', () => {
     });
 
     test('must return a 400 if manager is not provided as the role', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents?role=admin`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents?role=admin`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -390,7 +390,7 @@ describe('list employee documents by company as a manager', () => {
     });
 
     test('must return a 400 if supplied role is capitalized', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents?role=Manager`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents?role=Manager`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -404,7 +404,7 @@ describe('list employee documents by company as a manager', () => {
     });
 
     test('must return a 200 when documents exist', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents?role=manager`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents?role=manager`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)

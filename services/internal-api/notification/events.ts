@@ -10,7 +10,7 @@ export enum NotificationEventType {
     DirectDepositEvent = 'DirectDepositEvent',
     EsignatureEvent = 'EsignatureEvent',
     BillingEvent = 'BillingEvent',
-    EsignatureReminderEvent= 'EsignatureReminderEvent'
+    EsignatureReminderEvent = 'EsignatureReminderEvent',
 }
 
 export enum AlertCategory {

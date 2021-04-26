@@ -153,7 +153,7 @@ describe('esignatureService.preview.get', () => {
             expect(error.moreInfo).toEqual('More info');
         });
     });
-    
+
     test('returns a simple sign preview url', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'getFileMetadataByEsignatureMetadataId') {

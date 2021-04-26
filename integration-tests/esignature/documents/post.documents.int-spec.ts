@@ -52,7 +52,7 @@ describe('create company document', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -68,7 +68,7 @@ describe('create company document', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -85,7 +85,7 @@ describe('create company document', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -102,7 +102,7 @@ describe('create company document', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -125,7 +125,7 @@ describe('create company document', () => {
             category: 'bobam',
             isPublishedToEmployee: true,
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -147,7 +147,7 @@ describe('create company document', () => {
             category: 'bobam',
             isPublishedToEmployee: true,
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -171,7 +171,7 @@ describe('create company document', () => {
             isPublishedToEmployee: true,
             extraField: 'man playing handball',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -187,7 +187,7 @@ describe('create company document', () => {
     });
 
     test('must return a 201 when a company document is created', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -206,7 +206,7 @@ describe('create company document', () => {
     test('must return a 201 when a company document with special characters in filename is created', (done) => {
         const testDocumentWithSpecialChars: any = Object.assign({}, document);
         testDocumentWithSpecialChars.fileName = `_Interview &&#$@ Questions Do's & Dont's $%@(1).pdf`;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -226,7 +226,7 @@ describe('create company document', () => {
         const testDocumentWithSpecialChars: any = Object.assign({}, document);
         testDocumentWithSpecialChars.fileName = `_Interview &&#$@ Questions Do's & Dont's $%@(1).pdf`;
         testDocumentWithSpecialChars.category = 'onboarding';
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -255,7 +255,7 @@ describe('request upload url', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -271,7 +271,7 @@ describe('request upload url', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents/upload-url`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -288,7 +288,7 @@ describe('request upload url', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents/upload-url`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -305,7 +305,7 @@ describe('request upload url', () => {
 
     test('must return a 400 if companyID is invalid', (done) => {
         const invalidCompanyId = '9bcwsdg9999A9999';
-        const uri: string = `/tenants/${configs.tenantId}/companies/${invalidCompanyId}/documents/upload-url`;
+        const uri = `/tenants/${configs.tenantId}/companies/${invalidCompanyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -324,7 +324,7 @@ describe('request upload url', () => {
         const requestWithInvalidField: any = Object.assign({}, document);
         requestWithInvalidField.title = 1234;
 
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -343,7 +343,7 @@ describe('request upload url', () => {
         const requestMissingRequiredField: any = Object.assign({}, document);
         delete requestMissingRequiredField.fileName;
 
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -362,7 +362,7 @@ describe('request upload url', () => {
         const requestMissingFileExtension: any = Object.assign({}, document);
         requestMissingFileExtension.fileName = 'filename';
 
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -381,7 +381,7 @@ describe('request upload url', () => {
         const requestWithIncorrectCategory: any = Object.assign({}, document);
         requestWithIncorrectCategory.category = 123;
 
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -400,7 +400,7 @@ describe('request upload url', () => {
         const requestWithoutCategory: any = Object.assign({}, document);
         delete requestWithoutCategory.category;
 
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -416,7 +416,7 @@ describe('request upload url', () => {
     });
 
     test('must return 200 with a presigned url', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -435,7 +435,7 @@ describe('request upload url', () => {
         const testDocumentWithSpecialChars: any = Object.assign({}, document);
         testDocumentWithSpecialChars.fileName = `_Interview &&#$@ Questions Do's & Dont's $%@(1).pdf`;
 
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/upload-url`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)

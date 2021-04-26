@@ -76,7 +76,6 @@ export const employeesWithoutEmailAddressDBResponse = {
     recordset: [
         {
             EmployeeCode: '1',
-            // tslint:disable-next-line:no-null-keyword
             EmailAddress: null,
             FirstName: 'Hugh',
             LastName: 'Jass',

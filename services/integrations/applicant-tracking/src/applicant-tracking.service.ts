@@ -15,7 +15,7 @@ import * as configService from '../../../config.service';
  * @param {string} tenantId: The unique identifier for  a tenant
  * @param {string} companyId: The unique identifier for a company within a tenant
  * @param requestBody: The request body
- * 
+ *
  */
 export async function createApplicantData(tenantId: string, companyId: string, requestBody: any): Promise<void> {
     console.info('applicantTrackingService.createApplicantData');
@@ -54,7 +54,10 @@ export async function createApplicantData(tenantId: string, companyId: string, r
 
             //State
             const countrySubdivisions = address.countrySubdivisions;
-            createQuery.setParameter('@state', (countrySubdivisions == undefined || countrySubdivisions.length == 0) ? '' : countrySubdivisions[0].value);
+            createQuery.setParameter(
+                '@state',
+                countrySubdivisions == undefined || countrySubdivisions.length == 0 ? '' : countrySubdivisions[0].value,
+            );
 
             //Address Line
             createQuery.setParameter('@addressLine', address.line == undefined ? '' : address.line);
@@ -64,13 +67,13 @@ export async function createApplicantData(tenantId: string, companyId: string, r
         }
         //Phone
         const phone = applicant.candidate.person.communication.phone;
-        createQuery.setParameter('@phone', (phone == undefined || phone.length == 0) ? '' : phone[0].formattedNumber);
+        createQuery.setParameter('@phone', phone == undefined || phone.length == 0 ? '' : phone[0].formattedNumber);
 
         //email
         const email = applicant.candidate.person.communication.email;
-        createQuery.setParameter('@email', (email == undefined || email.length == 0) ? '' : email[0].address);
+        createQuery.setParameter('@email', email == undefined || email.length == 0 ? '' : email[0].address);
 
-        var profileCollection = applicant.candidate.profiles;
+        const profileCollection = applicant.candidate.profiles;
         //Profiles
         if (profileCollection == undefined || profileCollection.length == 0) {
             createQuery.setParameter('@profileID', '');
@@ -105,18 +108,21 @@ export async function createApplicantData(tenantId: string, companyId: string, r
                 createQuery.setParameter('@educationLevelCode', '');
             } else {
                 const educationLevelCodes = profile.education[0].educationLevelCodes;
-                createQuery.setParameter('@educationLevelCode', (educationLevelCodes == undefined || educationLevelCodes.length == 0) ? '' : educationLevelCodes[0].name);
+                createQuery.setParameter(
+                    '@educationLevelCode',
+                    educationLevelCodes == undefined || educationLevelCodes.length == 0 ? '' : educationLevelCodes[0].name,
+                );
             }
         }
 
         createQuery.setParameter('@companyId', companyId);
         createQuery.setParameter('@requestJson', JSON.stringify(requestBody));
 
-        let payload = { 
-            tenantId, 
-            queryName: createQuery.name, 
-            query: createQuery.value, 
-            queryType: QueryType.Simple, 
+        let payload = {
+            tenantId,
+            queryName: createQuery.name,
+            query: createQuery.value,
+            queryType: QueryType.Simple,
         } as DatabaseEvent;
 
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
@@ -128,7 +134,7 @@ export async function createApplicantData(tenantId: string, companyId: string, r
             if (!(profileCollection == undefined || profileCollection.length == 0)) {
                 //check if profile has attachments
                 if (!(profileCollection[0].attachments == undefined || profileCollection[0].attachments.length == 0)) {
-                    for (let attachment of profileCollection[0].attachments) {
+                    for (const attachment of profileCollection[0].attachments) {
                         //fetch attachment from url
                         const url = attachment.url;
                         const response = JSON.parse(await request.get({ url }));
@@ -136,8 +142,7 @@ export async function createApplicantData(tenantId: string, companyId: string, r
                         const { fileName, mimeType, content } = response;
                         const extension = '.' + fileName.split('.')[1];
 
-                        let fileSize: number;
-                        fileSize = calculateFileSize(content);
+                        const fileSize: number = calculateFileSize(content);
 
                         createQuery = new ParameterizedQuery('DocumentCreate', Queries.documentCreate);
 
@@ -150,10 +155,10 @@ export async function createApplicantData(tenantId: string, companyId: string, r
                         createQuery.setParameter('@fileSize', fileSize);
 
                         payload = {
-                             tenantId, 
-                             queryName: createQuery.name, 
-                             query: createQuery.value, 
-                             queryType: QueryType.Simple, 
+                            tenantId,
+                            queryName: createQuery.name,
+                            query: createQuery.value,
+                            queryType: QueryType.Simple,
                         } as DatabaseEvent;
 
                         await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
@@ -173,31 +178,29 @@ export async function createApplicantData(tenantId: string, companyId: string, r
     }
 }
 
-
 /**
  * Calculates the file Size from the document content encoded as base64 string
  * @param base64String: The document content encoded as base64 string
  * @returns: Returns the file size
  */
-function calculateFileSize(base64String: any) : number {
-    let padding, inBytes, base64StringLength;
+function calculateFileSize(base64String: any): number {
+    let padding;
+    const base64StringLength = base64String.length;
+    const inBytes = (base64StringLength / 4) * 3 - padding;
+
     if (base64String.endsWith('==')) padding = 2;
     else if (base64String.endsWith('=')) padding = 1;
     else padding = 0;
 
-    base64StringLength = base64String.length;
-    inBytes = (base64StringLength / 4) * 3 - padding;
     return Math.ceil(inBytes / 1024);
 }
-
 
 /**
  * Clear Cache with only tenantId available. ssoToken will be determined
  * @param {string} tenantId: The unique identifier for  a tenant
  */
 async function clearCache(tenantId: string) {
-    let secretId: string;
-    secretId = configService.getApiSecretId();
+    const secretId: string = configService.getApiSecretId();
     const secret = await utilService.getSecret(secretId);
     const applicationId = JSON.parse(secret).applicationId;
     const ssoToken = await utilService.getSSOToken(tenantId, applicationId);
@@ -211,31 +214,35 @@ async function clearCache(tenantId: string) {
  * @param requestBody: The request body
  * @param incomingSignature: Signature present in the header
  */
-export async function validateCompanySecret(tenantId: string, companyId: string, requestBody: any, incomingSignature: any ): Promise<void> {
+export async function validateCompanySecret(tenantId: string, companyId: string, requestBody: any, incomingSignature: any): Promise<void> {
     console.info('applicantTrackingService.validateCompanySecret');
-    
+
     try {
         const getQuery = new ParameterizedQuery('GetJazzhrSecretKeyByCompanyId', Queries.getJazzhrSecretKeyByCompanyId);
         getQuery.setParameter('@companyId', companyId);
-        
+
         const payload = {
             tenantId,
             queryName: getQuery.name,
             query: getQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        
+
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-        
-        let authorized : Boolean = false;
+
+        let authorized = false;
 
         if (result.recordset.length != 0) {
             const jzhrSecretKey = result.recordset[0].JazzhrSecretKey;
 
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
             const crypto = require('crypto');
-            const message =  requestBody;
+            const message = requestBody;
             //create HMAC hex digest using Hash sha256 and secret
-            const hash = crypto.createHmac('sha256', jzhrSecretKey).update(message).digest('hex');
+            const hash = crypto
+                .createHmac('sha256', jzhrSecretKey)
+                .update(message)
+                .digest('hex');
 
             //hash check with received signature
             if (hash == incomingSignature) {
@@ -247,7 +254,6 @@ export async function validateCompanySecret(tenantId: string, companyId: string,
             //not authorized
             throw errorService.getErrorResponse(11);
         }
-
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

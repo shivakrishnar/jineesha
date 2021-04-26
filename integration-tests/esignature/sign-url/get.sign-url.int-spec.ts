@@ -22,7 +22,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 describe('get sign url', () => {
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/esignatures/${
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/esignatures/${
             configs.esignature.signatureId
         }/sign-url`;
         request(baseUri)
@@ -38,7 +38,7 @@ describe('get sign url', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/esignatures/${
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/esignatures/${
             configs.esignature.signatureId
         }/sign-url`;
         request(baseUri)
@@ -54,7 +54,7 @@ describe('get sign url', () => {
 
     test('must return a 404 if CompanyID is not found', (done) => {
         const unknownCompanyId = 99999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/esignatures/${
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/esignatures/${
             configs.esignature.signatureId
         }/sign-url`;
         request(baseUri)
@@ -70,7 +70,7 @@ describe('get sign url', () => {
 
     test('must return a 404 if request ID is not found', (done) => {
         const unknownRequestId = 99999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
             configs.employeeId
         }/esignatures/${unknownRequestId}/sign-url`;
         request(baseUri)
@@ -85,7 +85,7 @@ describe('get sign url', () => {
     });
 
     test.skip('must return a 200 when the request exists', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/esignatures/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/esignatures/${
             configs.esignature.signatureId
         }/sign-url`;
         request(baseUri)

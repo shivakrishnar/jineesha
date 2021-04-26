@@ -164,15 +164,13 @@ async function createAuditDetailEntries(tenantId: string, auditId: number, audit
         fieldQuery.setParameter('@affectedEmployee', employeeDisplayName || 'NULL');
         fieldQuery.setParameter('@actionType', type);
         fieldQuery.setParameter('@fieldChanged', fieldKeys[i]);
-        // tslint:disable no-null-keyword
         fieldQuery.setParameter('@oldValue', [undefined, null, 'null'].includes(oldValues[i]) ? '[Blank]' : oldValues[i]);
         fieldQuery.setParameter('@newValue', [undefined, null, 'null'].includes(newValues[i]) ? '[Blank]' : newValues[i]);
-        // tslint:enable no-null-keyword
         fieldQuery.setParameter('@areaOfChange', areaOfChange);
         auditDetailQuery.appendFilter(fieldQuery.value, false);
 
-        let companyDetails: CompanyInfo = await utilService.validateCompany(tenantId, companyId);
-        let date = new Date().toISOString();
+        const companyDetails: CompanyInfo = await utilService.validateCompany(tenantId, companyId);
+        const date = new Date().toISOString();
         const auditPayload = {
             tenantID: tenantId,
             company: {

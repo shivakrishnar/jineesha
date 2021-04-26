@@ -36,7 +36,9 @@ describe('save onboarding documents', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/onboarding/${configs.esignature.onboardingWithCompanyDocumentsActive.key}/documents`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/onboarding/${
+            configs.esignature.onboardingWithCompanyDocumentsActive.key
+        }/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -53,7 +55,9 @@ describe('save onboarding documents', () => {
 
     test('must return a 404 if the onboarding does not exist', async (done) => {
         const nonExistentObKey = uuidV4();
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/onboarding/${nonExistentObKey}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
+            configs.employeeId
+        }/onboarding/${nonExistentObKey}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)

@@ -61,7 +61,6 @@ export const execute = async (event: DatabaseEvent, context: Context, callback: 
         await executeBatch(pool.transaction(), query);
         return callback(undefined, {
             statusCode: 200,
-            // tslint:disable no-null-keyword
             body: null,
         });
     } catch (error) {
