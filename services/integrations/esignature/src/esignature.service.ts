@@ -25,6 +25,7 @@ import * as utilService from '../../../util.service';
 import { convertTo } from '@shelf/aws-lambda-libreoffice';
 import { PromiseResult } from 'p-settle';
 import { PDFDocument, rgb } from 'pdf-lib';
+import { CompanyDetail } from '../../../api/tenants/src/ICompany';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
@@ -2409,11 +2410,6 @@ export async function configure(tenantId: string, companyId: string, token: stri
  * @return {Promise<string>} A Promise of the client id the company belongs to
  */
 
-type CompanyDetail = {
-    clientId: string;
-    name: string;
-    domain: string;
-};
 async function getCompanyDetails(tenantId: string, companyId: string): Promise<CompanyDetail> {
     console.info('esignatureService.getCompanyInfo');
 

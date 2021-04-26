@@ -29,6 +29,7 @@
     "pdf-lib": "^1.13.0",
     "serverless-plugin-thundra": "^1.2.0",
     "shortid": "^2.2.14",
+    "strip-bom": "^3.0.0",
     "uuid": "^3.0.1",
     "yup": "^0.26.10"
   },

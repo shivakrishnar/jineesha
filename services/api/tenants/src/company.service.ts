@@ -11,8 +11,13 @@ import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
 import * as paginationService from '../../../pagination/pagination.service';
+import * as hellosignService from '../../../remote-services/hellosign.service';
+import { HelloSignApplication } from '../../../remote-services/hellosign.service';
+import * as integrationsService from '../../../remote-services/integrations.service';
+import { EsignatureAppConfiguration } from '../../../remote-services/integrations.service';
 import * as utilService from '../../../util.service';
-import { ICompany } from './ICompany';
+import { CompanyDetail, ICompany } from './ICompany';
+import { PatchInstruction, PatchOperation } from './patchInstruction';
 
 /**
  * Returns a listing of companies for a specific user within a tenant
@@ -163,6 +168,257 @@ export async function getById(tenantId: string, companyId: string, email: string
         }
         console.error(error);
         throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Updates a company or that company's integrations
+ * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
+ * @param {string} companyCode: The unique code for the company
+ * @param {PatchInstruction[]} patch: The list of instructions the patch is should attempt to execute
+ * The patch instructions will be executed in the order provided.
+ * The array as a whole is atomic, if an instruction fails, all previous instructions will be rolled back.
+ */
+export async function companyUpdate(tenantId: string, companyCode: string, patch: PatchInstruction[]): Promise<void> {
+    console.info('companyService.companyUpdate');
+
+    const rollbackActions = [];
+
+    try {
+        for (const instruction of patch) {
+            switch (instruction.path) {
+                case '/platform/integration':
+                    rollbackActions.push(await updateHelloSignConfigurations(tenantId, companyCode, instruction));
+                    break;
+                case '/test':
+                    if (instruction.op === PatchOperation.Test) {
+                        throw errorService.getErrorResponse(0).setMoreInfo('Manual failure for unit tests');
+                    }
+                    break;
+                default:
+                // throw unrecognized path error
+            }
+        }
+    } catch (error) {
+        let action = rollbackActions.pop();
+        while (action) {
+            await action();
+            action = rollbackActions.pop();
+        }
+        if (error instanceof ErrorMessage) {
+            if (error.statusCode === 404) {
+                return undefined;
+            }
+            throw error;
+        }
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Updates a company's HelloSign configurations
+ * @param {string} oldTenantId: The unique identifier (SSO tenantId GUID) for the old (donor) tenant
+ * @param {string} evoCompanyCode: The unique code for the company
+ * @param {PatchInstruction} patch: The instruction the patch should attempt to execute
+ * @returns {Promise<() => void>}: A Promise of a rollback function
+ */
+async function updateHelloSignConfigurations(oldTenantId: string, evoCompanyCode: string, patch: PatchInstruction): Promise<() => void> {
+    console.info('companyService.updateHelloSignConfigurations');
+
+    const newTenantId = patch.value;
+
+    if (!newTenantId) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to equal newTenantId');
+    }
+
+    const rollbackActions = [];
+
+    try {
+        const [oldCompanyInfo, newCompanyInfo, adminToken]: any[] = await Promise.all([
+            getCompanyInfoByEvoCompanyCode(oldTenantId, evoCompanyCode),
+            getCompanyInfoByEvoCompanyCode(newTenantId, evoCompanyCode),
+            utilService.generateAdminToken(),
+        ]);
+
+        const oldIntegrationConfiguration: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            oldTenantId,
+            oldCompanyInfo.clientId,
+            oldCompanyInfo.id,
+            adminToken,
+        );
+        console.log('oldIntegrationConfiguration', JSON.stringify(oldIntegrationConfiguration));
+
+        if (!oldIntegrationConfiguration) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage('oldIntegrationConfiguration not found for this company');
+        }
+
+        // update new integration configuration for company with old eSignatureAppClientId
+        const newIntegrationConfiguration: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            newTenantId,
+            newCompanyInfo.clientId,
+            newCompanyInfo.id,
+            adminToken,
+        );
+        console.log('newIntegrationConfiguration', JSON.stringify(newIntegrationConfiguration));
+
+        if (!newIntegrationConfiguration) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage('newIntegrationConfiguration not found for this company');
+        }
+
+        const newEsignatureAppClientId = newIntegrationConfiguration.integrationDetails.eSignatureAppClientId;
+        const oldEsignatureAppClientId = oldIntegrationConfiguration.integrationDetails.eSignatureAppClientId;
+        newIntegrationConfiguration.integrationDetails.eSignatureAppClientId = oldEsignatureAppClientId;
+
+        await integrationsService.updateIntegrationConfigurationById(
+            newTenantId,
+            newCompanyInfo.clientId,
+            newCompanyInfo.id,
+            newIntegrationConfiguration,
+            adminToken,
+        );
+        rollbackActions.push(async () => {
+            newIntegrationConfiguration.integrationDetails.eSignatureAppClientId = newEsignatureAppClientId;
+            await integrationsService.updateIntegrationConfigurationById(
+                newTenantId,
+                newCompanyInfo.clientId,
+                newCompanyInfo.id,
+                newIntegrationConfiguration,
+                adminToken,
+            );
+        });
+
+        const newHsApp: any = JSON.parse(await hellosignService.getApplicationForCompany(newEsignatureAppClientId));
+        const oldHsApp: any = JSON.parse(await hellosignService.getApplicationForCompany(oldEsignatureAppClientId));
+
+        // update new HelloSign app name to temp name - HelloSign does not allow apps with duplicate names
+        let helloSignApplication: HelloSignApplication = {
+            name: newHsApp.api_app.name + ' old',
+        };
+        await hellosignService.updateApplicationForCompany(newEsignatureAppClientId, helloSignApplication);
+        rollbackActions.push(async () => {
+            try {
+                helloSignApplication = {
+                    name: newHsApp.api_app.name,
+                };
+                await hellosignService.updateApplicationForCompany(newEsignatureAppClientId, helloSignApplication);
+            } catch (error) {
+                // Note: we are eating the exception here because the update will not work if the HelloSign application
+                // has already been deleted. Just log the error and continue.
+                console.error(error);
+            }
+        });
+
+        // update old HelloSign app name and domain
+        helloSignApplication = {
+            name: newHsApp.api_app.name,
+            domain: newHsApp.api_app.domain,
+        };
+        await hellosignService.updateApplicationForCompany(oldEsignatureAppClientId, helloSignApplication);
+        rollbackActions.push(async () => {
+            helloSignApplication = {
+                name: oldHsApp.api_app.name,
+                domain: oldHsApp.api_app.domain,
+            };
+            await hellosignService.updateApplicationForCompany(oldEsignatureAppClientId, helloSignApplication);
+        });
+
+        // delete new HelloSign app
+        await hellosignService.deleteApplicationById(newEsignatureAppClientId);
+        rollbackActions.push(async () => {
+            const {
+                api_app: { client_id: eSignatureClientId },
+            } = await hellosignService.createApplicationForCompany(
+                newCompanyInfo.id,
+                newHsApp.api_app.domain,
+                newHsApp.api_app.callback_url,
+            );
+
+            newIntegrationConfiguration.integrationDetails.eSignatureAppClientId = eSignatureClientId;
+            await integrationsService.updateIntegrationConfigurationById(
+                newTenantId,
+                newCompanyInfo.clientId,
+                newCompanyInfo.id,
+                newIntegrationConfiguration,
+                adminToken,
+            );
+        });
+
+        // delete old integration configuration
+        await integrationsService.deleteIntegrationConfigurationbyId(
+            oldTenantId,
+            oldCompanyInfo.clientId,
+            oldCompanyInfo.id,
+            oldIntegrationConfiguration,
+            adminToken,
+        );
+        rollbackActions.push(async () => {
+            await integrationsService.createIntegrationConfiguration(
+                oldTenantId,
+                oldCompanyInfo.clientId,
+                oldCompanyInfo.id,
+                oldCompanyInfo.companyName,
+                oldHsApp.api_app.domain,
+                oldEsignatureAppClientId,
+                adminToken,
+            );
+        });
+    } catch (error) {
+        console.error(error);
+        let action = rollbackActions.shift();
+        while (action) {
+            await action();
+            action = rollbackActions.shift();
+        }
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        throw errorService.getErrorResponse(0);
+    }
+
+    // return rollback function
+    return async () => {
+        let action = rollbackActions.shift();
+        while (action) {
+            await action();
+            action = rollbackActions.shift();
+        }
+    };
+}
+
+/**
+ * Retrieves company info by EvoCompanyCode
+ * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
+ * @param {string} companyCode: The unique code for the company
+ * @returns {Promise<CompanyDetail>}: A Promise of a company's details
+ */
+async function getCompanyInfoByEvoCompanyCode(tenantId: string, companyCode: string): Promise<CompanyDetail> {
+    console.info('companyService.getCompanyInfoByEvoCompanyCode');
+
+    try {
+        const query = new ParameterizedQuery('GetCompanyInfoByEvoCompanyCode', Queries.getCompanyInfoByEvoCompanyCode);
+        query.setParameter('@evoCompanyCode', companyCode);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        if (result.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The company code: ${companyCode} not found`);
+        }
+
+        const companyInfo: any = result.recordset.map((entry) => {
+            return {
+                id: entry.ID,
+                clientId: entry.PRIntegration_ClientID,
+                companyName: entry.CompanyName,
+            };
+        })[0];
+
+        return companyInfo;
+    } catch (e) {
+        throw e;
     }
 }
 

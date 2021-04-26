@@ -6,3 +6,9 @@ export interface ICompany {
     evoCompanyCode?: string;
     logoUrl?: string;
 }
+
+export type CompanyDetail = {
+    clientId: string;
+    name: string;
+    domain: string;
+};

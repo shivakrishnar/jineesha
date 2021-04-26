@@ -7,8 +7,8 @@ import * as mockData from '../integrations/esignature/unit-tests/mock-data';
 import * as paginationService from '../pagination/pagination.service';
 import * as hellosignService from '../remote-services/hellosign.service';
 import * as integrationsService from '../remote-services/integrations.service';
-import * as utilService from '../util.service';
 import * as ssoService from '../remote-services/sso.service';
+import * as utilService from '../util.service';
 
 export const setup = () => {
     (configService as any).getSecretsAwsEndpoint = jest.fn(() => {
@@ -51,20 +51,20 @@ export const setup = () => {
         return mockData.indirectClientPricingData;
     });
     (configService as any).getFromEmailAddress = jest.fn(() => {
-        return 'random@email.com'
+        return 'random@email.com';
     });
     (configService as any).getSesSmtpCredentials = jest.fn(() => {
-        return 'Mail Credents'
+        return 'Mail Credents';
     });
     (configService as any).getSesSmtpServerHost = jest.fn(() => {
-        return 'Mail Host'
+        return 'Mail Host';
     });
     (configService as any).getSesSmtpServerPort = jest.fn(() => {
-        return '12345'
+        return '12345';
     });
-    
+
     (utilService as any).getPayrollApiCredentials = jest.fn(() => {
-        return { evoApiUsername: 'username', evoApiPassword: 'pass' } as IPayrollApiCredentials
+        return { evoApiUsername: 'username', evoApiPassword: 'pass' } as IPayrollApiCredentials;
     });
 
     (utilService as any).getSecret = jest.fn((params: any) => {
@@ -135,6 +135,10 @@ export const setup = () => {
         return;
     });
 
+    (hellosignService as any).updateApplicationForCompany = jest.fn((params: any) => {
+        return;
+    });
+
     (integrationsService as any).getIntegrationConfigurationByCompany = jest.fn((params: any) => {
         return { integrationDetails: { eSignatureAppClientId: '1234' } };
     });
@@ -156,7 +160,7 @@ export const setup = () => {
     });
 
     (ssoService as any).getAccessToken = jest.fn((params: any) => {
-        return 'randomaccessmemory'
+        return 'randomaccessmemory';
     });
 
     (tenantsService as any).listConnectionStrings = jest.fn((params: any) => {

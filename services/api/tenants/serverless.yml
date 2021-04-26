@@ -32,6 +32,10 @@ provider:
     pageLimitDefault: 30
     pageLimitMax: 100
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
+    tenantAdminCredentialsId: ${file(${self:custom.configFile}):tenantAdminCredentialsId}
+    goldilocksTenantId: ${file(${self:custom.configFile}):goldilocksTenantId}
+    integrationId: ${file(${self:custom.configFile}):integrationId}
+    eSignatureApiCredentialsId: ${file(${self:custom.configFile}):eSignatureApiCredentialsId}
 
   iamRoleStatements:
     - Effect: Allow
@@ -183,6 +187,15 @@ functions:
             cors:
               origin: '*'
 
+  updateCompany:
+    handler: src/handler.companyUpdate
+    events:
+      - http:
+          path: /tenants/{tenantId}/companies/{companyId}
+          method: patch
+          cors:
+            origin: '*'
+            
   getCompanyById:
     handler: src/handler.getCompanyById
     events:

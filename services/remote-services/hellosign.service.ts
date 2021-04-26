@@ -2,6 +2,11 @@ import * as request from 'request-promise-native';
 import * as configService from '../config.service';
 import * as utilService from '../util.service';
 
+export type HelloSignApplication = {
+    name?: string;
+    domain?: string;
+};
+
 export async function createApplicationForCompany(companyId: string, domain: string, eventCallbackUrl: string): Promise<any> {
     console.info('hellosignService.createApplicationForCompany');
 
@@ -21,6 +26,40 @@ export async function createApplicationForCompany(companyId: string, domain: str
     } catch (e) {
         console.log(e);
         throw new Error('Unable to create eSignature application');
+    }
+}
+
+export async function getApplicationForCompany(clientId: string): Promise<any> {
+    console.info('hellosignService.getApplicationForCompany');
+
+    try {
+        const apiKey = JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey;
+        const url = `https://${apiKey}:@api.hellosign.com/v3/api_app/${clientId}`;
+
+        return await request.get({
+            url,
+        });
+    } catch (e) {
+        console.log(e);
+        throw new Error('Unable to retrieve eSignature application');
+    }
+}
+
+export async function updateApplicationForCompany(clientId: string, body: HelloSignApplication): Promise<any> {
+    console.info('hellosignService.updateApplicationForCompany');
+
+    try {
+        const apiKey = JSON.parse(await utilService.getSecret(configService.getEsignatureApiCredentials())).apiKey;
+        const url = `https://${apiKey}:@api.hellosign.com/v3/api_app/${clientId}`;
+
+        return await request.post({
+            url,
+            json: true,
+            body,
+        });
+    } catch (e) {
+        console.log(e);
+        throw new Error('Unable to update eSignature application');
     }
 }
 
