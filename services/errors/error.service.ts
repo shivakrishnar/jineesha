@@ -108,6 +108,13 @@ function errorMessages(): ErrorMessage[] {
       "message": "The database contains bad data.",
       "developerMessage": "",
       "moreInfo": ""
+    },
+    {
+      "statusCode": 422,
+      "code": 71,
+      "message": "Invalid patch operation supplied.",
+      "developerMessage": "",
+      "moreInfo": ""
     }
   ]`);
 }

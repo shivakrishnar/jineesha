@@ -3,19 +3,22 @@ import * as configService from '../config.service';
 
 const baseUrl = `${configService.getApiDomain()}`;
 
+export enum ssoRoles {
+    tenantAdmin = 'asure.tenant-admin',
+}
 
 export type SsoAccount = {
     modifiedAt?: string,
     tenantId?: string,
     createdAt?: string,
     clients?: number[],
-    email: string,
+    email?: string,
     createdBy?: any,
     enabled?: boolean,
-    surname: string,
-    username: string,
+    surname?: string,
+    username?: string,
     id?: string,
-    givenName: string,
+    givenName?: string,
     modifiedBy?: any,
     href?: string,
     password?: string,
@@ -33,6 +36,38 @@ export async function getAccessToken(tenantId: string, token: string, username: 
                 password,
             },
             headers: { Authorization: `Bearer ${token}` },
+            json: true,
+        });
+        return result.access_token;
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+export async function getRoleAccessTokenByClientCredentials(
+    apiKey: string,
+    apiSecret: string,
+    audience: string,
+    roleName: string,
+    roleTenantId: string
+): Promise<string> {
+    console.log('ssoService.getRoleAccessTokenByClientCredentials');
+    const apiUrl = `${baseUrl}/identity/tenants/${configService.getGoldilocksTenantId()}/oauth/token`;
+    try {
+        const result = await request.post({
+            url: apiUrl,
+            body: {
+                grant_type: 'CLIENT_CREDENTIALS',
+                apiKey,
+                apiSecret,
+                audience,
+                assumeRole: {
+                    roleName,
+                    params: {
+                        tenantId: roleTenantId
+                    }
+                }
+            },
             json: true,
         });
         return result.access_token;
@@ -127,6 +162,33 @@ export async function createSsoAccount(tenantId: string, accountDetails: SsoAcco
     });
 
     return response;
+}
+
+export async function getSsoAccountById(id: string, tenantId: string, token: string): Promise<SsoAccount> {
+    console.info('ssoService.getSsoAccountById');
+
+    const apiUrl = `${baseUrl}/identity/tenants`;
+
+    const response = await request.get({
+        url: `${apiUrl}/${tenantId}/accounts/${id}`,
+        headers: { Authorization: `Bearer ${token}` },
+        json: true,
+    });
+
+    return response;
+}
+
+export async function updateSsoAccountById(id: string, tenantId: string, accountDetails: SsoAccount, token: string): Promise<void> {
+    console.info('ssoService.getSsoAccountById');
+
+    const apiUrl = `${baseUrl}/identity/tenants`;
+
+    await request.patch({
+        url: `${apiUrl}/${tenantId}/accounts/${id}`,
+        headers: { Authorization: `Bearer ${token}` },
+        json: true,
+        body: accountDetails,
+    });
 }
 
 export async function addRoleToAccount(tenantId: string, accountId: string, roleId: string, token: string): Promise<any> {

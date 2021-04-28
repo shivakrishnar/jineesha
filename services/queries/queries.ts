@@ -160,6 +160,8 @@ export const Queries = {
 
     // Users
     getUserById: fs.readFileSync(path.join(basePath, 'users/getUserById.sql')).toString(),
+    getUserSsoIdByEvoCompanyCode: fs.readFileSync(path.join(basePath, 'users/getUserSsoIdByEvoCompanyCode.sql')).toString(),
+    updateUserSsoIdById: fs.readFileSync(path.join(basePath, 'users/updateUserSsoIdById.sql')).toString(),
 
     // JazzHR Applicant Tracking
     applicantCreate: fs.readFileSync(path.join(basePath, 'applicant-tracking/createApplicant.sql')).toString(),

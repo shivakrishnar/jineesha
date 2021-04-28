@@ -875,6 +875,12 @@ export async function generateAdminToken(): Promise<string> {
     return await ssoService.getAccessTokenByClientCredentials(credentials.apiKey, credentials.apiSecret, credentials.audience);
 }
 
+export async function generateAssumedRoleToken(roleName: string, roleTenantId: string): Promise<string> {
+    console.info('util.service.generateAssumedRoleToken');
+    const credentials = JSON.parse(await getSecret(configService.getTenantAdminCredentialsId()));
+    return await ssoService.getRoleAccessTokenByClientCredentials(credentials.apiKey, credentials.apiSecret, credentials.audience, roleName, roleTenantId);
+}
+
 /**
  * Removes special characters in an S3 object name.
  * Reference: https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html
