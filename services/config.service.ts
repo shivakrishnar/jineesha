@@ -20,6 +20,10 @@ export const getEvoHrGroupCompany = () => process.env.evoHrGroupCompany;
 
 export const getEvoHrGlobalAdmin = () => process.env.evoHrGlobalAdmin;
 
+export const getTlmReadRole = () => process.env.tlmReadRole;
+
+export const getTlmWriteRole = () => process.env.tlmWriteRole;
+
 export const getApiSecretId = () => process.env.apiSecretId;
 
 export const getSecretsAwsEndpoint = () => process.env.secretsAwsEndPoint;

@@ -43,6 +43,8 @@ export async function addHrGlobalAdminAccount(tenantId: string, accountId: strin
         //       However, SSO account-related apis only support querying for an account by id and not username or email.
         const createdAccount = await ssoService.createSsoAccount(tenantId, accountDetails, accessToken);
         await ssoService.addRoleToAccount(tenantId, createdAccount.id, configService.getEvoHrGlobalAdmin(), accessToken);
+        await ssoService.addRoleToAccount(tenantId, createdAccount.id, configService.getTlmReadRole(), accessToken);
+        await ssoService.addRoleToAccount(tenantId, createdAccount.id, configService.getTlmWriteRole(), accessToken);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
