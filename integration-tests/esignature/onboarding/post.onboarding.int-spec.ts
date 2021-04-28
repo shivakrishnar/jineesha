@@ -31,7 +31,7 @@ describe('create onboarding signature requests', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -47,7 +47,7 @@ describe('create onboarding signature requests', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -63,7 +63,7 @@ describe('create onboarding signature requests', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/requests/onboarding`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/requests/onboarding`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -85,7 +85,7 @@ describe('create onboarding signature requests', () => {
             name: 'Cuong Lai',
             employeeCode: '1234',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -107,7 +107,7 @@ describe('create onboarding signature requests', () => {
             name: 'Cuong Lai',
             employeeCode: '1234',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -128,7 +128,7 @@ describe('create onboarding signature requests', () => {
             name: 'Cuong Lai',
             employeeCode: '1234',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -143,7 +143,7 @@ describe('create onboarding signature requests', () => {
     });
 
     test.skip('must return a 201 when onboarding signature requests are created', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/requests/onboarding`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')

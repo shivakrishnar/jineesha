@@ -8,7 +8,7 @@ export class Applicant {
 
 /**
  * @class: Candidate
- * @description: A class representing Candidate 
+ * @description: A class representing Candidate
  */
 
 export class Candidate {
@@ -18,7 +18,7 @@ export class Candidate {
 
 /**
  * @class: Person
- * @description: A class representing Personal Information 
+ * @description: A class representing Personal Information
  */
 export class Person {
     id: ID;
@@ -31,7 +31,7 @@ export class Person {
 
 /**
  * @class: Communication
- * @description: A class representing Communication Details 
+ * @description: A class representing Communication Details
  */
 export class Communication {
     address: Address[];
@@ -42,10 +42,10 @@ export class Communication {
 
 /**
  * @class: Address
- * @description: A class representing Address  
+ * @description: A class representing Address
  */
 export class Address {
-    city: string= '';
+    city = '';
     countrySubdivisions: CountrySubdivision[];
     formattedAddress: string;
     line: string;
@@ -54,7 +54,7 @@ export class Address {
 
 /**
  * @class: CountrySubdivision
- * @description: A class representing State   
+ * @description: A class representing State
  */
 export class CountrySubdivision {
     type: string;
@@ -63,7 +63,7 @@ export class CountrySubdivision {
 
 /**
  * @class: Email
- * @description: A class representing Email address   
+ * @description: A class representing Email address
  */
 export class Email {
     address: string;
@@ -71,7 +71,7 @@ export class Email {
 
 /**
  * @class: Phone
- * @description: A class representing Phone  
+ * @description: A class representing Phone
  */
 export class Phone {
     formattedNumber: string;
@@ -79,7 +79,7 @@ export class Phone {
 
 /**
  * @class: ID
- * @description: A class representing ID  
+ * @description: A class representing ID
  */
 export class ID {
     value: string;
@@ -89,7 +89,7 @@ export class ID {
 
 /**
  * @class: Name
- * @description: A class representing Name  
+ * @description: A class representing Name
  */
 export class Name {
     given: string;
@@ -99,7 +99,7 @@ export class Name {
 
 /**
  * @class: Profile
- * @description: A class representing Profile  
+ * @description: A class representing Profile
  */
 export class Profile {
     languageCode: string;
@@ -111,7 +111,7 @@ export class Profile {
 
 /**
  * @class: AssociatedPositionOpening
- * @description: A class representing AssociatedPositionOpening  
+ * @description: A class representing AssociatedPositionOpening
  */
 export class AssociatedPositionOpening {
     positionOpeningId: ID;
@@ -122,7 +122,7 @@ export class AssociatedPositionOpening {
 
 /**
  * @class: CandidateStatus
- * @description: A class representing CandidateStatus  
+ * @description: A class representing CandidateStatus
  */
 export class CandidateStatus {
     name: string;
@@ -132,7 +132,7 @@ export class CandidateStatus {
 
 /**
  * @class: Attachment
- * @description: A class representing Attachment  
+ * @description: A class representing Attachment
  */
 export class Attachment {
     id: ID;
@@ -142,7 +142,7 @@ export class Attachment {
 
 /**
  * @class: Education
- * @description: A class representing Education  
+ * @description: A class representing Education
  */
 export class Education {
     educationLevelCodes: EducationLevelCode[];
@@ -150,7 +150,7 @@ export class Education {
 
 /**
  * @class: EducationLevelCode
- * @description: A class representing EducationLevelCode  
+ * @description: A class representing EducationLevelCode
  */
 export class EducationLevelCode {
     name: string;

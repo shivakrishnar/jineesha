@@ -74,7 +74,7 @@ describe('get direct deposits', () => {
 
         test(`must return a 401 when attempting to get another employee's direct deposits`, (done) => {
             const anotherEmployeeId = 1;
-            const restrictedAccessUri: string = `/tenants/${configs.tenantId}/companies/${
+            const restrictedAccessUri = `/tenants/${configs.tenantId}/companies/${
                 configs.companyId
             }/employees/${anotherEmployeeId}/direct-deposits`;
             request(baseUri)
@@ -91,7 +91,7 @@ describe('get direct deposits', () => {
 
         test('must return a 404 when the tenant id is non-existent', (done) => {
             const invalidTenantId = uuidV4();
-            const unknownTenantUri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
+            const unknownTenantUri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
                 configs.employeeId
             }/direct-deposits`;
             request(baseUri)

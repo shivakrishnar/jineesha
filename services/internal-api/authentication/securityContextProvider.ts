@@ -8,8 +8,13 @@ import * as utilService from '../../util.service';
 import { SecurityContext } from './securityContext';
 
 export class SecurityContextProvider {
-
-    getSecurityContext = async ({ event, allowAnonymous }: { event: Partial<APIGatewayEvent>, allowAnonymous?: boolean }): Promise<SecurityContext> => {
+    getSecurityContext = async ({
+        event,
+        allowAnonymous,
+    }: {
+        event: Partial<APIGatewayEvent>;
+        allowAnonymous?: boolean;
+    }): Promise<SecurityContext> => {
         console.info('SecurityContextProvider.getSecurityContext');
 
         try {
@@ -46,7 +51,6 @@ export class SecurityContextProvider {
                     const hrScope = await this.getHrScope(account.tenantId, accessToken);
                     scope.push(...hrScope);
                 }
-
             } else {
                 // V2 access token
                 console.log('Verifying a V2 access token');
@@ -67,12 +71,11 @@ export class SecurityContextProvider {
             const roleMemberships = utilService.parseRoles(scope);
 
             return new SecurityContext(account, roleMemberships, accessToken, tokenPolicy);
-
         } catch (e) {
             console.error(`Authentication failed: ${e.message}`);
             throw errorService.notAuthenticated();
         }
-    }
+    };
 
     private async getHrScope(tenantId: string, accessToken: string): Promise<string[]> {
         console.info('SecurityContextProvider.getHrScope');

@@ -37,7 +37,7 @@ describe('delete company document', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${createdDocument.id}`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${createdDocument.id}`;
         request(baseUri)
             .delete(uri)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -51,7 +51,7 @@ describe('delete company document', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents/${createdDocument.id}`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/documents/${createdDocument.id}`;
         request(baseUri)
             .delete(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -66,7 +66,7 @@ describe('delete company document', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents/${createdDocument.id}`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/documents/${createdDocument.id}`;
         request(baseUri)
             .delete(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -81,7 +81,7 @@ describe('delete company document', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/documents/${createdDocument.id}`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/documents/${createdDocument.id}`;
         request(baseUri)
             .delete(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -96,7 +96,7 @@ describe('delete company document', () => {
 
     test('must return a 404 if documentId is invalid', (done) => {
         const invalidDocumentId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${invalidDocumentId}`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${invalidDocumentId}`;
         request(baseUri)
             .delete(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -110,9 +110,7 @@ describe('delete company document', () => {
     });
 
     test('must return a 404 if documentId is not found', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${
-            configs.esignature.nonExistingDocumentId
-        }`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${configs.esignature.nonExistingDocumentId}`;
         request(baseUri)
             .delete(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -126,7 +124,7 @@ describe('delete company document', () => {
     });
 
     test('must return a 204 when a non-e-signature company document is deleted', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${createdDocument.id}`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${createdDocument.id}`;
         request(baseUri)
             .delete(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -153,7 +151,7 @@ describe('delete employee document', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             createdDocument.id
         }`;
         request(baseUri)
@@ -169,7 +167,7 @@ describe('delete employee document', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             createdDocument.id
         }`;
         request(baseUri)
@@ -186,7 +184,7 @@ describe('delete employee document', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             createdDocument.id
         }`;
         request(baseUri)
@@ -203,7 +201,7 @@ describe('delete employee document', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/documents/${
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/documents/${
             createdDocument.id
         }`;
         request(baseUri)
@@ -220,7 +218,7 @@ describe('delete employee document', () => {
 
     test('must return a 404 if employeeID is not found', (done) => {
         const unknownEmployeeId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${unknownEmployeeId}/documents/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${unknownEmployeeId}/documents/${
             createdDocument.id
         }`;
         request(baseUri)
@@ -237,7 +235,7 @@ describe('delete employee document', () => {
 
     test('must return a 404 if documentId is invalid', (done) => {
         const invalidDocumentId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
             configs.employeeId
         }/documents/${invalidDocumentId}`;
         request(baseUri)
@@ -253,7 +251,7 @@ describe('delete employee document', () => {
     });
 
     test('must return a 404 if documentId is not found', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             configs.esignature.nonExistingDocumentId
         }`;
         request(baseUri)
@@ -269,7 +267,7 @@ describe('delete employee document', () => {
     });
 
     test.skip('must return a 204 when a non-signature employee document is deleted', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             createdDocument.id
         }`;
         request(baseUri)

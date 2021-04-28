@@ -30,17 +30,16 @@ describe('Configuring Webhook in JazzHR', () => {
             requestBody: jzMockCallbackData.jzRequestBody,
         };
 
-        return eventCallbackDelegate(handlerInput)
-            .catch((error: any) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(400);
-                expect(error.code).toEqual(30);
-                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-                const developerMessage = 'Unsupported query parameter(s) supplied';
-                expect(error.developerMessage).toEqual(developerMessage);
-                const moreInfo = 'Available query parameters: id. See documentation for usage.';
-                expect(error.moreInfo).toEqual(moreInfo);
-            });
+        return eventCallbackDelegate(handlerInput).catch((error: any) => {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error.statusCode).toEqual(400);
+            expect(error.code).toEqual(30);
+            expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+            const developerMessage = 'Unsupported query parameter(s) supplied';
+            expect(error.developerMessage).toEqual(developerMessage);
+            const moreInfo = 'Available query parameters: id. See documentation for usage.';
+            expect(error.moreInfo).toEqual(moreInfo);
+        });
     });
 
     test('returns 400 error.Not authorized when delimiter is missing in query string value format', () => {
@@ -50,17 +49,16 @@ describe('Configuring Webhook in JazzHR', () => {
             requestBody: jzMockCallbackData.jzRequestBody,
         };
 
-        return eventCallbackDelegate(handlerInput)
-            .catch((error: any) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(400);
-                expect(error.code).toEqual(30);
-                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-                const developerMessage = 'Unsupported value';
-                expect(error.developerMessage).toContain(developerMessage);
-                const moreInfo = 'Value format for id: tenantId_companyId.';
-                expect(error.moreInfo).toEqual(moreInfo);
-            });
+        return eventCallbackDelegate(handlerInput).catch((error: any) => {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error.statusCode).toEqual(400);
+            expect(error.code).toEqual(30);
+            expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+            const developerMessage = 'Unsupported value';
+            expect(error.developerMessage).toContain(developerMessage);
+            const moreInfo = 'Value format for id: tenantId_companyId.';
+            expect(error.moreInfo).toEqual(moreInfo);
+        });
     });
 
     test('returns 401 error.Not authorized when request is without JazzHR special header', () => {
@@ -70,14 +68,13 @@ describe('Configuring Webhook in JazzHR', () => {
             requestBody: jzMockCallbackData.jzRequestBody,
         };
 
-        return eventCallbackDelegate(handlerInput)
-            .catch((error: any) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(401);
-                expect(error.code).toEqual(11);
-                expect(error.message).toEqual('User is not authorized.');
-                const developerMessage = 'The user does not have authorization to use this endpoint.';
-                expect(error.developerMessage).toEqual(developerMessage);
-            });
+        return eventCallbackDelegate(handlerInput).catch((error: any) => {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error.statusCode).toEqual(401);
+            expect(error.code).toEqual(11);
+            expect(error.message).toEqual('User is not authorized.');
+            const developerMessage = 'The user does not have authorization to use this endpoint.';
+            expect(error.developerMessage).toEqual(developerMessage);
+        });
     });
 });

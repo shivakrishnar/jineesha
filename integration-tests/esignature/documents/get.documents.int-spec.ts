@@ -31,9 +31,7 @@ describe('list company documents', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${
-            configs.companyId
-        }/esignatures/documents?category=onboarding&categoryId=80`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/documents?category=onboarding&categoryId=80`;
         request(baseUri)
             .get(uri)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -47,9 +45,7 @@ describe('list company documents', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${
-            configs.companyId
-        }/esignatures/documents?category=onboarding&categoryId=80`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/documents?category=onboarding&categoryId=80`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -64,9 +60,7 @@ describe('list company documents', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${
-            configs.companyId
-        }/esignatures/documents?category=onboarding&categoryId=80`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/documents?category=onboarding&categoryId=80`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -81,9 +75,7 @@ describe('list company documents', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${
-            configs.tenantId
-        }/companies/${unknownCompanyId}/esignatures/documents?category=onboarding&categoryId=80`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/documents?category=onboarding&categoryId=80`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -98,9 +90,7 @@ describe('list company documents', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${
-            configs.tenantId
-        }/companies/${unknownCompanyId}/esignatures/documents?category=onboarding&categoryId=80`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/documents?category=onboarding&categoryId=80`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -115,7 +105,7 @@ describe('list company documents', () => {
 
     describe('list HelloSign documents', () => {
         test.skip('must return a 204 when no templates exist', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${
+            const uri = `/tenants/${configs.tenantId}/companies/${
                 configs.esignature.companyWithNoData
             }/esignatures/documents?category=onboarding&categoryId=80&docType=hellosign`;
             request(baseUri)
@@ -131,7 +121,7 @@ describe('list company documents', () => {
         });
 
         test('must return a 200 when templates exist', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${
+            const uri = `/tenants/${configs.tenantId}/companies/${
                 configs.companyId
             }/esignatures/documents?category=onboarding&categoryId=80&docType=hellosign`;
             request(baseUri)
@@ -149,7 +139,7 @@ describe('list company documents', () => {
 
     describe('list legacy documents', () => {
         test.skip('must return a 200 when legacy documents exist', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${
+            const uri = `/tenants/${configs.tenantId}/companies/${
                 configs.companyId
             }/esignatures/documents?category=onboarding&categoryId=80&docType=original`;
             request(baseUri)
@@ -167,7 +157,7 @@ describe('list company documents', () => {
 
     describe('list consolidated documents', () => {
         test('must return a 200 when HelloSign templates and legacy documents exist', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${
+            const uri = `/tenants/${configs.tenantId}/companies/${
                 configs.companyId
             }/esignatures/documents?category=onboarding&categoryId=80`;
             request(baseUri)

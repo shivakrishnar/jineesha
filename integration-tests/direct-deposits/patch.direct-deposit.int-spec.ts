@@ -66,9 +66,7 @@ describe('patch direct deposit', () => {
 
     test('must return a 401 when an employee attempts to update a direct deposit for another employee', (done) => {
         const anotherEmployeeId = 1;
-        const restrictedUri: string = `/tenants/${configs.tenantId}/companies/${
-            configs.companyId
-        }/employees/${anotherEmployeeId}/direct-deposits`;
+        const restrictedUri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${anotherEmployeeId}/direct-deposits`;
 
         request(baseUri)
             .patch(`${restrictedUri}/${directDeposit.id}`)
@@ -86,7 +84,7 @@ describe('patch direct deposit', () => {
 
     test('must return a 404 when the tenant id is non-existent', (done) => {
         const invalidTenantId = uuidV4();
-        const unknownTenantUri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
+        const unknownTenantUri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
             configs.employeeId
         }/direct-deposits`;
         request(baseUri)

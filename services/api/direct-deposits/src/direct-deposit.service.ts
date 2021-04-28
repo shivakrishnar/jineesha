@@ -649,7 +649,6 @@ async function getEvolutionKeys(tenantId: string, directDepositId: number): Prom
  */
 function applyDirectDepositBusinessRules(ed: any, amount: number, amountType: string): any {
     switch (amountType) {
-        // tslint:disable no-null-keyword
         case 'Balance Remainder':
             ed.deductWholeCheck = true;
             ed.calculation.method = 'None';
@@ -687,8 +686,6 @@ function applyDirectDepositBusinessRules(ed: any, amount: number, amountType: st
     ed.garnishment.minimumWageMultiplier = null;
     ed.garnishment.maximumPercentage = null;
     ed.target.action = 'None';
-
-    // tslint:enable no-null-keyword
 
     return ed;
 }

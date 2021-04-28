@@ -36,7 +36,7 @@ describe('get tenant e-signature data', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/esignatures`;
+        const uri = `/tenants/${configs.tenantId}/esignatures`;
         request(baseUri)
             .get(uri)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -50,7 +50,7 @@ describe('get tenant e-signature data', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/requests`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/requests`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -65,7 +65,7 @@ describe('get tenant e-signature data', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/esignatures`;
+        const uri = `/tenants/${unknownTenantId}/esignatures`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -79,7 +79,7 @@ describe('get tenant e-signature data', () => {
     });
 
     test('must return a 200 if tenant exists', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/esignatures`;
+        const uri = `/tenants/${configs.tenantId}/esignatures`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)

@@ -37,11 +37,11 @@ export class Query implements IQuery {
         return new Query(newName, combinedValue);
     }
 
-    public appendFilter(condition: string, appendToExistingWhereClause: boolean = true): void {
+    public appendFilter(condition: string, appendToExistingWhereClause = true): void {
         this._query = this._query.concat(`${appendToExistingWhereClause ? ' and ' : ' '}${condition}`);
     }
 
-    public combineQueries(queryToCombine: Query, combineName: boolean = true): void {
+    public combineQueries(queryToCombine: Query, combineName = true): void {
         if (combineName) {
             this._name = `${this._name} ${queryToCombine.name}`;
         }

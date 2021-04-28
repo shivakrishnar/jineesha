@@ -79,7 +79,7 @@ export async function retrievePaginationData(
  * @param {boolean} useMaxLimit: Determines whether or not to use the maximum limit.
  * @returns {Promise<Query>}: Promise of a paginated query
  */
-export async function appendPaginationFilter(query: Query, page: number = 1, useMaxLimit: boolean = false): Promise<Query> {
+export async function appendPaginationFilter(query: Query, page = 1, useMaxLimit = false): Promise<Query> {
     console.info('paginationService.appendPaginationFilter');
 
     const limit = useMaxLimit ? configService.getPageLimitMax() : configService.getPageLimitDefault();

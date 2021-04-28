@@ -26,10 +26,10 @@
         "request": "^2.88.0",
         "request-promise-native": "^1.0.5",
         "speakeasy": "^2.0.0",
+        "superagent": "^3.5.2",
         "uid-generator": "^1.0.0",
         "uuid": "^3.0.1",
-        "yup": "^0.26.6",
-        "superagent": "^3.5.2"
+        "yup": "^0.26.6"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.17",
@@ -60,9 +60,6 @@
         "supertest": "~3.0.0",
         "ts-jest": "^21.2.4",
         "ts-loader": "^4.5.0",
-        "tslint": "^5.4.0",
-        "tslint-config-prettier": "^1.17.0",
-        "tslint-consistent-codestyle": "^1.4.0",
         "typescript": "^3.0.1",
         "typescript-with-globs": "^0.1.4",
         "webpack": "^4.16.5",

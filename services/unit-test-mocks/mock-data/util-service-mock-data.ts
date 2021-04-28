@@ -65,8 +65,8 @@ export const context: Context = {
     },
 };
 
-export const fileName: string = 'object.pdf';
-export const s3Key: string = `${mockData.tenantId}/${mockData.companyId}/${mockData.employeeId}`;
-export const updatedFileName: string = 'object-123.pdf';
-export const updatedS3Key: string = `${s3Key}/object-123.pdf`;
+export const fileName = 'object.pdf';
+export const s3Key = `${mockData.tenantId}/${mockData.companyId}/${mockData.employeeId}`;
+export const updatedFileName = 'object-123.pdf';
+export const updatedS3Key = `${s3Key}/object-123.pdf`;
 export const updatedObjectData: string[] = [updatedFileName, updatedS3Key];

@@ -32,7 +32,7 @@ describe('list companies', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies`;
+        const uri = `/tenants/${configs.tenantId}/companies`;
         request(baseUri)
             .get(uri)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -45,7 +45,7 @@ describe('list companies', () => {
     });
 
     test('must return a 401 if an invalid token is provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies`;
+        const uri = `/tenants/${configs.tenantId}/companies`;
         request(baseUri)
             .get(uri)
             .set('Authorization', 'Bearer x8984399kjr')
@@ -60,7 +60,7 @@ describe('list companies', () => {
 
     test('must return a 400 if tenant ID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies`;
+        const uri = `/tenants/${invalidTenantId}/companies`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -75,7 +75,7 @@ describe('list companies', () => {
 
     test('must return a 404 if tenant ID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies`;
+        const uri = `/tenants/${unknownTenantId}/companies`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -89,7 +89,7 @@ describe('list companies', () => {
     });
 
     test('must return a 200 if the tenant has companies', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies`;
+        const uri = `/tenants/${configs.tenantId}/companies`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import 'reflect-metadata'; // required by asure.auth dependency
 
 import * as errorService from '../../../errors/error.service';
@@ -149,7 +150,6 @@ describe('esignatureService.template.list', () => {
 describe('esignatureService.template.create', () => {
     beforeEach(() => {
         setup();
-        // tslint:disable-next-line:no-require-imports
         require('fs').__forceError(false);
     });
 
@@ -168,7 +168,6 @@ describe('esignatureService.template.create', () => {
     });
 
     test('returns a 500 if an error occurs while creating a temp directory', async () => {
-        // tslint:disable-next-line:no-require-imports
         require('fs').__forceError('mkdir');
         return await esignatureService
             .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
@@ -182,7 +181,6 @@ describe('esignatureService.template.create', () => {
     });
 
     test('returns a 500 if an error occurs while creating a file', async () => {
-        // tslint:disable-next-line:no-require-imports
         require('fs').__forceError('writeFile');
         return await esignatureService
             .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
@@ -202,7 +200,6 @@ describe('esignatureService.template.create', () => {
             }
         });
 
-        // tslint:disable-next-line:no-require-imports
         require('fs').__forceError('unlink');
         return await esignatureService
             .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
@@ -223,7 +220,6 @@ describe('esignatureService.template.create', () => {
             }
         });
 
-        // tslint:disable-next-line:no-require-imports
         require('fs').__forceError('rmdir');
         return await esignatureService
             .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)

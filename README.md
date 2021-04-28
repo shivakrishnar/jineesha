@@ -58,3 +58,8 @@ _To execute the integration tests and see code coverage, run: `jest -c jest.inte
 #### Documentation Tools
 
 This repo makes use of Architectual Decision Records (ADRs). We manage these ADRs using adr-tools which can be found [here](https://github.com/npryce/adr-tools). The records themselves can be reviewed in the `./docs/adr` directory of this repo. ADR 1 and 2 document these decisions.
+
+#### How to Run the Linter
+
+'npm run lint' will lint TS files
+Use node V 12 or above for linting and commiting

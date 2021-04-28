@@ -39,7 +39,7 @@ describe('update company product tier', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
         request(baseUri)
             .put(uri)
             .send(simpleRequestBody)
@@ -54,7 +54,7 @@ describe('update company product tier', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
         request(baseUri)
             .put(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -70,7 +70,7 @@ describe('update company product tier', () => {
 
     test('must return a 400 if companyId is invalid', (done) => {
         const invalidCompanyId = 'abcd';
-        const uri: string = `/tenants/${configs.tenantId}/companies/${invalidCompanyId}/esignatures`;
+        const uri = `/tenants/${configs.tenantId}/companies/${invalidCompanyId}/esignatures`;
         request(baseUri)
             .put(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -86,7 +86,7 @@ describe('update company product tier', () => {
 
     test('must return a 404 if company does not exist', (done) => {
         const nonExistentCompany = '99999999';
-        const uri: string = `/tenants/${configs.tenantId}/companies/${nonExistentCompany}/esignatures`;
+        const uri = `/tenants/${configs.tenantId}/companies/${nonExistentCompany}/esignatures`;
         request(baseUri)
             .put(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -104,7 +104,7 @@ describe('update company product tier', () => {
         const requestBodyWithNonExistentId = {
             productTierId: 999999,
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
         request(baseUri)
             .put(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -122,7 +122,7 @@ describe('update company product tier', () => {
         const requestBodyWithInvalidId = {
             productTierId: 'abcd',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
         request(baseUri)
             .put(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -138,7 +138,7 @@ describe('update company product tier', () => {
 
     test('must return a 400 if productTierId is not supplied', (done) => {
         const requestBodyWithoutId = {};
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
         request(baseUri)
             .put(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -157,7 +157,7 @@ describe('update company product tier', () => {
             productTierId: 1,
             extraField: 'test',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
         request(baseUri)
             .put(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -172,7 +172,7 @@ describe('update company product tier', () => {
     });
 
     test('must return a 200 if product tier is updated to simple sign', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
         request(baseUri)
             .put(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -187,7 +187,7 @@ describe('update company product tier', () => {
     });
 
     test('must return a 200 if product tier is updated to enhanced e-signature', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyIdForProductTier}/esignatures`;
         request(baseUri)
             .put(uri)
             .set('Authorization', `Bearer ${accessToken}`)

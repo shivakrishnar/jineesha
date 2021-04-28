@@ -29,7 +29,7 @@ export class ParameterizedQuery extends Query {
             value = value.replace(/'/g, "''");
         } else {
             // If it's not, we assume a pair of starting and ending quotes are syntax not data and avoid escaping them
-            const quotedString: RegExp = /^'.*'$/;
+            const quotedString = /^'.*'$/;
             if (quotedString.test(value)) {
                 value = `'${value.substr(1, value.length - 2).replace(/'/g, "''")}'`;
             } else {

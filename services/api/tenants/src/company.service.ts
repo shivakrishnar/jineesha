@@ -394,32 +394,28 @@ async function updateHelloSignConfigurations(oldTenantId: string, evoCompanyCode
 async function getCompanyInfoByEvoCompanyCode(tenantId: string, companyCode: string): Promise<CompanyDetail> {
     console.info('companyService.getCompanyInfoByEvoCompanyCode');
 
-    try {
-        const query = new ParameterizedQuery('GetCompanyInfoByEvoCompanyCode', Queries.getCompanyInfoByEvoCompanyCode);
-        query.setParameter('@evoCompanyCode', companyCode);
-        const payload = {
-            tenantId,
-            queryName: query.name,
-            query: query.value,
-            queryType: QueryType.Simple,
-        } as DatabaseEvent;
-        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-        if (result.recordset.length === 0) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`The company code: ${companyCode} not found`);
-        }
-
-        const companyInfo: any = result.recordset.map((entry) => {
-            return {
-                id: entry.ID,
-                clientId: entry.PRIntegration_ClientID,
-                companyName: entry.CompanyName,
-            };
-        })[0];
-
-        return companyInfo;
-    } catch (e) {
-        throw e;
+    const query = new ParameterizedQuery('GetCompanyInfoByEvoCompanyCode', Queries.getCompanyInfoByEvoCompanyCode);
+    query.setParameter('@evoCompanyCode', companyCode);
+    const payload = {
+        tenantId,
+        queryName: query.name,
+        query: query.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+    if (result.recordset.length === 0) {
+        throw errorService.getErrorResponse(50).setDeveloperMessage(`The company code: ${companyCode} not found`);
     }
+
+    const companyInfo: any = result.recordset.map((entry) => {
+        return {
+            id: entry.ID,
+            clientId: entry.PRIntegration_ClientID,
+            companyName: entry.CompanyName,
+        };
+    })[0];
+
+    return companyInfo;
 }
 
 /**

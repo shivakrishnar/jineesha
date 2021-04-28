@@ -1,4 +1,4 @@
 export type BillingReportOptions = {
-    returnReport: Boolean | undefined;
-    targetEmail: String | undefined;
+    returnReport: boolean | undefined;
+    targetEmail: string | undefined;
 };

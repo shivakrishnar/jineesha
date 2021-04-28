@@ -44,7 +44,7 @@ describe('create simple sign document', () => {
     // TODO: delete created signature request after all tests run
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -60,7 +60,7 @@ describe('create simple sign document', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -77,7 +77,7 @@ describe('create simple sign document', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -94,7 +94,7 @@ describe('create simple sign document', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -111,7 +111,7 @@ describe('create simple sign document', () => {
 
     test('must return a 404 if employeeId is not found', (done) => {
         const unknownEmployeeId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${unknownEmployeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${unknownEmployeeId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -130,7 +130,7 @@ describe('create simple sign document', () => {
         const invalidRequest = {
             test: 'invalid',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -149,7 +149,7 @@ describe('create simple sign document', () => {
         const invalidRequest = {
             timeZone: 'America/New_York',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -170,7 +170,7 @@ describe('create simple sign document', () => {
             timeZone: 'America/New_York',
             extraField: 'man playing handball',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -190,7 +190,7 @@ describe('create simple sign document', () => {
             signatureRequestId: 'def does not exist',
             timeZone: 'America/New_York',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -206,7 +206,7 @@ describe('create simple sign document', () => {
     });
 
     test('must return a 201 when a simple sign document is created', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -222,7 +222,7 @@ describe('create simple sign document', () => {
     });
 
     test('must return a 422 if the document has already been signed', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -260,7 +260,7 @@ describe('create simple sign onboarding document', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/onboarding/${
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/onboarding/${
             configs.esignature.onboardingWithSimpleSignDocuments.key
         }/documents`;
         request(baseUri)
@@ -278,7 +278,7 @@ describe('create simple sign onboarding document', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/onboarding/${
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/onboarding/${
             configs.esignature.onboardingWithSimpleSignDocuments.key
         }/documents`;
         request(baseUri)
@@ -296,7 +296,7 @@ describe('create simple sign onboarding document', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/onboarding/${
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/onboarding/${
             configs.esignature.onboardingWithSimpleSignDocuments.key
         }/documents`;
         request(baseUri)
@@ -314,7 +314,7 @@ describe('create simple sign onboarding document', () => {
 
     test('must return a 400 if onboarding key is invalid', (done) => {
         const unknownOnboardingKey = '999999999';
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${unknownOnboardingKey}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${unknownOnboardingKey}/documents`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -330,7 +330,7 @@ describe('create simple sign onboarding document', () => {
 
     test('must return a 404 if onboarding key is not found', (done) => {
         const unknownOnboardingKey = uuidV4();
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${unknownOnboardingKey}/documents`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${unknownOnboardingKey}/documents`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -348,7 +348,7 @@ describe('create simple sign onboarding document', () => {
         const invalidRequest = {
             test: 'invalid',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
             configs.esignature.onboardingWithSimpleSignDocuments.key
         }/documents`;
         request(baseUri)
@@ -368,7 +368,7 @@ describe('create simple sign onboarding document', () => {
         const invalidRequest = {
             timeZone: 'America/New_York',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
             configs.esignature.onboardingWithSimpleSignDocuments.key
         }/documents`;
         request(baseUri)
@@ -390,7 +390,7 @@ describe('create simple sign onboarding document', () => {
             timeZone: 'America/New_York',
             extraField: 'man playing handball',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
             configs.esignature.onboardingWithSimpleSignDocuments.key
         }/documents`;
         request(baseUri)
@@ -411,7 +411,7 @@ describe('create simple sign onboarding document', () => {
             signatureRequestId: 'def does not exist',
             timeZone: 'America/New_York',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
             configs.esignature.onboardingWithSimpleSignDocuments.key
         }/documents`;
         request(baseUri)
@@ -429,7 +429,7 @@ describe('create simple sign onboarding document', () => {
 
     // TODO: unskip after fixing MJ-7237
     test.skip('must return a 201 when a simple sign document is created', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
             configs.esignature.onboardingWithSimpleSignDocuments.key
         }/documents`;
         request(baseUri)
@@ -447,7 +447,7 @@ describe('create simple sign onboarding document', () => {
 
     // TODO: unskip after fixing MJ-7237
     test.skip('must return a 422 if the document has already been signed', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/onboarding/${
             configs.esignature.onboardingWithSimpleSignDocuments.key
         }/documents`;
         request(baseUri)

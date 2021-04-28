@@ -12,29 +12,26 @@ jest.mock('jsonwebtoken');
 describe('notification.service.request', () => {
     beforeEach(() => {
         setup();
-        (jwt.decode as jest.Mock).mockImplementation(() => ({ applicationId: '123456' }))
+        (jwt.decode as jest.Mock).mockImplementation(() => ({ applicationId: '123456' }));
     });
-
 
     test('successfully send request email to employee', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'listAlerts') {
                 return Promise.resolve(mockData.alertDBResponse);
             } else if (payload.queryName === 'esignatureMetadata') {
-                return Promise.resolve(mockData.esignatureMetadataDBResponse)
+                return Promise.resolve(mockData.esignatureMetadataDBResponse);
             } else if (payload.queryName === 'smtpCredentials') {
-                return Promise.resolve(mockData.smtpCredentialsDBResponse)
+                return Promise.resolve(mockData.smtpCredentialsDBResponse);
             }
         });
 
         (utilService as any).getSecret = jest.fn(() => {
-            return JSON.stringify({ username: 'randomuser', password: 'randompassword' })
+            return JSON.stringify({ username: 'randomuser', password: 'randompassword' });
         });
 
-        return await notificationService
-            .processEvent(mockData.requestEvent)
-            .then((response) => {
-                expect(response).toEqual(true);
-            })  
+        return await notificationService.processEvent(mockData.requestEvent).then((response) => {
+            expect(response).toEqual(true);
+        });
     });
 });

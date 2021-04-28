@@ -32,7 +32,7 @@ describe('create template', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates`;
         request(baseUri)
             .post(uri)
             .set('Content-Type', 'application/json')
@@ -48,7 +48,7 @@ describe('create template', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/templates`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/templates`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -65,7 +65,7 @@ describe('create template', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/templates`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/templates`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -82,7 +82,7 @@ describe('create template', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/templates`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/templates`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -105,7 +105,7 @@ describe('create template', () => {
             title: 'This is the title',
             message: 'This is the message',
         };
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -121,7 +121,7 @@ describe('create template', () => {
     });
 
     test.skip('must return a 201 when a template is created', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)

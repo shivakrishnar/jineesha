@@ -6,7 +6,7 @@ const baseUri = configs.apiDomain;
 
 let accessToken: string;
 
-const esignatureConfigurationUri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures`;
+const esignatureConfigurationUri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures`;
 
 const EsignatureConfigurationOp = {
     enable: {

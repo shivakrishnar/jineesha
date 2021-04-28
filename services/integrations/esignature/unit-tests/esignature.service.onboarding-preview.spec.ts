@@ -17,13 +17,15 @@ describe('esignatureService.onboarding-preview.get', () => {
             if (payload.queryName === 'getOnboardingByKey') {
                 return Promise.resolve(mockData.onboardingDBResponse);
             } else if (payload.queryName === 'getFileMetadataByEsignatureMetadataId') {
-                return Promise.resolve(mockData.documentFileMetadataDBResponse)
+                return Promise.resolve(mockData.documentFileMetadataDBResponse);
             }
         });
 
-        return esignatureService.getOnboardingDocumentPreview(mockData.tenantId, mockData.noSignDocId, mockData.onboardingDocumentPreviewRequest).then((previewUrl) => {
-            expect(previewUrl).toEqual(mockData.nonLegacyDocumentPreviewUrlResponse);
-        });
+        return esignatureService
+            .getOnboardingDocumentPreview(mockData.tenantId, mockData.noSignDocId, mockData.onboardingDocumentPreviewRequest)
+            .then((previewUrl) => {
+                expect(previewUrl).toEqual(mockData.nonLegacyDocumentPreviewUrlResponse);
+            });
     });
 
     test('returns a 404 if the onboarding does not exist', () => {
@@ -33,13 +35,15 @@ describe('esignatureService.onboarding-preview.get', () => {
             }
         });
 
-        return esignatureService.getOnboardingDocumentPreview(mockData.tenantId, mockData.noSignDocId, mockData.onboardingDocumentPreviewRequest).catch((error) => {
-            expect(error).toBeInstanceOf(ErrorMessage);
-            expect(error.statusCode).toEqual(404);
-            expect(error.code).toEqual(50);
-            expect(error.message).toEqual('The requested resource does not exist.');
-            expect(error.developerMessage).toEqual(`No onboarding found with key ${mockData.obKey}`);
-        });
+        return esignatureService
+            .getOnboardingDocumentPreview(mockData.tenantId, mockData.noSignDocId, mockData.onboardingDocumentPreviewRequest)
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toEqual(`No onboarding found with key ${mockData.obKey}`);
+            });
     });
 
     test('returns a 422 if the company docs section is not active', () => {
@@ -49,13 +53,15 @@ describe('esignatureService.onboarding-preview.get', () => {
             }
         });
 
-        return esignatureService.getOnboardingDocumentPreview(mockData.tenantId, mockData.noSignDocId, mockData.onboardingDocumentPreviewRequest).catch((error) => {
-            expect(error).toBeInstanceOf(ErrorMessage);
-            expect(error.statusCode).toEqual(422);
-            expect(error.code).toEqual(70);
-            expect(error.message).toEqual('The database contains bad data.');
-            expect(error.developerMessage).toEqual('The Company Documents section is not active on this task list');
-        });
+        return esignatureService
+            .getOnboardingDocumentPreview(mockData.tenantId, mockData.noSignDocId, mockData.onboardingDocumentPreviewRequest)
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(422);
+                expect(error.code).toEqual(70);
+                expect(error.message).toEqual('The database contains bad data.');
+                expect(error.developerMessage).toEqual('The Company Documents section is not active on this task list');
+            });
     });
 
     test('returns a 404 if the specified document does not exist', () => {
@@ -67,13 +73,15 @@ describe('esignatureService.onboarding-preview.get', () => {
             }
         });
 
-        return esignatureService.getOnboardingDocumentPreview(mockData.tenantId, mockData.noSignDocId, mockData.onboardingDocumentPreviewRequest).catch((error) => {
-            expect(error).toBeInstanceOf(ErrorMessage);
-            expect(error.statusCode).toEqual(404);
-            expect(error.code).toEqual(50);
-            expect(error.message).toEqual('The requested resource does not exist.');
-            expect(error.developerMessage).toEqual(`Document with id ${mockData.noSignDocId} not found`);
-        });
+        return esignatureService
+            .getOnboardingDocumentPreview(mockData.tenantId, mockData.noSignDocId, mockData.onboardingDocumentPreviewRequest)
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toEqual(`Document with id ${mockData.noSignDocId} not found`);
+            });
     });
 
     test('returns a legacy document preview url', () => {
@@ -87,8 +95,10 @@ describe('esignatureService.onboarding-preview.get', () => {
             }
         });
 
-        return esignatureService.getOnboardingDocumentPreview(mockData.tenantId, mockData.legacyDocumentEncodedId, mockData.onboardingDocumentPreviewRequest).then((previewUrl) => {
-            expect(previewUrl).toEqual(mockData.legacyDocumentPreviewUrlResponse);
-        });
+        return esignatureService
+            .getOnboardingDocumentPreview(mockData.tenantId, mockData.legacyDocumentEncodedId, mockData.onboardingDocumentPreviewRequest)
+            .then((previewUrl) => {
+                expect(previewUrl).toEqual(mockData.legacyDocumentPreviewUrlResponse);
+            });
     });
 });

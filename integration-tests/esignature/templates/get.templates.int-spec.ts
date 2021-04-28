@@ -34,7 +34,7 @@ describe('list templates', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates`;
         request(baseUri)
             .get(uri)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -48,7 +48,7 @@ describe('list templates', () => {
 
     test('must return a 400 if tenantID is invalid', (done) => {
         const invalidTenantId = '99999999';
-        const uri: string = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/templates`;
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/esignatures/templates`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -63,7 +63,7 @@ describe('list templates', () => {
 
     test('must return a 404 if tenantID is not found', (done) => {
         const unknownTenantId = uuidV4();
-        const uri: string = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/templates`;
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/esignatures/templates`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -78,7 +78,7 @@ describe('list templates', () => {
 
     test('must return a 404 if companyID is not found', (done) => {
         const unknownCompanyId = 999999999;
-        const uri: string = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/templates`;
+        const uri = `/tenants/${configs.tenantId}/companies/${unknownCompanyId}/esignatures/templates`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -93,7 +93,7 @@ describe('list templates', () => {
 
     describe('list HelloSign templates', () => {
         test.skip('must return a 204 when no templates exist', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyWithNoData}/esignatures/templates`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.esignature.companyWithNoData}/esignatures/templates`;
             request(baseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -107,7 +107,7 @@ describe('list templates', () => {
         });
 
         test.skip('must return a 200 when templates exist', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates`;
             request(baseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -126,7 +126,7 @@ describe('list templates', () => {
 
     describe('list consolidated templates', () => {
         test('must return a 200 when templates and legacy documents exist', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates?consolidated=true`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates?consolidated=true`;
             request(baseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
@@ -142,9 +142,9 @@ describe('list templates', () => {
 
     describe('list filtered templates', () => {
         test('must return a 200 when templates that match the specified filter exist', (done) => {
-            const uri: string = `/tenants/${configs.tenantId}/companies/${
-                configs.companyId
-            }/esignatures/templates?consolidated=true&search=${configs.esignature.searchQueryParam}`;
+            const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/esignatures/templates?consolidated=true&search=${
+                configs.esignature.searchQueryParam
+            }`;
             request(baseUri)
                 .get(uri)
                 .set('Authorization', `Bearer ${accessToken}`)
