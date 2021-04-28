@@ -3,6 +3,24 @@ import * as configService from '../config.service';
 
 const baseUrl = `${configService.getApiDomain()}`;
 
+
+export type SsoAccount = {
+    modifiedAt?: string,
+    tenantId?: string,
+    createdAt?: string,
+    clients?: number[],
+    email: string,
+    createdBy?: any,
+    enabled?: boolean,
+    surname: string,
+    username: string,
+    id?: string,
+    givenName: string,
+    modifiedBy?: any,
+    href?: string,
+    password?: string,
+}
+
 export async function getAccessToken(tenantId: string, token: string, username: string, password: string): Promise<string> {
     console.info('ssoService.getAccessToken');
     const apiUrl = `${baseUrl}/identity/tenants/${tenantId}/oauth/token`;
@@ -93,7 +111,7 @@ export async function getRoleMemberships(tenantId: string, accountId: string, to
     return roles.filter((r: any) => r.enabled === true);
 }
 
-export async function createSsoAccount(tenantId: string, accountDetails: { [i: string]: string }, token: string): Promise<any> {
+export async function createSsoAccount(tenantId: string, accountDetails: SsoAccount, token: string): Promise<any> {
     console.info('ssoService.createSsoAccount');
 
     const apiUrl = `${baseUrl}/identity/tenants`;
