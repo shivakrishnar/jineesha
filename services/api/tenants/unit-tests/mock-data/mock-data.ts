@@ -1,4 +1,5 @@
 import { EsignatureAppConfiguration } from '../../../../remote-services/integrations.service';
+import { SsoAccount } from '../../../../remote-services/sso.service';
 import { PatchInstruction, PatchOperation } from '../../src/patchInstruction';
 
 export const oldTenantId = '1234';
@@ -9,6 +10,22 @@ export const platformIntegrationPatchInstructions: PatchInstruction[] = [
     {
         op: PatchOperation.Test,
         path: '/platform/integration',
+        value: newTenantId,
+    },
+];
+
+export const ssoAccountCopyPatchInstructions: PatchInstruction[] = [
+    {
+        op: PatchOperation.Copy,
+        path: '/sso/account',
+        value: newTenantId,
+    },
+];
+
+export const ssoAccountRemovePatchInstructions: PatchInstruction[] = [
+    {
+        op: PatchOperation.Remove,
+        path: '/sso/account',
         value: newTenantId,
     },
 ];
@@ -90,4 +107,56 @@ export const newCompanyDBResponse = {
     ],
     output: {},
     rowsAffected: [1],
+};
+
+export const usersDBResponse = {
+    recordset: [
+        {
+            ID: 1,
+            PR_Integration_PK: '1',
+        },
+        {
+            ID: 2,
+            PR_Integration_PK: '2',
+        },
+    ],
+    output: {},
+    rowsAffected: [2],
+};
+
+export const ssoAccountResponse: SsoAccount = {
+    modifiedAt: '123',
+    tenantId: '123',
+    createdAt: '123',
+    clients: [81],
+    email: 'test@test.com',
+    createdBy: 'test',
+    enabled: true,
+    surname: 'test',
+    username: 'test@test.com',
+    id: '123',
+    givenName: 'test',
+    modifiedBy: 'test',
+    href: 'test.com',
+};
+export const createdSsoAccountResponse: SsoAccount = {
+    modifiedAt: '123',
+    tenantId: '456',
+    createdAt: '123',
+    clients: [81],
+    email: 'test@test.com',
+    createdBy: 'test',
+    enabled: true,
+    surname: 'test',
+    username: 'test@test.com',
+    id: '456',
+    givenName: 'test',
+    modifiedBy: 'test',
+    href: 'test.com',
+};
+
+export const emptyDBResponse = {
+    recordset: [],
+    output: {},
+    rowsAffected: [0],
 };
