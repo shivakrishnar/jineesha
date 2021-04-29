@@ -14,6 +14,7 @@ import { ErrorMessage } from '../../../errors/errorMessage';
 import { SecurityContext } from '../../../internal-api/authentication/securityContext';
 import * as databaseService from '../../../internal-api/database/database.service';
 import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
+import { SsoAccount } from '../../../remote-services/sso.service';
 
 const teamsGood = '#4caf50';
 /**
@@ -30,7 +31,7 @@ export async function addHrGlobalAdminAccount(tenantId: string, accountId: strin
             await utilService.getSecret(configService.getPayrollApiCredentials()),
         );
 
-        const accountDetails: { [i: string]: string } = {
+        const accountDetails: SsoAccount = {
             username: evoApiUsername,
             password: evoApiPassword,
             email: evoApiUsername, // Within SSO the Global Admin username = email address

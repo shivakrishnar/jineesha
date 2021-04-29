@@ -94,6 +94,10 @@ export const setup = () => {
         return 'token';
     });
 
+    (utilService as any).generateAssumedRoleToken = jest.fn((params: any) => {
+        return 'token';
+    });
+
     (utilService as any).sanitizeForS3 = jest.fn((params: any) => {
         return 'key';
     });

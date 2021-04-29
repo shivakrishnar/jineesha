@@ -1,5 +1,6 @@
 import * as AWS from 'aws-sdk';
 import { Queries } from '../../../queries/queries';
+import * as crypto from 'crypto';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
@@ -18,6 +19,9 @@ import { EsignatureAppConfiguration } from '../../../remote-services/integration
 import * as utilService from '../../../util.service';
 import { CompanyDetail, ICompany } from './ICompany';
 import { PatchInstruction, PatchOperation } from './patchInstruction';
+import { ssoRoles, SsoAccount } from '../../../remote-services/sso.service';
+import * as pSettle from 'p-settle';
+import * as ssoService from '../../../remote-services/sso.service';
 
 /**
  * Returns a listing of companies for a specific user within a tenant
@@ -189,6 +193,9 @@ export async function companyUpdate(tenantId: string, companyCode: string, patch
             switch (instruction.path) {
                 case '/platform/integration':
                     rollbackActions.push(await updateHelloSignConfigurations(tenantId, companyCode, instruction));
+                    break;
+                case '/sso/account':
+                    rollbackActions.push(await handleSsoPatch(tenantId, companyCode, instruction));
                     break;
                 case '/test':
                     if (instruction.op === PatchOperation.Test) {
@@ -363,6 +370,167 @@ async function updateHelloSignConfigurations(oldTenantId: string, evoCompanyCode
             );
         });
     } catch (error) {
+        console.error(error);
+        let action = rollbackActions.shift();
+        while (action) {
+            await action();
+            action = rollbackActions.shift();
+        }
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        throw errorService.getErrorResponse(0);
+    }
+
+    // return rollback function
+    return async () => {
+        let action = rollbackActions.shift();
+        while (action) {
+            await action();
+            action = rollbackActions.shift();
+        }
+    };
+}
+
+async function handleSsoPatch(donorTenantId: string, companyCode: string, instruction: PatchInstruction): Promise<() => void> {
+    console.info('companyService.handleSsoPatch');
+
+    const recipientTenantId = instruction.value;
+
+    if (!recipientTenantId) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to equal newTenantId');
+    }
+
+    const supportedOperations = [PatchOperation.Copy, PatchOperation.Remove];
+    if (!supportedOperations.includes(instruction.op)) {
+        throw errorService.getErrorResponse(71).setDeveloperMessage(`Supported patch operations: ${supportedOperations.join()}`);
+    }
+
+    const rollbackActions = [];
+
+    try {
+        await Promise.all([
+            getCompanyInfoByEvoCompanyCode(donorTenantId, companyCode),
+            getCompanyInfoByEvoCompanyCode(recipientTenantId, companyCode),
+        ]);
+
+        // get all hr accounts under a company from recipient database
+        const usersQuery = new ParameterizedQuery('GetUserSsoIdByEvoCompanyCode', Queries.getUserSsoIdByEvoCompanyCode);
+        usersQuery.setStringParameter('@companyCode', companyCode);
+
+        const usersPayload = {
+            tenantId: instruction.op === PatchOperation.Remove ? donorTenantId : recipientTenantId,
+            queryName: usersQuery.name,
+            query: usersQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const usersResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            usersPayload,
+            utilService.InvocationType.RequestResponse,
+        );
+
+        if (usersResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage('No accounts found under this company');
+        }
+
+        const users = usersResult.recordset.map((record) => ({
+            id: record.ID,
+            key: record.PR_Integration_PK,
+        }));
+
+        const updatedUsers = [];
+        const actions = [];
+
+        const donorTenantToken = await utilService.generateAssumedRoleToken(ssoRoles.tenantAdmin, donorTenantId);
+        const recipientTenantToken = await utilService.generateAssumedRoleToken(ssoRoles.tenantAdmin, recipientTenantId);
+
+        for (const user of users) {
+            if (instruction.op === PatchOperation.Copy) {
+                actions.push(async () => {
+                    try {
+                        const account: SsoAccount = await ssoService.getSsoAccountById(user.key, donorTenantId, donorTenantToken);
+                        delete account.href;
+                        delete account.id;
+                        delete account.tenantId;
+                        // generate a cryptographically-secure temp password
+                        account.password = await crypto.randomBytes(8).toString('hex');
+
+                        const createdAccount: SsoAccount = await ssoService.createSsoAccount(
+                            recipientTenantId,
+                            account,
+                            recipientTenantToken,
+                        );
+                        rollbackActions.push(async () => {
+                            // Note: We cannot delete right now because the endpoint requires the user to have the asure-admin role.
+                            // Disable the account instead.
+                            const account: SsoAccount = { enabled: false };
+                            await ssoService.updateSsoAccountById(createdAccount.id, recipientTenantId, account, recipientTenantToken);
+                        });
+
+                        // update PR_Integration_PK in recipient database
+                        const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
+                        query.setStringParameter('@ssoId', createdAccount.id);
+                        query.setParameter('@userId', user.id);
+
+                        const payload = {
+                            tenantId: recipientTenantId,
+                            queryName: query.name,
+                            query: query.value,
+                            queryType: QueryType.Simple,
+                        } as DatabaseEvent;
+
+                        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+                        rollbackActions.push(async () => {
+                            const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
+                            query.setStringParameter('@ssoId', user.key);
+                            query.setParameter('@userId', user.id);
+
+                            const payload = {
+                                tenantId: recipientTenantId,
+                                queryName: query.name,
+                                query: query.value,
+                                queryType: QueryType.Simple,
+                            } as DatabaseEvent;
+
+                            await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+                        });
+
+                        updatedUsers.push(user.key);
+                    } catch (e) {
+                        console.error(`${user.key}: ${e}`);
+                    }
+                });
+            } else if (instruction.op === PatchOperation.Remove) {
+                actions.push(async () => {
+                    try {
+                        const account: SsoAccount = { enabled: false };
+                        await ssoService.updateSsoAccountById(user.key, donorTenantId, account, donorTenantToken);
+                        rollbackActions.push(async () => {
+                            account.enabled = true;
+                            await ssoService.updateSsoAccountById(user.key, donorTenantId, account, donorTenantToken);
+                        });
+                        updatedUsers.push(user.key);
+                    } catch (e) {
+                        console.error(`${user.key}: ${e}`);
+                    }
+                });
+            } else {
+                return Function;
+            }
+        }
+
+        await pSettle(actions);
+        if (updatedUsers.length !== users.length) {
+            const failedUpdates = users.filter(({ key }) => updatedUsers.indexOf(key) === -1);
+            console.log(`The following user(s) failed to update ${JSON.stringify(failedUpdates)}, attempting rollback`);
+            throw errorService
+                .getErrorResponse(0)
+                .setMoreInfo('Error occurred while performing patch operation. Check CloudWatch logs for more info.');
+        }
+    } catch (error) {
+        console.log('Update SSO accounts failed, rolling back');
         console.error(error);
         let action = rollbackActions.shift();
         while (action) {
