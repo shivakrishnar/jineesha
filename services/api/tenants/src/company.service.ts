@@ -20,7 +20,6 @@ import * as utilService from '../../../util.service';
 import { CompanyDetail, ICompany } from './ICompany';
 import { PatchInstruction, PatchOperation } from './patchInstruction';
 import { ssoRoles, SsoAccount } from '../../../remote-services/sso.service';
-import * as pSettle from 'p-settle';
 import * as ssoService from '../../../remote-services/sso.service';
 
 /**
@@ -448,7 +447,7 @@ async function handleSsoPatch(donorTenantId: string, companyCode: string, instru
 
         for (const user of users) {
             if (instruction.op === PatchOperation.Copy) {
-                actions.push(async () => {
+                const action = async () => {
                     try {
                         const account: SsoAccount = await ssoService.getSsoAccountById(user.key, donorTenantId, donorTenantToken);
                         delete account.href;
@@ -501,9 +500,10 @@ async function handleSsoPatch(donorTenantId: string, companyCode: string, instru
                     } catch (e) {
                         console.error(`${user.key}: ${e}`);
                     }
-                });
+                };
+                actions.push(action());
             } else if (instruction.op === PatchOperation.Remove) {
-                actions.push(async () => {
+                const action = async () => {
                     try {
                         const account: SsoAccount = { enabled: false };
                         await ssoService.updateSsoAccountById(user.key, donorTenantId, account, donorTenantToken);
@@ -515,13 +515,14 @@ async function handleSsoPatch(donorTenantId: string, companyCode: string, instru
                     } catch (e) {
                         console.error(`${user.key}: ${e}`);
                     }
-                });
+                };
+                actions.push(action());
             } else {
                 return Function;
             }
         }
 
-        await pSettle(actions);
+        await Promise.all(actions);
         if (updatedUsers.length !== users.length) {
             const failedUpdates = users.filter(({ key }) => updatedUsers.indexOf(key) === -1);
             console.log(`The following user(s) failed to update ${JSON.stringify(failedUpdates)}, attempting rollback`);
