@@ -36,6 +36,8 @@ provider:
     goldilocksTenantId: ${file(${self:custom.configFile}):goldilocksTenantId}
     integrationId: ${file(${self:custom.configFile}):integrationId}
     eSignatureApiCredentialsId: ${file(${self:custom.configFile}):eSignatureApiCredentialsId}
+    tlmReadRole: ${file(${self:custom.configFile}):tlmReadRole}
+    tlmWriteRole: ${file(${self:custom.configFile}):tlmWriteRole}
 
   iamRoleStatements:
     - Effect: Allow
