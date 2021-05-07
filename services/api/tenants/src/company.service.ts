@@ -522,7 +522,7 @@ async function handleSsoPatch(donorTenantId: string, companyCode: string, instru
             }
         }
 
-        await Promise.all(actions);
+        await Promise.allSettled(actions);
         if (updatedUsers.length !== users.length) {
             const failedUpdates = users.filter(({ key }) => updatedUsers.indexOf(key) === -1);
             console.log(`The following user(s) failed to update ${JSON.stringify(failedUpdates)}, attempting rollback`);
