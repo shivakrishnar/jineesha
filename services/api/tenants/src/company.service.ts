@@ -228,21 +228,21 @@ export async function companyUpdate(tenantId: string, companyCode: string, patch
  * @param {PatchInstruction} patch: The instruction the patch should attempt to execute
  * @returns {Promise<() => void>}: A Promise of a rollback function
  */
-async function updateHelloSignConfigurations(oldTenantId: string, evoCompanyCode: string, patch: PatchInstruction): Promise<() => void> {
+async function updateHelloSignConfigurations(oldTenantId: string, oldCompanyCode: string, patch: PatchInstruction): Promise<() => void> {
     console.info('companyService.updateHelloSignConfigurations');
 
-    const newTenantId = patch.value;
+    const { tenantId: newTenantId, companyCode: newCompanyCode } = patch.value || {};
 
-    if (!newTenantId) {
-        throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to equal newTenantId');
+    if (!newTenantId || !newCompanyCode) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to equal object containing recipient tenantId and companyCode');
     }
 
     const rollbackActions = [];
 
     try {
         const [oldCompanyInfo, newCompanyInfo, adminToken]: any[] = await Promise.all([
-            getCompanyInfoByEvoCompanyCode(oldTenantId, evoCompanyCode),
-            getCompanyInfoByEvoCompanyCode(newTenantId, evoCompanyCode),
+            getCompanyInfoByEvoCompanyCode(oldTenantId, oldCompanyCode),
+            getCompanyInfoByEvoCompanyCode(newTenantId, newCompanyCode),
             utilService.generateAdminToken(),
         ]);
 
@@ -391,13 +391,13 @@ async function updateHelloSignConfigurations(oldTenantId: string, evoCompanyCode
     };
 }
 
-async function handleSsoPatch(donorTenantId: string, companyCode: string, instruction: PatchInstruction): Promise<() => void> {
+async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, instruction: PatchInstruction): Promise<() => void> {
     console.info('companyService.handleSsoPatch');
 
-    const recipientTenantId = instruction.value;
+    const { tenantId: recipientTenantId, companyCode: recipientCompanyCode } = instruction.value || {};
 
-    if (!recipientTenantId) {
-        throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to equal newTenantId');
+    if (!recipientTenantId || !recipientCompanyCode) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to equal object containing recipient tenantId and companyCode');
     }
 
     const supportedOperations = [PatchOperation.Copy, PatchOperation.Remove];
@@ -409,13 +409,13 @@ async function handleSsoPatch(donorTenantId: string, companyCode: string, instru
 
     try {
         await Promise.all([
-            getCompanyInfoByEvoCompanyCode(donorTenantId, companyCode),
-            getCompanyInfoByEvoCompanyCode(recipientTenantId, companyCode),
+            getCompanyInfoByEvoCompanyCode(donorTenantId, donorCompanyCode),
+            getCompanyInfoByEvoCompanyCode(recipientTenantId, recipientCompanyCode),
         ]);
 
         // get all hr accounts under a company from recipient database
         const usersQuery = new ParameterizedQuery('GetUserSsoIdByEvoCompanyCode', Queries.getUserSsoIdByEvoCompanyCode);
-        usersQuery.setStringParameter('@companyCode', companyCode);
+        usersQuery.setStringParameter('@companyCode', instruction.op === PatchOperation.Remove ? donorCompanyCode : recipientCompanyCode);
 
         const usersPayload = {
             tenantId: instruction.op === PatchOperation.Remove ? donorTenantId : recipientTenantId,
@@ -576,7 +576,7 @@ async function getCompanyInfoByEvoCompanyCode(tenantId: string, companyCode: str
         throw errorService.getErrorResponse(50).setDeveloperMessage(`The company code: ${companyCode} not found`);
     }
 
-    const companyInfo: any = result.recordset.map((entry) => {
+    const companyInfo: CompanyDetail = result.recordset.map((entry) => {
         return {
             id: entry.ID,
             clientId: entry.PRIntegration_ClientID,

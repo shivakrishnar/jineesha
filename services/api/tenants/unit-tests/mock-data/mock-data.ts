@@ -4,13 +4,17 @@ import { PatchInstruction, PatchOperation } from '../../src/patchInstruction';
 
 export const oldTenantId = '1234';
 export const newTenantId = '5678';
-export const companyCode = '1';
+export const oldCompanyCode = '1';
+export const newCompanyCode = '2';
 
 export const platformIntegrationPatchInstructions: PatchInstruction[] = [
     {
         op: PatchOperation.Test,
         path: '/platform/integration',
-        value: newTenantId,
+        value: {
+            tenantId: newTenantId,
+            companyCode: newCompanyCode,
+        }
     },
 ];
 
@@ -18,7 +22,10 @@ export const ssoAccountCopyPatchInstructions: PatchInstruction[] = [
     {
         op: PatchOperation.Copy,
         path: '/sso/account',
-        value: newTenantId,
+        value: {
+            tenantId: newTenantId,
+            companyCode: newCompanyCode,
+        }
     },
 ];
 
@@ -26,7 +33,12 @@ export const ssoAccountRemovePatchInstructions: PatchInstruction[] = [
     {
         op: PatchOperation.Remove,
         path: '/sso/account',
-        value: newTenantId,
+        value: {
+            tenantId: newTenantId,
+            companyCode: newCompanyCode,
+        }
+    },
+];
     },
 ];
 
