@@ -1,8 +1,8 @@
 'use strict';
 
 let pdflib = jest.genMockFromModule('pdf-lib');
-const mockData = require('../esignature/unit-tests/mock-data');
-const listSignatureRequests = require('../esignature/unit-tests/mock-functions/hellosign-list-requests');
+const mockData = require('../mock-data');
+const listSignatureRequests = require('../mock-functions/hellosign-list-requests');
 
 const pdfDoc = {
     embedJpg: () => {
