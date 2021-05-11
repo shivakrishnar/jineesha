@@ -14,7 +14,7 @@ export const platformIntegrationPatchInstructions: PatchInstruction[] = [
         value: {
             tenantId: newTenantId,
             companyCode: newCompanyCode,
-        }
+        },
     },
 ];
 
@@ -25,7 +25,7 @@ export const ssoAccountCopyPatchInstructions: PatchInstruction[] = [
         value: {
             tenantId: newTenantId,
             companyCode: newCompanyCode,
-        }
+        },
     },
 ];
 
@@ -36,9 +36,18 @@ export const ssoAccountRemovePatchInstructions: PatchInstruction[] = [
         value: {
             tenantId: newTenantId,
             companyCode: newCompanyCode,
-        }
+        },
     },
 ];
+
+export const esignatureMovePatchInstructions: PatchInstruction[] = [
+    {
+        op: PatchOperation.Move,
+        path: '/esignature',
+        value: {
+            tenantId: newTenantId,
+            companyCode: newCompanyCode,
+        },
     },
 ];
 
@@ -130,6 +139,34 @@ export const usersDBResponse = {
         {
             ID: 2,
             PR_Integration_PK: '2',
+        },
+    ],
+    output: {},
+    rowsAffected: [2],
+};
+
+export const fileMetadataListDBResponse = {
+    recordset: [
+        {
+            ID: 1,
+            CompanyID: 5678,
+            EmployeeCode: '1',
+            Pointer: '5678/5678/1/eedoc1.pdf',
+            EmployeeID: 1,
+        },
+        {
+            ID: 2,
+            CompanyID: 5678,
+            EmployeeCode: '2',
+            Pointer: '5678/5678/2/eedoc2.pdf',
+            EmployeeID: 2,
+        },
+        {
+            ID: 3,
+            CompanyID: 5678,
+            EmployeeCode: '1',
+            Pointer: '5678/5678/companydoc.pdf',
+            EmployeeID: null,
         },
     ],
     output: {},
