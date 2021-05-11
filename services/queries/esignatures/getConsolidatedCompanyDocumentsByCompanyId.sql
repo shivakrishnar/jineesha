@@ -62,8 +62,8 @@ select
     null,
     null,
     null,
-    null,
-    null,
+    e.Title,
+    e.Category,
     'esignature',
     null,
     ExistsInTaskList = (

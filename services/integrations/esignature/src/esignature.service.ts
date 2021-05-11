@@ -550,8 +550,26 @@ async function createHelloSignSignatureRequest(
         }
         const { eSigner } = configuration;
 
+        const query = new ParameterizedQuery('getEsignatureMetadataById', Queries.getEsignatureMetadataById);
+        query.setParameter('@id', request.templateId);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const esignatureMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (esignatureMetadataResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${request.templateId} not found`);
+        }
+        const {
+            Title,
+            Category,
+        } = esignatureMetadataResult.recordset[0];
+
         const additionalMetadata = {
-            category: templateResponse.template.metadata.category,
+            category: Category,
             tenantId,
             companyId,
             employeeCodes: request.employeeCodes,
@@ -562,6 +580,7 @@ async function createHelloSignSignatureRequest(
         const options: { [i: string]: any } = {
             test_mode: configService.eSignatureApiDevModeOn() ? 1 : 0,
             template_id: request.templateId,
+            title: Title,
             metadata,
             signers: request.signatories.map((signer: Signatory) => {
                 return {
@@ -582,7 +601,7 @@ async function createHelloSignSignatureRequest(
 
         return {
             signatureRequest: (await eSigner.signatureRequest.createEmbeddedWithTemplate(options)).signature_request,
-            category: templateResponse.template.metadata.category,
+            category: Category,
         };
     } catch (error) {
         if (error.message) {
@@ -1300,7 +1319,6 @@ export async function listTemplates(
 
                     const {
                         template_id: id,
-                        title,
                         message,
                         can_edit: editable,
                         is_locked: isLocked,
@@ -1308,13 +1326,14 @@ export async function listTemplates(
                         cc_roles,
                         custom_fields,
                         documents: files,
-                        metadata: { uploadDate, uploadedBy, category },
+                        metadata: { uploadDate, uploadedBy },
                     } = apiResponse.template;
                     const fileName = files[0].name;
+                    const { Title, Category } = documents.filter((doc) => doc.ID === id)[0];
                     consolidatedDocuments.push(
                         new Template({
                             id,
-                            title,
+                            title: Title,
                             message,
                             editable,
                             isLocked,
@@ -1328,7 +1347,7 @@ export async function listTemplates(
                             uploadedBy,
                             isEsignatureDocument: true,
                             isHelloSignTemplate: true,
-                            category,
+                            category: Category,
                             existsInTaskList: nonLegacyDocuments[index].ID === id ? nonLegacyDocuments[index].ExistsInTaskList : undefined,
                         }),
                     );
@@ -2623,7 +2642,7 @@ export async function listEmployeeDocuments(
  * @returns {Promise<any>}: A Promise of a URL or file
  */
 export async function getOnboardingDocumentPreview(tenantId: string, id: string, requestBody: any): Promise<any> {
-    console.info('esignatureService.getDocumentPreview');
+    console.info('esignatureService.getOnboardingDocumentPreview');
 
     const { onboardingKey } = requestBody;
 
@@ -2908,7 +2927,7 @@ export async function getDocumentPreview(tenantId: string, id: string): Promise<
     try {
         const decoded = await decodeId(id);
 
-        // if id does not decode properly, assume it's a HelloSign document
+        // if id does not decode properly, assume it's an Esignature document
         if (decoded.length === 0) {
             const query = new ParameterizedQuery('getFileMetadataByEsignatureMetadataId', Queries.getFileMetadataByEsignatureMetadataId);
             query.setParameter('@id', id);
@@ -3843,8 +3862,9 @@ export async function updateCompanyDocument(tenantId: string, companyId: string,
 
         const [decodedId, type] = decoded;
 
+        // If the decode fails, assume it is a HelloSign document
         if (!decodedId) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`Document with ID ${documentId} not found.`);
+            return await updateHelloSignDocument(tenantId, documentId, request);
         }
 
         if (type === DocType.S3Document) {
@@ -4176,6 +4196,71 @@ async function updateEmployeeLegacyDocument(tenantId: string, employeeId: string
             throw error;
         }
 
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Updates a specified HelloSign record under a company
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {string} documentId: The unique identifier for the document to be updated.
+ * @param {any} request: The company document request.
+ * @returns {any}: A Promise of an updated HelloSign company document
+ */
+
+async function updateHelloSignDocument(tenantId: string, documentId: string, request: any): Promise<any> {
+    console.info('esignature.service.updateHelloSignDocument');
+    
+    const { title, category } = request;
+    try {
+        // get esignature metadata / make sure it exists in the database
+        const query = new ParameterizedQuery('getEsignatureMetadataById', Queries.getEsignatureMetadataById);
+        query.setParameter('@id', documentId);
+        let payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const esignatureMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+
+        if (esignatureMetadataResult.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${documentId} not found`);
+        }
+    const {
+        Title: oldTitle,
+        Category: oldCategory,
+    } = esignatureMetadataResult.recordset[0];
+
+    const newTitle = title || oldTitle;
+    const newCategory = category !== undefined ? category : oldCategory;
+
+    const updateEsignatureMetadataQuery = new ParameterizedQuery('updateEsignatureMetadataTitleCategoryById', Queries.updateEsignatureMetadataTitleCategoryById);
+    updateEsignatureMetadataQuery.setParameter('@id', documentId);
+    updateEsignatureMetadataQuery.setStringParameter('@title', newTitle);
+    const setCategory = newCategory ? (label, value) => updateEsignatureMetadataQuery.setStringParameter(label, value) : (label, value) => updateEsignatureMetadataQuery.setParameter(label, value);
+    setCategory('@category', newCategory || 'NULL');
+    payload = {
+        tenantId,
+        queryName: updateEsignatureMetadataQuery.name,
+        query: updateEsignatureMetadataQuery.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+    
+    const response = {
+        id: documentId,
+        title: newTitle,
+        category: category !== undefined ? category : oldCategory,
+    };
+
+    return response;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
     }
