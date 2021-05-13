@@ -94,6 +94,8 @@ describe('esignatureService.template.list', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetCompanyInfo') {
                 return Promise.resolve(mockData.companyInfo);
+            } else if (payload.queryName === 'getEsignatureMetadataById') {
+                return Promise.resolve(mockData.esignatureMetadataDBResponse);
             }
             return Promise.resolve(mockData.templateOnboardingDBResponse);
         });

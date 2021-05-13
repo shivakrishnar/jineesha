@@ -37,6 +37,8 @@ export const templateDBResponse = {
                 Type: 'esignature',
                 ID: 1,
                 ExistsInTaskList: true,
+                Category: 'test',
+                Title: 'hi',
             },
         ],
     ],
@@ -63,6 +65,8 @@ export const templateOnboardingDBResponse = {
                 Type: 'esignature',
                 ID: 1000,
                 ExistsInTaskList: true,
+                Title: 'hi',
+                Category: 'onboarding',
             },
         ],
     ],
@@ -84,7 +88,7 @@ export const helloSignTemplate = {
     cc_roles: [{ name: 'Hugh' }],
     custom_fields: [{ name: 'money', type: 'text' }],
     documents: [{ name: 'test.pdf' }],
-    metadata: { uploadDate: '12/31/2019', uploadedBy: 'Hugh', category: 'test' },
+    metadata: { uploadDate: '12/31/2019', uploadedBy: 'Hugh' },
 };
 export const helloSignTemplate2 = {
     template_id: 2,
@@ -96,7 +100,7 @@ export const helloSignTemplate2 = {
     cc_roles: [{ name: 'Hugh' }],
     custom_fields: [{ name: 'money', type: 'text' }],
     documents: [{ name: 'test.pdf' }],
-    metadata: { uploadDate: '12/31/2019', uploadedBy: 'Hugh', category: 'test' },
+    metadata: { uploadDate: '12/31/2019', uploadedBy: 'Hugh' },
 };
 export const helloSignOnboardingTemplate = {
     template_id: 1000,
