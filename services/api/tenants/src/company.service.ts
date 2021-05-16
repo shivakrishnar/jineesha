@@ -196,6 +196,9 @@ export async function companyUpdate(tenantId: string, companyCode: string, patch
                 case '/sso/account':
                     rollbackActions.push(await handleSsoPatch(tenantId, companyCode, instruction));
                     break;
+                case '/esignature':
+                    rollbackActions.push(await handleEsignatureDocs(tenantId, companyCode, instruction));
+                    break;
                 case '/test':
                     if (instruction.op === PatchOperation.Test) {
                         throw errorService.getErrorResponse(0).setMoreInfo('Manual failure for unit tests');
@@ -228,21 +231,23 @@ export async function companyUpdate(tenantId: string, companyCode: string, patch
  * @param {PatchInstruction} patch: The instruction the patch should attempt to execute
  * @returns {Promise<() => void>}: A Promise of a rollback function
  */
-async function updateHelloSignConfigurations(oldTenantId: string, evoCompanyCode: string, patch: PatchInstruction): Promise<() => void> {
+async function updateHelloSignConfigurations(oldTenantId: string, oldCompanyCode: string, patch: PatchInstruction): Promise<() => void> {
     console.info('companyService.updateHelloSignConfigurations');
 
-    const newTenantId = patch.value;
+    const { tenantId: newTenantId, companyCode: newCompanyCode } = patch.value || {};
 
-    if (!newTenantId) {
-        throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to equal newTenantId');
+    if (!newTenantId || !newCompanyCode) {
+        throw errorService
+            .getErrorResponse(30)
+            .setDeveloperMessage('Expected value to equal object containing recipient tenantId and companyCode');
     }
 
     const rollbackActions = [];
 
     try {
         const [oldCompanyInfo, newCompanyInfo, adminToken]: any[] = await Promise.all([
-            getCompanyInfoByEvoCompanyCode(oldTenantId, evoCompanyCode),
-            getCompanyInfoByEvoCompanyCode(newTenantId, evoCompanyCode),
+            getCompanyInfoByEvoCompanyCode(oldTenantId, oldCompanyCode),
+            getCompanyInfoByEvoCompanyCode(newTenantId, newCompanyCode),
             utilService.generateAdminToken(),
         ]);
 
@@ -391,13 +396,15 @@ async function updateHelloSignConfigurations(oldTenantId: string, evoCompanyCode
     };
 }
 
-async function handleSsoPatch(donorTenantId: string, companyCode: string, instruction: PatchInstruction): Promise<() => void> {
+async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, instruction: PatchInstruction): Promise<() => void> {
     console.info('companyService.handleSsoPatch');
 
-    const recipientTenantId = instruction.value;
+    const { tenantId: recipientTenantId, companyCode: recipientCompanyCode } = instruction.value || {};
 
-    if (!recipientTenantId) {
-        throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to equal newTenantId');
+    if (!recipientTenantId || !recipientCompanyCode) {
+        throw errorService
+            .getErrorResponse(30)
+            .setDeveloperMessage('Expected value to equal object containing recipient tenantId and companyCode');
     }
 
     const supportedOperations = [PatchOperation.Copy, PatchOperation.Remove];
@@ -409,13 +416,13 @@ async function handleSsoPatch(donorTenantId: string, companyCode: string, instru
 
     try {
         await Promise.all([
-            getCompanyInfoByEvoCompanyCode(donorTenantId, companyCode),
-            getCompanyInfoByEvoCompanyCode(recipientTenantId, companyCode),
+            getCompanyInfoByEvoCompanyCode(donorTenantId, donorCompanyCode),
+            getCompanyInfoByEvoCompanyCode(recipientTenantId, recipientCompanyCode),
         ]);
 
         // get all hr accounts under a company from recipient database
         const usersQuery = new ParameterizedQuery('GetUserSsoIdByEvoCompanyCode', Queries.getUserSsoIdByEvoCompanyCode);
-        usersQuery.setStringParameter('@companyCode', companyCode);
+        usersQuery.setStringParameter('@companyCode', instruction.op === PatchOperation.Remove ? donorCompanyCode : recipientCompanyCode);
 
         const usersPayload = {
             tenantId: instruction.op === PatchOperation.Remove ? donorTenantId : recipientTenantId,
@@ -554,6 +561,167 @@ async function handleSsoPatch(donorTenantId: string, companyCode: string, instru
     };
 }
 
+const s3Client = new AWS.S3({
+    region: configService.getAwsRegion(),
+    useAccelerateEndpoint: true,
+});
+
+async function handleEsignatureDocs(donorTenantId: string, donorCompanyCode: string, instruction: PatchInstruction): Promise<() => void> {
+    console.info('companyService.handleEsignatureDocs');
+
+    const { tenantId: recipientTenantId, companyCode: recipientCompanyCode } = instruction.value || {};
+
+    if (!recipientTenantId || !recipientCompanyCode) {
+        throw errorService
+            .getErrorResponse(30)
+            .setDeveloperMessage('Expected value to equal object containing recipient tenantId and companyCode');
+    }
+
+    const supportedOperations = [PatchOperation.Move];
+    if (!supportedOperations.includes(instruction.op)) {
+        throw errorService.getErrorResponse(71).setDeveloperMessage(`Supported patch operations: ${supportedOperations.join()}`);
+    }
+
+    const rollbackActions = [];
+    const failedActions = [];
+
+    try {
+        // company code validation & retrieve hr company ids
+        const [recipientCompanyInfo]: CompanyDetail[] = await Promise.all([
+            getCompanyInfoByEvoCompanyCode(recipientTenantId, recipientCompanyCode),
+            getCompanyInfoByEvoCompanyCode(donorTenantId, donorCompanyCode),
+        ]);
+
+        if (instruction.op === PatchOperation.Move) {
+            const query = new ParameterizedQuery('listFileMetadataByCompanyId', Queries.listFileMetadataByCompanyId);
+            query.setParameter('@companyId', recipientCompanyInfo.id);
+
+            const payload = {
+                tenantId: recipientTenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+
+            const result: any = await utilService.invokeInternalService(
+                'queryExecutor',
+                payload,
+                utilService.InvocationType.RequestResponse,
+            );
+
+            if (result.recordset.length === 0) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage('No documents found under this company');
+            }
+
+            await Promise.allSettled(
+                result.recordset.map(async (file) => {
+                    try {
+                        const fileName = file.Pointer.split('/').pop();
+                        let newKey = `${recipientTenantId}/${recipientCompanyInfo.id}`;
+                        newKey = file.EmployeeID ? `${newKey}/${file.EmployeeID}/${fileName}` : `${newKey}/${fileName}`;
+
+                        await s3Client
+                            .copyObject({
+                                Bucket: configService.getFileBucketName(),
+                                CopySource: `${configService.getFileBucketName()}/${file.Pointer}`,
+                                Key: newKey,
+                            })
+                            .promise();
+                        rollbackActions.push(async () => {
+                            try {
+                                await s3Client
+                                    .deleteObject({
+                                        Bucket: configService.getFileBucketName(),
+                                        Key: newKey,
+                                    })
+                                    .promise();
+                            } catch (error) {
+                                console.error(error);
+                            }
+                        });
+
+                        // update pointer in db
+                        const query = new ParameterizedQuery('updateFileMetadataPointerById', Queries.updateFileMetadataPointerById);
+                        query.setStringParameter('@pointer', newKey);
+                        query.setParameter('@id', file.ID);
+
+                        const payload = {
+                            tenantId: recipientTenantId,
+                            queryName: query.name,
+                            query: query.value,
+                            queryType: QueryType.Simple,
+                        } as DatabaseEvent;
+
+                        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+                        rollbackActions.push(async () => {
+                            const query = new ParameterizedQuery('updateFileMetadataPointerById', Queries.updateFileMetadataPointerById);
+                            query.setStringParameter('@pointer', file.Pointer);
+                            query.setParameter('@id', file.ID);
+
+                            const payload = {
+                                tenantId: recipientTenantId,
+                                queryName: query.name,
+                                query: query.value,
+                                queryType: QueryType.Simple,
+                            } as DatabaseEvent;
+
+                            await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+                        });
+
+                        // Note: preserve old s3 docs for now in the event they need to be accessed
+                        // await s3Client.deleteObject({
+                        //     Bucket: configService.getFileBucketName(),
+                        //     Key: file.Pointer,
+                        // }).promise();
+                        // rollbackActions.push(async () => {
+                        //     try {
+                        //         await s3Client.copyObject({
+                        //             Bucket: configService.getFileBucketName(),
+                        //             CopySource: `${configService.getFileBucketName()}/${newKey}`,
+                        //             Key: file.Pointer,
+                        //         }).promise();
+                        //     } catch (error) {
+                        //         console.error(error);
+                        //     }
+                        // });
+                    } catch (error) {
+                        console.error(`${file.ID}: ${error}`);
+                        failedActions.push(file.ID);
+                    }
+                }),
+            );
+        }
+
+        if (failedActions.length > 0) {
+            console.log(`The following user(s) failed to update ${JSON.stringify(failedActions)}, attempting rollback`);
+            throw errorService
+                .getErrorResponse(0)
+                .setMoreInfo('Error occurred while performing patch operation. Check CloudWatch logs for more info.');
+        }
+    } catch (error) {
+        console.log('Updating e-signature docs failed, rolling back');
+        console.error(error);
+        let action = rollbackActions.pop();
+        while (action) {
+            await action();
+            action = rollbackActions.pop();
+        }
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        throw errorService.getErrorResponse(0);
+    }
+
+    // return rollback function
+    return async () => {
+        let action = rollbackActions.pop();
+        while (action) {
+            await action();
+            action = rollbackActions.pop();
+        }
+    };
+}
+
 /**
  * Retrieves company info by EvoCompanyCode
  * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
@@ -576,7 +744,7 @@ async function getCompanyInfoByEvoCompanyCode(tenantId: string, companyCode: str
         throw errorService.getErrorResponse(50).setDeveloperMessage(`The company code: ${companyCode} not found`);
     }
 
-    const companyInfo: any = result.recordset.map((entry) => {
+    const companyInfo: CompanyDetail = result.recordset.map((entry) => {
         return {
             id: entry.ID,
             clientId: entry.PRIntegration_ClientID,

@@ -10,5 +10,6 @@ export interface ICompany {
 export type CompanyDetail = {
     clientId: string;
     name: string;
-    domain: string;
+    domain?: string;
+    id?: number;
 };

@@ -44,7 +44,7 @@ describe('company.service.update.platform.integration', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.companyCode, mockData.platformIntegrationPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.platformIntegrationPatchInstructions)
             .catch(() => {
                 done.fail(new Error('Test should not throw an exception.'));
             });
@@ -55,12 +55,12 @@ describe('company.service.update.platform.integration', () => {
         const instruction: PatchInstruction = Object.assign({}, mockData.platformIntegrationPatchInstructions[0]);
         instruction.value = undefined;
 
-        await companyService.companyUpdate(mockData.oldTenantId, mockData.companyCode, [instruction]).catch((error) => {
+        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, [instruction]).catch((error) => {
             expect(error).toBeInstanceOf(ErrorMessage);
             expect(error.statusCode).toEqual(400);
             expect(error.code).toEqual(30);
             expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-            expect(error.developerMessage).toEqual('Expected value to equal newTenantId');
+            expect(error.developerMessage).toEqual('Expected value to equal object containing recipient tenantId and companyCode');
         });
     });
 
@@ -84,7 +84,7 @@ describe('company.service.update.platform.integration', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.companyCode, mockData.platformIntegrationPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.platformIntegrationPatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -114,7 +114,7 @@ describe('company.service.update.platform.integration', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.companyCode, mockData.platformIntegrationPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.platformIntegrationPatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -154,7 +154,7 @@ describe('company.service.update.platform.integration', () => {
         mockData.platformIntegrationPatchInstructions.push(mockData.testPatchInstruction);
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.companyCode, mockData.platformIntegrationPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.platformIntegrationPatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
@@ -192,7 +192,7 @@ describe('company.service.update.sso.account', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.companyCode, mockData.ssoAccountCopyPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.ssoAccountCopyPatchInstructions)
             .catch(() => {
                 done.fail(new Error('Test should not throw an exception.'));
             });
@@ -217,7 +217,7 @@ describe('company.service.update.sso.account', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.companyCode, mockData.ssoAccountRemovePatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.ssoAccountRemovePatchInstructions)
             .catch(() => {
                 done.fail(new Error('Test should not throw an exception.'));
             });
@@ -228,7 +228,7 @@ describe('company.service.update.sso.account', () => {
         const instruction: PatchInstruction = Object.assign({}, mockData.ssoAccountCopyPatchInstructions[0]);
         instruction.op = PatchOperation.Move;
 
-        await companyService.companyUpdate(mockData.oldTenantId, mockData.companyCode, [instruction]).catch((error) => {
+        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, [instruction]).catch((error) => {
             expect(error).toBeInstanceOf(ErrorMessage);
             expect(error.statusCode).toEqual(422);
             expect(error.code).toEqual(71);
@@ -241,12 +241,12 @@ describe('company.service.update.sso.account', () => {
         const instruction: PatchInstruction = Object.assign({}, mockData.ssoAccountCopyPatchInstructions[0]);
         instruction.value = undefined;
 
-        await companyService.companyUpdate(mockData.oldTenantId, mockData.companyCode, [instruction]).catch((error) => {
+        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, [instruction]).catch((error) => {
             expect(error).toBeInstanceOf(ErrorMessage);
             expect(error.statusCode).toEqual(400);
             expect(error.code).toEqual(30);
             expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-            expect(error.developerMessage).toEqual('Expected value to equal newTenantId');
+            expect(error.developerMessage).toEqual('Expected value to equal object containing recipient tenantId and companyCode');
         });
     });
 
@@ -264,7 +264,7 @@ describe('company.service.update.sso.account', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.companyCode, mockData.ssoAccountCopyPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.ssoAccountCopyPatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -300,7 +300,7 @@ describe('company.service.update.sso.account', () => {
         mockData.ssoAccountCopyPatchInstructions.push(mockData.testPatchInstruction);
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.companyCode, mockData.ssoAccountCopyPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.ssoAccountCopyPatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
@@ -331,7 +331,7 @@ describe('company.service.update.sso.account', () => {
         mockData.ssoAccountRemovePatchInstructions.push(mockData.testPatchInstruction);
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.companyCode, mockData.ssoAccountRemovePatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.ssoAccountRemovePatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
@@ -368,7 +368,138 @@ describe('company.service.update.sso.account', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.companyCode, mockData.ssoAccountCopyPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.ssoAccountCopyPatchInstructions)
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(500);
+                expect(error.code).toEqual(0);
+                expect(error.message).toEqual('Unexpected error occurred.');
+                expect(error.developerMessage).toEqual('Something happened on the server and we have no idea what. Blame the architect.');
+                expect(error.moreInfo).toEqual('Error occurred while performing patch operation. Check CloudWatch logs for more info.');
+            });
+    });
+});
+
+describe('company.service.update.esignature', () => {
+    beforeEach(() => {
+        setup();
+    });
+
+    test('moves all s3 documents for a company', async (done) => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+                if (payload.tenantId === mockData.oldTenantId) {
+                    return Promise.resolve(mockData.oldCompanyDBResponse);
+                } else {
+                    return Promise.resolve(mockData.newCompanyDBResponse);
+                }
+            } else if (payload.queryName === 'listFileMetadataByCompanyId') {
+                return Promise.resolve(mockData.fileMetadataListDBResponse);
+            }
+        });
+
+        await companyService
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.esignatureMovePatchInstructions)
+            .catch(() => {
+                done.fail(new Error('Test should not throw an exception.'));
+            });
+        done();
+    });
+
+    test('throws a 422 when an invalid patch operation is provided', async () => {
+        const instruction: PatchInstruction = Object.assign({}, mockData.esignatureMovePatchInstructions[0]);
+        instruction.op = PatchOperation.Copy;
+
+        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, [instruction]).catch((error) => {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error.statusCode).toEqual(422);
+            expect(error.code).toEqual(71);
+            expect(error.message).toEqual('Invalid patch operation supplied.');
+            expect(error.developerMessage).toEqual('Supported patch operations: move');
+        });
+    });
+
+    test('throws a 400 when no value is provided in instruction', async () => {
+        const instruction: PatchInstruction = Object.assign({}, mockData.esignatureMovePatchInstructions[0]);
+        instruction.value = undefined;
+
+        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, [instruction]).catch((error) => {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error.statusCode).toEqual(400);
+            expect(error.code).toEqual(30);
+            expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+            expect(error.developerMessage).toEqual('Expected value to equal object containing recipient tenantId and companyCode');
+        });
+    });
+
+    test('throws a 404 when no documents are found', async () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+                if (payload.tenantId === mockData.oldTenantId) {
+                    return Promise.resolve(mockData.oldCompanyDBResponse);
+                } else {
+                    return Promise.resolve(mockData.newCompanyDBResponse);
+                }
+            } else if (payload.queryName === 'listFileMetadataByCompanyId') {
+                return Promise.resolve(mockData.emptyDBResponse);
+            }
+        });
+
+        await companyService
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.esignatureMovePatchInstructions)
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toEqual('No documents found under this company');
+            });
+    });
+
+    test('performs rollback when error occurs after a move operation', async () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+                if (payload.tenantId === mockData.oldTenantId) {
+                    return Promise.resolve(mockData.oldCompanyDBResponse);
+                } else {
+                    return Promise.resolve(mockData.newCompanyDBResponse);
+                }
+            } else if (payload.queryName === 'listFileMetadataByCompanyId') {
+                return Promise.resolve(mockData.fileMetadataListDBResponse);
+            }
+        });
+
+        mockData.esignatureMovePatchInstructions.push(mockData.testPatchInstruction);
+
+        await companyService
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.esignatureMovePatchInstructions)
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(500);
+                expect(error.code).toEqual(0);
+                expect(error.message).toEqual('Unexpected error occurred.');
+                expect(error.developerMessage).toEqual('Something happened on the server and we have no idea what. Blame the architect.');
+                expect(error.moreInfo).toEqual('Manual failure for unit tests');
+            });
+    });
+
+    test('performs rollback when error occurs during a move operation', async () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+                if (payload.tenantId === mockData.oldTenantId) {
+                    return Promise.resolve(mockData.oldCompanyDBResponse);
+                } else {
+                    return Promise.resolve(mockData.newCompanyDBResponse);
+                }
+            } else if (payload.queryName === 'listFileMetadataByCompanyId') {
+                return Promise.resolve(mockData.fileMetadataListDBResponse);
+            } else if (payload.queryName === 'updateFileMetadataPointerById') {
+                throw {};
+            }
+        });
+
+        await companyService
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.esignatureMovePatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
