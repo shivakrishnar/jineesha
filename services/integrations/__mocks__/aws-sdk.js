@@ -1,7 +1,7 @@
 'use strict';
 
 let AWS = jest.genMockFromModule('aws-sdk');
-const mockData = require('../mock-data');
+const mockData = require('../esignature/unit-tests/mock-data');
 
 AWS = {
     S3: class {
@@ -78,7 +78,7 @@ AWS = {
                                 Items: [],
                             };
                         },
-                    }
+                    };
                 }
 
                 let IsDirectClient = false;
@@ -96,9 +96,9 @@ AWS = {
                             ],
                         };
                     },
-                }
+                };
             }
-        }
+        },
     },
     SSM: class {
         constructor() {
@@ -109,8 +109,7 @@ AWS = {
             let response = mockData.directClientPricingData;
             if (params.Name.includes('indirectClientPricingData')) {
                 response = mockData.indirectClientPricingData;
-            }
-            else if (params.Name.includes('legacyClientCutOffDate')) {
+            } else if (params.Name.includes('legacyClientCutOffDate')) {
                 response = mockData.legacyClientCutOffDate;
             }
             return {
@@ -118,12 +117,12 @@ AWS = {
                     return {
                         Parameter: {
                             Value: response,
-                        }
-                    }
-                }
-            }
+                        },
+                    };
+                },
+            };
         }
-    }
+    },
 };
 
 const promise = () => {

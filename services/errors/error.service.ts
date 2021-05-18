@@ -115,6 +115,13 @@ function errorMessages(): ErrorMessage[] {
       "message": "Invalid patch operation supplied.",
       "developerMessage": "",
       "moreInfo": ""
+    },
+    {
+      "statusCode": 422,
+      "code": 72,
+      "message": "Request data falls outside allowed ranges.",
+      "developerMessage": "",
+      "moreInfo": ""
     }
   ]`);
 }
