@@ -682,8 +682,23 @@ async function saveEsignatureMetadata(
     }
 }
 
-export async function generateBillingReport(options: any | BillingReportOptions): Promise<string> {
+export async function generateBillingReport(options: BillingReportOptions): Promise<string> {
     console.info('esignatureService.generateBillingReport');
+
+    // set up defaults for month/year
+    const today = new Date();
+    let { month, year } = options;
+    month = month || today.getUTCMonth() || 12; // UTC is 0-11, mssql is 1-12, default is last month's records and if it's JAN (0) we want DEC (12)
+    year = year || (today.getUTCMonth() ? today.getUTCFullYear() : today.getUTCFullYear() - 1); //default month 0 (Jan) to December of last year
+
+    // validate month & year
+    if (
+        month > 12 || // months are 1-12
+        year > today.getUTCFullYear() || // can't generate reports for future years
+        (year == today.getUTCFullYear() && month > today.getUTCMonth() + 1) // can't generate reports for future months
+    ) {
+        throw errorService.getErrorResponse(72).setDeveloperMessage('Invalid request date. Months are 1-12. Date must be past or present.');
+    }
 
     // get all tenant IDs
     const connectionStrings = await tenantsService.listConnectionStrings();
@@ -702,9 +717,8 @@ export async function generateBillingReport(options: any | BillingReportOptions)
 
     // run query for every tenant
     const getBillableSignRequests: ParameterizedQuery = new ParameterizedQuery('getBillableSignRequests', Queries.getBillableSignRequests);
-    const today = new Date();
-    getBillableSignRequests.setParameter('@month', today.getUTCMonth() || 12); // UTC months are 0-11, mssql months are 1-12, we want last month's records
-    getBillableSignRequests.setParameter('@year', today.getUTCMonth() ? today.getUTCFullYear() : today.getUTCFullYear() - 1); // if month is 0 (Jan) we're doing December of last year
+    getBillableSignRequests.setParameter('@month', month);
+    getBillableSignRequests.setParameter('@year', year);
     getBillableSignRequests.setStringParameter('@esignLegacyCutoff', legacyClientCutOffDate);
 
     const payload = {

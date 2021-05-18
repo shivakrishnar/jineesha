@@ -138,11 +138,15 @@ const signatorySchema = Yup.object().shape({
 const billingValidationSchema = {
     returnReport: { required: false, type: Boolean },
     targetEmail: { required: false, type: String },
+    month: { required: false, type: Number },
+    year: { required: false, type: Number },
 };
 
 const billingSchema = Yup.object().shape({
     returnReport: Yup.boolean(),
     targetEmail: Yup.string(),
+    month: Yup.number(),
+    year: Yup.number(),
 });
 
 // Onboarding Signature Request schemas
@@ -421,6 +425,8 @@ export const generateBillingReport = utilService.gatewayEventHandlerV2(
         requestBody = {
             returnReport: requestBody.returnReport || false,
             targetEmail: requestBody.targetEmail || '',
+            month: requestBody.month || 0,
+            year: requestBody.year || 0,
         };
 
         await utilService.requirePayload(requestBody);
@@ -436,7 +442,7 @@ export const generateInternalBillingReport = utilService.gatewayEventHandlerV2({
     allowAnonymous: true,
     delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
         console.info('esignature.handler.generateInternalBillingReport');
-        return await esignatureService.generateBillingReport({ returnReport: false, targetEmail: '' });
+        return await esignatureService.generateBillingReport({ returnReport: false, targetEmail: '', month: 0, year: 0 });
     },
 });
 
