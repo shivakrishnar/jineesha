@@ -720,7 +720,7 @@ export type CompanyInfo = {
  * @param {string} companyId: The unique identifier for the company.
  * @returns: The company details.
  */
-export async function validateCompany(tenantId: string, companyId: string): Promise<CompanyInfo> {
+export async function validateCompany(tenantId: string, companyId: string, customQueryPayload?: DatabaseEvent): Promise<CompanyInfo> {
     console.info('utilService.validateCompany');
 
     // companyId value must be integral
@@ -739,7 +739,7 @@ export async function validateCompany(tenantId: string, companyId: string): Prom
             query: query.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        const result: any = await invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const result: any = await invokeInternalService('queryExecutor', customQueryPayload || payload, InvocationType.RequestResponse);
         if (result.recordset.length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage(`The company id: ${companyId} not found`);
         }

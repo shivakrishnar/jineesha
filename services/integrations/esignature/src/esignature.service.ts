@@ -5162,8 +5162,6 @@ export async function updateEsignatureProductTier(tenantId: string, companyId: s
     const { productTierId } = requestBody;
 
     try {
-        const companyInfo = await utilService.validateCompany(tenantId, companyId);
-
         const getQuery = new ParameterizedQuery('getEsignatureProductTierById', Queries.getEsignatureProductTierById);
         getQuery.setParameter('@id', productTierId);
         const getPayload = {
@@ -5172,7 +5170,21 @@ export async function updateEsignatureProductTier(tenantId: string, companyId: s
             query: getQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        const getResult: any = await utilService.invokeInternalService('queryExecutor', getPayload, InvocationType.RequestResponse);
+
+        const getCompanyQuery = new ParameterizedQuery('getCompanyById', Queries.getCompanyById);
+        getCompanyQuery.setParameter('@email', email);
+        getCompanyQuery.setParameter('@companyId', companyId)
+        const getCompanyPayload = {
+            tenantId,
+            queryName: getCompanyQuery.name,
+            query: getCompanyQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const [getResult, companyInfo]: any[] = await Promise.all([
+            utilService.invokeInternalService('queryExecutor', getPayload, InvocationType.RequestResponse),
+            utilService.validateCompany(tenantId, companyId, getCompanyPayload),
+        ]);
 
         if (getResult.recordset.length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage(`E-Signature product tier with ID ${productTierId} not found.`);
@@ -5188,6 +5200,35 @@ export async function updateEsignatureProductTier(tenantId: string, companyId: s
             queryType: QueryType.Simple,
         } as DatabaseEvent;
         const updateResult: any = await utilService.invokeInternalService('queryExecutor', updatePayload, InvocationType.RequestResponse);
+
+        if (companyInfo.EsignatureProductTierID !== productTierId) {
+            const billingEventName = getResult.recordset[0].Name === 'E-Sign' ? 'EnhancedEsignatureEnabled' : 'EnhancedEsignatureDisabled'
+            const getBillingEventTypeQuery = new ParameterizedQuery('getBillingEventTypeByName', Queries.getBillingEventTypeByName);
+            getBillingEventTypeQuery.setParameter('@name', billingEventName);
+            const getBillingEventTypePayload = {
+                tenantId,
+                queryName: getBillingEventTypeQuery.name,
+                query: getBillingEventTypeQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            const getBillingEventTypeResult: any = await utilService.invokeInternalService('queryExecutor', getBillingEventTypePayload, InvocationType.RequestResponse);
+
+            if (getBillingEventTypeResult.recordset.length === 0) {
+                console.error(`BillingEventType with name ${billingEventName} not found.`);
+                throw errorService.getErrorResponse(0);
+            }
+
+            const createBillingEventQuery = new ParameterizedQuery('createBillingEventForCompany', Queries.createBillingEventForCompany);
+            createBillingEventQuery.setParameter('@companyId', companyId);
+            createBillingEventQuery.setParameter('@billingEventTypeId', getBillingEventTypeResult.recordset[0].ID);
+            const createBillingEventPayload = {
+                tenantId,
+                queryName: createBillingEventQuery.name,
+                query: createBillingEventQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+            await utilService.invokeInternalService('queryExecutor', createBillingEventPayload, InvocationType.RequestResponse); 
+        }
 
         // retrieve legacy client cut off date
         const ssm = new AWS.SSM({ region: configService.getAwsRegion() });
@@ -5213,7 +5254,7 @@ export async function updateEsignatureProductTier(tenantId: string, companyId: s
             await utilService.invokeInternalService('queryExecutor', taskListPayload, InvocationType.RequestResponse);
         }
 
-        utilService.logToAuditTrail({
+        utilService.logToAuditTrail({   
             userEmail: email,
             newFields: updateResult.recordset[0],
             type: AuditActionType.Update,
