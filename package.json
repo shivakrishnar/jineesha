@@ -4,7 +4,7 @@
     "description": "Collection of HR-related services for Asure Software Evolution HCM suite",
     "main": "index.js",
     "scripts": {
-        "test": "node_modules/.bin/jest --coverage",
+        "test": "node_modules/.bin/jest --coverage --runInBand",
         "lint": "npx eslint . --ext .ts",
         "prettier": "prettier --write \"**/*.{js,ts,tsx,json,md}\"",
         "test:base": "node_modules/.bin/jest -c jest.integration.test.config.json -i --verbose --detectOpenHandles",
