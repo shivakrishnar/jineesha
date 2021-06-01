@@ -138,6 +138,8 @@ export const Queries = {
         .readFileSync(path.join(basePath, 'esignatures/removeHelloSignTemplatesFromTaskList.sql'))
         .toString(),
     listFileMetadataByCompanyId: fs.readFileSync(path.join(basePath, 'esignatures/listFileMetadataByCompanyId.sql')).toString(),
+    createBillingEventForCompany: fs.readFileSync(path.join(basePath, 'esignatures/createBillingEventForCompany.sql')).toString(),
+    getBillingEventTypeByName: fs.readFileSync(path.join(basePath, 'esignatures/getBillingEventTypeByName.sql')).toString(),
 
     // Companies
     getUserCompaniesById: fs.readFileSync(path.join(basePath, 'companies/getUserCompaniesById.sql')).toString(),
