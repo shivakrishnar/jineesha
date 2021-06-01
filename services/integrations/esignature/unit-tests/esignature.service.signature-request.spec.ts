@@ -278,6 +278,8 @@ describe('esignatureService.signature-requests.create', () => {
                 return Promise.resolve(mockData.companyInfo);
             } else if (payload.queryName === 'GetEmployeeByCompanyIdAndCode') {
                 return Promise.resolve(mockData.employeesByCodeDBResponse);
+            } else if (payload.queryName === 'getEsignatureMetadataById') {
+                return Promise.resolve(mockData.esignatureMetadataDBResponse);
             }
         });
 
@@ -302,6 +304,8 @@ describe('esignatureService.signature-requests.create', () => {
                 return Promise.resolve(mockData.companyInfo);
             } else if (payload.queryName === 'listEmployeesByCompany') {
                 return Promise.resolve(mockData.paginatedEmployeesDBResponse);
+            } else if (payload.queryName === 'getEsignatureMetadataById') {
+                return Promise.resolve(mockData.esignatureMetadataDBResponse);
             }
         });
 
@@ -463,12 +467,14 @@ describe('esignatureService.signature-requests.create', () => {
             });
     });
 
-    test('returns a 422 if some employee do not have email addresses', () => {
+    test('returns a 422 if some employee do not have email addresses (HelloSign)', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetCompanyInfo') {
                 return Promise.resolve(mockData.companyInfo);
             } else if (payload.queryName === 'GetEmployeeByCompanyIdAndCode') {
                 return Promise.resolve(mockData.employeesWithoutEmailAddressDBResponse);
+            } else if (payload.queryName === 'getEsignatureMetadataById') {
+                return Promise.resolve(mockData.esignatureMetadataDBResponse);
             }
         });
 
@@ -494,7 +500,7 @@ describe('esignatureService.signature-requests.create', () => {
             });
     });
 
-    test('returns a 422 if some employee do not have email addresses', () => {
+    test('returns a 422 if some employees do not have email addresses (Simple Sign)', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetCompanyInfo') {
                 return Promise.resolve(mockData.companyInfo);

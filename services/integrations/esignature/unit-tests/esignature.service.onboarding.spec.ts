@@ -27,6 +27,8 @@ describe('esignatureService.onboarding', () => {
                 return Promise.resolve(mockData.emptyDBResponse);
             } else if (payload.queryName === 'getFileMetadataById') {
                 return Promise.resolve(mockData.documentFileMetadataByIdDBResponse);
+            } else if (payload.queryName === 'getEsignatureMetadataById') {
+                return Promise.resolve(mockData.esignatureMetadataDBResponse);
             }
         });
         const request = { ...mockData.onboardingRequestBody };
