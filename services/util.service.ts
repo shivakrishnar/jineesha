@@ -878,7 +878,13 @@ export async function generateAdminToken(): Promise<string> {
 export async function generateAssumedRoleToken(roleName: string, roleTenantId: string): Promise<string> {
     console.info('util.service.generateAssumedRoleToken');
     const credentials = JSON.parse(await getSecret(configService.getTenantAdminCredentialsId()));
-    return await ssoService.getRoleAccessTokenByClientCredentials(credentials.apiKey, credentials.apiSecret, credentials.audience, roleName, roleTenantId);
+    return await ssoService.getRoleAccessTokenByClientCredentials(
+        credentials.apiKey,
+        credentials.apiSecret,
+        credentials.audience,
+        roleName,
+        roleTenantId,
+    );
 }
 
 /**
@@ -950,4 +956,13 @@ export async function withTimeout(callee: any, timeout: number): Promise<any> {
     });
     const result = callee();
     return Promise.race([result, throwOnTime]);
+}
+
+export async function getSignedUrlSync(operation: string, params: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+        s3Client.getSignedUrl(operation, params, (err, url) => {
+            if (err) reject(err);
+            else resolve(url);
+        });
+    });
 }

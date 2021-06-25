@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "./node_modules/.bin/sls offline start --httpPort 4104 --variables development --noPrependStageInUrl --prefix integrations",
+    "test:local": "cd ../ && INTEGRATION_TEST_CONFIG_FILENAME=local.config.json npm run test:base -- --watch --testPathPattern=/esignature/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -43,11 +45,12 @@
     "@types/yup": "^0.26.9",
     "copy-webpack-plugin": "^4.6.0",
     "jest": "^24.1.0",
-    "serverless": "1.58.0",
+    "serverless": "^1.70.0",
     "serverless-apigw-binary": "^0.4.4",
     "serverless-aws-documentation": "^1.1.0",
     "serverless-cloudformation-resource-counter": "^0.2.0",
     "serverless-domain-manager": "^5.1.0",
+    "serverless-offline": "^8.0.0",
     "serverless-plugin-warmup": "^4.7.0-rc.1",
     "serverless-stack-output": "0.2.0",
     "serverless-webpack": "^5.2.0",

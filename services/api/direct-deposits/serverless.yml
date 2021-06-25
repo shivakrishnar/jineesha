@@ -135,6 +135,7 @@ plugins:
   - serverless-aws-documentation
   - serverless-cloudformation-resource-counter
   - serverless-domain-manager
+  - serverless-offline
 
 package:
   individually: false

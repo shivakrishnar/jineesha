@@ -519,6 +519,7 @@ plugins:
   - serverless-cloudformation-resource-counter
   - serverless-domain-manager
   - serverless-apigw-binary
+  - serverless-offline
 
 package:
   individually: false

@@ -558,15 +558,16 @@ async function createHelloSignSignatureRequest(
             query: query.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        const esignatureMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const esignatureMetadataResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payload,
+            InvocationType.RequestResponse,
+        );
 
         if (esignatureMetadataResult.recordset.length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${request.templateId} not found`);
         }
-        const {
-            Title,
-            Category,
-        } = esignatureMetadataResult.recordset[0];
+        const { Title, Category } = esignatureMetadataResult.recordset[0];
 
         const additionalMetadata = {
             category: Category,
@@ -2696,7 +2697,7 @@ export async function getOnboardingDocumentPreview(tenantId: string, id: string,
                 Bucket: configService.getFileBucketName(),
                 Key: key,
             };
-            const url = s3Client.getSignedUrl('getObject', params);
+            const url = await utilService.getSignedUrlSync('getObject', params);
             // parse key to get file extension
             const mimeType = key.split('.')[key.split('.').length - 1];
 
@@ -2949,7 +2950,7 @@ export async function getDocumentPreview(tenantId: string, id: string): Promise<
                     Bucket: configService.getFileBucketName(),
                     Key: key,
                 };
-                const url = s3Client.getSignedUrl('getObject', params);
+                const url = await utilService.getSignedUrlSync('getObject', params);
                 // parse key to get file extension
                 const mimeType = key.split('.')[key.split('.').length - 1];
 
@@ -3137,7 +3138,7 @@ async function getNonLegacyDocument(tenantId: string, documentId: number): Promi
             Bucket: configService.getFileBucketName(),
             Key: key,
         };
-        const url = s3Client.getSignedUrl('getObject', params);
+        const url = await utilService.getSignedUrlSync('getObject', params);
         // parse key to get file extension
         const mimeType = key.split('.')[key.split('.').length - 1];
 
@@ -3228,7 +3229,7 @@ async function getLegacyDocument(tenantId: string, documentId: number): Promise<
             Bucket: configService.getFileBucketName(),
             Key: key,
         };
-        const url = s3Client.getSignedUrl('getObject', params);
+        const url = await utilService.getSignedUrlSync('getObject', params);
 
         return { data: url, mimeType: extension };
     } catch (error) {
@@ -3444,7 +3445,7 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
         metadata.category = category;
     }
 
-    const url = s3Client.getSignedUrl('putObject', {
+    const url = await utilService.getSignedUrlSync('putObject', {
         Bucket: configService.getFileBucketName(),
         Key: s3UploadKey,
         ContentType: mime.contentType(updatedFilename),
@@ -4212,7 +4213,7 @@ async function updateEmployeeLegacyDocument(tenantId: string, employeeId: string
 
 async function updateHelloSignDocument(tenantId: string, documentId: string, request: any): Promise<any> {
     console.info('esignature.service.updateHelloSignDocument');
-    
+
     const { title, category } = request;
     try {
         // get esignature metadata / make sure it exists in the database
@@ -4224,39 +4225,45 @@ async function updateHelloSignDocument(tenantId: string, documentId: string, req
             query: query.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        const esignatureMetadataResult: any = await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        const esignatureMetadataResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payload,
+            InvocationType.RequestResponse,
+        );
 
         if (esignatureMetadataResult.recordset.length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage(`The document id: ${documentId} not found`);
         }
-    const {
-        Title: oldTitle,
-        Category: oldCategory,
-    } = esignatureMetadataResult.recordset[0];
+        const { Title: oldTitle, Category: oldCategory } = esignatureMetadataResult.recordset[0];
 
-    const newTitle = title || oldTitle;
-    const newCategory = category !== undefined ? category : oldCategory;
+        const newTitle = title || oldTitle;
+        const newCategory = category !== undefined ? category : oldCategory;
 
-    const updateEsignatureMetadataQuery = new ParameterizedQuery('updateEsignatureMetadataTitleCategoryById', Queries.updateEsignatureMetadataTitleCategoryById);
-    updateEsignatureMetadataQuery.setParameter('@id', documentId);
-    updateEsignatureMetadataQuery.setStringParameter('@title', newTitle);
-    const setCategory = newCategory ? (label, value) => updateEsignatureMetadataQuery.setStringParameter(label, value) : (label, value) => updateEsignatureMetadataQuery.setParameter(label, value);
-    setCategory('@category', newCategory || 'NULL');
-    payload = {
-        tenantId,
-        queryName: updateEsignatureMetadataQuery.name,
-        query: updateEsignatureMetadataQuery.value,
-        queryType: QueryType.Simple,
-    } as DatabaseEvent;
-    await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
-    
-    const response = {
-        id: documentId,
-        title: newTitle,
-        category: category !== undefined ? category : oldCategory,
-    };
+        const updateEsignatureMetadataQuery = new ParameterizedQuery(
+            'updateEsignatureMetadataTitleCategoryById',
+            Queries.updateEsignatureMetadataTitleCategoryById,
+        );
+        updateEsignatureMetadataQuery.setParameter('@id', documentId);
+        updateEsignatureMetadataQuery.setStringParameter('@title', newTitle);
+        const setCategory = newCategory
+            ? (label, value) => updateEsignatureMetadataQuery.setStringParameter(label, value)
+            : (label, value) => updateEsignatureMetadataQuery.setParameter(label, value);
+        setCategory('@category', newCategory || 'NULL');
+        payload = {
+            tenantId,
+            queryName: updateEsignatureMetadataQuery.name,
+            query: updateEsignatureMetadataQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
-    return response;
+        const response = {
+            id: documentId,
+            title: newTitle,
+            category: category !== undefined ? category : oldCategory,
+        };
+
+        return response;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -5258,7 +5265,7 @@ export async function updateEsignatureProductTier(tenantId: string, companyId: s
 
         const getCompanyQuery = new ParameterizedQuery('getCompanyById', Queries.getCompanyById);
         getCompanyQuery.setParameter('@email', email);
-        getCompanyQuery.setParameter('@companyId', companyId)
+        getCompanyQuery.setParameter('@companyId', companyId);
         const getCompanyPayload = {
             tenantId,
             queryName: getCompanyQuery.name,
@@ -5287,7 +5294,7 @@ export async function updateEsignatureProductTier(tenantId: string, companyId: s
         const updateResult: any = await utilService.invokeInternalService('queryExecutor', updatePayload, InvocationType.RequestResponse);
 
         if (companyInfo.EsignatureProductTierID !== productTierId) {
-            const billingEventName = getResult.recordset[0].Name === 'E-Sign' ? 'EnhancedEsignatureEnabled' : 'EnhancedEsignatureDisabled'
+            const billingEventName = getResult.recordset[0].Name === 'E-Sign' ? 'EnhancedEsignatureEnabled' : 'EnhancedEsignatureDisabled';
             const getBillingEventTypeQuery = new ParameterizedQuery('getBillingEventTypeByName', Queries.getBillingEventTypeByName);
             getBillingEventTypeQuery.setParameter('@name', billingEventName);
             const getBillingEventTypePayload = {
@@ -5296,7 +5303,11 @@ export async function updateEsignatureProductTier(tenantId: string, companyId: s
                 query: getBillingEventTypeQuery.value,
                 queryType: QueryType.Simple,
             } as DatabaseEvent;
-            const getBillingEventTypeResult: any = await utilService.invokeInternalService('queryExecutor', getBillingEventTypePayload, InvocationType.RequestResponse);
+            const getBillingEventTypeResult: any = await utilService.invokeInternalService(
+                'queryExecutor',
+                getBillingEventTypePayload,
+                InvocationType.RequestResponse,
+            );
 
             if (getBillingEventTypeResult.recordset.length === 0) {
                 console.error(`BillingEventType with name ${billingEventName} not found.`);
@@ -5312,7 +5323,7 @@ export async function updateEsignatureProductTier(tenantId: string, companyId: s
                 query: createBillingEventQuery.value,
                 queryType: QueryType.Simple,
             } as DatabaseEvent;
-            await utilService.invokeInternalService('queryExecutor', createBillingEventPayload, InvocationType.RequestResponse); 
+            await utilService.invokeInternalService('queryExecutor', createBillingEventPayload, InvocationType.RequestResponse);
         }
 
         // retrieve legacy client cut off date
@@ -5339,7 +5350,7 @@ export async function updateEsignatureProductTier(tenantId: string, companyId: s
             await utilService.invokeInternalService('queryExecutor', taskListPayload, InvocationType.RequestResponse);
         }
 
-        utilService.logToAuditTrail({   
+        utilService.logToAuditTrail({
             userEmail: email,
             newFields: updateResult.recordset[0],
             type: AuditActionType.Update,

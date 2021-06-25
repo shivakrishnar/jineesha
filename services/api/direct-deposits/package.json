@@ -6,6 +6,10 @@
         "node": ">=8.10.0"
     },
     "main": "./dist/index.js",
+    "scripts": {
+        "start": "./node_modules/.bin/sls offline start --httpPort 4105 --variables development --prefix direct-deposits",
+        "test:local": "cd ../../.. && INTEGRATION_TEST_CONFIG_FILENAME=local.config.json npm run test:base -- --watch --testPathPattern=/direct-deposits/"
+    },
     "dependencies": {
         "@smallwins/validate": "^4.3.0",
         "@types/lodash": "^4.14.88",
@@ -50,10 +54,11 @@
         "lint-staged": "^8.0.4",
         "prettier": "1.15.0",
         "randomstring": "^1.1.5",
-        "serverless": "1.58.0",
+        "serverless": "^1.60.0",
         "serverless-aws-documentation": "^1.1.0",
         "serverless-cloudformation-resource-counter": "^0.1.1",
-        "serverless-domain-manager": "^2.6.6",
+        "serverless-domain-manager": "^5.1.5",
+        "serverless-offline": "^7.0.0",
         "serverless-plugin-warmup": "^4.7.0-rc.1",
         "serverless-stack-output": "^0.2.3",
         "serverless-webpack": "^5.2.0",
