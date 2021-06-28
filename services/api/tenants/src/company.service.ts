@@ -164,6 +164,7 @@ export async function getById(tenantId: string, companyId: string, email: string
                 name: company.EsignatureProductTierName,
             },
             isEsignatureLegacyCompany,
+            productTierId: company.ProductTierID,
         };
     } catch (error) {
         if (error instanceof ErrorMessage) {
