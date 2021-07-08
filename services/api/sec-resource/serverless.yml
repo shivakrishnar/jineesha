@@ -98,6 +98,15 @@ functions:
             method: get
             cors:
               origin: '*'
+              
+  listSecResourceSubGroups:
+    handler: src/handler.listSecResourceSubGroups
+    events:
+        - http:
+            path: /tenants/{tenantId}/sub-groups
+            method: get
+            cors:
+              origin: '*'
 
 resources:
   Resources:
