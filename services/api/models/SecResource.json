@@ -1,0 +1,80 @@
+{
+    "$schema" : "http://json-schema.org/draft-06/schema#",
+    "title" : "SecResource Schema",
+    "$id" : "SecResource",
+    "type" : "object",
+    "properties" : {
+        "id": {
+            "description" : "Unique identifier of the SecResource",
+            "type" : "string"
+        },
+        "resourceGroupId": {
+            "description" : "SecResourceGroup ID",
+            "type" : "string"
+        },
+        "resourceSubGroupId": {
+            "description" : "SecResourceSubGroup ID",
+            "type" : ["string", "null"]
+        },
+        "name": {
+            "description" : "Name of the SecResource",
+            "type" : ["string", "null"]
+        },
+        "description": {
+            "description" : "Description of SecResource",
+            "type" : ["string", "null"]
+        },
+        "cddID": {
+            "description" : "SecCDD ID",
+            "type" : ["string", "null"]
+        },
+        "tableColumn": {
+            "description" : "Table column header",
+            "type" : ["string", "null"]
+        },
+        "requiredRoleLevel": {
+            "description" : "Required role level for access",
+            "type" : ["number", "null"]
+        },
+        "isLocked": {
+            "description" : "If this resource is locked",
+            "type" : "boolean"
+        },
+        "resourceTypeId": {
+            "description" : "Resource Type ID",
+            "type" : ["string", "null"]
+        },
+        "parentId": {
+            "description" : "Parent ID",
+            "type" : ["string", "null"]
+        },
+        "position": {
+            "description" : "Position in current SecResource list",
+            "type" : "number"
+        },
+        "link": {
+            "description" : "URI for SecResource",
+            "type" : ["string", "null"]
+        },
+        "requiredPermission": {
+            "description" : "Permission required for access",
+            "type" : ["string", "null"]
+        },
+        "menuClass": {
+            "description" : "Css class for menu",
+            "type" : ["string", "null"]
+        },
+        "isOwnWindow": {
+            "description" : "Uses its own window",
+            "type" : ["boolean", "null"]
+        },
+        "isVisible": {
+            "description" : "Is visible to end user",
+            "type" : ["string", "null"]
+        },
+        "isRequired": {
+            "description" : "Is required for application to work",
+            "type" : ["boolean", "null"]
+        }
+    }
+}

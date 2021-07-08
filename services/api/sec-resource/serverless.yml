@@ -89,6 +89,16 @@ provider:
         - dynamodb:GetItem
       Resource: arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings/index/*
 
+functions:         
+  listSecResourcesBySubGroupId:
+    handler: src/handler.listSecResourcesBySubGroupId
+    events:
+        - http:
+            path: /tenants/{tenantId}/sub-groups/{subGroupId}/resources
+            method: get
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
