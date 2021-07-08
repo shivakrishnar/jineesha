@@ -54,6 +54,13 @@
         "nonExistentSignableDocument": "W6oy6tb",
         "companyIdForProductTier": 600430
     },
+    "secResource": {
+        "subGroupId": 38,
+        "invalidSubGroupId": "abc",
+        "nonExistentSubGroupId": 999999,
+        "invalidTenantId": "abc",
+        "nonExistentTenantId": "c2f6dbae-230d-406e-a625-52a0c153b338"
+    },
     "documentsBucket": "development.hr.files",
     "logo": {
         "companyWithNoLogo": 600259,
