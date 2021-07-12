@@ -8,15 +8,18 @@ const configs = utils.getConfig();
 const baseUri = `${configs.nonProxiedApiDomain}/internal`;
 
 let accessToken: string;
+let employeeAccessToken: string;
 let nonAdminToken: string;
 
 const errorMessageSchema = JSON.parse(fs.readFileSync('services/api/models/ErrorMessage.json').toString());
+const employeeSchema = JSON.parse(fs.readFileSync('services/api/models/Employee.json').toString());
 const paginatedResultSchema = JSON.parse(fs.readFileSync('services/integrations/models/PaginatedResult.json').toString());
 
-const schemas = [errorMessageSchema, paginatedResultSchema];
+const schemas = [errorMessageSchema, employeeSchema, paginatedResultSchema];
 
 const enum schemaNames {
     ErrorMessage = 'ErrorMessage',
+    Employee = 'Employee',
     PaginatedResult = 'PaginatedResult',
 }
 
@@ -240,6 +243,103 @@ describe('list employees by company', () => {
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
                     return utils.assertJson(schemas, schemaNames.PaginatedResult, response.body);
+                });
+            });
+    });
+});
+
+describe('get employee by id', () => {
+    beforeAll(async (done) => {
+        try {
+            accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+            employeeAccessToken = await utils.getAccessToken(configs.user.username, configs.user.password);
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    });
+
+    test('must return a 401 if a token is not provided', (done) => {
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}`;
+        request(baseUri)
+            .get(uri)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(401)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 401 if an invalid token is provided', (done) => {
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', 'Bearer x8984399kjr')
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(401)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 400 if tenant ID is invalid', (done) => {
+        const invalidTenantId = '99999999';
+        const uri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(400)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 404 if tenant ID is not found', (done) => {
+        const unknownTenantId = uuidV4();
+        const uri = `/tenants/${unknownTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(404)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 200 if an employee is returned', (done) => {
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(200)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.Employee, response.body);
+                });
+            });
+    });
+
+    test('must return a 200 if employee tries to access another employee', (done) => {
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.unauthorizedEmployeeId}`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${employeeAccessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(200)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return undefined;
                 });
             });
     });

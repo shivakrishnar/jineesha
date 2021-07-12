@@ -1,5 +1,4 @@
 import { IPayrollApiCredentials } from '../api/models/IPayrollApiCredentials';
-import * as employeeService from '../api/tenants/src/employee.service';
 import * as tenantsService from '../api/tenants/src/tenants.service';
 import * as configService from '../config.service';
 import * as errorService from '../errors/error.service';
@@ -117,10 +116,6 @@ export const setup = () => {
 
     (paginationService as any).appendPaginationFilter = jest.fn((params: any) => {
         return Promise.resolve({ name: params.name, value: params.value });
-    });
-
-    (employeeService as any).getById = jest.fn((params: any) => {
-        return {};
     });
 
     (hellosignService as any).getTemplateEditUrlById = jest.fn((params: any) => {

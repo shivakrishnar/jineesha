@@ -17,7 +17,7 @@ with Roles as (
         sru.UserID = @_userId and
         srl.Level = @_employeeRoleLevel
 ),
-AssociateEmployee as (
+AssignedEmployees as (
     select
         EmployeeID
     from
@@ -49,5 +49,5 @@ from
 left join dbo.EmployeeCompensation ec on ec.EmployeeID = ee.ID
 left join dbo.PayType pt on pt.ID = ec.PayTypeID
 where 
-    ee.ID in (select * from AssociateEmployee)
+    ee.ID in (select * from AssignedEmployees)
     and ee.ID = @_employeeId

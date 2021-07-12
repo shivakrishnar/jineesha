@@ -6,6 +6,7 @@
     "ssoAccountId": "d2e01f76-638c-44b8-89b5-44e06535214f",
     "companyId": 600351,
     "employeeId": 24666,
+    "unauthorizedEmployeeId": 24811,
     "employeeCode": "41",
     "user": {
         "username": "direct-deposit-tester-dev@sharklasers.com",
