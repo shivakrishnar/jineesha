@@ -40,12 +40,15 @@ select
     ee.CompanyID,
     ee.EmployeeCode,
     ee.FirstName,
-    ee.LastName
+    ee.LastName,
+    pt.IsSalary
 from
     ManagerEmployee me,
     dbo.Employee ee
     inner join AssignedCompanies ac on ee.CompanyID = ac.CompanyID
     inner join Roles r on ee.CompanyID = r.CompanyID
+left join dbo.EmployeeCompensation ec on ec.EmployeeID = ee.ID
+left join dbo.PayType pt on pt.ID = ec.PayTypeID
 where 
     me.EmployeeID in (ee.CurrentSupervisor1ID, ee.CurrentSupervisor2ID, ee.CurrentSupervisor3ID)
     and ee.ID = @_employeeId

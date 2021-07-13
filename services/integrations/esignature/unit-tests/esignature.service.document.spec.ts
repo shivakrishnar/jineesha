@@ -17,6 +17,10 @@ const decodedDocumentId = '101010';
 describe('esignatureService.company-document.list', () => {
     beforeEach(() => {
         setup();
+        // Moved this out of setup() so that tests for getById work
+        (employeeService as any).getById = jest.fn((params: any) => {
+            return {};
+        });
     });
 
     test('returns original company documents', () => {

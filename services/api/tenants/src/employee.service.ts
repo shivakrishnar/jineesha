@@ -17,6 +17,7 @@ type Employee = {
     lastName: string;
     eeCode: string;
     companyName: string;
+    isSalary: boolean;
     isActive: boolean;
 };
 
@@ -175,6 +176,10 @@ export async function getById(tenantId: string, companyId: string, employeeId: s
             query = new ParameterizedQuery('GetEmployeeForManagerById', Queries.getEmployeeForManagerById);
             query.setParameter('@employeeId', employeeId);
             query.setParameter('@username', email);
+        } else if (roles.includes(Role.hrEmployee)) {
+            query = new ParameterizedQuery('GetEmployeeForEmployeeById', Queries.getEmployeeForEmployeeById);
+            query.setParameter('@employeeId', employeeId);
+            query.setParameter('@username', email);
         }
 
         const payload = {
@@ -197,6 +202,7 @@ export async function getById(tenantId: string, companyId: string, employeeId: s
             lastName: record.LastName,
             eeCode: record.EmployeeCode,
             companyName: record.CompanyName,
+            isSalary: record.IsSalary,
         } as Employee;
     } catch (error) {
         if (error instanceof ErrorMessage) {

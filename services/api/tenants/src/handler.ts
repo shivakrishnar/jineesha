@@ -31,6 +31,12 @@ const companyUriSchema = {
     companyId: { required: true, type: String },
 };
 
+const employeeUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+    employeeId: { required: true, type: String },
+};
+
 const ssoUserUriSchema = {
     tenantId: { required: true, type: UUID },
     ssoAccountId: { required: true, type: UUID },
@@ -342,6 +348,24 @@ export const listEmployeesByCompany = utilService.gatewayEventHandlerV2(async ({
         path,
         queryStringParameters,
     );
+});
+
+/**
+ * Returns information on an employee
+ */
+export const getEmployeeById = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('tenants.handler.getEmployeeById');
+
+    const { tenantId, companyId, employeeId } = event.pathParameters;
+    const email = securityContext.principal.email;
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+
+    const results = await employeeService.getById(tenantId, companyId, employeeId, email, securityContext.roleMemberships);
+
+    return results || { statusCode: 200, headers: new Headers() };
 });
 
 /**

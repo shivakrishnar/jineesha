@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Employee Schema",
+    "$id": "Employee",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "Unique identifier of the employee.",
+            "type": "string"
+        },
+        "firstName": {
+            "description": "First name of the employee.",
+            "type": "string"
+        },
+        "lastName": {
+            "description": "Last name of the employee.",
+            "type": "string"
+        },
+        "eeCode": {
+            "description": "Employee code for Evo",
+            "type": "string"
+        },
+        "companyName": {
+            "description": "Name of the employee's company.",
+            "type": "string"
+        },
+        "isSalary": {
+            "description": "Whether the employee is salaried or hourly.",
+            "type": "boolean"
+        }
+    },
+    "required": ["id"]
+}
