@@ -9,6 +9,8 @@ import { ObjectSchema } from 'yup';
 import * as configService from './config.service';
 import * as errorService from './errors/error.service';
 import * as ssoService from './remote-services/sso.service';
+// utilService is being imported in itself so that jest can mock this function
+import * as utilService from './util.service';
 
 import { APIGatewayEvent, APIGatewayProxyHandler, Context, ProxyCallback, ProxyResult, ScheduledEvent } from 'aws-lambda';
 import { Headers } from './api/models/headers';
@@ -801,6 +803,88 @@ export async function validateEmployee(tenantId: string, employeeId: string): Pr
 
 export enum Resources {
     Company = 'company',
+}
+
+/**
+ * Validates a company to exist in a tenant and that an employee exist in the company.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {string} employeeId: The unique identifier for the specified employee.
+ */
+export async function validateEmployeeWithCompany(tenantId: string, companyId: string, employeeId: string): Promise<void> {
+    console.info('utilService.validateEmployeeWithCompany');
+
+    try {
+        // companyId value must be integral
+        if (Number.isNaN(Number(companyId))) {
+            const errorMessage = `${companyId} is not a valid companyId`;
+            throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        }
+
+        // employeeId value must be integral
+        if (Number.isNaN(Number(employeeId))) {
+            const errorMessage = `${employeeId} is not a valid employeeId`;
+            throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        }
+
+        const companyExistsInTenantQuery: ParameterizedQuery = new ParameterizedQuery(
+            'companyExistsInTenant',
+            Queries.companyExistsInTenant,
+        );
+        companyExistsInTenantQuery.setParameter('@companyId', companyId);
+        const companyExistsInTenantPayload: DatabaseEvent = {
+            tenantId,
+            queryName: companyExistsInTenantQuery.name,
+            query: companyExistsInTenantQuery.value,
+            queryType: QueryType.Simple,
+        };
+
+        const companyExistsInTenantResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            companyExistsInTenantPayload,
+            InvocationType.RequestResponse,
+        );
+
+        const companyExistsInTenant = companyExistsInTenantResult.recordset[0].companyExistsInTenant;
+
+        if (!companyExistsInTenant) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Company with ID ${companyId} not found.`);
+        }
+
+        const employeeExistsInCompanyQuery: ParameterizedQuery = new ParameterizedQuery(
+            'employeeExistsInCompany',
+            Queries.employeeExistsInCompany,
+        );
+        employeeExistsInCompanyQuery.setParameter('@companyId', companyId);
+        employeeExistsInCompanyQuery.setParameter('@employeeId', employeeId);
+
+        const employeeExistsInCompanyPayload = {
+            tenantId,
+            queryName: employeeExistsInCompanyQuery.name,
+            query: employeeExistsInCompanyQuery.value,
+            queryType: QueryType.Simple,
+        };
+        const employeeExistsInCompanyResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            employeeExistsInCompanyPayload,
+            InvocationType.RequestResponse,
+        );
+
+        const employeeExistsInCompany = employeeExistsInCompanyResult.recordset[0].employeeExistsInCompany;
+
+        if (!employeeExistsInCompany) {
+            throw errorService
+                .getErrorResponse(50)
+                .setDeveloperMessage(`Employee with ID ${employeeId} was not found in the Company with ID ${companyId}.`);
+        }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
 }
 
 /**
