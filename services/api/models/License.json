@@ -1,0 +1,64 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "License Schema",
+    "$id": "License",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "Unique identifier of the license.",
+            "type": "string"
+        },
+        "employeeId": {
+            "description": "Unique identifier associated to the employee.",
+            "type": "string"
+        },
+        "licenseTypeId": {
+            "description": "Unique identifier associated to the license type.",
+            "type": ["string", "null"]
+        },
+        "licenseNumber": {
+            "description": "Employee license number.",
+            "type": ["string", "null"]
+        },
+        "issuedBy": {
+            "description": "The entity who issued this license.",
+            "type": ["string", "null"]
+        },
+        "issuedDate": {
+            "description": "Date of license issued.",
+            "type": ["string", "null"]
+        },
+        "expirationDate": {
+            "description": "Date of license expires.",
+            "type": ["string", "null"]
+        },
+        "notes": {
+            "description": "Additional notes for this license.",
+            "type": ["string", "null"]
+        },
+        "emailAcknowledged": {
+            "description": "Status of license acknowledged.",
+            "type": ["boolean", "null"]
+        },
+        "licenseTypeCompanyId": {
+            "description": "Unique identifier for the companny associated with the license type.",
+            "type": ["string", "null"]
+        },
+        "licenseTypeCode": {
+            "description": "The code for the license type.",
+            "type": ["string", "null"]
+        },
+        "licenseTypeDescription": {
+            "description": "Description of the license type.",
+            "type": ["string", "null"]
+        },
+        "licenseTypePriority": {
+            "description": "Priority of the license type.",
+            "type": ["number", "null"]
+        },
+        "licenseTypeActive": {
+            "description": "The active status of the license type.",
+            "type": ["boolean", "null"]
+        }
+    }
+}

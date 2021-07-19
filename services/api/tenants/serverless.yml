@@ -254,6 +254,15 @@ functions:
             method: get
             cors:
               origin: '*'
+            
+  listLicensesByEmployeeId:
+    handler: src/handler.listLicensesByEmployeeId
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/licenses
+            method: get
+            cors:
+              origin: '*'
 
   listUserRoles:
     handler: src/handler.listUserRoles
