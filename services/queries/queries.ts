@@ -176,4 +176,9 @@ export const Queries = {
     applicantCreate: fs.readFileSync(path.join(basePath, 'applicant-tracking/createApplicant.sql')).toString(),
     documentCreate: fs.readFileSync(path.join(basePath, 'applicant-tracking/createDocument.sql')).toString(),
     getJazzhrSecretKeyByCompanyId: fs.readFileSync(path.join(basePath, 'applicant-tracking/getJazzhrSecretKeyByCompanyId.sql')).toString(),
+
+    // SecResources
+    listSecResourcesBySubGroupId: fs.readFileSync(path.join(basePath, 'sec-resource/listSecResourcesBySubGroupId.sql')).toString(),
+    getSecResourceSubGroupById: fs.readFileSync(path.join(basePath, 'sec-resource/getSecResourceSubGroupById.sql')).toString(),
+    listSecResourceSubGroups: fs.readFileSync(path.join(basePath, 'sec-resource/listSecResourceSubGroups.sql')).toString(),
 };

@@ -1,0 +1,28 @@
+{
+    "$schema" : "http://json-schema.org/draft-06/schema#",
+    "title" : "SecResourceSubGroup Schema",
+    "$id" : "SecResourceSubGroup",
+    "type" : "object",
+    "properties" : {
+        "id": {
+            "description" : "Resource Id",
+            "type" : ["string"]
+        },
+        "resourceGroupId": {
+            "description" : "ResourceGroup Id",
+            "type" : ["string"]
+        },
+        "name": {
+            "description" : "Name of resource",
+            "type" : ["string", "null"]
+        },
+        "description": {
+            "description" : "Description of resource",
+            "type" : ["string", "null"]
+        },
+        "mainTableName" : {
+            "description" : "Identifier for the main table",
+            "type" : ["string", "null"]
+        }
+    }
+}

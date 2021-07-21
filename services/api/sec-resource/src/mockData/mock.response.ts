@@ -1,0 +1,280 @@
+export const resourcesDBResponse = {
+    recordsets: [
+        [
+            [
+                {
+                    totalCount: 3,
+                },
+            ],
+        ],
+        [
+            {
+                ID: '9267',
+                ResourceGroupID: '191',
+                ResourceSubGroupID: '7',
+                Name: 'View Paystubs',
+                Description: 'View all paystubs',
+                CddID: null,
+                TableColumn: null,
+                RequiredRoleLevel: 50,
+                IsLocked: false,
+                ResourceTypeID: null,
+                ParentID: null,
+                Position: 0,
+                Link: '~/Secure/Employee/EmployeePaystubList.aspx',
+                RequiredPermission: 'Visible',
+                MenuClass: 'fas fa-user',
+                IsOwnWindow: false,
+                IsVisible: null,
+                IsRequired: null,
+            },
+            {
+                ID: '9268',
+                ResourceGroupID: '191',
+                ResourceSubGroupID: '7',
+                Name: 'Direct Deposit',
+                Description: 'View all direct deposits',
+                CddID: null,
+                TableColumn: null,
+                RequiredRoleLevel: 50,
+                IsLocked: false,
+                ResourceTypeID: null,
+                ParentID: null,
+                Position: 0,
+                Link: '~/Secure/Employee/EmployeeDirectDepositList.aspx',
+                RequiredPermission: 'Visible',
+                MenuClass: 'fas fa-user',
+                IsOwnWindow: false,
+                IsVisible: null,
+                IsRequired: null,
+            },
+            {
+                ID: '9269',
+                ResourceGroupID: '191',
+                ResourceSubGroupID: '7',
+                Name: 'Time Off',
+                Description: 'View time off',
+                CddID: null,
+                TableColumn: null,
+                RequiredRoleLevel: 50,
+                IsLocked: false,
+                ResourceTypeID: null,
+                ParentID: null,
+                Position: 0,
+                Link: '~/Secure/Employee/EmployeeTimeOffList.aspx',
+                RequiredPermission: 'Visible',
+                MenuClass: 'fas fa-user',
+                IsOwnWindow: false,
+                IsVisible: null,
+                IsRequired: null,
+            },
+        ],
+    ],
+    recordset: [
+        {
+            totalCount: 3,
+        },
+    ],
+    output: {},
+    rowsAffected: [3],
+};
+
+export const subGroupsDBResponse = {
+    recordsets: [
+        [
+            [
+                {
+                    totalCount: 6,
+                },
+            ],
+        ],
+        [
+            {
+                ID: '4',
+                ResourceGroupID: '21',
+                Name: 'PRServiceLocation',
+                Description: 'Account List Modal Sub PRServiceLocation Grid',
+                MainTableName: 'PRServiceLocation',
+            },
+            {
+                ID: '5',
+                ResourceGroupID: '118',
+                Name: 'Maintenance',
+                Description: 'Menu Items under Security Maintenance',
+                MainTableName: null,
+            },
+            {
+                ID: '6',
+                ResourceGroupID: '118',
+                Name: 'Setup',
+                Description: 'Menu Items under Security Setup',
+                MainTableName: null,
+            },
+            {
+                ID: '7',
+                ResourceGroupID: '191',
+                Name: 'QuickLinks',
+                Description: 'Quick Links Dashboard',
+                MainTableName: null,
+            },
+            {
+                ID: '8',
+                ResourceGroupID: '191',
+                Name: 'Kentos Subgroup',
+                Description: "Kento's awesome subgroup",
+                MainTableName: null,
+            },
+            {
+                ID: '9',
+                ResourceGroupID: '191',
+                Name: 'Test',
+                Description: 'Test',
+                MainTableName: null,
+            },
+        ],
+    ],
+    recordset: [
+        {
+            totalCount: 6,
+        },
+    ],
+    output: {},
+    rowsAffected: [6],
+};
+
+export const subGroupsResponse: any[] = [
+    {
+        id: '4',
+        resourceGroupId: '21',
+        name: 'PRServiceLocation',
+        description: 'Account List Modal Sub PRServiceLocation Grid',
+        mainTableName: 'PRServiceLocation',
+    },
+    {
+        id: '5',
+        resourceGroupId: '118',
+        name: 'Maintenance',
+        description: 'Menu Items under Security Maintenance',
+        mainTableName: null,
+    },
+    {
+        id: '6',
+        resourceGroupId: '118',
+        name: 'Setup',
+        description: 'Menu Items under Security Setup',
+        mainTableName: null,
+    },
+    {
+        id: '7',
+        resourceGroupId: '191',
+        name: 'QuickLinks',
+        description: 'Quick Links Dashboard',
+        mainTableName: null,
+    },
+    {
+        id: '8',
+        resourceGroupId: '191',
+        name: 'Kentos Subgroup',
+        description: "Kento's awesome subgroup",
+        mainTableName: null,
+    },
+    {
+        id: '9',
+        resourceGroupId: '191',
+        name: 'Test',
+        description: 'Test',
+        mainTableName: null,
+    },
+];
+
+export const resourcesResponse: any[] = [
+    {
+        id: '9267',
+        resourceGroupId: '191',
+        resourceSubGroupId: '7',
+        name: 'View Paystubs',
+        description: 'View all paystubs',
+        cddId: null,
+        tableColumn: null,
+        requiredRoleLevel: 50,
+        isLocked: false,
+        resourceTypeId: null,
+        parentId: null,
+        position: 0,
+        link: '~/Secure/Employee/EmployeePaystubList.aspx',
+        requiredPermission: 'Visible',
+        menuClass: 'fas fa-user',
+        isOwnWindow: false,
+        isVisible: null,
+        isRequired: null,
+    },
+    {
+        id: '9268',
+        resourceGroupId: '191',
+        resourceSubGroupId: '7',
+        name: 'Direct Deposit',
+        description: 'View all direct deposits',
+        cddId: null,
+        tableColumn: null,
+        requiredRoleLevel: 50,
+        isLocked: false,
+        resourceTypeId: null,
+        parentId: null,
+        position: 0,
+        link: '~/Secure/Employee/EmployeeDirectDepositList.aspx',
+        requiredPermission: 'Visible',
+        menuClass: 'fas fa-user',
+        isOwnWindow: false,
+        isVisible: null,
+        isRequired: null,
+    },
+    {
+        id: '9269',
+        resourceGroupId: '191',
+        resourceSubGroupId: '7',
+        name: 'Time Off',
+        description: 'View time off',
+        cddId: null,
+        tableColumn: null,
+        requiredRoleLevel: 50,
+        isLocked: false,
+        resourceTypeId: null,
+        parentId: null,
+        position: 0,
+        link: '~/Secure/Employee/EmployeeTimeOffList.aspx',
+        requiredPermission: 'Visible',
+        menuClass: 'fas fa-user',
+        isOwnWindow: false,
+        isVisible: null,
+        isRequired: null,
+    },
+];
+
+export const subGroupWithEmptyResourceResponse = {
+    recordsets: [[[Object]]],
+    recordset: [
+        {
+            id: '7',
+            resourceGroupId: '191',
+            name: 'QuickLinks',
+            description: 'Quick Links Dashboard',
+            mainTableName: null,
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const emptyResourceDBResponse = {
+    recordsets: [[{ totalCount: 0 }], []],
+    recordset: [{ totalCount: 0 }],
+    output: {},
+    rowsAffected: [1, 1, 0],
+};
+
+export const nonExistentSubGroup = { 
+    recordsets: [[]], 
+    recordset: [], 
+    output: {}, 
+    rowsAffected: [0] 
+};
