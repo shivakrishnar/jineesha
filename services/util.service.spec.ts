@@ -267,3 +267,75 @@ describe('utilService.validateEmployeeWithCompany', () => {
         });
     });
 });
+
+describe('utilService.parseQueryParamsBoolean', () => {
+    beforeEach(() => {
+        setup();
+    });
+
+    test('key should not exist in queryParams', () => {
+        try {
+            utilService.parseQueryParamsBoolean({ key: 'true' }, 'invalidKey');
+        } catch (error) {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error.message).toEqual(`Key 'invalidKey' does not exist in queryParams`);
+        }
+    });
+
+    test('should return boolean', () => {
+        const parsedTrueQueryParamsBoolean = utilService.parseQueryParamsBoolean({ key: 'true' }, 'key');
+        expect(parsedTrueQueryParamsBoolean).toBe(true);
+
+        const parsedFalseQueryParamsBoolean = utilService.parseQueryParamsBoolean({ key: 'false' }, 'key');
+        expect(parsedFalseQueryParamsBoolean).toBe(false);
+    });
+
+    test('should be invalid', () => {
+        try {
+            utilService.parseQueryParamsBoolean({ key: 'abc' }, 'key');
+        } catch (error) {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error).toEqual({
+                statusCode: 400,
+                code: 60,
+                message: 'Invalid url parameter value',
+                developerMessage: "'abc' is not a boolean value.",
+                moreInfo: '',
+            });
+        }
+    });
+});
+
+describe('utilService.validateQueryParams', () => {
+    beforeEach(() => {
+        setup();
+    });
+
+    test('should show the invalid queryParameters', () => {
+        try {
+            utilService.validateQueryParams({ key1: 'key1', key2: 'key2', key3: 'key3' }, ['key1', 'key3']);
+        } catch (error) {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error).toEqual({
+                statusCode: 400,
+                code: 60,
+                message: 'Invalid url parameter value',
+                developerMessage: "'key2' is not a valid query parameter.",
+                moreInfo: '',
+            });
+        }
+
+        try {
+            utilService.validateQueryParams({ key1: 'key1', key2: 'key2', key3: 'key3', key4: 'key4' }, ['key1', 'key3']);
+        } catch (error) {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error).toEqual({
+                statusCode: 400,
+                code: 60,
+                message: 'Invalid url parameter value',
+                developerMessage: "'key2','key4' are not valid query parameters.",
+                moreInfo: '',
+            });
+        }
+    });
+});

@@ -1050,3 +1050,45 @@ export async function getSignedUrlSync(operation: string, params: any): Promise<
         });
     });
 }
+
+/**
+ * Parses a specific query parameter value into a boolean value
+ * @param {any} queryParams: The query parameters that were specified by the user
+ * @param {string} key: The key of the queryParam that needs to be parsed into a boolean
+ * @returns {boolean}: Boolean value of the parsed key in queryParams
+ */
+export function parseQueryParamsBoolean(queryParams: any, key: string) {
+    console.info('util.service.parseQueryParamsBoolean');
+
+    if (key in queryParams === false) throw Error(`Key '${key}' does not exist in queryParams`);
+
+    if (queryParams[key] === 'true') {
+        return true;
+    } else if (queryParams[key] === 'false') {
+        return false;
+    } else {
+        throw errorService.getErrorResponse(60).setDeveloperMessage(`'${queryParams[key]}' is not a boolean value.`);
+    }
+}
+
+/**
+ * Validates the keys of the query parameter to an array of keys
+ * @param {any} queryParams: The query parameters that were specified by the user
+ * @param {string} keys: The keys that are valid in the queryParam
+ */
+export function validateQueryParams(queryParams: any, keys: string[]) {
+    console.info('util.service.validateQueryParams');
+
+    const invalidKeyInParam = Object.keys(queryParams).filter((paramKey) => !keys.includes(paramKey));
+    if (invalidKeyInParam.length > 0) {
+        const plural = invalidKeyInParam.length > 1;
+
+        throw errorService
+            .getErrorResponse(60)
+            .setDeveloperMessage(
+                `${"'" + invalidKeyInParam.join("','") + "'"} ${plural ? 'are not' : 'is not a'} valid query parameter${
+                    plural ? 's' : ''
+                }.`,
+            );
+    }
+}
