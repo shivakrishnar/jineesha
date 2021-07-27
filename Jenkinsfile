@@ -186,7 +186,8 @@ void deploy(String environment) {
     deployService('services/api/direct-deposits', awsCredentialsId, environment)  
     deployService('services/api/sec-resource', awsCredentialsId, environment)  
     deployService('services/api/tenants', awsCredentialsId, environment)      
-    deployService('services/integrations', awsCredentialsId, environment)      
+    deployService('services/api/group-term-life', awsCredentialsId, environment)    
+    deployService('services/integrations', awsCredentialsId, environment)  
 }
 
 void deployInternalServices(String awsCredentialsId, String environment) {
@@ -230,6 +231,10 @@ void installServiceApiDependencies() {
     }
 
     dir('services/api/tenants') {
+        sh 'npm install'
+    }
+
+    dir('services/api/group-term-life') {
         sh 'npm install'
     }
 
