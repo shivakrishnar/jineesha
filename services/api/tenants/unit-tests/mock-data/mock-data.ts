@@ -367,5 +367,25 @@ export const emptyExpiringLicensesResult = {
     rowsAffected: [1, 1, 1, 0],
 };
 
+export const emptyLicenseResult = {
+    recordsets: [[], []],
+    recordset: [],
+    output: {},
+    rowsAffected: [1, 0, 0, 0],
+};
+
+export const validUpdateEmailAcknowledgedLicenseResult = {
+    recordsets: [[{ EmailAcknowledged: '0' }], [{ EmailAcknowledged: '1' }]],
+    recordset: [{ EmailAcknowledged: '1' }],
+    output: {},
+    rowsAffected: [1, 1, 1, 1],
+};
+
+export const updateEmailAcknowledgedLicenseBody = {
+    emailAcknowledged: true,
+};
+
+export const validId = '72';
+export const invalidId = 'abc';
 export const domainName = 'https://test.evolution-software.com';
 export const path = '/identity/tenants/1234/companies/1/employees/123/direct-deposits';

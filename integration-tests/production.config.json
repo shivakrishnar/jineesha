@@ -64,7 +64,11 @@
     "licenses": {
         "tenantId": "c2745dc6-a732-403d-b333-cc4b9c326437",
         "companyId": 27,
-        "employeeId": 912
+        "employeeId": 912,
+        "employeeWithExpiringLicenses": "35109",
+        "id": 72,
+        "invalidId": "abc",
+        "nonExistentId": 99999
     },
     "documentsBucket": "production.hr.files",
     "logo": {
