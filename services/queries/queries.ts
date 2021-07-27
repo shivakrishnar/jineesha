@@ -69,7 +69,9 @@ export const Queries = {
         .readFileSync(path.join(basePath, 'esignatures/updateEsignatureMetadataSignatureStatusById.sql'))
         .toString(),
     updateEsignatureMetadataById: fs.readFileSync(path.join(basePath, 'esignatures/updateEsignatureMetadataById.sql')).toString(),
-    updateEsignatureMetadataTitleCategoryById: fs.readFileSync(path.join(basePath, 'esignatures/updateEsignatureMetadataTitleCategoryById.sql')).toString(),
+    updateEsignatureMetadataTitleCategoryById: fs
+        .readFileSync(path.join(basePath, 'esignatures/updateEsignatureMetadataTitleCategoryById.sql'))
+        .toString(),
     getEmployeeLegacyAndSignedDocuments: fs
         .readFileSync(path.join(basePath, 'esignatures/getEmployeeLegacyAndSignedDocuments.sql'))
         .toString(),
@@ -170,6 +172,7 @@ export const Queries = {
     getEmployeeInfoByOnboardingKey: fs.readFileSync(path.join(basePath, 'employees/getEmployeeInfoByOnboardingKey.sql')).toString(),
     listLicensesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listLicensesByEmployeeId.sql')).toString(),
     listExpiringLicensesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listExpiringLicensesByEmployeeId.sql')).toString(),
+    updateEmployeeLicenseById: fs.readFileSync(path.join(basePath, 'employees/updateEmployeeLicenseById.sql')).toString(),
 
     // Group Term Life
     createGtlRecord: fs.readFileSync(path.join(basePath, 'gtl/createGtlRecord.sql')).toString(),
