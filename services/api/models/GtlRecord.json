@@ -1,0 +1,29 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "GTL Record Schema",
+    "$id": "GtlRecord",
+    "type": "object",
+    "properties": {
+        "employeeId": {
+            "description": "ID of employee",
+            "type": "string"
+        },
+        "flatCoverage": {
+            "description": "Whether the GTL record is flat coverage (versus earnings multiple)",
+            "type": "boolean"
+        },
+        "flatAmount": {
+            "description": "Amount of flat coverage",
+            "type": ["number", "null"]
+        },
+        "earningsMultiplier": {
+            "description": "Earnings multiplier if coverage is based on annual earnings",
+            "type": ["number", "null"]
+        },
+        "workHours": {
+            "description": "Number of hours employee works in a year",
+            "type": ["number", "null"]
+        }
+    },
+    "required": ["employeeId", "flatCoverage"]
+}
