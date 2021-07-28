@@ -167,6 +167,10 @@ export const Queries = {
     getEmployeeForEmployeeById: fs.readFileSync(path.join(basePath, 'employees/getEmployeeForEmployeeById.sql')).toString(),
     getEmployeeInfoByOnboardingKey: fs.readFileSync(path.join(basePath, 'employees/getEmployeeInfoByOnboardingKey.sql')).toString(),
 
+    // Group Term Life
+    createGtlRecord: fs.readFileSync(path.join(basePath, 'gtl/createGtlRecord.sql')).toString(),
+    listGtlRecordsByEmployee: fs.readFileSync(path.join(basePath, 'gtl/listGtlRecordsByEmployee.sql')).toString(),
+
     // Users
     getUserById: fs.readFileSync(path.join(basePath, 'users/getUserById.sql')).toString(),
     getUserSsoIdByEvoCompanyCode: fs.readFileSync(path.join(basePath, 'users/getUserSsoIdByEvoCompanyCode.sql')).toString(),

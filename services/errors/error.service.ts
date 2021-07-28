@@ -122,6 +122,13 @@ function errorMessages(): ErrorMessage[] {
       "message": "Request data falls outside allowed ranges.",
       "developerMessage": "",
       "moreInfo": ""
+    },    
+    {
+      "statusCode": 422,
+      "code": 73,
+      "message": "Data already exists for this user.",
+      "developerMessage": "",
+      "moreInfo": ""
     }
   ]`);
 }
