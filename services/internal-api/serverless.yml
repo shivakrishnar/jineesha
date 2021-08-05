@@ -128,7 +128,7 @@ plugins:
   - serverless-aws-documentation
   - serverless-cloudformation-resource-counter
 
-
+  
 package:
   individually: false
   excludeDevDependencies: true

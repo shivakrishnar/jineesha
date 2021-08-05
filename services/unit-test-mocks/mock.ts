@@ -85,6 +85,10 @@ export const setup = () => {
         return 'token';
     });
 
+    (utilService as any).getSignedUrlSync = jest.fn((params: any) => {
+        return 'www.mysignedurl.com';
+    });
+
     (utilService as any).invokeInternalService = jest.fn((params: any) => {
         return {};
     });

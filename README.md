@@ -15,7 +15,24 @@ architecture uses AWS Lambda, API Gateway with a SQL Server-based RDS backend.
 
 ### How to Run Locally
 
-Currently, only the `tenants` service has been refactored to run locally with `serverless-offline`. See [/services/api/tenants/README.md](/services/api/tenants/README.md) for instructions.
+Currently, the `tenants`, `integrations`, and `direct-deposits` services have been refactored to run locally with `serverless-offline`.
+
+1. Ensure `npm install` has been run in the following folders:
+    - `/asure.hr.services`
+    - `/asure.hr.services/services/internal-api`
+    - `/asure.hr.services/services/integrations`
+    - `/asure.hr.services/services/api/direct-deposits`
+    - `/asure.hr.services/services/api/tenants`
+    - `asure.hr.services/services/api/group-term-life`
+2. Authenticate with your AWS account, then: `npm start`
+
+After a minute or two, the service will be running on the designated port - Tenants runs on `http://localhost:4100` - Direct-deposits runs on `http://localhost:4105` - Integrations runs on `http://localhost:4104`
+
+With a valid access token, you can make requests (with curl, Postman, etc) using this base URL, for example, `http://localhost:4100/internal/tenants/c807d7f9-b391-4525-ac0e-31dbc0cf202b/employees`.
+
+### How to Run Integration Tests against a Local Instance
+
+See the respective services README for instructions on how to run integration tests against serverless-offline
 
 #### How to Deploy to AWS
 
@@ -23,7 +40,7 @@ _Deployment order is important!: deploy services in `services/internal-api` firs
 
 1. Clone this repository
 2. Install all dependencies by running `./npm_install_all.sh`
-    a. or `npm install` in each folder and subfolder
+   a. or `npm install` in each folder and subfolder
 3. Update the `domain` value in the `development.serverless.variables.json` file with `evolution-software.com`
 4. Update the `domainName` value in the `serverless.yml` file with your own custom domain. Example: `domainName: my-custom-domain-name.${file(${opt:variables}):domain}`
 5. Create the custom domain in API Gateway: `sls create_domain --variables development.serverless.variables.json`
