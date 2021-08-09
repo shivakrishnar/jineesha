@@ -5,6 +5,7 @@ String currentVersion
 String nextVersion
 String semanticVersion
 @Field String skipIntegrationTests
+@Field boolean isReleaseBuild = false
 
 // The git remote
 final String gitCredentials = "ssh-bitbucket-asuresoftware"
@@ -21,28 +22,41 @@ final String gitCredentials = "ssh-bitbucket-asuresoftware"
 // Project Name - this value is set by the name of the Jenkins job which should also be the name of the repo
 @Field final String projectName
 @Field final String nodeVersion = "v12.14.0"
+@Field final String nodeName = "linux"
 
 String commit_id
 Map deploymentOutput
 boolean isMasterBranch = env.BRANCH_NAME == "master"
 //AWS
 
-stage("Build")
-{
+stage("Build") {
     timeout(time: timeoutDays, unit: "DAYS") {
         stage("Choose semantic version") {
             semanticVersion = input(id: 'userInput', message: "Please select the semantic version of build...",
-                    parameters: [[$class: 'ChoiceParameterDefinition', choices: 'patch\nminor\nmajor', name: "choices"]])
+                parameters: [
+                    [$class: 'ChoiceParameterDefinition', choices: 'patch\nminor\nmajor', name: "choices"]
+                ])
         }
     }
     timeout(time: timeoutDays, unit: "DAYS") {
         stage("Skip integration tests?") {
             skipIntegrationTests = input(id: 'userInput', message: "Skip integration tests?",
-                    parameters: [[$class: 'ChoiceParameterDefinition', choices: 'no\nyes', name: "choices"]])
+                parameters: [
+                    [$class: 'ChoiceParameterDefinition', choices: 'no\nyes', name: "choices"]
+                ])
         }
     }
-    node("linux") {
-        try {
+    if (isMasterBranch) {
+        stage('Choose deployment type') {
+            buildTypeResponse = input(id: 'userInput', message: 'Is this a release?',
+                parameters: [
+                    [$class: 'ChoiceParameterDefinition', choices: 'No\nYes', name: "choices"]
+                ])
+            isReleaseBuild = buildTypeResponse == 'Yes'
+        }
+    }
+    try {
+        node(nodeName) {
             projectName = env.JOB_NAME.substring(0, env.JOB_NAME.indexOf('/'))
             bitbucketStatusNotify(buildState: "INPROGRESS")
             // Make sure we have a clean workspace before we get started
@@ -69,64 +83,77 @@ stage("Build")
             stash name: "package", includes: "package.json"
             stash name: "package lock", includes: "package-lock.json"
         }
-        catch (Exception e) {
+        if (!isReleaseBuild) {
+            stage('Choose the target environment') {
+                environmentsList = 'development\nstaging'
+
+                targetEnvironment = input(id: 'userInput', message: 'Please select the environment...',
+                    parameters: [
+                        [$class: 'ChoiceParameterDefinition', choices: environmentsList, name: "choices"]
+                    ])
+            }
+            deploy(targetEnvironment)
+            if (skipIntegrationTests == "no") {
+                runIntegrationTests(targetEnvironment)
+            }
+        } else {
+            stage("deploy - development") {
+                deployStage("development")
+                if (skipIntegrationTests == "no") {
+                    runIntegrationTests("development")
+                }
+            }
+            stage("deploy - staging") {
+                deployStage("staging")
+                if (skipIntegrationTests == "no") {
+                    runIntegrationTests("staging")
+                }
+            }
+
+            if (isMasterBranch) {
+                stage("Deploy to Production") {
+                    deploymentNotification("${projectName}: ready to deploy version: ${nextVersion} to production.", teamEmail, false)
+                    deployStage("production")
+                    node("EvolutionCore") {
+                        ws("workspace/${env.JOB_NAME}") {
+                            checkout scm
+                            unstash "package"
+                            unstash "package lock"
+
+                            bat "git add package.json package-lock.json"
+                            bat "git commit -m \"version bump to ${nextVersion}\""
+
+                            //Get commit id:
+                            commit_id = powershell(
+                                script: "git rev-parse --short HEAD",
+                                returnStdout: true,
+                                returnStatus: false
+                            ).trim()
+
+                            sshagent(credentials: [gitCredentials]) {
+                                bat "git tag -m \"Built by Jenkins\" -a ${nextVersion} ${commit_id}"
+                                bat "git push origin ${env.BRANCH_NAME} ${nextVersion}"
+                            }
+                            deploymentNotification("${projectName}: successfully deployed version: ${nextVersion} to production!", teamEmail, true)
+
+                        }
+                    }
+                    node(nodeName) {
+                        // TODO: Run integration tests in production when e-signatures is turned on for EvoNPD
+                        // runIntegrationTests("production") 
+                        sh "INTEGRATION_TEST_CONFIG_FILENAME=production.config.json node_modules/.bin/jest -c jest.integration.test.config.json -i -t direct deposit"
+                    }
+                }
+            }
+        }
+    } catch (Exception e) {
+        node(nodeName) {
             cleanUpWorkspace()
             // Notify build breaking culprit and team of regressions on critical branches
-            if (isMasterBranch) {
-                notifyTeam(e)
-            }
+            notifyTeam(e)
 
             bitbucketStatusNotify(buildState: "FAILED")
             throw e
-        }
-    }
-
-    stage("deploy - development") {
-        deployStage("development")
-        if (skipIntegrationTests == "no") {
-            runIntegrationTests("development")
-        }
-    }
-    stage("deploy - staging") {
-        deployStage("staging")
-        if (skipIntegrationTests == "no") {
-            runIntegrationTests("staging")
-        }
-    }
-
-    if (isMasterBranch) {
-        stage("Deploy to Production") {
-            deploymentNotification("${projectName}: ready to deploy version: ${nextVersion} to production.", teamEmail, false)
-            deployStage("production")
-            node("EvolutionCore") {
-                ws("workspace/${env.JOB_NAME}") { 
-                    checkout scm
-                    unstash "package"
-                    unstash "package lock"
-
-                    bat "git add package.json package-lock.json"
-                    bat "git commit -m \"version bump to ${nextVersion}\""
-
-                    //Get commit id:
-                    commit_id = powershell (
-                        script: "git rev-parse --short HEAD",
-                        returnStdout: true,
-                        returnStatus: false
-                    ).trim()
-
-                    sshagent(credentials: [gitCredentials]) {
-                        bat "git tag -m \"Built by Jenkins\" -a ${nextVersion} ${commit_id}"
-                        bat "git push origin ${env.BRANCH_NAME} ${nextVersion}"
-                    }
-                    deploymentNotification("${projectName}: successfully deployed version: ${nextVersion} to production!", teamEmail, true)
-
-                }
-            }
-            node("linux") {
-                // TODO: Run integration tests in production when e-signatures is turned on for EvoNPD
-                // runIntegrationTests("production") 
-                sh "INTEGRATION_TEST_CONFIG_FILENAME=production.config.json node_modules/.bin/jest -c jest.integration.test.config.json -i -t direct deposit"
-            }
         }
     }
 }
@@ -180,14 +207,16 @@ void runWithAwsCredentials(String awsCredentialsId, String command) {
 }
 
 void deploy(String environment) {
-    sh "ls -lah"
-    String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
-    deployInternalServices(awsCredentialsId, environment)
-    deployService('services/api/direct-deposits', awsCredentialsId, environment)  
-    deployService('services/api/sec-resource', awsCredentialsId, environment)  
-    deployService('services/api/tenants', awsCredentialsId, environment)      
-    deployService('services/api/group-term-life', awsCredentialsId, environment)    
-    deployService('services/integrations', awsCredentialsId, environment)  
+    node(nodeName){
+        sh "ls -lah"
+        String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
+        deployInternalServices(awsCredentialsId, environment)
+        deployService('services/api/direct-deposits', awsCredentialsId, environment)  
+        deployService('services/api/sec-resource', awsCredentialsId, environment)  
+        deployService('services/api/tenants', awsCredentialsId, environment)      
+        deployService('services/api/group-term-life', awsCredentialsId, environment)    
+        deployService('services/integrations', awsCredentialsId, environment)
+    }
 }
 
 void deployInternalServices(String awsCredentialsId, String environment) {
@@ -244,7 +273,7 @@ void installServiceApiDependencies() {
 }
 
 void runIntegrationTests(String environment) {
-    node("linux") {
+    node(nodeName) {
         String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
         try 
         {
@@ -266,7 +295,7 @@ void deployStage(String environment) {
         def userInput = input(id: "userInput", message: "Promote to ${environment}")
     }
 
-    node("linux") {
+    node(nodeName) {
         try {
             deploy(environment)
         }
