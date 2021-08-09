@@ -9,6 +9,8 @@ import { ObjectSchema } from 'yup';
 import * as configService from './config.service';
 import * as errorService from './errors/error.service';
 import * as ssoService from './remote-services/sso.service';
+// utilService is being imported in itself so that jest can mock this function
+import * as utilService from './util.service';
 
 import { APIGatewayEvent, APIGatewayProxyHandler, Context, ProxyCallback, ProxyResult, ScheduledEvent } from 'aws-lambda';
 import { Headers } from './api/models/headers';
@@ -804,6 +806,88 @@ export enum Resources {
 }
 
 /**
+ * Validates a company to exist in a tenant and that an employee exist in the company.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ * @param {string} employeeId: The unique identifier for the specified employee.
+ */
+export async function validateEmployeeWithCompany(tenantId: string, companyId: string, employeeId: string): Promise<void> {
+    console.info('utilService.validateEmployeeWithCompany');
+
+    try {
+        // companyId value must be integral
+        if (Number.isNaN(Number(companyId))) {
+            const errorMessage = `${companyId} is not a valid companyId`;
+            throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        }
+
+        // employeeId value must be integral
+        if (Number.isNaN(Number(employeeId))) {
+            const errorMessage = `${employeeId} is not a valid employeeId`;
+            throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        }
+
+        const companyExistsInTenantQuery: ParameterizedQuery = new ParameterizedQuery(
+            'companyExistsInTenant',
+            Queries.companyExistsInTenant,
+        );
+        companyExistsInTenantQuery.setParameter('@companyId', companyId);
+        const companyExistsInTenantPayload: DatabaseEvent = {
+            tenantId,
+            queryName: companyExistsInTenantQuery.name,
+            query: companyExistsInTenantQuery.value,
+            queryType: QueryType.Simple,
+        };
+
+        const companyExistsInTenantResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            companyExistsInTenantPayload,
+            InvocationType.RequestResponse,
+        );
+
+        const companyExistsInTenant = companyExistsInTenantResult.recordset[0].companyExistsInTenant;
+
+        if (!companyExistsInTenant) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Company with ID ${companyId} not found.`);
+        }
+
+        const employeeExistsInCompanyQuery: ParameterizedQuery = new ParameterizedQuery(
+            'employeeExistsInCompany',
+            Queries.employeeExistsInCompany,
+        );
+        employeeExistsInCompanyQuery.setParameter('@companyId', companyId);
+        employeeExistsInCompanyQuery.setParameter('@employeeId', employeeId);
+
+        const employeeExistsInCompanyPayload = {
+            tenantId,
+            queryName: employeeExistsInCompanyQuery.name,
+            query: employeeExistsInCompanyQuery.value,
+            queryType: QueryType.Simple,
+        };
+        const employeeExistsInCompanyResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            employeeExistsInCompanyPayload,
+            InvocationType.RequestResponse,
+        );
+
+        const employeeExistsInCompany = employeeExistsInCompanyResult.recordset[0].employeeExistsInCompany;
+
+        if (!employeeExistsInCompany) {
+            throw errorService
+                .getErrorResponse(50)
+                .setDeveloperMessage(`Employee with ID ${employeeId} was not found in the Company with ID ${companyId}.`);
+        }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Ensures that the invoking user has access to the specified resource and runs the given query if authorized.
  * @param {string} tenantId: The unique identifier for the tenant.
  * @param {Resources} resourceType: The type of resource to be accessed.
@@ -965,4 +1049,46 @@ export async function getSignedUrlSync(operation: string, params: any): Promise<
             else resolve(url);
         });
     });
+}
+
+/**
+ * Parses a specific query parameter value into a boolean value
+ * @param {any} queryParams: The query parameters that were specified by the user
+ * @param {string} key: The key of the queryParam that needs to be parsed into a boolean
+ * @returns {boolean}: Boolean value of the parsed key in queryParams
+ */
+export function parseQueryParamsBoolean(queryParams: any, key: string) {
+    console.info('util.service.parseQueryParamsBoolean');
+
+    if (key in queryParams === false) throw Error(`Key '${key}' does not exist in queryParams`);
+
+    if (queryParams[key] === 'true') {
+        return true;
+    } else if (queryParams[key] === 'false') {
+        return false;
+    } else {
+        throw errorService.getErrorResponse(60).setDeveloperMessage(`'${queryParams[key]}' is not a boolean value.`);
+    }
+}
+
+/**
+ * Validates the keys of the query parameter to an array of keys
+ * @param {any} queryParams: The query parameters that were specified by the user
+ * @param {string} keys: The keys that are valid in the queryParam
+ */
+export function validateQueryParams(queryParams: any, keys: string[]) {
+    console.info('util.service.validateQueryParams');
+
+    const invalidKeyInParam = Object.keys(queryParams).filter((paramKey) => !keys.includes(paramKey));
+    if (invalidKeyInParam.length > 0) {
+        const plural = invalidKeyInParam.length > 1;
+
+        throw errorService
+            .getErrorResponse(60)
+            .setDeveloperMessage(
+                `${"'" + invalidKeyInParam.join("','") + "'"} ${plural ? 'are not' : 'is not a'} valid query parameter${
+                    plural ? 's' : ''
+                }.`,
+            );
+    }
 }

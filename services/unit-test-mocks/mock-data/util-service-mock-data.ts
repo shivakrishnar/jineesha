@@ -70,3 +70,47 @@ export const s3Key = `${mockData.tenantId}/${mockData.companyId}/${mockData.empl
 export const updatedFileName = 'object-123.pdf';
 export const updatedS3Key = `${s3Key}/object-123.pdf`;
 export const updatedObjectData: string[] = [updatedFileName, updatedS3Key];
+
+export const companyExistInTenant = {
+    recordsets: [
+        [
+            { companyExistsInTenant: true }
+        ]
+    ],
+    recordset: [{ companyExistsInTenant: true }],
+    output: {},
+    rowsAffected: [1, 1],
+};
+
+export const employeeExistsInCompany = {
+    recordsets: [
+        [
+            { employeeExistsInCompany: true }
+        ]
+    ],
+    recordset: [{ employeeExistsInCompany: true }],
+    output: {},
+    rowsAffected: [1, 1],
+};
+
+export const companyDoesNotExistInTenant = {
+    recordsets: [
+        [
+            { companyExistsInTenant: false }
+        ]
+    ],
+    recordset: [{ companyExistsInTenant: false }],
+    output: {},
+    rowsAffected: [1, 1],
+};
+
+export const employeeDoesNotExistsInCompany = {
+    recordsets: [
+        [
+            { employeeExistsInCompany: false }
+        ]
+    ],
+    recordset: [{ employeeExistsInCompany: false }],
+    output: {},
+    rowsAffected: [1, 1],
+};

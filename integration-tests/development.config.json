@@ -3,10 +3,16 @@
     "nonProxiedApiDomain": "https://hr-services.dev.evolution-software.com",
     "tokenUrl": "https://api.dev.evolution-software.com",
     "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
+    "nonExistentTenantId": "d85a31b3-32d7-44d7-9f63-515162441bbd",
+    "invalidTenantId": "abc",
     "ssoAccountId": "d2e01f76-638c-44b8-89b5-44e06535214f",
     "companyId": 600351,
     "employeeId": 24666,
     "unauthorizedEmployeeId": 24811,
+    "nonExistentCompanyId": 999999,
+    "nonExistentEmployeeId": 999999,
+    "invalidCompanyId": "abc",
+    "invalidEmployeeId": "abc",
     "employeeCode": "41",
     "user": {
         "username": "direct-deposit-tester-dev@sharklasers.com",
@@ -60,6 +66,11 @@
         "nonExistentSubGroupId": 999999,
         "invalidTenantId": "abc",
         "nonExistentTenantId": "c2f6dbae-230d-406e-a625-52a0c153b338"
+    },
+    "licenses": {
+        "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
+        "companyId": 600351,
+        "employeeId": 35109
     },
     "documentsBucket": "development.hr.files",
     "logo": {

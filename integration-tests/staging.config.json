@@ -3,10 +3,16 @@
     "nonProxiedApiDomain": "https://hr-services.staging.evolution-software.com",
     "tokenUrl": "https://api.staging.evolution-software.com",
     "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
+    "nonExistentTenantId": "d85a31b3-32d7-44d7-9f63-515162441bbd",
+    "invalidTenantId": "abc",
     "ssoAccountId": "19ec977c-7472-43b8-a13a-1dbd82ce47b3",
     "companyId": 600351,
     "employeeId": 23312,
     "unauthorizedEmployeeId": 878,
+    "nonExistentCompanyId": 999999,
+    "nonExistentEmployeeId": 999999,
+    "invalidCompanyId": "abc",
+    "invalidEmployeeId": "abc",
     "employeeCode": "2",
     "user": {
         "username": "direct-deposit-user-staging@sharklasers.com",
@@ -60,6 +66,11 @@
         "nonExistentSubGroupId": 999999,
         "invalidTenantId": "abc",
         "nonExistentTenantId": "c2f6dbae-230d-406e-a625-52a0c153b338"
+    },
+    "licenses": {
+        "tenantId": "c2745dc6-a732-403d-b333-cc4b9c326437",
+        "companyId": 27,
+        "employeeId": 912
     },
     "documentsBucket": "staging.hr.files",
     "logo": {

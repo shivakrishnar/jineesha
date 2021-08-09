@@ -464,3 +464,23 @@ export const listEmployeeCompaniesBySsoAccount = utilService.gatewayEventHandler
         return await companyService.listEmployeeCompaniesBySsoAccount(tenantId, ssoAccountId);
     },
 );
+
+/**
+ * Return the list of licenses for an employee.
+ */
+export const listLicensesByEmployeeId = utilService.gatewayEventHandlerV2(async ({ event }: IGatewayEventInput) => {
+    console.info('tenants.handler.listLicensesByEmployeeId');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId, companyId, employeeId } = event.pathParameters;
+
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    return await employeeService.listLicensesByEmployeeId(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
+});
