@@ -11,6 +11,7 @@ import * as errorService from '../../../errors/error.service';
 import * as paginationService from '../../../pagination/pagination.service';
 import * as utilService from '../../../util.service';
 import { EmployeeLicense } from './EmployeeLicense';
+import { EmployeeCertificate } from './EmployeeCertificate';
 
 type Employee = {
     id: number;
@@ -253,7 +254,7 @@ async function getEmployees(tenantId: string, query: Query, baseUrl: string, pag
 }
 
 /**
- * Lists all licenses that are expiring for a specific employee
+ * Lists all licenses for a specific employee
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for the specified company.
  * @param {string} employeeId: The unique identifier employee.
@@ -385,6 +386,93 @@ export async function updateEmployeeLicenseById(
             oldEmailAcknowledged: result.recordsets[0][0].EmailAcknowledged === '1',
             newEmailAcknowledged: result.recordsets[1][0].EmailAcknowledged === '1',
         };
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Lists all the certificates for a specific employee
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the specified company.
+ * @param {string} employeeId: The unique identifier employee.
+ * @param {any} queryParams: The query parameters that were specified by the user.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @returns {PaginatedResult}: A Promise of a paginated collection of employee's certificates.
+ */
+export async function listCertificatesByEmployeeId(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
+    console.info('employeeService.listCertificatesByEmployeeId');
+
+    const validQueryStringParameters = ['pageToken', 'expiring'];
+
+    // Pagination validation
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    try {
+        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+
+        let query;
+        query = new ParameterizedQuery('listCertificatesByEmployeeId', Queries.listCertificatesByEmployeeId);
+
+        if (queryParams) {
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+
+            const expiring = utilService.parseQueryParamsBoolean(queryParams, 'expiring');
+
+            if (expiring) {
+                query = new ParameterizedQuery('listExpiringCertificatesByEmployeeId', Queries.listExpiringCertificatesByEmployeeId);
+                query.setParameter('@companyId', companyId);
+            }
+        }
+
+        query.setParameter('@employeeId', employeeId);
+
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+
+        const payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        const totalCount = result.recordsets[0][0].totalCount;
+
+        const certificates: EmployeeCertificate[] = result.recordsets[1].map((record) => {
+            return {
+                id: record.ID,
+                employeeId: record.EmployeeID,
+                certificateTypeId: record.CertificateTypeID,
+                certificateNumber: record.CertificateNumber,
+                issuedBy: record.IssuedBy,
+                issuedDate: record.IssuedDate,
+                expirationDate: record.ExpirationDate,
+                notes: record.Notes,
+                emailAcknowledged: record.EmailAcknowledged,
+                certificateTypeCompanyId: record.CompanyID,
+                certificateTypeCode: record.Code,
+                certificateTypeDescription: record.Description,
+                certificateTypePriority: record.Priority,
+                certificateTypeActive: record.Active,
+            } as EmployeeCertificate;
+        });
+
+        return await paginationService.createPaginatedResult(certificates, baseUrl, totalCount, page);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
