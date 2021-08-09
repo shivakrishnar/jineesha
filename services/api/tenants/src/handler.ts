@@ -48,6 +48,10 @@ const createTenantDbSchema = {
     subdomain: { required: true, type: String },
 };
 
+const updateEmployeeLicenseSchema = {
+    emailAcknowledged: { required: true, type: Boolean },
+};
+
 /**
  * Adds an SSO global admin account to a specified tenant
  */
@@ -483,4 +487,23 @@ export const listLicensesByEmployeeId = utilService.gatewayEventHandlerV2(async 
     } = event;
 
     return await employeeService.listLicensesByEmployeeId(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
+});
+
+/**
+ * Updates EmployeeLicense's record by ID.
+ */
+export const updateEmployeeLicenseById = utilService.gatewayEventHandlerV2(async ({ event, requestBody }: IGatewayEventInput) => {
+    console.info('tenants.handler.updateEmployeeLicenseById');
+
+    await utilService.requirePayload(requestBody);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+    utilService.validateAndThrow(requestBody, updateEmployeeLicenseSchema);
+    utilService.checkAdditionalProperties(updateEmployeeLicenseSchema, requestBody, 'Update License Email Acknowledged');
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId, companyId, employeeId, id } = event.pathParameters;
+
+    return await employeeService.updateEmployeeLicenseById(tenantId, companyId, employeeId, id, requestBody);
 });
