@@ -27,6 +27,9 @@ final String gitCredentials = "ssh-bitbucket-asuresoftware"
 String commit_id
 Map deploymentOutput
 boolean isMasterBranch = env.BRANCH_NAME == "master"
+
+// Deployment credentials
+@Field final String releaseAuthorizations = "Team Mojo Jojo, Release Managers"
 //AWS
 
 stage("Build") {
@@ -292,7 +295,7 @@ void runIntegrationTests(String environment) {
 
 void deployStage(String environment) {
     timeout(time: timeoutDays, unit: "DAYS") {
-        def userInput = input(id: "userInput", message: "Promote to ${environment}")
+        def userInput = input(id: "userInput", message: "Promote to ${environment}", submitter: (isReleaseBuild && environment == 'production') ? releaseAuthorizations : null)
     }
 
     node(nodeName) {
