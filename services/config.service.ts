@@ -100,3 +100,5 @@ export const getSsoPublicKeys = () => {
 };
 
 export const getSignaturePageFontUrl = () => process.env.signaturePageFontUrl;
+
+export const getPayrollBaseUrl = () => process.env.payrollBaseUrl;

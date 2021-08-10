@@ -39,6 +39,8 @@ provider:
     tlmReadRole: ${file(${self:custom.configFile}):tlmReadRole}
     tlmWriteRole: ${file(${self:custom.configFile}):tlmWriteRole}
     fileBucketName: ${file(${self:custom.configFile}):fileBucketName}
+    payrollBaseUrl: ${file(${self:custom.configFile}):payrollBaseUrl}
+
 
   iamRoleStatements:
     - Effect: Allow
