@@ -447,6 +447,7 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, i
             key: record.PR_Integration_PK,
         }));
 
+        const createdAccounts = [];
         const updatedUsers = [];
         const actions = [];
 
@@ -469,12 +470,14 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, i
                             account,
                             recipientTenantToken,
                         );
-                        rollbackActions.push(async () => {
-                            // Note: We cannot delete right now because the endpoint requires the user to have the asure-admin role.
-                            // Disable the account instead.
-                            const account: SsoAccount = { enabled: false };
-                            await ssoService.updateSsoAccountById(createdAccount.id, recipientTenantId, account, recipientTenantToken);
-                        });
+                        createdAccounts.push(user.key);
+
+                        // Note: (MJ-8259) We cannot delete right now because the endpoint requires the user to have the asure-admin role.
+                        // Previously, we were disabling created accounts as a rollback action. We are now opting to skip rollbacks to allow for smoother migrations.
+                        // rollbackActions.push(async () => {
+                        //     const account: SsoAccount = { enabled: false };
+                        //     await ssoService.updateSsoAccountById(createdAccount.id, recipientTenantId, account, recipientTenantToken);
+                        // });
 
                         // update PR_Integration_PK in recipient database
                         const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
@@ -489,20 +492,21 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, i
                         } as DatabaseEvent;
 
                         await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-                        rollbackActions.push(async () => {
-                            const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
-                            query.setStringParameter('@ssoId', user.key);
-                            query.setParameter('@userId', user.id);
+                        // Note: (MJ-8259) Opting to skip database update rollbacks to allow for smoother migrations.
+                        // rollbackActions.push(async () => {
+                        //     const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
+                        //     query.setStringParameter('@ssoId', user.key);
+                        //     query.setParameter('@userId', user.id);
 
-                            const payload = {
-                                tenantId: recipientTenantId,
-                                queryName: query.name,
-                                query: query.value,
-                                queryType: QueryType.Simple,
-                            } as DatabaseEvent;
+                        //     const payload = {
+                        //         tenantId: recipientTenantId,
+                        //         queryName: query.name,
+                        //         query: query.value,
+                        //         queryType: QueryType.Simple,
+                        //     } as DatabaseEvent;
 
-                            await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-                        });
+                        //     await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+                        // });
 
                         updatedUsers.push(user.key);
                     } catch (e) {
@@ -532,11 +536,21 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, i
 
         await Promise.allSettled(actions);
         if (updatedUsers.length !== users.length) {
-            const failedUpdates = users.filter(({ key }) => updatedUsers.indexOf(key) === -1);
-            console.log(`The following user(s) failed to update ${JSON.stringify(failedUpdates)}, attempting rollback`);
+            const totalFailedUpdates = users.filter(({ key }) => updatedUsers.indexOf(key) === -1);
+            const partialFailedUpdates = createdAccounts.filter(key => !updatedUsers.includes(key));
+            const fullyFailedUpdates = totalFailedUpdates.filter(({ key }) => !partialFailedUpdates.includes(key));
+            console.log(`The following user(s) failed to update ${JSON.stringify(totalFailedUpdates)}, attempting rollback`);
+            console.log(`The following account(s) were created in SSO but failed to update in the db: ${JSON.stringify(partialFailedUpdates)}`);
+            console.log(`The following account(s) completely failed to migrate: ${JSON.stringify(fullyFailedUpdates)}`);
             throw errorService
                 .getErrorResponse(0)
-                .setMoreInfo('Error occurred while performing patch operation. Check CloudWatch logs for more info.');
+                .setDeveloperMessage(`Failed to migrate the following user(s): ${JSON.stringify(totalFailedUpdates)}`)
+                .setDeveloperMessage('Error occurred while performing patch operation. Check CloudWatch logs for more info.')
+                .setMoreInfo({
+                    totalFailedUpdates,
+                    partialFailedUpdates,
+                    fullyFailedUpdates,
+                });
         }
     } catch (error) {
         console.log('Update SSO accounts failed, rolling back');
