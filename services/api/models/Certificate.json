@@ -1,0 +1,64 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Certificate Schema",
+    "$id": "Certificate",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "Unique identifier of the certificate.",
+            "type": "string"
+        },
+        "employeeId": {
+            "description": "Unique identifier associated to the employee.",
+            "type": "string"
+        },
+        "certificateTypeId": {
+            "description": "Unique identifier associated to the certificate type.",
+            "type": ["string", "null"]
+        },
+        "certificateNumber": {
+            "description": "Employee certificate number.",
+            "type": ["string", "null"]
+        },
+        "issuedBy": {
+            "description": "The entity who issued this certificate.",
+            "type": ["string", "null"]
+        },
+        "issuedDate": {
+            "description": "Date of certificate issuance.",
+            "type": ["string", "null"]
+        },
+        "expirationDate": {
+            "description": "Date of certificate expiration.",
+            "type": ["string", "null"]
+        },
+        "notes": {
+            "description": "Additional notes for this certificate.",
+            "type": ["string", "null"]
+        },
+        "emailAcknowledged": {
+            "description": "Status of certificate acknowledged.",
+            "type": ["boolean", "null"]
+        },
+        "certificateTypeCompanyId": {
+            "description": "Unique identifier for the companny associated with the certificate type.",
+            "type": ["string", "null"]
+        },
+        "certificateTypeCode": {
+            "description": "The code for the certificate type.",
+            "type": ["string", "null"]
+        },
+        "certificateTypeDescription": {
+            "description": "Description of the certificate type.",
+            "type": ["string", "null"]
+        },
+        "certificateTypePriority": {
+            "description": "Priority of the certificate type.",
+            "type": ["number", "null"]
+        },
+        "certificateTypeActive": {
+            "description": "The active status of the certificate type.",
+            "type": ["boolean", "null"]
+        }
+    }
+}

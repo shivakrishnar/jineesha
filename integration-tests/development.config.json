@@ -76,6 +76,11 @@
         "invalidId": "abc",
         "nonExistentId": 99999
     },
+    "certificates": {
+        "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
+        "companyId": 600351,
+        "employeeId": 35109
+    },
     "documentsBucket": "development.hr.files",
     "logo": {
         "companyWithNoLogo": 600259,
