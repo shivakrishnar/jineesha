@@ -34,10 +34,10 @@ export class ErrorMessage {
     developerMessage: string;
 
     /**
-     * @property {String} [moreInfo]
+     * @property {any} [moreInfo]
      * Field that can provide more information about the error.
      */
-    moreInfo: string;
+    moreInfo: any;
 
     /**
      * @property {String} requestId
@@ -69,7 +69,7 @@ export class ErrorMessage {
      * Allows us to enahnce the error message with specific details that may
      * be useful to the user.
      */
-    setMoreInfo(value: string): ErrorMessage {
+    setMoreInfo(value: any): ErrorMessage {
         this.moreInfo = value;
         return this;
     }

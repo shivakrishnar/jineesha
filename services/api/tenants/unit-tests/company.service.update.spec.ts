@@ -374,8 +374,12 @@ describe('company.service.update.sso.account', () => {
                 expect(error.statusCode).toEqual(500);
                 expect(error.code).toEqual(0);
                 expect(error.message).toEqual('Unexpected error occurred.');
-                expect(error.developerMessage).toEqual('Something happened on the server and we have no idea what. Blame the architect.');
-                expect(error.moreInfo).toEqual('Error occurred while performing patch operation. Check CloudWatch logs for more info.');
+                expect(error.developerMessage).toEqual('Error occurred while performing patch operation. Check CloudWatch logs for more info.');
+                expect(error.moreInfo).toEqual({
+                    "fullyFailedUpdates": [],
+                    "partialFailedUpdates": ["1", "2"],
+                    "totalFailedUpdates": [{ "id": 1, "key": "1" }, { "id": 2, "key": "2" }]
+                });
             });
     });
 });
