@@ -165,6 +165,8 @@ export async function getById(tenantId: string, companyId: string, email: string
             },
             isEsignatureLegacyCompany,
             productTierId: company.ProductTierID,
+            isLandingSectionOnUpcomingTimeOff: company.IsLandingSectionOnUpcomingTimeOff,
+            clientId: company.PRIntegration_ClientID,
         };
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -537,10 +539,12 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, i
         await Promise.allSettled(actions);
         if (updatedUsers.length !== users.length) {
             const totalFailedUpdates = users.filter(({ key }) => updatedUsers.indexOf(key) === -1);
-            const partialFailedUpdates = createdAccounts.filter(key => !updatedUsers.includes(key));
+            const partialFailedUpdates = createdAccounts.filter((key) => !updatedUsers.includes(key));
             const fullyFailedUpdates = totalFailedUpdates.filter(({ key }) => !partialFailedUpdates.includes(key));
             console.log(`The following user(s) failed to update ${JSON.stringify(totalFailedUpdates)}, attempting rollback`);
-            console.log(`The following account(s) were created in SSO but failed to update in the db: ${JSON.stringify(partialFailedUpdates)}`);
+            console.log(
+                `The following account(s) were created in SSO but failed to update in the db: ${JSON.stringify(partialFailedUpdates)}`,
+            );
             console.log(`The following account(s) completely failed to migrate: ${JSON.stringify(fullyFailedUpdates)}`);
             throw errorService
                 .getErrorResponse(0)
