@@ -889,6 +889,50 @@ export async function validateEmployeeWithCompany(tenantId: string, companyId: s
 }
 
 /**
+ * Validates a user to exist in a company.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} username: The string a user uses to login.
+ * @param {string} companyId: The unique identifier for the company the user belongs to.
+ */
+export async function validateUserIsInCompany(tenantId: string, username: string, companyId: string): Promise<boolean> {
+    console.info('utilService.validateUserIsInCompany');
+    try {
+        // companyId value must be integral
+        if (Number.isNaN(Number(companyId))) {
+            const errorMessage = `${companyId} is not a valid companyId`;
+            throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        }
+
+        const query: ParameterizedQuery = new ParameterizedQuery('userExistsInCompany', Queries.userExistsInCompany);
+        query.setParameter('@username', username);
+        query.setParameter('@companyId', companyId);
+        const companyExistsInTenantPayload: DatabaseEvent = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        };
+
+        const result: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            companyExistsInTenantPayload,
+            InvocationType.RequestResponse,
+        );
+
+        const userExistsInCompany = result.recordset.length > 0;
+
+        return Promise.resolve(userExistsInCompany);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Ensures that the invoking user has access to the specified resource and runs the given query if authorized.
  * @param {string} tenantId: The unique identifier for the tenant.
  * @param {Resources} resourceType: The type of resource to be accessed.

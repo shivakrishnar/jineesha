@@ -239,15 +239,19 @@ export const getCompanyById = utilService.gatewayEventHandlerV2(async ({ securit
 
     const { tenantId, companyId } = event.pathParameters;
     const email = securityContext.principal.email;
+    const username = securityContext.principal.username;
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, companyUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
-    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+    const hasRole: boolean = securityContext.roleMemberships.some((role) => {
         return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin || role === Role.hrAdmin;
     });
+
+    const userIsInCompany = await utilService.validateUserIsInCompany(tenantId, username, companyId);
+    const isAuthorized = hasRole || userIsInCompany;
 
     if (!isAuthorized) {
         throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');

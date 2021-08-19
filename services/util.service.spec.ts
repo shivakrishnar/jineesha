@@ -339,3 +339,44 @@ describe('utilService.validateQueryParams', () => {
         }
     });
 });
+
+describe('utilService.validateUserIsInCompany', () => {
+    beforeEach(() => {
+        setup();
+    });
+
+    test('validates if companyId is invalid', async () => {
+        const invalidCompanyIdError = {
+            statusCode: 400,
+            code: 30,
+            message: 'The provided request object was not valid for the requested operation.',
+            developerMessage: `${mockData.invalidCompanyId} is not a valid companyId`,
+            moreInfo: '',
+        };
+
+        await utilService.validateUserIsInCompany(mockData.tenantId, mockData.username, mockData.invalidCompanyId).catch((error) => {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error).toEqual(invalidCompanyIdError);
+        });
+    });
+
+    test('returns false if user does not exist in company', () => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
+            return Promise.resolve(utilServiceMockData.userDoesNotExistInCompany);
+        });
+
+        return utilService.validateUserIsInCompany(mockData.tenantId, mockData.username, mockData.companyId).then((result) => {
+            expect(result).toEqual(false);
+        });
+    });
+
+    test('returns true if user exists in company', () => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
+            return Promise.resolve(utilServiceMockData.userExistsInCompany);
+        });
+
+        return utilService.validateUserIsInCompany(mockData.tenantId, mockData.username, mockData.companyId).then((result) => {
+            expect(result).toEqual(true);
+        });
+    });
+});

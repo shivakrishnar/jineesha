@@ -72,45 +72,43 @@ export const updatedS3Key = `${s3Key}/object-123.pdf`;
 export const updatedObjectData: string[] = [updatedFileName, updatedS3Key];
 
 export const companyExistInTenant = {
-    recordsets: [
-        [
-            { companyExistsInTenant: true }
-        ]
-    ],
+    recordsets: [[{ companyExistsInTenant: true }]],
     recordset: [{ companyExistsInTenant: true }],
     output: {},
     rowsAffected: [1, 1],
 };
 
 export const employeeExistsInCompany = {
-    recordsets: [
-        [
-            { employeeExistsInCompany: true }
-        ]
-    ],
+    recordsets: [[{ employeeExistsInCompany: true }]],
     recordset: [{ employeeExistsInCompany: true }],
     output: {},
     rowsAffected: [1, 1],
 };
 
 export const companyDoesNotExistInTenant = {
-    recordsets: [
-        [
-            { companyExistsInTenant: false }
-        ]
-    ],
+    recordsets: [[{ companyExistsInTenant: false }]],
     recordset: [{ companyExistsInTenant: false }],
     output: {},
     rowsAffected: [1, 1],
 };
 
 export const employeeDoesNotExistsInCompany = {
-    recordsets: [
-        [
-            { employeeExistsInCompany: false }
-        ]
-    ],
+    recordsets: [[{ employeeExistsInCompany: false }]],
     recordset: [{ employeeExistsInCompany: false }],
     output: {},
     rowsAffected: [1, 1],
+};
+
+export const userDoesNotExistInCompany = {
+    recordsets: [[]],
+    recordset: [],
+    output: {},
+    rowsAffected: [1, 1, 0],
+};
+
+export const userExistsInCompany = {
+    recordsets: [[{ HRnextUserID: '1870', CompanyID: '600395' }]],
+    recordset: [{ HRnextUserID: '1870', CompanyID: '600395' }],
+    output: {},
+    rowsAffected: [1, 1, 1],
 };

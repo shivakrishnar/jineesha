@@ -32,6 +32,7 @@ export const Queries = {
     apiServiceAccount: fs.readFileSync(path.join(basePath, 'miscellaneous/apiServiceAccount.sql')).toString(),
     companyExistsInTenant: fs.readFileSync(path.join(basePath, 'miscellaneous/companyExistsInTenant.sql')).toString(),
     employeeExistsInCompany: fs.readFileSync(path.join(basePath, 'miscellaneous/employeeExistsInCompany.sql')).toString(),
+    userExistsInCompany: fs.readFileSync(path.join(basePath, 'miscellaneous/userExistsInCompany.sql')).toString(),
 
     // Alerts
     alertEventList: fs.readFileSync(path.join(basePath, 'alerts/listAlertEventsByCompanyId.sql')).toString(),
