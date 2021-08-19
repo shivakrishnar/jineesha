@@ -1,5 +1,7 @@
 import * as request from 'request-promise-native';
 import * as configService from '../config.service';
+import * as errorService from '../errors/error.service';
+import { ErrorMessage } from '../errors/errorMessage';
 
 export type EsignatureAppConfiguration = {
     id: string;
@@ -41,6 +43,35 @@ export async function getIntegrationConfigurationByCompany(
     } catch (e) {
         console.log(e);
         throw new Error('Unable to get e-signature app client id');
+    }
+}
+
+export async function getIntegrationDetailsByCompanyId(
+    tenantId: string,
+    clientId: string,
+    companyId: string,
+    integrationId: string,
+    adminToken: string,
+): Promise<any> {
+    console.info('integrationsService.getIntegrationDetailsByCompanyId');
+
+    const apiUrl = `${baseUrl}/tenants/${tenantId}/clients/${clientId}/companies/${companyId}/integrations/${integrationId}/integration-configurations`;
+    try {
+        const configurations = await request.get({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${adminToken}` },
+            json: true,
+        });
+
+        if (configurations.length === 0) throw errorService.getErrorResponse(50).setMoreInfo(`Integration details does not exist`);
+
+        return configurations[0].integrationDetails;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
     }
 }
 

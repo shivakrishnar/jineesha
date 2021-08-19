@@ -118,7 +118,7 @@ provider:
         - dynamodb:Scan
         - dynamodb:GetItem
       Resource: "arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings/*"
-    
+
     - Effect: Allow
       Action:
         - ssm:GetParameter
@@ -160,7 +160,7 @@ functions:
             cors:
               origin: '*'
 
-  createSignUrl: 
+  createSignUrl:
     handler: esignature/src/handler.createSignUrl
     events:
         - http:
@@ -169,7 +169,7 @@ functions:
             cors:
               origin: '*'
 
-  createEditUrl: 
+  createEditUrl:
     handler: esignature/src/handler.createEditUrl
     events:
         - http:
@@ -178,7 +178,7 @@ functions:
             cors:
               origin: '*'
 
-  updateSignatureRequestStatus: 
+  updateSignatureRequestStatus:
     handler: esignature/src/handler.updateSignatureRequestStatus
     events:
         - http:
@@ -267,7 +267,7 @@ functions:
           method: post
           cors:
             origin: '*'
-  
+
   scheduledGenerateBilling:
     handler: esignature/src/handler.generateInternalBillingReport
     events:
@@ -430,8 +430,8 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/documents/{documentId}
             method: delete
             cors:
-              origin: '*' 
-  
+              origin: '*'
+
   applicantTrackingWebhook:
     handler: applicant-tracking/src/handler.applicantDataImport
     events:
@@ -440,7 +440,7 @@ functions:
             method: post
             cors:
               origin: '*'
-  
+
 
   deleteOnboardingDocuments:
     handler: esignature/src/handler.deleteOnboardingDocuments
@@ -484,6 +484,15 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/esignatures
             method: put
+            cors:
+              origin: '*'
+
+  getIntegrationDetailsByCompanyId:
+    handler: remote-services/src/handler.getIntegrationDetailsByCompanyId
+    events:
+        - http:
+            path: /tenants/{tenantId}/clients/{clientId}/companies/{companyId}/integrations/{integrationId}/integration-details
+            method: get
             cors:
               origin: '*'
 
