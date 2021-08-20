@@ -227,6 +227,7 @@ export async function update(
                 throw errorService.getErrorResponse(0).setMoreInfo('Associated direct deposit missing in Evolution');
             }
             const payrollApiCredentials = await utilService.getPayrollApiCredentials(tenantId);
+            // TODO: Refactor to only generate payroll API token once
             await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, amount, amountType, method);
             payrollApiToken = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
 

@@ -7,6 +7,9 @@ import { ParameterizedQuery } from '../../queries/parameterizedQuery';
 import * as errorService from '../../errors/error.service';
 import * as utilService from '../../util.service';
 import * as employeeService from '../tenants/src/employee.service';
+import * as payrollService from '../../remote-services/payroll.service';
+import * as ssoService from '../../remote-services/sso.service';
+import { IEvolutionKey } from '../models/IEvolutionKey';
 
 type GtlRecord = {
     flatCoverage: boolean;
@@ -38,7 +41,6 @@ export async function listGtlRecordsByEmployee(
         const [employee]: any[] = await Promise.all([
             employeeService.getById(tenantId, companyId, employeeId, emailAddress, roles),
             utilService.validateCompany(tenantId, companyId),
-            utilService.validateEmployee(tenantId, employeeId),
         ]);
 
         if (!employee) {
@@ -86,6 +88,7 @@ export async function listGtlRecordsByEmployee(
  * @param {object} gtlData: An object that contains GTL data to be inserted into the database
  * @param {string} emailAddress: The email address of the user
  * @param {string[]} roles: A collection of roles that are associated with the user
+ * @param {string} accessToken: HR access token
  * @returns {Promise<GtlRecord>}: Promise of a GTL record
  */
 
@@ -96,6 +99,7 @@ export async function createGtlRecord(
     gtlData: GtlRecord,
     emailAddress: string,
     roles: string[],
+    accessToken: string,
 ): Promise<GtlRecord> {
     console.info('gtlService.createGtlRecord');
 
@@ -103,7 +107,6 @@ export async function createGtlRecord(
         const [employee]: any[] = await Promise.all([
             employeeService.getById(tenantId, companyId, employeeId, emailAddress, roles),
             utilService.validateCompany(tenantId, companyId),
-            utilService.validateEmployee(tenantId, employeeId),
         ]);
 
         if (!employee) {
@@ -137,6 +140,8 @@ export async function createGtlRecord(
             throw errorService.getErrorResponse(73).setDeveloperMessage('Record already exists for this employee!');
         }
 
+        await updateEvolution(tenantId, employee.evoData, accessToken, gtlData);
+
         const query = new ParameterizedQuery('CreateGtlRecord', Queries.createGtlRecord);
         query.setParameter('@employeeId', employeeId);
         query.setParameter('@flatCoverage', gtlData.flatCoverage ? 1 : 0);
@@ -160,6 +165,38 @@ export async function createGtlRecord(
             earningsMultiplier: gtlData.earningsMultiplier,
             workHours: gtlData.workHours,
         } as GtlRecord;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Updates Evolution employee with GTL data
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to
+ * @param {string} evoKeys: Evo clientId, companyId, and employeeIds
+ * @param {string} accessToken: HR access token
+ * @param {object} gtlData: An object that contains GTL data to be inserted into the database
+ */
+
+async function updateEvolution(tenantId: string, evoKeys: IEvolutionKey, accessToken: string, gtlData: any): Promise<void> {
+    console.info('gtlService.updateEvolution');
+
+    try {
+        const payrollApiAccessToken: string = await utilService.getEvoTokenWithHrToken(tenantId, accessToken);
+        const tenantObject = await ssoService.getTenantById(tenantId, payrollApiAccessToken);
+        const tenantName = tenantObject.subdomain;
+
+        const employeeEvoInfo: any = await payrollService.getEmployeeFromEvo(tenantName, evoKeys, payrollApiAccessToken);
+
+        employeeEvoInfo.groupTermLife.hours = gtlData.workHours;
+        employeeEvoInfo.groupTermLife.policyAmount = gtlData.flatAmount;
+        employeeEvoInfo.groupTermLife.rate = gtlData.earningsMultiplier;
+
+        await payrollService.updateEmployeeInEvo(tenantName, evoKeys, payrollApiAccessToken, employeeEvoInfo);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
