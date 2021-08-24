@@ -19,55 +19,63 @@ const employeeUriSchema = {
 };
 
 const postSchema = Yup.object().shape({
-  flatCoverage: Yup.boolean().required(),
-  flatAmount: Yup.number(),
-  earningsMultiplier: Yup.number(),
-  workHours: Yup.number(),
+    flatCoverage: Yup.boolean().required(),
+    flatAmount: Yup.number(),
+    earningsMultiplier: Yup.number(),
+    workHours: Yup.number(),
 });
 
 const postValidationSchema = {
-  flatCoverage: { required: true, type: Boolean },
-  flatAmount: { required: false, type: Number },
-  earningsMultiplier: { required: false, type: Number },
-  workHours: { required: false, type: Number },
+    flatCoverage: { required: true, type: Boolean },
+    flatAmount: { required: false, type: Number },
+    earningsMultiplier: { required: false, type: Number },
+    workHours: { required: false, type: Number },
 };
 
 /**
  * Creates a GTL record
  */
- export const createGtlRecord = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-  console.info('gtl.handler.createGtlRecord');
+export const createGtlRecord = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('gtl.handler.createGtlRecord');
 
-  const { tenantId, companyId, employeeId } = event.pathParameters;
+    const { tenantId, companyId, employeeId } = event.pathParameters;
 
-  utilService.normalizeHeaders(event);
-  utilService.validateAndThrow(event.headers, headerSchema);
-  utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
-  await utilService.validateRequestBody(postSchema, requestBody);
-  utilService.checkAdditionalProperties(postValidationSchema, requestBody, 'group term life');
+    const accessToken = event.headers.Authorization.replace(/Bearer /i, '');
 
-  const { principal: { email }, roleMemberships } = securityContext;
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+    await utilService.validateRequestBody(postSchema, requestBody);
+    utilService.checkAdditionalProperties(postValidationSchema, requestBody, 'group term life');
 
-  const results = await gtlService.createGtlRecord(tenantId, companyId, employeeId, requestBody, email, roleMemberships);
+    const {
+        principal: { email },
+        roleMemberships,
+    } = securityContext;
 
-  return results || { statusCode: 200, headers: new Headers() };
+    const results = await gtlService.createGtlRecord(tenantId, companyId, employeeId, requestBody, email, roleMemberships, accessToken);
+
+    return results || { statusCode: 200, headers: new Headers() };
 });
 
 /**
-* Retrieves GTL records for an employee
-*/
+ * Retrieves GTL records for an employee
+ */
 export const listGtlRecordsByEmployee = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
-  console.info('gtl.handler.listGtlRecordsByEmployee');
+    console.info('gtl.handler.listGtlRecordsByEmployee');
 
-  const { tenantId, companyId, employeeId } = event.pathParameters;
+    const { tenantId, companyId, employeeId } = event.pathParameters;
 
-  utilService.normalizeHeaders(event);
-  utilService.validateAndThrow(event.headers, headerSchema);
-  utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
 
-  const { principal: { email }, roleMemberships } = securityContext;
+    const {
+        principal: { email },
+        roleMemberships,
+    } = securityContext;
 
-  const results = await gtlService.listGtlRecordsByEmployee(tenantId, companyId, employeeId, email, roleMemberships);
+    const results = await gtlService.listGtlRecordsByEmployee(tenantId, companyId, employeeId, email, roleMemberships);
 
-  return results || { statusCode: 200, headers: new Headers() };
+    return results || { statusCode: 200, headers: new Headers() };
 });

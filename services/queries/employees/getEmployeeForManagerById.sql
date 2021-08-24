@@ -41,12 +41,16 @@ select
     ee.EmployeeCode,
     ee.FirstName,
     ee.LastName,
-    pt.IsSalary
+    pt.IsSalary,
+    ee.PR_Integration_PK as evoEmployeeId,
+    c.PR_Integration_PK as evoCompanyId,
+    c.PRIntegration_ClientID as evoClientId
 from
     ManagerEmployee me,
     dbo.Employee ee
     inner join AssignedCompanies ac on ee.CompanyID = ac.CompanyID
-    inner join Roles r on ee.CompanyID = r.CompanyID
+    inner join Roles r on ee.CompanyID = r.CompanyID    
+inner join dbo.Company c on ee.CompanyID = c.ID
 left join dbo.EmployeeCompensation ec on ec.EmployeeID = ee.ID
 left join dbo.PayType pt on pt.ID = ec.PayTypeID
 where 

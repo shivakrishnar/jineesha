@@ -44,3 +44,47 @@ export async function updateEvolutionEarningAndDeduction(
         console.log(e);
     }
 }
+
+export async function getEmployeeFromEvo(
+    tenantName: string,
+    evolutionKeys: IEvolutionKey,
+    token: string
+): Promise<any> {
+    console.info('payrollService.getEmployeeFromEvo');
+
+    const { clientId, companyId, employeeId } = evolutionKeys;
+
+    const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}`;
+    try {
+        return await request.get({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            json: true,
+        });
+    } catch (e) {
+        throw e;
+    }
+}
+
+export async function updateEmployeeInEvo(
+    tenantName: string,
+    evolutionKeys: IEvolutionKey,
+    token: string,
+    requestBody: any,
+): Promise<any> {
+    console.info('payrollService.updateEmployeeInEvo');
+
+    const { clientId, companyId, employeeId } = evolutionKeys;
+
+    const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}`;
+    try {
+        return await request.put({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            body: requestBody,
+            json: true,
+        });
+    } catch (e) {
+        throw e;
+    }
+}

@@ -18,6 +18,9 @@ describe('employee.service.get', () => {
                 return Promise.resolve(employeeInfoDBResponse);
             }
         });
+        (utilService as any).validateEmployee = jest.fn(() => {
+            return Promise.resolve({});
+        });
 
         return employeeService
             .getById(mockData.tenantId, mockData.companyId, mockData.employeeId, mockData.email, mockData.roles)

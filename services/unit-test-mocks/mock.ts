@@ -8,6 +8,7 @@ import * as hellosignService from '../remote-services/hellosign.service';
 import * as integrationsService from '../remote-services/integrations.service';
 import * as ssoService from '../remote-services/sso.service';
 import * as utilService from '../util.service';
+import * as payrollService from '../remote-services/payroll.service';
 
 export const setup = () => {
     (configService as any).getSecretsAwsEndpoint = jest.fn(() => {
@@ -115,55 +116,72 @@ export const setup = () => {
     (utilService as any).authorizeAndRunQuery = jest.fn((params: any) => {
         return [[{}]];
     });
-
+    
     (utilService as any).sendEventNotification = jest.fn();
-
+    
     (paginationService as any).appendPaginationFilter = jest.fn((params: any) => {
         return Promise.resolve({ name: params.name, value: params.value });
     });
-
+    
     (hellosignService as any).getTemplateEditUrlById = jest.fn((params: any) => {
         return '{ "embedded": { "edit_url": "editUrl", "expires_at": "123" } }';
     });
-
+    
     (hellosignService as any).getTemplateFilesById = jest.fn((params: any) => {
         return '{ "data_uri": "my data" }';
     });
-
+    
     (hellosignService as any).createApplicationForCompany = jest.fn((params: any) => {
         return { api_app: { client_id: '1234' } };
     });
-
+    
     (hellosignService as any).deleteApplicationById = jest.fn((params: any) => {
         return;
     });
-
+    
     (hellosignService as any).updateApplicationForCompany = jest.fn((params: any) => {
         return;
     });
-
+    
     (integrationsService as any).getIntegrationConfigurationByCompany = jest.fn((params: any) => {
         return { integrationDetails: { eSignatureAppClientId: '1234' } };
     });
-
+    
     (integrationsService as any).updateIntegrationConfigurationById = jest.fn((params: any) => {
         return;
     });
-
+    
     (integrationsService as any).createIntegrationConfiguration = jest.fn((params: any) => {
         return;
     });
-
+    
     (integrationsService as any).deleteIntegrationConfigurationbyId = jest.fn((params: any) => {
         return;
     });
-
+    
     (integrationsService as any).eSignatureApiDevModeOn = jest.fn((params: any) => {
         return true;
     });
-
+    
     (ssoService as any).getAccessToken = jest.fn((params: any) => {
         return 'randomaccessmemory';
+    });
+
+    (payrollService as any).getEmployeeFromEvo = jest.fn((params: any) => {
+        return {
+            groupTermLife: {
+                hours: '2500',
+                flatAmount: null,
+                earningsMultiplier: '3'
+            }
+        };
+    });
+
+    (utilService as any).getEvoTokenWithHrToken = jest.fn((params: any) => {
+        return 'token';
+    });
+    (ssoService as any).getTenantById = jest.fn((params: any) => {
+        return { subdomain: 'payroll' };
     });
 
     (tenantsService as any).listConnectionStrings = jest.fn((params: any) => {

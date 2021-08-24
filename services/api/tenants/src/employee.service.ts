@@ -12,6 +12,7 @@ import * as paginationService from '../../../pagination/pagination.service';
 import * as utilService from '../../../util.service';
 import { EmployeeLicense } from './EmployeeLicense';
 import { EmployeeCertificate } from './EmployeeCertificate';
+import { IEvolutionKey } from '../../models/IEvolutionKey';
 
 type Employee = {
     id: number;
@@ -21,6 +22,7 @@ type Employee = {
     companyName: string;
     isSalary: boolean;
     isActive: boolean;
+    evoData: IEvolutionKey;
 };
 
 /**
@@ -162,6 +164,8 @@ export async function getById(tenantId: string, companyId: string, employeeId: s
     console.info('employeeService.getById');
 
     try {
+        await utilService.validateEmployee(tenantId, employeeId);
+        
         let query: ParameterizedQuery;
         if (roles.includes(Role.globalAdmin) || roles.includes(Role.superAdmin)) {
             query = new ParameterizedQuery('GetEmployeeById', Queries.getEmployeeById);
@@ -205,6 +209,11 @@ export async function getById(tenantId: string, companyId: string, employeeId: s
             eeCode: record.EmployeeCode,
             companyName: record.CompanyName,
             isSalary: record.IsSalary,
+            evoData: {
+                employeeId: record.evoEmployeeId,
+                companyId: record.evoCompanyId,
+                clientId: record.evoClientId,
+            } as IEvolutionKey
         } as Employee;
     } catch (error) {
         if (error instanceof ErrorMessage) {

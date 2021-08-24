@@ -1,4 +1,5 @@
 import * as validate from '@smallwins/validate';
+import * as jwt from 'jsonwebtoken';
 import * as AWS from 'aws-sdk';
 import * as nJwt from 'njwt';
 import * as shortid from 'shortid';
@@ -1091,4 +1092,32 @@ export function validateQueryParams(queryParams: any, keys: string[]) {
                 }.`,
             );
     }
+}
+
+/**
+ * Retrieve an Evo access token using an HR token
+ * @param {string} tenantId: Tenant Id of the user
+ * @param {string} accessToken: HR access token
+ */
+ export async function getEvoTokenWithHrToken(tenantId: string, accessToken: string): Promise<string> {
+    console.info('util.service.getEvoTokenWithHrToken');
+
+    try {
+        const payrollApiCredentials = await utilService.getPayrollApiCredentials(tenantId);
+        const decodedToken: any = jwt.decode(accessToken);
+        const ssoToken = await utilService.getSSOToken(tenantId, decodedToken.applicationId);
+        return await ssoService.getAccessToken(
+            tenantId,
+            ssoToken,
+            payrollApiCredentials.evoApiUsername,
+            payrollApiCredentials.evoApiPassword,
+        );
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    };
 }
