@@ -1143,7 +1143,7 @@ export function validateQueryParams(queryParams: any, keys: string[]) {
  * @param {string} tenantId: Tenant Id of the user
  * @param {string} accessToken: HR access token
  */
- export async function getEvoTokenWithHrToken(tenantId: string, accessToken: string): Promise<string> {
+export async function getEvoTokenWithHrToken(tenantId: string, accessToken: string): Promise<string> {
     console.info('util.service.getEvoTokenWithHrToken');
 
     try {
@@ -1163,5 +1163,5 @@ export function validateQueryParams(queryParams: any, keys: string[]) {
 
         console.error(error);
         throw errorService.getErrorResponse(0);
-    };
+    }
 }
