@@ -298,17 +298,15 @@ void deployStage(String environment) {
         def userInput = input(id: "userInput", message: "Promote to ${environment}", submitter: (isReleaseBuild && environment == 'production') ? releaseAuthorizations : null)
     }
 
-    node(nodeName) {
-        try {
-            deploy(environment)
-        }
-        catch (Exception e) {
-            cleanUpWorkspace()
-            notifyTeam(e)
-            //Notify build breaking culprit and team of regressions on critical branches
-            bitbucketStatusNotify(buildState: "FAILED")
-            throw e
-        }
+    try {
+        deploy(environment)
+    }
+    catch (Exception e) {
+        cleanUpWorkspace()
+        notifyTeam(e)
+        //Notify build breaking culprit and team of regressions on critical branches
+        bitbucketStatusNotify(buildState: "FAILED")
+        throw e
     }
 }
 
