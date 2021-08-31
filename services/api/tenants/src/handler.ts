@@ -48,7 +48,7 @@ const createTenantDbSchema = {
     subdomain: { required: true, type: String },
 };
 
-const updateEmployeeLicenseSchema = {
+const emailAcknowledgedSchema = {
     emailAcknowledged: { required: true, type: Boolean },
 };
 
@@ -503,8 +503,8 @@ export const updateEmployeeLicenseById = utilService.gatewayEventHandlerV2(async
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
-    utilService.validateAndThrow(requestBody, updateEmployeeLicenseSchema);
-    utilService.checkAdditionalProperties(updateEmployeeLicenseSchema, requestBody, 'Update License Email Acknowledged');
+    utilService.validateAndThrow(requestBody, emailAcknowledgedSchema);
+    utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update License Email Acknowledged');
     utilService.checkBoundedIntegralValues(event.pathParameters);
 
     const { tenantId, companyId, employeeId, id } = event.pathParameters;
@@ -537,4 +537,23 @@ export const listCertificatesByEmployeeId = utilService.gatewayEventHandlerV2(as
         domainName,
         path,
     );
+});
+
+/**
+ * Updates EmployeeCertificate's record by ID.
+ */
+export const updateEmployeeCertificateById = utilService.gatewayEventHandlerV2(async ({ event, requestBody }: IGatewayEventInput) => {
+    console.info('tenants.handler.updateEmployeeCertificateById');
+
+    await utilService.requirePayload(requestBody);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+    utilService.validateAndThrow(requestBody, emailAcknowledgedSchema);
+    utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update Certificate Email Acknowledged');
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId, companyId, employeeId, id } = event.pathParameters;
+
+    return await employeeService.updateEmployeeCertificateById(tenantId, companyId, employeeId, id, requestBody);
 });

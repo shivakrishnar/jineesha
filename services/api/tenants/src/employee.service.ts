@@ -165,7 +165,7 @@ export async function getById(tenantId: string, companyId: string, employeeId: s
 
     try {
         await utilService.validateEmployee(tenantId, employeeId);
-        
+
         let query: ParameterizedQuery;
         if (roles.includes(Role.globalAdmin) || roles.includes(Role.superAdmin)) {
             query = new ParameterizedQuery('GetEmployeeById', Queries.getEmployeeById);
@@ -213,7 +213,7 @@ export async function getById(tenantId: string, companyId: string, employeeId: s
                 employeeId: record.evoEmployeeId,
                 companyId: record.evoCompanyId,
                 clientId: record.evoClientId,
-            } as IEvolutionKey
+            } as IEvolutionKey,
         } as Employee;
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -355,7 +355,7 @@ export async function listLicensesByEmployeeId(
  * @param {string} companyId: The unique identifier for the specified company.
  * @param {string} employeeId: The unique identifier for the employee.
  * @param {string} id: The unique identifier for the license.
- * @param {any} requestBody: The body that comes with the PATCH request.
+ * @param {any} request: The body that comes with the PATCH request.
  * @returns {any}: A Promise of the update response.
  */
 export async function updateEmployeeLicenseById(
@@ -482,6 +482,66 @@ export async function listCertificatesByEmployeeId(
         });
 
         return await paginationService.createPaginatedResult(certificates, baseUrl, totalCount, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Update a specific EmployeeCertificate's record
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the specified company.
+ * @param {string} employeeId: The unique identifier for the employee.
+ * @param {string} id: The unique identifier for the certificate.
+ * @param {any} request: The body that comes with the PATCH request.
+ * @returns {any}: A Promise of the update response.
+ */
+export async function updateEmployeeCertificateById(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    id: string,
+    request: any,
+): Promise<any> {
+    console.info('employeeService.updateEmployeeCertificateById');
+
+    await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+
+    if (Number.isNaN(Number(id))) throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid id.`);
+
+    try {
+        const { emailAcknowledged } = request;
+
+        const query = new ParameterizedQuery('updateEmployeeCertificateById', Queries.updateEmployeeCertificateById);
+        query.setParameter('@emailAcknowledged', emailAcknowledged);
+        query.setParameter('@employeeId', employeeId);
+        query.setParameter('@id', id);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        if (result.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Certificate with ID ${id} not found.`);
+        }
+
+        return {
+            id: parseInt(id),
+            // Since booleans get returned as a stringified bit, these two lines check to see if the value returned is true,
+            // then returns an actual boolean value instead of a '1'.
+            oldEmailAcknowledged: result.recordsets[0][0].EmailAcknowledged === '1',
+            newEmailAcknowledged: result.recordsets[1][0].EmailAcknowledged === '1',
+        };
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
