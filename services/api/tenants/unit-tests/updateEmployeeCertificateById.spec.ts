@@ -5,7 +5,7 @@ import * as utilService from '../../../util.service';
 import * as service from '../src/employee.service';
 import * as mockData from './mock-data';
 
-describe('updateEmployeeLicenseById service', () => {
+describe('updateEmployeeCertificateById service', () => {
     beforeEach(() => {
         setup();
     });
@@ -14,7 +14,7 @@ describe('updateEmployeeLicenseById service', () => {
         (utilService as any).validateEmployeeWithCompany = jest.fn();
 
         return service
-            .updateEmployeeLicenseById(
+            .updateEmployeeCertificateById(
                 mockData.tenantId,
                 mockData.companyId,
                 mockData.employeeId,
@@ -37,7 +37,7 @@ describe('updateEmployeeLicenseById service', () => {
         (utilService as any).invokeInternalService = jest.fn(() => mockData.emptyResult);
 
         return service
-            .updateEmployeeLicenseById(
+            .updateEmployeeCertificateById(
                 mockData.tenantId,
                 mockData.companyId,
                 mockData.employeeId,
@@ -49,7 +49,7 @@ describe('updateEmployeeLicenseById service', () => {
                     statusCode: 404,
                     code: 50,
                     message: 'The requested resource does not exist.',
-                    developerMessage: `License with ID ${mockData.validId} not found.`,
+                    developerMessage: `Certificate with ID ${mockData.validId} not found.`,
                     moreInfo: '',
                 });
             });
@@ -60,7 +60,7 @@ describe('updateEmployeeLicenseById service', () => {
         (utilService as any).invokeInternalService = jest.fn(() => mockData.validUpdateEmailAcknowledgedResult);
 
         return service
-            .updateEmployeeLicenseById(
+            .updateEmployeeCertificateById(
                 mockData.tenantId,
                 mockData.companyId,
                 mockData.employeeId,

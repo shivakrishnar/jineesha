@@ -19,7 +19,7 @@ function setUpEmailAcknowledgedBody(value: any) {
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
-describe('update employee license EmailAcknowledged column By Id', () => {
+describe('update employee certificate EmailAcknowledged column By Id', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
@@ -30,8 +30,8 @@ describe('update employee license EmailAcknowledged column By Id', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/licenses/${
-            configs.licenses.id
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/certificates/${
+            configs.certificates.id
         }`;
         request(baseUri)
             .patch(uri)
@@ -46,8 +46,8 @@ describe('update employee license EmailAcknowledged column By Id', () => {
     });
 
     test('must return a 400 if body is not provided', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/licenses/${
-            configs.licenses.id
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/certificates/${
+            configs.certificates.id
         }`;
 
         request(baseUri)
@@ -63,8 +63,8 @@ describe('update employee license EmailAcknowledged column By Id', () => {
     });
 
     test('must return a 400 if body return and invalid value for emailAcknowledged', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/licenses/${
-            configs.licenses.id
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/certificates/${
+            configs.certificates.id
         }`;
 
         request(baseUri)
@@ -81,8 +81,8 @@ describe('update employee license EmailAcknowledged column By Id', () => {
     });
 
     test('must return a 400 if body is invalid', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/licenses/${
-            configs.licenses.id
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/certificates/${
+            configs.certificates.id
         }`;
 
         request(baseUri)
@@ -102,14 +102,14 @@ describe('update employee license EmailAcknowledged column By Id', () => {
         { tenantId: configs.invalidTenantId },
         { companyId: configs.invalidCompanyId },
         { employeeId: configs.invalidEmployeeId },
-        { id: configs.licenses.invalidId },
+        { id: configs.certificates.invalidId },
     ].forEach((invalid) => {
         test(`must return a 400 if ${Object.keys(invalid)} is invalid`, (done) => {
             request(baseUri)
                 .patch(
                     `/tenants/${invalid.tenantId || configs.tenantId}/companies/${invalid.companyId ||
-                        configs.companyId}/employees/${invalid.employeeId || configs.employeeId}/licenses/${invalid.id ||
-                        configs.licenses.id}`,
+                        configs.companyId}/employees/${invalid.employeeId || configs.employeeId}/certificates/${invalid.id ||
+                        configs.certificates.id}`,
                 )
                 .set('Authorization', `Bearer ${accessToken}`)
                 .send(setUpEmailAcknowledgedBody(true))
@@ -127,14 +127,14 @@ describe('update employee license EmailAcknowledged column By Id', () => {
         { tenantId: configs.nonExistentTenantId },
         { companyId: configs.nonExistentCompanyId },
         { employeeId: configs.nonExistentEmployeeId },
-        { id: configs.licenses.nonExistentId },
+        { id: configs.certificates.nonExistentId },
     ].forEach((nonexistent) => {
         test(`must return a 404 if ${Object.keys(nonexistent)} is nonexistent`, (done) => {
             request(baseUri)
                 .patch(
                     `/tenants/${nonexistent.tenantId || configs.tenantId}/companies/${nonexistent.companyId ||
-                        configs.companyId}/employees/${nonexistent.employeeId || configs.employeeId}/licenses/${nonexistent.id ||
-                        configs.licenses.id}`,
+                        configs.companyId}/employees/${nonexistent.employeeId || configs.employeeId}/certificates/${nonexistent.id ||
+                        configs.certificates.id}`,
                 )
                 .set('Authorization', `Bearer ${accessToken}`)
                 .send(setUpEmailAcknowledgedBody(true))
@@ -150,8 +150,8 @@ describe('update employee license EmailAcknowledged column By Id', () => {
 
     test('must return 200 if emailAcknowledged is patched', (done) => {
         const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-            configs.licenses.employeeWithExpiringLicenses
-        }/licenses/${configs.licenses.id}`;
+            configs.certificates.employeeWithExpiringCertificates
+        }/certificates/${configs.certificates.id}`;
         request(baseUri)
             .patch(uri)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -163,7 +163,7 @@ describe('update employee license EmailAcknowledged column By Id', () => {
                     return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, response.body);
                 });
 
-                expect(response.body.id).toBe(configs.licenses.id);
+                expect(response.body.id).toBe(configs.certificates.id);
                 expect(response.body.newEmailAcknowledged).toBe(true);
             });
 
@@ -178,7 +178,7 @@ describe('update employee license EmailAcknowledged column By Id', () => {
                     return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, response.body);
                 });
 
-                expect(response.body.id).toBe(configs.licenses.id);
+                expect(response.body.id).toBe(configs.certificates.id);
                 expect(response.body.oldEmailAcknowledged).toBe(true);
                 expect(response.body.newEmailAcknowledged).toBe(false);
             });

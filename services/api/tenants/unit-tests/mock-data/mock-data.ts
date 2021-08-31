@@ -367,21 +367,21 @@ export const emptyExpiringLicensesResult = {
     rowsAffected: [1, 1, 1, 0],
 };
 
-export const emptyLicenseResult = {
+export const emptyResult = {
     recordsets: [[], []],
     recordset: [],
     output: {},
     rowsAffected: [1, 0, 0, 0],
 };
 
-export const validUpdateEmailAcknowledgedLicenseResult = {
+export const validUpdateEmailAcknowledgedResult = {
     recordsets: [[{ EmailAcknowledged: '0' }], [{ EmailAcknowledged: '1' }]],
     recordset: [{ EmailAcknowledged: '1' }],
     output: {},
     rowsAffected: [1, 1, 1, 1],
 };
 
-export const updateEmailAcknowledgedLicenseBody = {
+export const updateEmailAcknowledgedBody = {
     emailAcknowledged: true,
 };
 
