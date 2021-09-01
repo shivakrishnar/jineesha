@@ -22,7 +22,9 @@ begin
         EsignatureProductTierID,
         EsignatureProductTierName = (select Name from dbo.EsignatureProductTier where ID = EsignatureProductTierID),
         CreateDate,
-        ProductTierID
+        ProductTierID,
+        IsLandingSectionOnUpcomingTimeOff,
+        PRIntegration_ClientID
     from
         dbo.Company
     where
@@ -36,7 +38,9 @@ begin
         EsignatureProductTierID,
         EsignatureProductTierName = (select Name from dbo.EsignatureProductTier where ID = EsignatureProductTierID),
         CreateDate,
-        ProductTierID
+        ProductTierID,
+        IsLandingSectionOnUpcomingTimeOff,
+        PRIntegration_ClientID
     from
         dbo.Company
     where
@@ -58,7 +62,9 @@ begin
         EsignatureProductTierID,
         EsignatureProductTierName = (select Name from dbo.EsignatureProductTier where ID = EsignatureProductTierID),
         CreateDate,
-        ProductTierID
+        ProductTierID,
+        IsLandingSectionOnUpcomingTimeOff,
+        PRIntegration_ClientID
     from
         dbo.Company
     where
