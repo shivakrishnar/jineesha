@@ -1,0 +1,68 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Review Schema",
+    "$id": "Review",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "Unique identifier of the review.",
+            "type": "string"
+        },
+        "employeeId": {
+            "description": "Unique identifier associated to the employee.",
+            "type": "string"
+        },
+        "reviewTypeId": {
+            "description": "Unique identifier associated to the review type.",
+            "type": ["string", "null"]
+        },
+        "scheduledDate": {
+            "description": "Scheduled date of the review.",
+            "type": ["string", "null"]
+        },
+        "completedDate": {
+            "description": "Completion date of the review if any.",
+            "type": ["string", "null"]
+        },
+        "reviewByEmployeeId": {
+            "description": "Employee Id of the reviewer.",
+            "type": ["string", "null"]
+        },
+        "notes": {
+            "description": "Additional notes for this review.",
+            "type": ["string", "null"]
+        },
+        "privateNotes": {
+            "description": "private notes for this review.",
+            "type": ["string", "null"]
+        },
+        "reviewTemplate": {
+            "description": "Review Template that may be used as a review description",
+            "type": ["string", "null"]
+        },
+        "emailAcknowledged": {
+            "description": "Status of review acknowledgment by email.",
+            "type": ["boolean", "null"]
+        },
+        "reviewTypeCompanyId": {
+            "description": "Unique identifier for the company associated with the review type.",
+            "type": ["string", "null"]
+        },
+        "reviewTypeCode": {
+            "description": "The code for the review type.",
+            "type": ["string", "null"]
+        },
+        "reviewTypeDescription": {
+            "description": "Description of the review type.",
+            "type": ["string", "null"]
+        },
+        "reviewTypePriority": {
+            "description": "Priority of the review type.",
+            "type": ["string", "null"]
+        },
+        "reviewTypeActive": {
+            "description": "The active status of the review type.",
+            "type": ["boolean", "null"]
+        }
+    }
+}

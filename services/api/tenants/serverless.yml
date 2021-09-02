@@ -293,6 +293,15 @@ functions:
             cors:
               origin: '*'
 
+  listReviewsByEmployeeId:
+    handler: src/handler.listReviewsByEmployeeId
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/reviews
+            method: get
+            cors:
+              origin: '*'
+
   listUserRoles:
     handler: src/handler.listUserRoles
     events:
