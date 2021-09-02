@@ -33,11 +33,11 @@
             "type": ["string", "null"]
         },
         "privateNotes": {
-            "description": "private notes for this review.",
+            "description": "Private notes for this review.",
             "type": ["string", "null"]
         },
         "reviewTemplate": {
-            "description": "Review Template that may be used as a review description",
+            "description": "Review template that may be used as a review description",
             "type": ["string", "null"]
         },
         "emailAcknowledged": {

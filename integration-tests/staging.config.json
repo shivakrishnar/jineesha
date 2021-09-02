@@ -18,6 +18,12 @@
         "username": "direct-deposit-user-staging@sharklasers.com",
         "password": "Demo123!!!"
     },
+    "employeeUser": {
+        "review": {
+            "username": "mo@lol.com",
+            "password": "Demo123!"    
+        }
+    },
     "sbAdminUser": {
         "username": "bdyer@sharklasers.com",
         "password": "demo"
@@ -84,6 +90,11 @@
         "id": 8,
         "invalidId": "abc",
         "nonExistentId": 99999
+    },
+    "reviews": {
+        "tenantId": "c2745dc6-a732-403d-b333-cc4b9c326437",
+        "companyId": 1,
+        "employeeId": 23
     },
     "documentsBucket": "staging.hr.files",
     "logo": {
