@@ -96,6 +96,13 @@ function errorMessages(): ErrorMessage[] {
       "moreInfo": ""
     },
     {
+      "statusCode": 404,
+      "code": 51,
+      "message": "The requested resource does not exist in Evolution.",
+      "developerMessage": "",
+      "moreInfo": ""
+    },
+    {
       "statusCode": 400,
       "code": 60,
       "message": "Invalid url parameter value",

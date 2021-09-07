@@ -79,3 +79,53 @@ export const listGtlRecordsByEmployee = utilService.gatewayEventHandlerV2(async 
 
     return results || { statusCode: 200, headers: new Headers() };
 });
+
+/**
+ * Updates a GTL record
+ */
+ export const updateGtlRecord = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('gtl.handler.updateGtlRecord');
+
+    const { tenantId, companyId, employeeId } = event.pathParameters;
+
+    const accessToken = event.headers.Authorization.replace(/Bearer /i, '');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+    await utilService.validateRequestBody(postSchema, requestBody);
+    utilService.checkAdditionalProperties(postValidationSchema, requestBody, 'group term life');
+
+    const {
+        principal: { email },
+        roleMemberships,
+    } = securityContext;
+
+    const results = await gtlService.updateGtlRecord(tenantId, companyId, employeeId, requestBody, email, roleMemberships, accessToken);
+
+    return results || { statusCode: 200, headers: new Headers() };
+});
+
+/**
+ * Deletes GTL records by Employee
+ */
+ export const deleteGtlRecordsByEmployee = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('gtl.handler.deleteGtlRecordsByEmployee');
+
+    const { tenantId, companyId, employeeId } = event.pathParameters;
+
+    const accessToken = event.headers.Authorization.replace(/Bearer /i, '');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+
+    const {
+        principal: { email },
+        roleMemberships,
+    } = securityContext;
+
+    const results = await gtlService.deleteGtlRecordsByEmployee(tenantId, companyId, employeeId, email, roleMemberships, accessToken);
+
+    return results || { statusCode: 200, headers: new Headers() };
+});

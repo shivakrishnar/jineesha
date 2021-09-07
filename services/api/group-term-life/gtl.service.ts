@@ -200,6 +200,180 @@ async function updateEvolution(tenantId: string, evoKeys: IEvolutionKey, accessT
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
+        } else if (error.httpStatus === 404) {
+            throw errorService.getErrorResponse(51);
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Updates a group term life record
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to
+ * @param {string} companyId: The company the specific employee belongs to
+ * @param {string} employeeId: The id of the specific employee
+ * @param {object} gtlData: An object that contains GTL data to be inserted into the database
+ * @param {string} emailAddress: The email address of the user
+ * @param {string[]} roles: A collection of roles that are associated with the user
+ * @param {string} accessToken: HR access token
+ * @returns {Promise<GtlRecord>}: Promise of a GTL record
+ */
+
+ export async function updateGtlRecord(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    gtlData: GtlRecord,
+    emailAddress: string,
+    roles: string[],
+    accessToken: string,
+): Promise<GtlRecord> {
+    console.info('gtlService.updateGtlRecord');
+
+    try {
+        const [employee]: any[] = await Promise.all([
+            employeeService.getById(tenantId, companyId, employeeId, emailAddress, roles),
+            utilService.validateCompany(tenantId, companyId),
+        ]);
+
+        if (!employee) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Employee with ID ${employeeId} not found.`);
+        }
+
+        let validationErrorMessage;
+        if (gtlData.flatCoverage) {
+            if (!gtlData.flatAmount) {
+                validationErrorMessage = 'flatAmount must be provided if flatCoverage is true.';
+            } else if (gtlData.earningsMultiplier || gtlData.workHours) {
+                validationErrorMessage = 'earningsMultiplier and workHours must not be provided if flatCoverage is true.';
+            }
+        } else {
+            if (!gtlData.earningsMultiplier) {
+                validationErrorMessage = 'earningsMultiplier must be provided if flatCoverage is false.';
+            } else if (!employee.isSalary && !gtlData.workHours) {
+                validationErrorMessage = 'workHours must be provided if flatCoverage is false and employee is hourly.';
+            } else if (gtlData.flatAmount) {
+                validationErrorMessage = 'flatAmount must not be provided if flatCoverage is false.';
+            }
+        }
+
+        if (validationErrorMessage) {
+            throw errorService.getErrorResponse(30).setDeveloperMessage(validationErrorMessage);
+        }
+
+        const checkForExistingRecord: any = await listGtlRecordsByEmployee(tenantId, companyId, employeeId, emailAddress, roles);
+
+        if (!checkForExistingRecord) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage('No record exists for this employee!');
+        }
+
+        let evoGtlData;
+
+        evoGtlData = {
+            flatCoverage: gtlData.flatCoverage,
+            flatAmount: gtlData.flatAmount || null,
+            earningsMultiplier: gtlData.earningsMultiplier || null,
+            workHours: gtlData.workHours || null
+        }
+
+        await updateEvolution(tenantId, employee.evoData, accessToken, evoGtlData);
+
+        const query = new ParameterizedQuery('UpdateGtlRecord', Queries.updateGtlRecord);
+        query.setParameter('@employeeId', employeeId);
+        query.setParameter('@flatCoverage', gtlData.flatCoverage ? 1 : 0);
+        query.setParameter('@flatAmount', gtlData.flatAmount || 'NULL');
+        query.setParameter('@earningsMultiplier', gtlData.earningsMultiplier || 'NULL');
+        query.setParameter('@workHours', gtlData.workHours || 'NULL');
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        return {
+            employeeId,
+            flatCoverage: gtlData.flatCoverage,
+            flatAmount: gtlData.flatAmount,
+            earningsMultiplier: gtlData.earningsMultiplier,
+            workHours: gtlData.workHours,
+        } as GtlRecord;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Deletes a group term life record
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to
+ * @param {string} companyId: The company the specific employee belongs to
+ * @param {string} employeeId: The id of the specific employee
+ * @param {object} gtlData: An object that contains GTL data to be inserted into the database
+ * @param {string} emailAddress: The email address of the user
+ * @param {string[]} roles: A collection of roles that are associated with the user
+ * @param {string} accessToken: HR access token
+ * @returns {Promise<GtlRecord>}: Promise of a GTL record
+ */
+
+ export async function deleteGtlRecordsByEmployee(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    emailAddress: string,
+    roles: string[],
+    accessToken: string,
+) {
+    console.info('gtlService.deleteGtlRecordsByEmployee');
+
+    try {
+        const [employee]: any[] = await Promise.all([
+            employeeService.getById(tenantId, companyId, employeeId, emailAddress, roles),
+            utilService.validateCompany(tenantId, companyId),
+        ]);
+
+        if (!employee) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Employee with ID ${employeeId} not found.`);
+        }
+
+        const checkForExistingRecord: any = await listGtlRecordsByEmployee(tenantId, companyId, employeeId, emailAddress, roles);
+
+        if (!checkForExistingRecord) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage('No record exists for this employee!');
+        }
+
+        const gtlData = {
+            flatCoverage: null,
+            workHours: null,
+            flatAmount: null,
+            earningsMultiplier: null,
+        }
+
+        await updateEvolution(tenantId, employee.evoData, accessToken, gtlData);
+
+        const query = new ParameterizedQuery('DeleteGtlRecord', Queries.deleteGtlRecord);
+        query.setParameter('@employeeId', employeeId);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        return { statusCode: 200 } 
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
         }
         console.error(error);
         throw errorService.getErrorResponse(0);
