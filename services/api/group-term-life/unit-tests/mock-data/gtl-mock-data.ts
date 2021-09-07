@@ -70,6 +70,46 @@ export const createGtlRecordMockResult = {
     flatAmount: 200000,
 };
 
+export const updateGtlRecordDBResponse = {
+    recordset: [
+        {
+            FlatCoverage: 1,
+            FlatAmount: 200000,
+            EarningsMultiplier: null,
+            WorkHours: null,
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const deleteGtlRecordMockResult = {
+    employeeId: '42242',
+    flatCoverage: null,
+    flatAmount: null,
+    earningsMultiplier: null,
+    workHours: null,
+};
+
+export const deleteGtlRecordDBResponse = {
+    recordset: [
+        {
+            FlatCoverage: null,
+            FlatAmount: null,
+            EarningsMultiplier: null,
+            WorkHours: null,
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const updateGtlRecordMockResult = {
+    employeeId: '42242',
+    flatCoverage: true,
+    flatAmount: 200000,
+};
+
 export const getEmployeeEvoDataDBResponse = {
     recordset: [
         {
