@@ -557,3 +557,23 @@ export const updateEmployeeCertificateById = utilService.gatewayEventHandlerV2(a
 
     return await employeeService.updateEmployeeCertificateById(tenantId, companyId, employeeId, id, requestBody);
 });
+
+/**
+ * Return the list of Reviews for an employee.
+ */
+export const listReviewsByEmployeeId = utilService.gatewayEventHandlerV2(async ({ event }: IGatewayEventInput) => {
+    console.info('tenants.handler.listReviewsByEmployeeId');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId, companyId, employeeId } = event.pathParameters;
+
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    return await employeeService.listReviewsByEmployeeId(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
+});

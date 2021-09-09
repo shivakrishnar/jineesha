@@ -12,6 +12,7 @@ import * as paginationService from '../../../pagination/pagination.service';
 import * as utilService from '../../../util.service';
 import { EmployeeLicense } from './EmployeeLicense';
 import { EmployeeCertificate } from './EmployeeCertificate';
+import { EmployeeReview } from './EmployeeReview';
 import { IEvolutionKey } from '../../models/IEvolutionKey';
 
 type Employee = {
@@ -542,6 +543,94 @@ export async function updateEmployeeCertificateById(
             oldEmailAcknowledged: result.recordsets[0][0].EmailAcknowledged === '1',
             newEmailAcknowledged: result.recordsets[1][0].EmailAcknowledged === '1',
         };
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Lists all reviews for a specific employee
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the specified company.
+ * @param {string} employeeId: The unique identifier employee.
+ * @param {any} queryParams: The query parameters that were specified by the user.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @returns {PaginatedResult}: A Promise of a paginated collection of employee's reviews.
+ */
+export async function listReviewsByEmployeeId(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
+    console.info('employeeService.listReviewsByEmployeeId');
+
+    const validQueryStringParameters = ['pageToken', 'upcoming'];
+
+    // Pagination validation
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    try {
+        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+
+        let query;
+        query = new ParameterizedQuery('listReviewsByEmployeeId', Queries.listReviewsByEmployeeId);
+
+        if (queryParams) {
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+
+            const upcoming = utilService.parseQueryParamsBoolean(queryParams, 'upcoming');
+
+            if (upcoming) {
+                query = new ParameterizedQuery('listUpcomingReviewsByEmployeeId', Queries.listUpcomingReviewsByEmployeeId);
+                query.setParameter('@companyId', companyId);
+            }
+        }
+
+        query.setParameter('@employeeId', employeeId);
+
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+
+        const payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        const totalCount = result.recordsets[0][0].totalCount;
+
+        const reviews: EmployeeReview[] = result.recordsets[1].map((record) => {
+            return {
+                id: record.ID,
+                employeeId: record.EmployeeID,
+                reviewTypeId: record.ReviewTypeID,
+                scheduledDate: record.ScheduledDate,
+                completedDate: record.CompletedDate,
+                reviewByEmployeeId: record.ReviewByEmployeeID,
+                notes: record.Notes,
+                privateNotes: record.PrivateNotes,
+                reviewTemplate: record.ReviewTemplate,
+                emailAcknowledged: record.EmailAcknowledged,
+                reviewTypeCompanyId: record.CompanyID,
+                reviewTypeCode: record.Code,
+                reviewTypeDescription: record.Description,
+                reviewTypePriority: record.Priority,
+                reviewTypeActive: record.Active,
+            } as EmployeeReview;
+        });
+
+        return await paginationService.createPaginatedResult(reviews, baseUrl, totalCount, page);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
