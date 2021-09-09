@@ -1,11 +1,11 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
-    "title": "Update Employee License Email Acknowledged Schema",
-    "$id": "UpdateLicenseEmailAcknowledged",
+    "title": "Update Email Acknowledged Schema",
+    "$id": "UpdateEmailAcknowledged",
     "type": "object",
     "properties": {
         "id": {
-            "description": "The unique identifier of the License that was patched.",
+            "description": "The unique identifier of the record that was patched.",
             "type": ["number"]
         },
         "oldEmailAcknowledged": {

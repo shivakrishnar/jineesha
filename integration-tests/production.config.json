@@ -73,7 +73,11 @@
     "certificates": {
         "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
         "companyId": 27,
-        "employeeId": 912
+        "employeeId": 912,
+        "employeeWithExpiringCertificates": "35109",
+        "id": 143,
+        "invalidId": "abc",
+        "nonExistentId": 99999
     },
     "documentsBucket": "production.hr.files",
     "logo": {

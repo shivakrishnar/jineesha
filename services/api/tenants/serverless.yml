@@ -8,7 +8,7 @@ provider:
   versionFunctions: false
   memorySize: 1024
   logRetentionInDays: ${file(${self:custom.configFile}):logRetentionInDays}
-  
+
   environment:  #environment variables
     awsRegion: ${file(${self:custom.configFile}):awsRegion}
     secretsAwsEndPoint: ${file(${self:custom.configFile}):secretsAwsEndPoint}
@@ -202,7 +202,7 @@ functions:
           method: patch
           cors:
             origin: '*'
-            
+
   getCompanyById:
     handler: src/handler.getCompanyById
     events:
@@ -256,7 +256,7 @@ functions:
             method: get
             cors:
               origin: '*'
-            
+
   listLicensesByEmployeeId:
     handler: src/handler.listLicensesByEmployeeId
     events:
@@ -281,6 +281,15 @@ functions:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/certificates
             method: get
+            cors:
+              origin: '*'
+
+  updateEmployeeCertificateById:
+    handler: src/handler.updateEmployeeCertificateById
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/certificates/{id}
+            method: patch
             cors:
               origin: '*'
 
@@ -315,7 +324,7 @@ stepFunctions:
   stateMachines:
      HrDatabaseCreator:
       name: HrDatabaseCreator-${self:provider.stage}
-  
+
       definition:
         Comment: "State machine for creating a new tenant database within RDS"
         StartAt: TenantChecker
