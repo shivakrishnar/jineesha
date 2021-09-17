@@ -302,6 +302,15 @@ functions:
             cors:
               origin: '*'
 
+  updateEmployeeReviewById:
+    handler: src/handler.updateEmployeeReviewById
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/reviews/{id}
+            method: patch
+            cors:
+              origin: '*'
+
   listUserRoles:
     handler: src/handler.listUserRoles
     events:

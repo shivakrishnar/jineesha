@@ -577,3 +577,22 @@ export const listReviewsByEmployeeId = utilService.gatewayEventHandlerV2(async (
 
     return await employeeService.listReviewsByEmployeeId(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
 });
+
+/**
+ * Updates EmployeeReview's record by ID.
+ */
+export const updateEmployeeReviewById = utilService.gatewayEventHandlerV2(async ({ event, requestBody }: IGatewayEventInput) => {
+    console.info('tenants.handler.updateEmployeeReviewById');
+
+    await utilService.requirePayload(requestBody);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+    utilService.validateAndThrow(requestBody, emailAcknowledgedSchema);
+    utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update Review Email Acknowledged');
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const { tenantId, companyId, employeeId, id } = event.pathParameters;
+
+    return await employeeService.updateEmployeeReviewById(tenantId, companyId, employeeId, id, requestBody);
+});
