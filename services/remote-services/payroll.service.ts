@@ -88,3 +88,46 @@ export async function updateEmployeeInEvo(
         throw e;
     }
 }
+
+export async function getEvolutionTimeOffCategoriesByEmployeeId(
+    tenantName: string,
+    evolutionKeys: IEvolutionKey,
+    token: string,
+): Promise<any> {
+    console.info('payrollService.getEvolutionTimeOffCategoriesByEmployeeId');
+
+    const { clientId, companyId, employeeId } = evolutionKeys;
+
+    const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}/time-off-categories`;
+
+    try {
+        return await request.get({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            json: true,
+        })
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+export async function getEvolutionTimeOffSummariesByEmployeeId(
+    tenantName: string,
+    evolutionKeys: IEvolutionKey,
+    token: string,
+): Promise<any> {
+    console.info('payrollService.getEvolutionTimeOffSummariesByEmployeeId');
+
+    const { clientId, companyId, employeeId } = evolutionKeys;
+
+    const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}/time-off-summaries`;
+    try {
+        return await request.get({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            json: true,
+        });
+    } catch (e) {
+        console.log(e);
+    }
+}
