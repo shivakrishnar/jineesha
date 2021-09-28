@@ -10,10 +10,13 @@ import { Role } from '../../models/Role';
 import * as errorService from '../../../errors/error.service';
 import * as paginationService from '../../../pagination/pagination.service';
 import * as utilService from '../../../util.service';
+import * as payrollService from '../../../remote-services/payroll.service';
+import * as ssoService from '../../../remote-services/sso.service';
 import { EmployeeLicense } from './EmployeeLicense';
 import { EmployeeCertificate } from './EmployeeCertificate';
 import { EmployeeReview } from './EmployeeReview';
 import { IEvolutionKey } from '../../models/IEvolutionKey';
+import { EmployeeAbsenceSummary, EmployeeAbsenceSummaryCategory } from './EmployeeAbsenceSummary';
 
 type Employee = {
     id: number;
@@ -690,6 +693,103 @@ export async function updateEmployeeReviewById(
             // then returns an actual boolean value instead of a '1'.
             oldEmailAcknowledged: result.recordsets[0][0].EmailAcknowledged === '1',
             newEmailAcknowledged: result.recordsets[1][0].EmailAcknowledged === '1',
+        };
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Get the absence summary for a specific employee
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the specified company.
+ * @param {string} employeeId: The unique identifier employee.
+ * @param {string} emailAddress: The email address of the user.
+ * @param {string[]} roles: The roles memberships that are associated with the user.
+ * @param {string} accessToken: The access token of the user making the request.
+ * @returns {EmployeeAbsenceSummary}: A Promise of an employee's absence summary.
+ */
+export async function getEmployeeAbsenceSummary(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    emailAddress: string,
+    roles: string[],
+    accessToken: string,
+): Promise<EmployeeAbsenceSummary> {
+    console.info('employeeService.getEmployeeAbsenceSummary');
+
+    try {
+        const [employee, payrollApiAccessToken]: any[] = await Promise.all([
+            getById(tenantId, companyId, employeeId, emailAddress, roles),
+            utilService.getEvoTokenWithHrToken(tenantId, accessToken),
+        ]);
+        const tenantObject = await ssoService.getTenantById(tenantId, payrollApiAccessToken);
+        const tenantName = tenantObject.subdomain;
+
+        const query = new ParameterizedQuery('listEmployeeAbsenceByEmployeeId', Queries.listEmployeeAbsenceByEmployeeId);
+        query.setParameter('@employeeId', employeeId);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const [employeeTimeOffCategories, employeeTimeOffSummaries, result]: any[] = await Promise.all([
+            payrollService.getEvolutionTimeOffCategoriesByEmployeeId(tenantName, employee.evoData, payrollApiAccessToken),
+            payrollService.getEvolutionTimeOffSummariesByEmployeeId(tenantName, employee.evoData, payrollApiAccessToken),
+            utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse),
+        ]);
+
+        if (!employeeTimeOffCategories) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`No time off categories found.`);
+        }
+
+        if (employeeTimeOffSummaries.results.length === 0 || result.recordset.length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`No time off records found.`);
+        }
+
+        const getEmployeeTimeOffSummaryByCategoryId = (id) => {
+            return employeeTimeOffSummaries.results.find((summary) => summary.id === id);
+        };
+
+        const calculateCategoryPendingHours = (timeOffCategoryId: number) =>
+            result.recordset
+                .filter(
+                    (timeOffRequest) =>
+                        timeOffRequest.Description === 'Pending' && parseInt(timeOffRequest.EvoFK_TimeOffCategoryId) === timeOffCategoryId,
+                )
+                .reduce((accumulator, currentValue) => accumulator + currentValue.HoursTaken, 0);
+
+        let totalAvailableBalance: number = 0;
+
+        const categories: EmployeeAbsenceSummaryCategory[] = employeeTimeOffCategories.results.map((category) => {
+            const employeeSummary = getEmployeeTimeOffSummaryByCategoryId(category.id);
+            const currentBalance = employeeSummary.accruedHours - employeeSummary.usedHours;
+            const pendingApprovalHours = calculateCategoryPendingHours(category.id);
+            const availableBalance = currentBalance - (employeeSummary.approvedHours + pendingApprovalHours);
+
+            totalAvailableBalance += availableBalance;
+
+            return {
+                category: category.categoryDescription,
+                currentBalance,
+                scheduledHours: employeeSummary.approvedHours,
+                pendingApprovalHours,
+                availableBalance,
+            };
+        });
+
+        return {
+            totalAvailableBalance,
+            categories,
         };
     } catch (error) {
         if (error instanceof ErrorMessage) {
