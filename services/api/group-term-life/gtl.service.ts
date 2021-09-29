@@ -268,9 +268,7 @@ async function updateEvolution(tenantId: string, evoKeys: IEvolutionKey, accessT
             throw errorService.getErrorResponse(50).setDeveloperMessage('No record exists for this employee!');
         }
 
-        let evoGtlData;
-
-        evoGtlData = {
+        const evoGtlData = {
             flatCoverage: gtlData.flatCoverage,
             flatAmount: gtlData.flatAmount || null,
             earningsMultiplier: gtlData.earningsMultiplier || null,
@@ -370,7 +368,7 @@ async function updateEvolution(tenantId: string, evoKeys: IEvolutionKey, accessT
 
         await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
 
-        return { statusCode: 200 } 
+        return { statusCode: 200 }
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
