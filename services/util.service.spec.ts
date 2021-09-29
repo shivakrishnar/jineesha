@@ -380,3 +380,47 @@ describe('utilService.validateUserIsInCompany', () => {
         });
     });
 });
+
+describe('utilService.validateUserWithEmployee', () => {
+    beforeEach(() => {
+        setup();
+    })
+
+    test('validates if employeeId is invalid', async () => {
+        const invalidCompanyIdError = {
+            statusCode: 400,
+            code: 30,
+            message: 'The provided request object was not valid for the requested operation.',
+            developerMessage: `${mockData.invalidCompanyId} is not a valid employeeId`,
+            moreInfo: '',
+        };
+
+        await utilService.validateUserWithEmployee(mockData.tenantId, mockData.username, mockData.invalidCompanyId).catch((error) => {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error).toEqual(invalidCompanyIdError);
+        });
+    });
+
+
+    test('returns false if user does not belong to the employee', () => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
+            return Promise.resolve(utilServiceMockData.userDoesNotBelongToEmployee);
+        });
+
+        return utilService.validateUserWithEmployee(mockData.tenantId, mockData.username, mockData.employeeId).then((result) => {
+            expect(result).toEqual(false);
+        });
+    });
+
+    test('returns true if user belongs to the employee', () => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
+            return Promise.resolve(utilServiceMockData.userBelongsToEmployee);
+        });
+
+        return utilService.validateUserWithEmployee(mockData.tenantId, mockData.username, mockData.employeeId).then((result) => {
+            expect(result).toEqual(true);
+        });
+    });
+
+
+})
