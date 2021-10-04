@@ -558,7 +558,7 @@ async function saveSimpleEsignatureMetadata(
             utilService.sendEventNotification({
                 urlParameters: pathParameters,
                 invokerEmail,
-                type: NotificationEventType.EsignatureEvent,
+                type: NotificationEventType.EsignatureBatchEvent,
                 actions: [EsignatureAction.EsignatureRequest],
                 accessToken: token.replace(/Bearer /i, ''),
                 metadata: {
@@ -873,7 +873,7 @@ export async function createBatchHSSignatureRequest(
         utilService.sendEventNotification({
             urlParameters: pathParameters,
             invokerEmail,
-            type: NotificationEventType.EsignatureEvent,
+            type: NotificationEventType.EsignatureBatchEvent,
             actions: [EsignatureAction.EsignatureRequest],
             accessToken: token.replace(/Bearer /i, ''),
             metadata: {
@@ -1325,7 +1325,7 @@ export async function sendReminderEmail(pathParameters: any, accessToken: string
         utilService.sendEventNotification({
             urlParameters: pathParameters,
             invokerEmail,
-            type: NotificationEventType.EsignatureReminderEvent,
+            type: NotificationEventType.EsignatureEvent,
             actions: [EsignatureAction.EsignatureReminder],
             accessToken: accessToken.replace(/Bearer /i, ''),
             metadata: {
@@ -4032,10 +4032,21 @@ export async function createCompanyDocument(
  * @param {string} employeeId: The unique identifier for the employee.
  * @param {string} documentId: The unique identifier for the document to be updated.
  */
-export async function deleteSignatureRequest(tenantId: string, companyId: string, employeeId: string, documentId: string): Promise<void> {
+export async function deleteSignatureRequest(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    documentId: string,
+    pathParameters: any,
+    invokerEmail: string,
+    token: string,
+): Promise<void> {
     console.info('esignature.service.deleteSignatureRequest');
     try {
-        await Promise.all([utilService.validateCompany(tenantId, companyId), validateEmployeeId(tenantId, companyId, employeeId)]);
+        const [employee] = await Promise.all([
+            utilService.validateEmployee(tenantId, employeeId),
+            utilService.validateCompany(tenantId, companyId),
+        ]);
 
         // get the document if it exists
         let query = new ParameterizedQuery('GetEsignatureMetadataById', Queries.getEsignatureMetadataById);
@@ -4070,6 +4081,17 @@ export async function deleteSignatureRequest(tenantId: string, companyId: string
             console.info('Cancel HelloSign Signature Request');
             eSigner.signatureRequest.cancel(documentId);
         }
+
+        utilService.sendEventNotification({
+            urlParameters: pathParameters,
+            invokerEmail,
+            type: NotificationEventType.EsignatureEvent,
+            actions: [EsignatureAction.EsignatureDelete],
+            accessToken: token.replace(/Bearer /i, ''),
+            metadata: {
+                employeeCode: employee.employeeCode,
+            },
+        } as IEsignatureEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

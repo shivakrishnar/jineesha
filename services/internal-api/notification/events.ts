@@ -8,9 +8,9 @@ export interface INotificationEvent {
 
 export enum NotificationEventType {
     DirectDepositEvent = 'DirectDepositEvent',
-    EsignatureEvent = 'EsignatureEvent',
+    EsignatureBatchEvent = 'EsignatureBatchEvent',
     BillingEvent = 'BillingEvent',
-    EsignatureReminderEvent = 'EsignatureReminderEvent',
+    EsignatureEvent = 'EsignatureEvent',
 }
 
 export enum AlertCategory {
@@ -51,4 +51,5 @@ export interface IESignatureMetadata {
 export enum EsignatureAction {
     EsignatureReminder = 'E-Signature Reminder',
     EsignatureRequest = 'E-Signature Request',
+    EsignatureDelete = 'E-Signature Cancelled',
 }

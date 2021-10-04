@@ -486,8 +486,8 @@ async function createEmailRecordListEntries(
  * Handles and sends alerts for E-Signature events
  * @param {IEsignatureEvent} event
  */
-async function submitEsignatureEventNotification(event: IEsignatureEvent): Promise<void> {
-    console.info('notification.service.submitEsignatureEventNotification');
+async function submitEsignatureBatchEventNotification(event: IEsignatureEvent): Promise<void> {
+    console.info('notification.service.submitEsignatureBatchEventNotification');
 
     const { tenantId, companyId } = event.urlParameters;
 
@@ -533,7 +533,7 @@ async function submitEsignatureEventNotification(event: IEsignatureEvent): Promi
  * Handles and sends alerts for E-Signature events
  * @param {IEsignatureEvent} event
  */
-async function submitEsignatureReminderEventNotification(event: IEsignatureEvent): Promise<void> {
+async function submitEsignatureEventNotification(event: IEsignatureEvent): Promise<void> {
     console.info('notification.service.submitEsignatureEventNotification');
 
     const { tenantId, companyId, documentId } = event.urlParameters;
@@ -561,7 +561,7 @@ async function submitEsignatureReminderEventNotification(event: IEsignatureEvent
 
         await createEmailRecordListEntries(tenantId, companyId, [emailMessage], event.accessToken);
 
-        console.log(action, 'Signature reminder email sent');
+        console.log(action, 'Signature event email sent');
     }
 }
 
@@ -607,11 +607,11 @@ export async function processEvent(event: INotificationEvent): Promise<boolean> 
             case NotificationEventType.DirectDepositEvent:
                 await submitDirectDepositEventNotification(event as IDirectDepositEvent);
                 return true;
+            case NotificationEventType.EsignatureBatchEvent:
+                await submitEsignatureBatchEventNotification(event as IEsignatureEvent);
+                return true;
             case NotificationEventType.EsignatureEvent:
                 await submitEsignatureEventNotification(event as IEsignatureEvent);
-                return true;
-            case NotificationEventType.EsignatureReminderEvent:
-                await submitEsignatureReminderEventNotification(event as IEsignatureEvent);
                 return true;
             case NotificationEventType.BillingEvent:
                 await submitBillingEventNotification(event as IBillingEvent);

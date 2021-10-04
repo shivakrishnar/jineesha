@@ -1173,7 +1173,15 @@ export const deleteSignatureRequestStatus = utilService.gatewayEventHandlerV2(
         utilService.validateAndThrow(event.headers, headerSchema);
         utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
 
-        return await esignatureService.deleteSignatureRequest(tenantId, companyId, employeeId, documentId);
+        return await esignatureService.deleteSignatureRequest(
+            tenantId,
+            companyId,
+            employeeId,
+            documentId,
+            event.pathParameters,
+            securityContext.principal.email,
+            event.headers.authorization,
+        );
     },
 );
 
