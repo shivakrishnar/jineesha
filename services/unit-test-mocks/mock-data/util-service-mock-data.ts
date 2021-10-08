@@ -112,3 +112,17 @@ export const userExistsInCompany = {
     output: {},
     rowsAffected: [1, 1, 1],
 };
+
+export const userDoesNotBelongToEmployee = {
+    recordsets: [[]],
+    recordset: [{ ID: 0 }],
+    output: {},
+    rowsAffected: [1, 1, 0],
+};
+
+export const userBelongsToEmployee = {
+    recordsets: [[[{ ID: '113' }]]],
+    recordset: [{ ID: '113' }],
+    output: {},
+    rowsAffected: [1, 1, 1],
+};

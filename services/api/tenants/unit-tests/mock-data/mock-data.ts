@@ -725,3 +725,127 @@ export const validId = '72';
 export const invalidId = 'abc';
 export const domainName = 'https://test.evolution-software.com';
 export const path = '/identity/tenants/1234/companies/1/employees/123/direct-deposits';
+
+export const listEmployeeAbsenceByEmployeeIdResult = {
+    recordsets: [[[Object], [Object], [Object], [Object], [Object], [Object], [Object]]],
+    recordset: [
+        {
+            SubmitDate: '2021-09-27T00:00:00.000Z',
+            StartDate: '2021-10-01T00:00:00.000Z',
+            ReturnDate: '2021-10-06T00:00:00.000Z',
+            HoursTaken: 32,
+            EvoFK_TimeOffCategoryId: '785',
+            Description: 'Approved',
+        },
+        {
+            SubmitDate: '2021-09-27T00:00:00.000Z',
+            StartDate: '2021-10-22T00:00:00.000Z',
+            ReturnDate: '2021-10-30T00:00:00.000Z',
+            HoursTaken: 48,
+            EvoFK_TimeOffCategoryId: '786',
+            Description: 'Pending',
+        },
+        {
+            SubmitDate: '2021-09-27T00:00:00.000Z',
+            StartDate: '2021-11-01T00:00:00.000Z',
+            ReturnDate: '2021-11-05T00:00:00.000Z',
+            HoursTaken: 40,
+            EvoFK_TimeOffCategoryId: '785',
+            Description: 'Pending',
+        },
+        {
+            SubmitDate: '2021-09-27T00:00:00.000Z',
+            StartDate: '2021-09-28T00:00:00.000Z',
+            ReturnDate: '2021-09-28T00:00:00.000Z',
+            HoursTaken: 8,
+            EvoFK_TimeOffCategoryId: '785',
+            Description: 'Approved',
+        },
+        {
+            SubmitDate: '2021-09-28T00:00:00.000Z',
+            StartDate: '2021-09-28T00:00:00.000Z',
+            ReturnDate: '2021-09-28T00:00:00.000Z',
+            HoursTaken: 8,
+            EvoFK_TimeOffCategoryId: '785',
+            Description: 'Rejected',
+        },
+        {
+            SubmitDate: '2021-09-28T00:00:00.000Z',
+            StartDate: '2021-09-27T00:00:00.000Z',
+            ReturnDate: '2021-09-27T00:00:00.000Z',
+            HoursTaken: 8,
+            EvoFK_TimeOffCategoryId: '785',
+            Description: 'Approved',
+        },
+        {
+            SubmitDate: '2021-09-28T00:00:00.000Z',
+            StartDate: '2021-10-19T00:00:00.000Z',
+            ReturnDate: '2021-10-20T00:00:00.000Z',
+            HoursTaken: 12.75,
+            EvoFK_TimeOffCategoryId: '785',
+            Description: 'Pending',
+        },
+    ],
+    output: {},
+    rowsAffected: [1, 7],
+};
+
+// Do NOT change any of these test values for the time off categories/summary/expected categories.
+// These mock data are set to test if the function is properly calculating the hours as a result.
+export const getEvolutionTimeOffCategoriesByEmployeeIdResult = {
+    results: [
+        {
+            employeeId: 123,
+            categoryDescription: 'Vacation',
+            standardHours: null,
+            id: 1,
+        },
+        {
+            employeeId: 123,
+            categoryDescription: 'Sick',
+            standardHours: null,
+            id: 2,
+        },
+    ],
+};
+
+export const getEvolutionTimeOffSummariesByEmployeeId = {
+    results: [
+        {
+            employeeId: 123,
+            timeOffCategoryId: 11,
+            accruedHours: 40,
+            usedHours: 18,
+            approvedHours: 16,
+            id: 1,
+        },
+        {
+            employeeId: 123,
+            timeOffCategoryId: 12,
+            accruedHours: 48,
+            usedHours: 0,
+            approvedHours: 8,
+            id: 2,
+        },
+    ],
+};
+
+export const expectedEmployeeAbsenceSummary = {
+    totalAvailableBalance: 46,
+    categories: [
+        {
+            category: 'Vacation',
+            currentBalance: 22,
+            scheduledHours: 16,
+            pendingApprovalHours: 0,
+            availableBalance: 6,
+        },
+        {
+            category: 'Sick',
+            currentBalance: 48,
+            scheduledHours: 8,
+            pendingApprovalHours: 0,
+            availableBalance: 40,
+        },
+    ],
+};

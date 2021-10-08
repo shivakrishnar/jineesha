@@ -21,7 +21,11 @@
     "employeeUser": {
         "review": {
             "username": "mo@lol.com",
-            "password": "Demo123!"    
+            "password": "Demo123!"
+        },
+        "timeOff": {
+            "username": "kento@huh2.com",
+            "password": "Demo123!"
         }
     },
     "sbAdminUser": {
@@ -91,7 +95,7 @@
         "invalidId": "abc",
         "nonExistentId": 99999
     },
-     "reviews": {
+    "reviews": {
         "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
         "companyId": 600351,
         "employeeId": 29355,
@@ -100,7 +104,26 @@
         "id": 124,
         "nonExistentId": 99999
     },
-
+    "timeOff": {
+        "existingTimeOffs": [
+            {
+                "companyId": 600351,
+                "employeeId": 35122
+            },
+            {
+                "companyId": 600351,
+                "employeeId": 34833
+            },
+            {
+                "companyId": 600358,
+                "employeeId": 24324
+            },
+            {
+                "companyId": 600442,
+                "employeeId": 35073
+            }
+        ]
+    },
     "documentsBucket": "development.hr.files",
     "logo": {
         "companyWithNoLogo": 600259,

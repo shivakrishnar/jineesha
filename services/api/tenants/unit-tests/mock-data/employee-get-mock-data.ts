@@ -39,3 +39,21 @@ export const employeeMockResult = {
         employeeId: undefined,
     },
 };
+export const getEmployeeByIdResult = {
+    recordsets: [[[Object], [Object]]],
+    recordset: [
+        {
+            ID: '35122',
+            CompanyID: '600351',
+            EmployeeCode: '8000926',
+            FirstName: 'Doja',
+            LastName: 'Cat',
+            IsSalary: true,
+            evoEmployeeId: '481',
+            evoCompanyId: '6',
+            evoClientId: '81',
+        },
+    ],
+    output: {},
+    rowsAffected: [1, 1, 1, 1, 2],
+};

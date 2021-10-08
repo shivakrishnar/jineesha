@@ -933,6 +933,50 @@ export async function validateUserIsInCompany(tenantId: string, username: string
 }
 
 /**
+ * Validates that a user belongs to a specific employee.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} username: The string a user uses to login.
+ * @param {string} employeeId: The unique identifier for an employee.
+ */
+export async function validateUserWithEmployee(tenantId: string, username: string, employeeId: string): Promise<boolean> {
+    console.info('utilService.validateUserWithEmployee');
+    try {
+        // employeeId value must be integral
+        if (Number.isNaN(Number(employeeId))) {
+            const errorMessage = `${employeeId} is not a valid employeeId`;
+            throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        }
+
+        const query: ParameterizedQuery = new ParameterizedQuery('getEmployeesByEmailAddress', Queries.getEmployeesByEmailAddress);
+        query.setParameter('@emailAddresses', username);
+
+        const companyExistsInTenantPayload: DatabaseEvent = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        };
+
+        const result: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            companyExistsInTenantPayload,
+            InvocationType.RequestResponse,
+        );
+
+        const userExistsInCompany = result?.recordset[0]?.ID === employeeId;
+
+        return Promise.resolve(userExistsInCompany);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Ensures that the invoking user has access to the specified resource and runs the given query if authorized.
  * @param {string} tenantId: The unique identifier for the tenant.
  * @param {Resources} resourceType: The type of resource to be accessed.

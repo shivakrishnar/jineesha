@@ -302,6 +302,15 @@ functions:
             cors:
               origin: '*'
 
+  getEmployeeAbsenceSummary:
+    handler: src/handler.getEmployeeAbsenceSummary
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/absence-summary
+            method: get
+            cors:
+              origin: '*'
+
   updateEmployeeReviewById:
     handler: src/handler.updateEmployeeReviewById
     events:

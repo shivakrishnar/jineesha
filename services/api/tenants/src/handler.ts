@@ -596,3 +596,47 @@ export const updateEmployeeReviewById = utilService.gatewayEventHandlerV2(async 
 
     return await employeeService.updateEmployeeReviewById(tenantId, companyId, employeeId, id, requestBody);
 });
+
+/**
+ * Return an employee's absence summary
+ */
+
+export const getEmployeeAbsenceSummary = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('tenants.handler.getEmployeeAbsenceSummary');
+
+    const {
+        pathParameters: { tenantId, companyId, employeeId },
+        headers: { Authorization },
+    } = event;
+
+    const {
+        principal: { email, username },
+        roleMemberships,
+    } = securityContext;
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+    await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+
+    const accessToken: string = Authorization.replace(/Bearer /i, '');
+
+    const hasRole: boolean = securityContext.roleMemberships.some((role) => {
+        return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin || role === Role.hrAdmin;
+    });
+
+    let userValidatedWithEmployee;
+
+    if(!hasRole){
+        userValidatedWithEmployee = await utilService.validateUserWithEmployee(tenantId, username, employeeId);
+    }
+
+    const isAuthorized = hasRole || userValidatedWithEmployee;
+
+    if (!isAuthorized) {
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
+
+    return await employeeService.getEmployeeAbsenceSummary(tenantId, companyId, employeeId, email, roleMemberships, accessToken);
+});

@@ -1,0 +1,29 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Employee Absence Summary Category Schema",
+    "$id": "EmployeeAbsenceSummaryCategory",
+    "type": "object",
+    "properties": {
+        "category": {
+            "description": "Name of the category",
+            "type": "string"
+        },
+        "currentBalance": {
+            "description": "The current time off accrual balance for this category",
+            "type": ["number", "null"]
+        },
+        "scheduledHours": {
+            "description": "The total amount of time off request hours that are approved.",
+            "type": ["number", "null"]
+        },
+        "pendingApprovalHours": {
+            "description": "The total amount of time off request hours that are pending approval.",
+            "type": ["number", "null"]
+        },
+        "availableBalance": {
+            "description": "The calculated time off accrual balance after considering pending and approved hours.",
+            "type": ["number", "null"]
+        }
+    },
+    "required": ["category"]
+}
