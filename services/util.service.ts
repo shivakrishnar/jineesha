@@ -991,9 +991,9 @@ export async function checkAuthorization (securityContext: SecurityContext, even
         const hasRole: boolean = roleMemberships.some((role) => {
             return authorizedRoles.includes(role)
         });
-    
+
         let userValidatedWithEmployee;
-    
+
         if (!hasRole) {
             userValidatedWithEmployee = await validateUserWithEmployee(tenantId, username, employeeId);
         }
