@@ -4,7 +4,8 @@ import * as utils from '../utils';
 
 const configs = utils.getConfig();
 const baseUri = `${configs.nonProxiedApiDomain}/internal`;
-let accessToken: string;
+let adminAccessToken: string;
+let employeeAccessToken: string;
 
 const errorMessageSchema = JSON.parse(fs.readFileSync('services/api/models/ErrorMessage.json').toString());
 const paginatedResultSchema = JSON.parse(fs.readFileSync('services/integrations/models/PaginatedResult.json').toString());
@@ -20,10 +21,10 @@ const enum schemaNames {
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
-describe('get licenses by employee id', () => {
+describe('get licenses by employee id as an admin user', () => {
     beforeAll(async (done) => {
         try {
-            accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+            adminAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
             done();
         } catch (error) {
             done.fail(error);
@@ -53,7 +54,7 @@ describe('get licenses by employee id', () => {
                         `/tenants/${endpoint.tenantId || configs.licenses.tenantId}/companies/${endpoint.companyId ||
                             configs.licenses.companyId}/employees/${endpoint.employeeId || configs.licenses.employeeId}/licenses`,
                     )
-                    .set('Authorization', `Bearer ${accessToken}`)
+                    .set('Authorization', `Bearer ${adminAccessToken}`)
                     .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
                     .expect(400)
                     .end((error, response) => {
@@ -76,7 +77,7 @@ describe('get licenses by employee id', () => {
                     `/tenants/${endpoint.tenantId || configs.licenses.tenantId}/companies/${endpoint.companyId ||
                         configs.licenses.companyId}/employees/${endpoint.employeeId || configs.licenses.employeeId}/licenses`,
                 )
-                .set('Authorization', `Bearer ${accessToken}`)
+                .set('Authorization', `Bearer ${adminAccessToken}`)
                 .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
                 .expect(404)
                 .end((error, response) => {
@@ -93,7 +94,55 @@ describe('get licenses by employee id', () => {
         }/licenses`;
         request(baseUri)
             .get(uri)
-            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Authorization', `Bearer ${adminAccessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(200)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJsonOrThrow(schemas, licensesSchema, response.body.results);
+                });
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.PaginatedResult, response.body);
+                });
+            });
+    });
+});
+
+describe('get licenses by employee Id as an employee user', () => {
+    beforeAll(async (done) => {
+        try {
+            employeeAccessToken = await utils.getAccessToken(configs.employeeUser.review.username, configs.employeeUser.review.password);
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    });
+
+    test('must return 401 error if employee level user is not tied to the requested employee', async (done) => {
+        const uri = `/tenants/${configs.licenses.tenantId}/companies/${configs.licenses.companyId}/employees/${
+            configs.licenses.userAccessTest.unrightfulEmployee
+        }/licenses`
+ 
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${employeeAccessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(401)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 200 if employee level user is tied to the requested employee', async (done) => {
+        const uri = `/tenants/${configs.licenses.tenantId}/companies/${configs.licenses.companyId}/employees/${
+            configs.licenses.userAccessTest.rightfulEmployee
+        }/licenses`;
+
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${employeeAccessToken}`)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
             .expect(200)
             .end((error, response) => {
