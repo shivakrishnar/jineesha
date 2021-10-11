@@ -13,7 +13,7 @@ import * as ssoService from './remote-services/sso.service';
 // utilService is being imported in itself so that jest can mock this function
 import * as utilService from './util.service';
 
-import { APIGatewayEvent, APIGatewayProxyHandler, Context, ProxyCallback, ProxyResult, ScheduledEvent } from 'aws-lambda';
+import { APIGatewayEvent, APIGatewayProxyEvent, APIGatewayProxyHandler, Context, ProxyCallback, ProxyResult, ScheduledEvent } from 'aws-lambda';
 import { Headers } from './api/models/headers';
 import { IPayrollApiCredentials } from './api/models/IPayrollApiCredentials';
 import { ErrorMessage } from './errors/errorMessage';
@@ -972,6 +972,43 @@ export async function validateUserWithEmployee(tenantId: string, username: strin
         }
 
         console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Validates whether that the invoking user has the access right to use the endpoint either by having an admin role or being the employee himself.
+ * @param {SecurityContext} securityContext: represents data pulled from the token when it is verified.
+ * @param {APIGatewayProxyEvent} event: The API request event.
+ * @param {string[]} authorizedRoles: The array of user authorized roles strings.
+ */
+export async function checkAuthorization (securityContext: SecurityContext, event: APIGatewayProxyEvent, authorizedRoles: string[]): Promise<void> {
+    console.info('utilService.checkAuthorization');
+    const { tenantId, employeeId } = event.pathParameters;
+    const { principal: { username }, roleMemberships } = securityContext;
+
+    try {
+        const hasRole: boolean = roleMemberships.some((role) => {
+            return authorizedRoles.includes(role)
+        });
+    
+        let userValidatedWithEmployee;
+    
+        if (!hasRole) {
+            userValidatedWithEmployee = await validateUserWithEmployee(tenantId, username, employeeId);
+        }
+        const isAuthorized = hasRole || userValidatedWithEmployee;
+        if (!isAuthorized) {
+            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the access right to use this endpoint');
+
+        }
+    }
+    catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(`Unable to authorize. Reason: ${error}`);
         throw errorService.getErrorResponse(0);
     }
 }
