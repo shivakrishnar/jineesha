@@ -24,6 +24,7 @@ begin
         CreateDate,
         ProductTierID,
         IsLandingSectionOnUpcomingTimeOff,
+        IsLandingSectionOnAnnouncements,
         PRIntegration_ClientID
     from
         dbo.Company
@@ -40,6 +41,7 @@ begin
         CreateDate,
         ProductTierID,
         IsLandingSectionOnUpcomingTimeOff,
+        IsLandingSectionOnAnnouncements,
         PRIntegration_ClientID
     from
         dbo.Company
@@ -64,6 +66,7 @@ begin
         CreateDate,
         ProductTierID,
         IsLandingSectionOnUpcomingTimeOff,
+        IsLandingSectionOnAnnouncements,
         PRIntegration_ClientID
     from
         dbo.Company

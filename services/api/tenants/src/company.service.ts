@@ -166,6 +166,7 @@ export async function getById(tenantId: string, companyId: string, email: string
             isEsignatureLegacyCompany,
             productTierId: company.ProductTierID,
             isLandingSectionOnUpcomingTimeOff: company.IsLandingSectionOnUpcomingTimeOff,
+            IsLandingSectionOnAnnouncements: company.IsLandingSectionOnAnnouncements,
             clientId: company.PRIntegration_ClientID,
         };
     } catch (error) {
