@@ -239,23 +239,18 @@ export const getCompanyById = utilService.gatewayEventHandlerV2(async ({ securit
 
     const { tenantId, companyId } = event.pathParameters;
     const email = securityContext.principal.email;
-    const username = securityContext.principal.username;
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, companyUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
-
-    const hasRole: boolean = securityContext.roleMemberships.some((role) => {
-        return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin || role === Role.hrAdmin;
-    });
-
-    const userIsInCompany = await utilService.validateUserIsInCompany(tenantId, username, companyId);
-    const isAuthorized = hasRole || userIsInCompany;
-
-    if (!isAuthorized) {
-        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
-    }
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.hrEmployee,
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+    ]);
 
     return await companyService.getById(tenantId, companyId, email);
 });
@@ -271,13 +266,7 @@ export const companyUpdate = utilService.gatewayEventHandlerV2(async ({ security
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, companyUriSchema);
 
-    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
-        return role === Role.globalAdmin;
-    });
-
-    if (!isAuthorized) {
-        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
-    }
+    await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin]);
 
     const { patch } = requestBody;
     const { tenantId, companyId: companyCode } = event.pathParameters;
@@ -298,13 +287,7 @@ export const listEmployeesByTenant = utilService.gatewayEventHandlerV2(async ({ 
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, adminsUriSchema);
 
-    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
-        return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin;
-    });
-
-    if (!isAuthorized) {
-        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
-    }
+    await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin]);
 
     const {
         requestContext: { domainName, path },
@@ -327,20 +310,14 @@ export const listEmployeesByCompany = utilService.gatewayEventHandlerV2(async ({
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, companyUriSchema);
 
-    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
-        return (
-            role === Role.hrManager ||
-            role === Role.globalAdmin ||
-            role === Role.serviceBureauAdmin ||
-            role === Role.superAdmin ||
-            role === Role.hrAdmin ||
-            role === Role.hrRestrictedAdmin
-        );
-    });
-
-    if (!isAuthorized) {
-        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
-    }
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+        Role.hrManager,
+        Role.hrRestrictedAdmin,
+    ]);
 
     const {
         requestContext: { domainName, path },
@@ -370,6 +347,13 @@ export const getEmployeeById = utilService.gatewayEventHandlerV2(async ({ securi
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.hrEmployee,
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+    ]);
 
     const results = await employeeService.getById(tenantId, companyId, employeeId, email, securityContext.roleMemberships);
 
@@ -489,7 +473,13 @@ export const listLicensesByEmployeeId = utilService.gatewayEventHandlerV2(async 
     utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
     await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-    await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin]);
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+        Role.hrEmployee,
+    ]);
 
     return await employeeService.listLicensesByEmployeeId(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
 });
@@ -511,7 +501,13 @@ export const updateEmployeeLicenseById = utilService.gatewayEventHandlerV2(
         utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update License Email Acknowledged');
         utilService.checkBoundedIntegralValues(event.pathParameters);
         await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-        await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin]);
+        await utilService.checkAuthorization(securityContext, event, [
+            Role.globalAdmin,
+            Role.serviceBureauAdmin,
+            Role.superAdmin,
+            Role.hrAdmin,
+            Role.hrEmployee,
+        ]);
 
         return await employeeService.updateEmployeeLicenseById(tenantId, companyId, employeeId, id, requestBody);
     },
@@ -527,13 +523,19 @@ export const listCertificatesByEmployeeId = utilService.gatewayEventHandlerV2(as
     const {
         requestContext: { domainName, path },
     } = event;
-   
+
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
     await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-    await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin]);
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+        Role.hrEmployee,
+    ]);
 
     return await employeeService.listCertificatesByEmployeeId(
         tenantId,
@@ -562,8 +564,14 @@ export const updateEmployeeCertificateById = utilService.gatewayEventHandlerV2(
         utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update Certificate Email Acknowledged');
         utilService.checkBoundedIntegralValues(event.pathParameters);
         await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-        await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin]);
-        
+        await utilService.checkAuthorization(securityContext, event, [
+            Role.globalAdmin,
+            Role.serviceBureauAdmin,
+            Role.superAdmin,
+            Role.hrAdmin,
+            Role.hrEmployee,
+        ]);
+
         return await employeeService.updateEmployeeCertificateById(tenantId, companyId, employeeId, id, requestBody);
     },
 );
@@ -584,7 +592,13 @@ export const listReviewsByEmployeeId = utilService.gatewayEventHandlerV2(async (
     utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
     await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-    await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin]);
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+        Role.hrEmployee,
+    ]);
 
     return await employeeService.listReviewsByEmployeeId(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
 });
@@ -592,7 +606,6 @@ export const listReviewsByEmployeeId = utilService.gatewayEventHandlerV2(async (
 /**
  * Return an employee's absence summary
  */
-
 export const getEmployeeAbsenceSummary = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
     console.info('tenants.handler.getEmployeeAbsenceSummary');
 
@@ -602,7 +615,7 @@ export const getEmployeeAbsenceSummary = utilService.gatewayEventHandlerV2(async
     } = event;
 
     const {
-        principal: { email, username },
+        principal: { email },
         roleMemberships,
     } = securityContext;
 
@@ -614,27 +627,18 @@ export const getEmployeeAbsenceSummary = utilService.gatewayEventHandlerV2(async
 
     const accessToken: string = Authorization.replace(/Bearer /i, '');
 
-    const hasRole: boolean = securityContext.roleMemberships.some((role) => {
-        return role === Role.globalAdmin || role === Role.serviceBureauAdmin || role === Role.superAdmin || role === Role.hrAdmin;
-    });
-
-    let userValidatedWithEmployee;
-
-    if(!hasRole){
-        userValidatedWithEmployee = await utilService.validateUserWithEmployee(tenantId, username, employeeId);
-    }
-
-    const isAuthorized = hasRole || userValidatedWithEmployee;
-
-    if (!isAuthorized) {
-        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
-    }
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.hrEmployee,
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+    ]);
 
     return await employeeService.getEmployeeAbsenceSummary(tenantId, companyId, employeeId, email, roleMemberships, accessToken);
 });
 
 //Updates EmployeeReview's record by ID
- 
 export const updateEmployeeReviewById = utilService.gatewayEventHandlerV2(
     async ({ event, requestBody, securityContext }: IGatewayEventInput) => {
         console.info('tenants.handler.updateEmployeeReviewById');
@@ -649,7 +653,13 @@ export const updateEmployeeReviewById = utilService.gatewayEventHandlerV2(
         utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update Review Email Acknowledged');
         utilService.checkBoundedIntegralValues(event.pathParameters);
         await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-        await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin]);
+        await utilService.checkAuthorization(securityContext, event, [
+            Role.globalAdmin,
+            Role.serviceBureauAdmin,
+            Role.superAdmin,
+            Role.hrAdmin,
+            Role.hrEmployee,
+        ]);
 
         return await employeeService.updateEmployeeReviewById(tenantId, companyId, employeeId, id, requestBody);
     },
