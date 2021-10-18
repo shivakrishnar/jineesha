@@ -21,6 +21,7 @@ import { CompanyDetail, ICompany } from './ICompany';
 import { PatchInstruction, PatchOperation } from './patchInstruction';
 import { ssoRoles, SsoAccount } from '../../../remote-services/sso.service';
 import * as ssoService from '../../../remote-services/sso.service';
+import { CompanyAnnouncement } from './CompanyAnnouncement';
 
 /**
  * Returns a listing of companies for a specific user within a tenant
@@ -877,6 +878,96 @@ export async function listEmployeeCompaniesBySsoAccount(tenantId: string, ssoAcc
             }
             throw error;
         }
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Lists all company announcements
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the specified company.
+ * @param {any} queryParams: The query parameters that were specified by the user.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @returns {PaginatedResult}: A Promise of a paginated collection of company's announcements.
+ */
+export async function listCompanyAnnouncements(
+    tenantId: string,
+    companyId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
+    console.info('companyService.listCompanyAnnouncements');
+
+    const validQueryStringParameters = ['pageToken', 'active', 'indefinite'];
+
+    // Pagination validation
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    try {
+        let query = new ParameterizedQuery('listCompanyAnnouncements', Queries.listCompanyAnnouncements);
+
+        if (queryParams) {
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+
+            const requestedQueryParams = Object.keys(queryParams);
+            const nonPairableParams = ['active', 'indefinite'];
+            const foundInvalidParamPair = nonPairableParams.every((param) => requestedQueryParams.includes(param));
+
+            if (foundInvalidParamPair) {
+                throw errorService
+                    .getErrorResponse(60)
+                    .setDeveloperMessage(`The query params ${nonPairableParams.join(' and ')} cannot be used together`);
+            }
+
+            const active = queryParams.active && utilService.parseQueryParamsBoolean(queryParams, 'active');
+            const indefinite = queryParams.indefinite && utilService.parseQueryParamsBoolean(queryParams, 'indefinite');
+
+            if (active) query = new ParameterizedQuery('listActiveCompanyAnnouncements', Queries.listActiveCompanyAnnouncements);
+            if (indefinite)
+                query = new ParameterizedQuery('listIndefiniteCompanyAnnouncements', Queries.listIndefiniteCompanyAnnouncements);
+        }
+
+        query.setParameter('@companyId', companyId);
+
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+
+        const payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        if (result.recordsets[1].length === 0) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage(`Announcements for company with the ID ${companyId} not found.`);
+        }
+
+        const totalCount = result.recordsets[0][0].totalCount;
+
+        const announcements: CompanyAnnouncement[] = result.recordsets[1].map((record) => {
+            return {
+                id: record.ID,
+                companyId: record.CompanyID,
+                postDate: record.PostDate,
+                postTitle: record.PostTitle,
+                postDetail: record.PostDetail,
+                expiresDate: record.ExpiresDate,
+                isOn: record.IsOn,
+                isHighPriority: record.IsHighPriority,
+            };
+        });
+
+        return await paginationService.createPaginatedResult(announcements, baseUrl, totalCount, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
     }
 }

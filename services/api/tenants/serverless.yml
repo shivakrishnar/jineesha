@@ -221,6 +221,15 @@ functions:
           cors:
             origin: '*'
 
+  listCompanyAnnouncements:
+    handler: src/handler.listCompanyAnnouncements
+    events:
+      - http:
+          path: /tenants/{tenantId}/companies/{companyId}/announcements
+          method: get
+          cors:
+            origin: '*'
+
   listEmployeeCompaniesBySsoAccount:
     handler: src/handler.listEmployeeCompaniesBySsoAccount
     events:

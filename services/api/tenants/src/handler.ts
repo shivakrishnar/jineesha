@@ -664,3 +664,31 @@ export const updateEmployeeReviewById = utilService.gatewayEventHandlerV2(
         return await employeeService.updateEmployeeReviewById(tenantId, companyId, employeeId, id, requestBody);
     },
 );
+
+/**
+ * Returns a list of announcements of a company
+ */
+
+export const listCompanyAnnouncements = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('tenants.handler.listCompanyAnnouncements');
+
+    const { tenantId, companyId } = event.pathParameters;
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+    await utilService.validateCompany(tenantId, companyId);
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+        Role.hrEmployee,
+    ]);
+
+    return await companyService.listCompanyAnnouncements(tenantId, companyId, event.queryStringParameters, domainName, path);
+});
