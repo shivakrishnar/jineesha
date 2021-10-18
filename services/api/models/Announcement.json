@@ -1,0 +1,40 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Announcement Schema",
+    "$id": "Announcement",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "Unique identifier of the announcement.",
+            "type": "string"
+        },
+        "companyId": {
+            "description": "Unique identifier associated to the company.",
+            "type": "string"
+        },
+        "postDate": {
+            "description": "Date the announcement is posted.",
+            "type": ["string", "null"]
+        },
+        "postTitle": {
+            "description": "The title of the announcement.",
+            "type": ["string", "null"]
+        },
+        "postDetail": {
+            "description": "The detail of the announcement.",
+            "type": ["string", "null"]
+        },
+        "expiresDate": {
+            "description": "Date the announcement expires.",
+            "type": ["string", "null"]
+        },
+        "isOn": {
+            "description": "Determines if the announcement should be on or off.",
+            "type": ["boolean", "null"]
+        },
+        "isHighPriority": {
+            "description": "Specifies the announcement is high priority.",
+            "type": ["boolean", "null"]
+        }
+    }
+}
