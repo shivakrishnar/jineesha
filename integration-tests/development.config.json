@@ -19,6 +19,8 @@
         "password": "Demo123!"
     },
     "employeeUser": {
+        "username": "kento@huh2.com",
+        "password": "Demo123!",
         "review": {
             "username": "mo@lol.com",
             "password": "Demo123!"
@@ -141,6 +143,10 @@
                 "employeeId": 35073
             }
         ]
+    },
+    "announcements": {
+        "companyA": 600351,
+        "companyB": 600395
     },
     "documentsBucket": "development.hr.files",
     "logo": {

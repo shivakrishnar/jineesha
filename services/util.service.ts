@@ -13,7 +13,15 @@ import * as ssoService from './remote-services/sso.service';
 // utilService is being imported in itself so that jest can mock this function
 import * as utilService from './util.service';
 
-import { APIGatewayEvent, APIGatewayProxyEvent, APIGatewayProxyHandler, Context, ProxyCallback, ProxyResult, ScheduledEvent } from 'aws-lambda';
+import {
+    APIGatewayEvent,
+    APIGatewayProxyEvent,
+    APIGatewayProxyHandler,
+    Context,
+    ProxyCallback,
+    ProxyResult,
+    ScheduledEvent,
+} from 'aws-lambda';
 import { Headers } from './api/models/headers';
 import { IPayrollApiCredentials } from './api/models/IPayrollApiCredentials';
 import { ErrorMessage } from './errors/errorMessage';
@@ -25,6 +33,7 @@ import { INotificationEvent } from './internal-api/notification/events';
 import { ParameterizedQuery } from './queries/parameterizedQuery';
 import { Queries } from './queries/queries';
 import { Query } from './queries/query';
+import { Role } from './api/models/Role';
 
 export type ApiInvocationEvent = APIGatewayEvent | ScheduledEvent;
 
@@ -982,28 +991,42 @@ export async function validateUserWithEmployee(tenantId: string, username: strin
  * @param {APIGatewayProxyEvent} event: The API request event.
  * @param {string[]} authorizedRoles: The array of user authorized roles strings.
  */
-export async function checkAuthorization (securityContext: SecurityContext, event: APIGatewayProxyEvent, authorizedRoles: string[]): Promise<void> {
+export async function checkAuthorization(
+    securityContext: SecurityContext,
+    event: APIGatewayProxyEvent,
+    authorizedRoles: string[],
+): Promise<void> {
     console.info('utilService.checkAuthorization');
-    const { tenantId, employeeId } = event.pathParameters;
-    const { principal: { username }, roleMemberships } = securityContext;
+    const { tenantId, companyId, employeeId } = event.pathParameters;
+    const {
+        principal: { username },
+        roleMemberships,
+    } = securityContext;
 
     try {
-        const hasRole: boolean = roleMemberships.some((role) => {
-            return authorizedRoles.includes(role)
-        });
-    
-        let userValidatedWithEmployee;
-    
-        if (!hasRole) {
-            userValidatedWithEmployee = await validateUserWithEmployee(tenantId, username, employeeId);
+        let isAuthorized: boolean;
+        let roleMembershipsWithoutHrPersonaUser: string[];
+
+        // Checks if the user has the hrEmployee(hr.persona.user) role
+        const userIsEmployee = roleMemberships.includes(Role.hrEmployee);
+        // Checks to see the roles you're authorizing includes hrEmployee(hr.persona.user)
+        const checkingIfUserIsEmployee = authorizedRoles.includes(Role.hrEmployee);
+
+        // If the function is checking for the role hrEmployee(hr.persona.user), it validates the user with their own employee or company
+        if (userIsEmployee && checkingIfUserIsEmployee) {
+            if (companyId && employeeId) isAuthorized = await utilService.validateUserWithEmployee(tenantId, username, employeeId);
+            if (companyId && !employeeId) isAuthorized = await utilService.validateUserIsInCompany(tenantId, username, companyId);
+
+            // Otherwise check if the user has any of the remaining roles not including hrEmployee(hr.persona.user)
+        } else {
+            roleMembershipsWithoutHrPersonaUser = roleMemberships.filter((role) => role !== Role.hrEmployee);
+            isAuthorized = await roleMembershipsWithoutHrPersonaUser.some((role) => authorizedRoles.includes(role));
         }
-        const isAuthorized = hasRole || userValidatedWithEmployee;
+
         if (!isAuthorized) {
             throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the access right to use this endpoint');
-
         }
-    }
-    catch (error) {
+    } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
         }

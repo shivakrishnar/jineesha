@@ -2,11 +2,11 @@
     "apiDomain": "https://api.staging.evolution-software.com/api",
     "nonProxiedApiDomain": "https://hr-services.staging.evolution-software.com",
     "tokenUrl": "https://api.staging.evolution-software.com",
-    "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
+    "tenantId": "c2745dc6-a732-403d-b333-cc4b9c326437",
     "nonExistentTenantId": "d85a31b3-32d7-44d7-9f63-515162441bbd",
     "invalidTenantId": "abc",
     "ssoAccountId": "19ec977c-7472-43b8-a13a-1dbd82ce47b3",
-    "companyId": 600351,
+    "companyId": 27,
     "employeeId": 23312,
     "unauthorizedEmployeeId": 878,
     "nonExistentCompanyId": 999999,
@@ -19,6 +19,8 @@
         "password": "Demo123!!!"
     },
     "employeeUser": {
+        "username": "kento@employee.com",
+        "password": "Demo123!",
         "review": {
             "username": "mo@lol.com",
             "password": "Demo123!"
@@ -141,6 +143,10 @@
                 "employeeId": 35073
             }
         ]
+    },
+    "announcements": {
+        "companyA": 27,
+        "companyB": 22
     },
     "documentsBucket": "staging.hr.files",
     "logo": {
