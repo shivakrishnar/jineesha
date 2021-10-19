@@ -4,7 +4,8 @@ import * as utils from '../utils';
 
 const configs = utils.getConfig();
 const baseUri = `${configs.nonProxiedApiDomain}/internal`;
-let accessToken: string;
+let adminAccessToken: string;
+let employeeAccessToken: string;
 
 const errorMessageSchema = JSON.parse(fs.readFileSync('services/api/models/ErrorMessage.json').toString());
 const paginatedResultSchema = JSON.parse(fs.readFileSync('services/integrations/models/PaginatedResult.json').toString());
@@ -22,10 +23,10 @@ const enum schemaNames {
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
-describe('get reviews by employee id', () => {
+describe('get reviews by employee id as an admin user', () => {
     beforeAll(async (done) => {
         try {
-            accessToken = await utils.getAccessToken(configs.employeeUser.review.username, configs.employeeUser.review.password);
+            adminAccessToken = await utils.getAccessToken(configs.employeeUser.review.username, configs.employeeUser.review.password);
             done();
         } catch (error) {
             done.fail(error);
@@ -55,7 +56,7 @@ describe('get reviews by employee id', () => {
                         `/tenants/${endpoint.tenantId || configs.reviews.tenantId}/companies/${endpoint.companyId ||
                             configs.reviews.companyId}/employees/${endpoint.employeeId || configs.reviews.employeeId}/reviews`,
                     )
-                    .set('Authorization', `Bearer ${accessToken}`)
+                    .set('Authorization', `Bearer ${adminAccessToken}`)
                     .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
                     .expect(400)
                     .end((error, response) => {
@@ -78,7 +79,7 @@ describe('get reviews by employee id', () => {
                     `/tenants/${endpoint.tenantId || configs.reviews.tenantId}/companies/${endpoint.companyId ||
                         configs.reviews.companyId}/employees/${endpoint.employeeId || configs.reviews.employeeId}/reviews`,
                 )
-                .set('Authorization', `Bearer ${accessToken}`)
+                .set('Authorization', `Bearer ${adminAccessToken}`)
                 .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
                 .expect(404)
                 .end((error, response) => {
@@ -95,7 +96,7 @@ describe('get reviews by employee id', () => {
         }/reviews`;
         request(baseUri)
             .get(uri)
-            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Authorization', `Bearer ${adminAccessToken}`)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
             .expect(200)
             .end((error, response) => {
@@ -111,3 +112,51 @@ describe('get reviews by employee id', () => {
             });
     });
 });
+
+describe('get reviews by employee Id as an employee user', () => {
+    beforeAll(async (done) => {
+        try {
+            employeeAccessToken = await utils.getAccessToken(configs.employeeUser.review.username, configs.employeeUser.review.password);
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    });
+
+    test('must return 401 error if employee level user is not tied to the requested employee', async (done) => {
+        const uri = `/tenants/${configs.reviews.tenantId}/companies/${configs.reviews.companyId}/employees/${
+            configs.reviews.userAccessTest.unrightfulEmployee
+        }/reviews`
+
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${employeeAccessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(401)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
+                });
+            });
+    });
+
+    test('must return a 200 if employee level user is tied to the requested employee', async (done) => {
+        const uri = `/tenants/${configs.reviews.tenantId}/companies/${configs.reviews.companyId}/employees/${
+            configs.reviews.userAccessTest.rightfulEmployee
+        }/reviews`;
+        request(baseUri)
+            .get(uri)
+            .set('Authorization', `Bearer ${employeeAccessToken}`)
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(200)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJsonOrThrow(schemas, reviewsSchema, response.body.results);
+                });
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, schemaNames.PaginatedResult, response.body);
+                });
+            });
+    });
+});
+

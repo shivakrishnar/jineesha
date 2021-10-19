@@ -78,7 +78,13 @@
         "employeeWithExpiringLicenses": "35109",
         "id": 72,
         "invalidId": "abc",
-        "nonExistentId": 99999
+        "nonExistentId": 99999,
+        "userAccessTest": {
+            "rightfulEmployee": 29355,
+            "unrightfulEmployee": 35109,
+            "rightfulEmployeeLicenseId": 58,
+            "unrightfulEmployeeLicenseId": 72
+        }
     },
     "certificates": {
         "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
@@ -87,7 +93,13 @@
         "employeeWithExpiringCertificates": "35109",
         "id": 143,
         "invalidId": "abc",
-        "nonExistentId": 99999
+        "nonExistentId": 99999,
+        "userAccessTest": {
+            "rightfulEmployee": 29355,
+            "unrightfulEmployee": 35109,
+            "rightfulEmployeeCertificateId": 118,
+            "unrightfulEmployeeCertificateId": 143
+        }
     },
     "reviews": {
         "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
@@ -96,7 +108,13 @@
         "employeeWithUpcomingReviews": 29355,
         "id": 123,
         "invalidId": "abc",
-        "nonExistentId": 99999
+        "nonExistentId": 99999,
+        "userAccessTest": {
+            "rightfulEmployee": 29355,
+            "unrightfulEmployee": 35109,
+            "rightfulEmployeeCertificateId": 118,
+            "unrightfulEmployeeCertificateId": 143
+        }
     },
     "timeOff": {
         "existingTimeOffs": [

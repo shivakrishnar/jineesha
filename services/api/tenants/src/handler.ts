@@ -476,58 +476,64 @@ export const listEmployeeCompaniesBySsoAccount = utilService.gatewayEventHandler
 /**
  * Return the list of licenses for an employee.
  */
-export const listLicensesByEmployeeId = utilService.gatewayEventHandlerV2(async ({ event }: IGatewayEventInput) => {
+export const listLicensesByEmployeeId = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
     console.info('tenants.handler.listLicensesByEmployeeId');
+
+    const { tenantId, companyId, employeeId } = event.pathParameters;
+    const {
+        requestContext: { domainName, path },
+    } = event;
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
-
-    const { tenantId, companyId, employeeId } = event.pathParameters;
-
-    const {
-        requestContext: { domainName, path },
-    } = event;
+    await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+    await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin]);
 
     return await employeeService.listLicensesByEmployeeId(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
 });
 
-/**
+/*
  * Updates EmployeeLicense's record by ID.
  */
-export const updateEmployeeLicenseById = utilService.gatewayEventHandlerV2(async ({ event, requestBody }: IGatewayEventInput) => {
-    console.info('tenants.handler.updateEmployeeLicenseById');
+export const updateEmployeeLicenseById = utilService.gatewayEventHandlerV2(
+    async ({ event, requestBody, securityContext }: IGatewayEventInput) => {
+        console.info('tenants.handler.updateEmployeeLicenseById');
 
-    await utilService.requirePayload(requestBody);
-    utilService.normalizeHeaders(event);
-    utilService.validateAndThrow(event.headers, headerSchema);
-    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
-    utilService.validateAndThrow(requestBody, emailAcknowledgedSchema);
-    utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update License Email Acknowledged');
-    utilService.checkBoundedIntegralValues(event.pathParameters);
+        const { tenantId, companyId, employeeId, id } = event.pathParameters;
 
-    const { tenantId, companyId, employeeId, id } = event.pathParameters;
+        await utilService.requirePayload(requestBody);
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+        utilService.validateAndThrow(requestBody, emailAcknowledgedSchema);
+        utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update License Email Acknowledged');
+        utilService.checkBoundedIntegralValues(event.pathParameters);
+        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+        await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin]);
 
-    return await employeeService.updateEmployeeLicenseById(tenantId, companyId, employeeId, id, requestBody);
-});
+        return await employeeService.updateEmployeeLicenseById(tenantId, companyId, employeeId, id, requestBody);
+    },
+);
 
 /**
  * Return the list of certificates for an employee.
  */
-export const listCertificatesByEmployeeId = utilService.gatewayEventHandlerV2(async ({ event }: IGatewayEventInput) => {
+export const listCertificatesByEmployeeId = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
     console.info('tenants.handler.listCertificatesByEmployeeId');
 
+    const { tenantId, companyId, employeeId } = event.pathParameters;
+    const {
+        requestContext: { domainName, path },
+    } = event;
+   
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
     utilService.checkBoundedIntegralValues(event.pathParameters);
-
-    const { tenantId, companyId, employeeId } = event.pathParameters;
-
-    const {
-        requestContext: { domainName, path },
-    } = event;
+    await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+    await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin]);
 
     return await employeeService.listCertificatesByEmployeeId(
         tenantId,
@@ -542,59 +548,45 @@ export const listCertificatesByEmployeeId = utilService.gatewayEventHandlerV2(as
 /**
  * Updates EmployeeCertificate's record by ID.
  */
-export const updateEmployeeCertificateById = utilService.gatewayEventHandlerV2(async ({ event, requestBody }: IGatewayEventInput) => {
-    console.info('tenants.handler.updateEmployeeCertificateById');
+export const updateEmployeeCertificateById = utilService.gatewayEventHandlerV2(
+    async ({ event, requestBody, securityContext }: IGatewayEventInput) => {
+        console.info('tenants.handler.updateEmployeeCertificateById');
 
-    await utilService.requirePayload(requestBody);
-    utilService.normalizeHeaders(event);
-    utilService.validateAndThrow(event.headers, headerSchema);
-    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
-    utilService.validateAndThrow(requestBody, emailAcknowledgedSchema);
-    utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update Certificate Email Acknowledged');
-    utilService.checkBoundedIntegralValues(event.pathParameters);
+        const { tenantId, companyId, employeeId, id } = event.pathParameters;
 
-    const { tenantId, companyId, employeeId, id } = event.pathParameters;
-
-    return await employeeService.updateEmployeeCertificateById(tenantId, companyId, employeeId, id, requestBody);
-});
+        await utilService.requirePayload(requestBody);
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+        utilService.validateAndThrow(requestBody, emailAcknowledgedSchema);
+        utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update Certificate Email Acknowledged');
+        utilService.checkBoundedIntegralValues(event.pathParameters);
+        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+        await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin]);
+        
+        return await employeeService.updateEmployeeCertificateById(tenantId, companyId, employeeId, id, requestBody);
+    },
+);
 
 /**
  * Return the list of Reviews for an employee.
  */
-export const listReviewsByEmployeeId = utilService.gatewayEventHandlerV2(async ({ event }: IGatewayEventInput) => {
+export const listReviewsByEmployeeId = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
     console.info('tenants.handler.listReviewsByEmployeeId');
 
-    utilService.normalizeHeaders(event);
-    utilService.validateAndThrow(event.headers, headerSchema);
-    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
-    utilService.checkBoundedIntegralValues(event.pathParameters);
-
     const { tenantId, companyId, employeeId } = event.pathParameters;
-
     const {
         requestContext: { domainName, path },
     } = event;
 
-    return await employeeService.listReviewsByEmployeeId(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
-});
-
-/**
- * Updates EmployeeReview's record by ID.
- */
-export const updateEmployeeReviewById = utilService.gatewayEventHandlerV2(async ({ event, requestBody }: IGatewayEventInput) => {
-    console.info('tenants.handler.updateEmployeeReviewById');
-
-    await utilService.requirePayload(requestBody);
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
-    utilService.validateAndThrow(requestBody, emailAcknowledgedSchema);
-    utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update Review Email Acknowledged');
     utilService.checkBoundedIntegralValues(event.pathParameters);
+    await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+    await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin]);
 
-    const { tenantId, companyId, employeeId, id } = event.pathParameters;
-
-    return await employeeService.updateEmployeeReviewById(tenantId, companyId, employeeId, id, requestBody);
+    return await employeeService.listReviewsByEmployeeId(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
 });
 
 /**
@@ -640,3 +632,25 @@ export const getEmployeeAbsenceSummary = utilService.gatewayEventHandlerV2(async
 
     return await employeeService.getEmployeeAbsenceSummary(tenantId, companyId, employeeId, email, roleMemberships, accessToken);
 });
+
+//Updates EmployeeReview's record by ID
+ 
+export const updateEmployeeReviewById = utilService.gatewayEventHandlerV2(
+    async ({ event, requestBody, securityContext }: IGatewayEventInput) => {
+        console.info('tenants.handler.updateEmployeeReviewById');
+
+        const { tenantId, companyId, employeeId, id } = event.pathParameters;
+
+        await utilService.requirePayload(requestBody);
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+        utilService.validateAndThrow(requestBody, emailAcknowledgedSchema);
+        utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update Review Email Acknowledged');
+        utilService.checkBoundedIntegralValues(event.pathParameters);
+        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+        await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin]);
+
+        return await employeeService.updateEmployeeReviewById(tenantId, companyId, employeeId, id, requestBody);
+    },
+);

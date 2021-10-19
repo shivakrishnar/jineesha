@@ -84,16 +84,28 @@
         "employeeWithExpiringLicenses": "35109",
         "id": 72,
         "invalidId": "abc",
-        "nonExistentId": 99999
+        "nonExistentId": 99999,
+        "userAccessTest": {
+            "rightfulEmployee": 919,
+            "rightfulEmployeeLicenseId": 31,
+            "unrightfulEmployee": 917,
+            "unrightfulEmployeeLicenseId": 29
+        }
     },
     "certificates": {
         "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
         "companyId": 27,
         "employeeId": 912,
-        "employeeWithExpiringLicenses": 912,
+        "employeeWithExpiringCertificates": 912,
         "id": 8,
         "invalidId": "abc",
-        "nonExistentId": 99999
+        "nonExistentId": 99999,
+        "userAccessTest": {
+            "rightfulEmployee": 919,
+            "rightfulEmployeeCertificateId": 43,
+            "unrightfulEmployee": 917,
+            "unrightfulEmployeeCertificateId": 41
+        }
     },
     "reviews": {
         "tenantId": "c2745dc6-a732-403d-b333-cc4b9c326437",
@@ -102,7 +114,13 @@
         "employeeWithUpcomingReviews": 23,
         "invalidId": "abc",
         "id": 14,
-        "nonExistentId": 99999
+        "nonExistentId": 99999,
+        "userAccessTest": {
+            "rightfulEmployee": 919,
+            "rightfulEmployeeReviewId": 23,
+            "unrightfulEmployee": 917,
+            "unrightfulEmployeeReviewId": 27
+        }
     },
     "timeOff": {
         "existingTimeOffs": [

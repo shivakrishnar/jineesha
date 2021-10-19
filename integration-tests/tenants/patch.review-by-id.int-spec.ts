@@ -4,7 +4,8 @@ import * as utils from '../utils';
 
 const configs = utils.getConfig();
 const baseUri = `${configs.nonProxiedApiDomain}/internal`;
-let accessToken: string;
+let adminAccessToken: string;
+let employeeAccessToken: string;
 
 const errorMessageSchema = JSON.parse(fs.readFileSync('services/api/models/ErrorMessage.json').toString());
 const updateEmailAcknowledgedSchema = JSON.parse(
@@ -19,10 +20,10 @@ function setUpEmailAcknowledgedBody(value: any) {
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
-describe('update employee review EmailAcknowledged column By Id', () => {
+describe('update employee review EmailAcknowledged column By Id as an admin user', () => {
     beforeAll(async (done) => {
         try {
-            accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+            adminAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
             done();
         } catch (error) {
             done.fail(error);
@@ -52,7 +53,7 @@ describe('update employee review EmailAcknowledged column By Id', () => {
 
         request(baseUri)
             .patch(uri)
-            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Authorization', `Bearer ${adminAccessToken}`)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
             .expect(400)
             .end((error, response) => {
@@ -69,7 +70,7 @@ describe('update employee review EmailAcknowledged column By Id', () => {
 
         request(baseUri)
             .patch(uri)
-            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Authorization', `Bearer ${adminAccessToken}`)
             .send(setUpEmailAcknowledgedBody('invalid value'))
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
             .expect(400)
@@ -87,7 +88,7 @@ describe('update employee review EmailAcknowledged column By Id', () => {
 
         request(baseUri)
             .patch(uri)
-            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Authorization', `Bearer ${adminAccessToken}`)
             .send({ invalidKey: 'invalid value' })
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
             .expect(400)
@@ -111,7 +112,7 @@ describe('update employee review EmailAcknowledged column By Id', () => {
                         configs.companyId}/employees/${invalid.employeeId || configs.employeeId}/reviews/${invalid.id ||
                         configs.reviews.id}`,
                 )
-                .set('Authorization', `Bearer ${accessToken}`)
+                .set('Authorization', `Bearer ${adminAccessToken}`)
                 .send(setUpEmailAcknowledgedBody(true))
                 .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
                 .expect(400)
@@ -136,7 +137,7 @@ describe('update employee review EmailAcknowledged column By Id', () => {
                         configs.companyId}/employees/${nonexistent.employeeId || configs.employeeId}/reviews/${nonexistent.id ||
                         configs.reviews.id}`,
                 )
-                .set('Authorization', `Bearer ${accessToken}`)
+                .set('Authorization', `Bearer ${adminAccessToken}`)
                 .send(setUpEmailAcknowledgedBody(true))
                 .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
                 .expect(404)
@@ -154,7 +155,7 @@ describe('update employee review EmailAcknowledged column By Id', () => {
         }/reviews/${configs.reviews.id}`;
         request(baseUri)
             .patch(uri)
-            .set('Authorization', `Bearer ${accessToken}`)
+            .set('Authorization', `Bearer ${adminAccessToken}`)
             .send(setUpEmailAcknowledgedBody(true))
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
             .expect(200)
@@ -162,25 +163,87 @@ describe('update employee review EmailAcknowledged column By Id', () => {
                 utils.testResponse(error, response, done, () => {
                     return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, response.body);
                 });
-
                 expect(response.body.id).toBe(configs.reviews.id);
                 expect(response.body.newEmailAcknowledged).toBe(true);
+
+                request(baseUri)
+                .patch(uri)
+                .set('Authorization', `Bearer ${adminAccessToken}`)
+                .send(setUpEmailAcknowledgedBody(false))
+                .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+                .expect(200)
+                .end((error, response) => {
+                    utils.testResponse(error, response, done, () => {
+                        return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, response.body);
+                    });
+                    expect(response.body.id).toBe(configs.reviews.id);
+                    expect(response.body.oldEmailAcknowledged).toBe(true);
+                    expect(response.body.newEmailAcknowledged).toBe(false);
+                });
             });
+    });
+});
+
+describe('update review by id as an employee user', () => {
+    beforeAll(async (done) => {
+        try {
+            employeeAccessToken = await utils.getAccessToken(configs.employeeUser.review.username, configs.employeeUser.review.password);
+            done();
+        } catch (error) {
+            done.fail(error);
+        }
+    });
+
+    test('must return 401 error if employee level user is not tied to the requested employee', (done) => {
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
+            configs.reviews.userAccessTest.unrightfulEmployee
+        }/reviews/${configs.reviews.userAccessTest.unrightfulEmployeeReviewId}`;
 
         request(baseUri)
             .patch(uri)
-            .set('Authorization', `Bearer ${accessToken}`)
-            .send(setUpEmailAcknowledgedBody(false))
+            .set('Authorization', `Bearer ${employeeAccessToken}`)
+            .send(setUpEmailAcknowledgedBody(true))
+            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+            .expect(401)
+            .end((error, response) => {
+                utils.testResponse(error, response, done, () => {
+                    return utils.assertJson(schemas, errorMessageSchemaName, response.body);
+                });
+            });
+    });
+
+    test('must return a 200 if employee level user is tied to the requested employee', (done) => {
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
+            configs.reviews.userAccessTest.rightfulEmployee
+        }/reviews/${configs.reviews.userAccessTest.rightfulEmployeeReviewId}`;
+
+        request(baseUri)
+            .patch(uri)
+            .set('Authorization', `Bearer ${employeeAccessToken}`)
+            .send(setUpEmailAcknowledgedBody(true))
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
             .expect(200)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
                     return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, response.body);
                 });
+                expect(response.body.id).toBe(configs.reviews.userAccessTest.rightfulEmployeeReviewId);
+                expect(response.body.newEmailAcknowledged).toBe(true);
 
-                expect(response.body.id).toBe(configs.reviews.id);
-                expect(response.body.oldEmailAcknowledged).toBe(true);
-                expect(response.body.newEmailAcknowledged).toBe(false);
+                request(baseUri)
+                    .patch(uri)
+                    .set('Authorization', `Bearer ${employeeAccessToken}`)
+                    .send(setUpEmailAcknowledgedBody(false))
+                    .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+                    .expect(200)
+                    .end((error, response) => {
+                        utils.testResponse(error, response, done, () => {
+                            return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, response.body);
+                        });
+                        expect(response.body.id).toBe(configs.reviews.userAccessTest.rightfulEmployeeReviewId);
+                        expect(response.body.oldEmailAcknowledged).toBe(true);
+                        expect(response.body.newEmailAcknowledged).toBe(false);
+                    });
             });
     });
 });
