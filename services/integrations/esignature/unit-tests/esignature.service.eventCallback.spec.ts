@@ -28,7 +28,7 @@ const mockRequest = {
 describe('esignatureService.company-categories.list', () => {
     beforeEach(() => {
         setup();
-        (hellosignService as any).getFileBySignatureRequestId = jest.fn((params: any) => {
+        (hellosignService as any).getFileBySignatureRequestId = jest.fn(() => {
             return JSON.stringify({ data_uri: `content-type:${contentType}/${extension};, ${file}` });
         });
         Date.prototype.toISOString = jest.fn(() => '1970-01-01');
@@ -36,7 +36,7 @@ describe('esignatureService.company-categories.list', () => {
 
     test('Saves the doc to S3 and adds the metadata to the database if it does not already exists', () => {
         // build test specific mocks
-        (utilService as any).invokeInternalService = jest.fn((params: any) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return { recordset: [] };
         });
 
@@ -81,7 +81,7 @@ describe('esignatureService.company-categories.list', () => {
 
     test('Saves the doc to S3 and leaves the database unchanged if the document already exists', () => {
         // build test specific mocks
-        (utilService as any).invokeInternalService = jest.fn((params: any) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return { recordset: ['this has a lenght > 0'] };
         });
 
