@@ -75,7 +75,7 @@ describe('esignatureService.preview.get', () => {
     });
 
     test('returns a non-legacy document preview url', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.documentFileMetadataByIdDBResponse);
         });
 
@@ -85,7 +85,7 @@ describe('esignatureService.preview.get', () => {
     });
 
     test('returns a 404 if no legacy documents are found', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.emptyDBResponse);
         });
 
@@ -99,7 +99,7 @@ describe('esignatureService.preview.get', () => {
     });
 
     test('returns a 404 if no non-legacy documents are found', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.emptyDBResponse);
         });
 
@@ -118,7 +118,7 @@ describe('esignatureService.preview.get', () => {
                 return Promise.resolve(mockData.emptyDBResponse);
             }
         });
-        (hellosignService as any).getTemplateFilesById = jest.fn((params: any) => {
+        (hellosignService as any).getTemplateFilesById = jest.fn(() => {
             throw { message: 'Template not found' };
         });
 
@@ -137,7 +137,7 @@ describe('esignatureService.preview.get', () => {
                 return Promise.resolve(mockData.emptyDBResponse);
             }
         });
-        (hellosignService as any).getTemplateFilesById = jest.fn((params: any) => {
+        (hellosignService as any).getTemplateFilesById = jest.fn(() => {
             throw errorService
                 .getErrorResponse(40)
                 .setDeveloperMessage('Force this error')
