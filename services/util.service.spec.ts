@@ -30,17 +30,15 @@ describe('utilService.gatewayEventHandlerV2', () => {
         };
         apiGatewayEvent.body = JSON.stringify(testRequestBody);
 
-        const handler = utilService.gatewayEventHandlerV2(
-            async ({ securityContext, event, requestBody }: utilService.IGatewayEventInput) => {
-                return {
-                    statusCode: 200,
-                    body: {
-                        isObject: typeof requestBody === 'object',
-                        requestBody,
-                    },
-                };
-            },
-        );
+        const handler = utilService.gatewayEventHandlerV2(async ({ requestBody }: utilService.IGatewayEventInput) => {
+            return {
+                statusCode: 200,
+                body: {
+                    isObject: typeof requestBody === 'object',
+                    requestBody,
+                },
+            };
+        });
 
         const callback: ProxyCallback = (error, result) => {
             const body = JSON.parse(result.body);
@@ -60,17 +58,15 @@ describe('utilService.gatewayEventHandlerV2', () => {
         const invalidJSONRequestBody = '{ property: "Invalid" }';
         apiGatewayEvent.body = invalidJSONRequestBody;
 
-        const handler = utilService.gatewayEventHandlerV2(
-            async ({ securityContext, event, requestBody }: utilService.IGatewayEventInput) => {
-                return {
-                    statusCode: 200,
-                    body: {
-                        isObject: typeof requestBody === 'object',
-                        requestBody,
-                    },
-                };
-            },
-        );
+        const handler = utilService.gatewayEventHandlerV2(async ({ requestBody }: utilService.IGatewayEventInput) => {
+            return {
+                statusCode: 200,
+                body: {
+                    isObject: typeof requestBody === 'object',
+                    requestBody,
+                },
+            };
+        });
 
         const callback: ProxyCallback = (error, result) => {
             const body = JSON.parse(result.body);
@@ -94,17 +90,15 @@ describe('utilService.gatewayEventHandlerV2', () => {
         apiGatewayEvent.body = base64RequestBody;
         apiGatewayEvent.isBase64Encoded = true;
 
-        const handler = utilService.gatewayEventHandlerV2(
-            async ({ securityContext, event, requestBody }: utilService.IGatewayEventInput) => {
-                return {
-                    statusCode: 200,
-                    body: {
-                        isObject: typeof requestBody === 'object',
-                        requestBody,
-                    },
-                };
-            },
-        );
+        const handler = utilService.gatewayEventHandlerV2(async ({ requestBody }: utilService.IGatewayEventInput) => {
+            return {
+                statusCode: 200,
+                body: {
+                    isObject: typeof requestBody === 'object',
+                    requestBody,
+                },
+            };
+        });
 
         const callback: ProxyCallback = (error, result) => {
             const body = JSON.parse(result.body);
@@ -125,17 +119,15 @@ describe('utilService.gatewayEventHandlerV2', () => {
         apiGatewayEvent.body = base64RequestBody;
         apiGatewayEvent.isBase64Encoded = true;
 
-        const handler = utilService.gatewayEventHandlerV2(
-            async ({ securityContext, event, requestBody }: utilService.IGatewayEventInput) => {
-                return {
-                    statusCode: 200,
-                    body: {
-                        isObject: typeof requestBody === 'object',
-                        requestBody,
-                    },
-                };
-            },
-        );
+        const handler = utilService.gatewayEventHandlerV2(async ({ requestBody }: utilService.IGatewayEventInput) => {
+            return {
+                statusCode: 200,
+                body: {
+                    isObject: typeof requestBody === 'object',
+                    requestBody,
+                },
+            };
+        });
 
         const callback: ProxyCallback = (error, result) => {
             const body = JSON.parse(result.body);
@@ -384,7 +376,7 @@ describe('utilService.validateUserIsInCompany', () => {
 describe('utilService.validateUserWithEmployee', () => {
     beforeEach(() => {
         setup();
-    })
+    });
 
     test('validates if employeeId is invalid', async () => {
         const invalidCompanyIdError = {
@@ -400,7 +392,6 @@ describe('utilService.validateUserWithEmployee', () => {
             expect(error).toEqual(invalidCompanyIdError);
         });
     });
-
 
     test('returns false if user does not belong to the employee', () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
@@ -421,6 +412,4 @@ describe('utilService.validateUserWithEmployee', () => {
             expect(result).toEqual(true);
         });
     });
-
-
-})
+});
