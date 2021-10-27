@@ -109,7 +109,7 @@ describe('esignatureService.onboarding', () => {
     });
 
     test('throws a custom error if one occurs', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             throw errorService.getErrorResponse(40).setMoreInfo('Force an error');
         });
 
