@@ -258,7 +258,7 @@ export const update = utilService.gatewayEventHandlerV2(async ({ securityContext
 /**
  * Deletes a direct deposit for an employee.
  */
-export const remove = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const remove = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
     console.info('directDeposits.handler.delete');
 
     const { tenantId, employeeId, companyId } = event.pathParameters;
