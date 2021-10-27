@@ -67,42 +67,42 @@ export const setup = () => {
         return { evoApiUsername: 'username', evoApiPassword: 'pass' } as IPayrollApiCredentials;
     });
 
-    (utilService as any).getSecret = jest.fn((params: any) => {
+    (utilService as any).getSecret = jest.fn(() => {
         return `{
         "salt": "salt",
         "apiKey": "123"
     }`;
     });
 
-    (utilService as any).logToAuditTrail = jest.fn((params: any) => {
+    (utilService as any).logToAuditTrail = jest.fn(() => {
         return {};
     });
 
-    (utilService as any).clearCache = jest.fn((pool: any, accessToken: string) => {
+    (utilService as any).clearCache = jest.fn(() => {
         return;
     });
 
-    (utilService as any).getSSOToken = jest.fn((params: any) => {
+    (utilService as any).getSSOToken = jest.fn(() => {
         return 'token';
     });
 
-    (utilService as any).getSignedUrlSync = jest.fn((params: any) => {
+    (utilService as any).getSignedUrlSync = jest.fn(() => {
         return 'www.mysignedurl.com';
     });
 
-    (utilService as any).invokeInternalService = jest.fn((params: any) => {
+    (utilService as any).invokeInternalService = jest.fn(() => {
         return {};
     });
 
-    (utilService as any).generateAdminToken = jest.fn((params: any) => {
+    (utilService as any).generateAdminToken = jest.fn(() => {
         return 'token';
     });
 
-    (utilService as any).generateAssumedRoleToken = jest.fn((params: any) => {
+    (utilService as any).generateAssumedRoleToken = jest.fn(() => {
         return 'token';
     });
 
-    (utilService as any).sanitizeForS3 = jest.fn((params: any) => {
+    (utilService as any).sanitizeForS3 = jest.fn(() => {
         return 'key';
     });
 
@@ -113,7 +113,7 @@ export const setup = () => {
         }
     });
 
-    (utilService as any).authorizeAndRunQuery = jest.fn((params: any) => {
+    (utilService as any).authorizeAndRunQuery = jest.fn(() => {
         return [[{}]];
     });
 
@@ -123,51 +123,51 @@ export const setup = () => {
         return Promise.resolve({ name: params.name, value: params.value });
     });
 
-    (hellosignService as any).getTemplateEditUrlById = jest.fn((params: any) => {
+    (hellosignService as any).getTemplateEditUrlById = jest.fn(() => {
         return '{ "embedded": { "edit_url": "editUrl", "expires_at": "123" } }';
     });
 
-    (hellosignService as any).getTemplateFilesById = jest.fn((params: any) => {
+    (hellosignService as any).getTemplateFilesById = jest.fn(() => {
         return '{ "data_uri": "my data" }';
     });
 
-    (hellosignService as any).createApplicationForCompany = jest.fn((params: any) => {
+    (hellosignService as any).createApplicationForCompany = jest.fn(() => {
         return { api_app: { client_id: '1234' } };
     });
 
-    (hellosignService as any).deleteApplicationById = jest.fn((params: any) => {
+    (hellosignService as any).deleteApplicationById = jest.fn(() => {
         return;
     });
 
-    (hellosignService as any).updateApplicationForCompany = jest.fn((params: any) => {
+    (hellosignService as any).updateApplicationForCompany = jest.fn(() => {
         return;
     });
 
-    (integrationsService as any).getIntegrationConfigurationByCompany = jest.fn((params: any) => {
+    (integrationsService as any).getIntegrationConfigurationByCompany = jest.fn(() => {
         return { integrationDetails: { eSignatureAppClientId: '1234' } };
     });
 
-    (integrationsService as any).updateIntegrationConfigurationById = jest.fn((params: any) => {
+    (integrationsService as any).updateIntegrationConfigurationById = jest.fn(() => {
         return;
     });
 
-    (integrationsService as any).createIntegrationConfiguration = jest.fn((params: any) => {
+    (integrationsService as any).createIntegrationConfiguration = jest.fn(() => {
         return;
     });
 
-    (integrationsService as any).deleteIntegrationConfigurationbyId = jest.fn((params: any) => {
+    (integrationsService as any).deleteIntegrationConfigurationbyId = jest.fn(() => {
         return;
     });
 
-    (integrationsService as any).eSignatureApiDevModeOn = jest.fn((params: any) => {
+    (integrationsService as any).eSignatureApiDevModeOn = jest.fn(() => {
         return true;
     });
 
-    (ssoService as any).getAccessToken = jest.fn((params: any) => {
+    (ssoService as any).getAccessToken = jest.fn(() => {
         return 'randomaccessmemory';
     });
 
-    (payrollService as any).getEmployeeFromEvo = jest.fn((params: any) => {
+    (payrollService as any).getEmployeeFromEvo = jest.fn(() => {
         return {
             groupTermLife: {
                 hours: '2500',
@@ -181,14 +181,14 @@ export const setup = () => {
         return Promise.resolve({});
     });
 
-    (utilService as any).getEvoTokenWithHrToken = jest.fn((params: any) => {
+    (utilService as any).getEvoTokenWithHrToken = jest.fn(() => {
         return 'token';
     });
-    (ssoService as any).getTenantById = jest.fn((params: any) => {
+    (ssoService as any).getTenantById = jest.fn(() => {
         return { subdomain: 'payroll' };
     });
 
-    (tenantsService as any).listConnectionStrings = jest.fn((params: any) => {
+    (tenantsService as any).listConnectionStrings = jest.fn(() => {
         return {
             Items: [
                 {
