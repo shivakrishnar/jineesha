@@ -158,6 +158,114 @@ const s3Client = new AWS.S3({
 });
 
 /**
+ *  Executes a series of btach statements on a given database connection.
+ * @param {string} s3FilePath: The path to the object within an S3 Bucket
+ * @param {ConnectionPool} pool: The connection to the database.
+ */
+async function applyDatabaseSchemaScript(s3FilePath: string, pool: ConnectionPool): Promise<void> {
+    console.info('tenants.service.applyDatabaseSchemaScript');
+
+    const data = await s3Client
+        .getObject({
+            Bucket: `${configService.getStage()}.hr.database-schema-scripts`,
+            Key: s3FilePath,
+        })
+        .promise();
+
+    const script = data.Body.toString();
+    await databaseService.executeBatch(pool, stripBom(script));
+}
+
+/**
+ * Executes all SQL scripts found in the specified folder
+ * @param {string} s3FolderPath: The path to the S3 folder containing scripts to the executed.
+ * @param {ConnectionPool} pool: The connection to the database.
+ */
+async function applyScriptsInS3Folder(s3FolderPath: string, pool: ConnectionPool): Promise<void> {
+    console.info('tenants.service.applyScriptsInS3Folder');
+    const folderScripts = await s3Client
+        .listObjects({
+            Bucket: `${configService.getStage()}.hr.database-schema-scripts`,
+            Marker: `${s3FolderPath}/`,
+        })
+        .promise();
+
+    const sqlScriptFilePathUris: string[] = folderScripts.Contents.map((item) => item.Key);
+    for (const scriptS3Path of sqlScriptFilePathUris) {
+        console.info(`applying script at: ${scriptS3Path}`);
+        await applyDatabaseSchemaScript(scriptS3Path, pool);
+    }
+}
+
+/**
+ * Builds a Teams message attachment
+ * {@link https://docs.microsoft.com/en-us/microsoftteams/platform/}
+ * @param {TenantDatabase} dbInfo: The created tenant database details
+ * @param {string} rdsInstance: The RDS instance a tenant was created on
+ * @param {string} title: Title to be used for the notification
+ * @param {string} themeColor: color in hex format for Teams notification border
+ * @returns {string}:  A formatted Teams message attachment
+ */
+export function buildMessageAttachment(dbInfo: TenantDatabase, rdsInstance: string, title: string, themeColor: string): string {
+    console.info('tenants.service.buildMessageAttachment');
+
+    const messageAttachment = {
+        title,
+        text: `<div>Tenant ID: ${dbInfo.id}</div><div>Tenant URL: ${
+            dbInfo.subdomain
+        }.${configService.getDomain()}</div><div>RDS Instance: ${rdsInstance}</div><div>Environment: ${configService.getStage()}</div>`,
+        themeColor,
+    };
+
+    return JSON.stringify(messageAttachment);
+}
+
+function createConnectionString(dbInfo: TenantDatabase, rdsInstance: string): any {
+    console.info('tenants.service.createConnectionString');
+
+    const dbConnectionString = `data source=${rdsInstance};initial catalog=${dbInfo.id};`;
+    const domain = `${dbInfo.subdomain}.${configService.getDomain()}`;
+    const tenantId = `${dbInfo.id}`;
+
+    return {
+        ConnectionString: dbConnectionString,
+        Domain: domain,
+        TenantID: tenantId,
+    };
+}
+
+async function addConnectionString(dbInfo: TenantDatabase, rdsInstance: string): Promise<void> {
+    console.info('tenants.service.addConnectionString');
+
+    const connectionString = createConnectionString(dbInfo, rdsInstance);
+
+    const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+    const params = {
+        TableName: 'ConnectionStrings',
+        Item: connectionString,
+    };
+
+    await dynamoDbClient.put(params).promise();
+}
+
+/**
+ * Publishes a message to an SNS topic
+ * @param {string} message: The message to publish
+ * @returns {Promise}: Promise of message publication result
+ */
+export async function publishMessage(message: any): Promise<void> {
+    console.info('tenants.service.publishMessage');
+    const sns = new AWS.SNS();
+    const params = {
+        Message: message,
+        Subject: 'RDS Database Creation',
+        TopicArn: `${configService.getTeamNotificationTopicArn()}`,
+    };
+
+    sns.publish(params).promise();
+}
+
+/**
  * Creates a tenant database on a given RDS instance.
  * @param {string} rdsEndpoint: The url of the RDS instance that will host the database
  * @param {TenantDatase} dbInfo: The tenant database to be created
@@ -225,69 +333,6 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
     }
 }
 
-/**
- * Executes all SQL scripts found in the specified folder
- * @param {string} s3FolderPath: The path to the S3 folder containing scripts to the executed.
- * @param {ConnectionPool} pool: The connection to the database.
- */
-async function applyScriptsInS3Folder(s3FolderPath: string, pool: ConnectionPool): Promise<void> {
-    console.info('tenants.service.applyScriptsInS3Folder');
-    const folderScripts = await s3Client
-        .listObjects({
-            Bucket: `${configService.getStage()}.hr.database-schema-scripts`,
-            Marker: `${s3FolderPath}/`,
-        })
-        .promise();
-
-    const sqlScriptFilePathUris: string[] = folderScripts.Contents.map((item) => item.Key);
-    for (const scriptS3Path of sqlScriptFilePathUris) {
-        console.info(`applying script at: ${scriptS3Path}`);
-        await applyDatabaseSchemaScript(scriptS3Path, pool);
-    }
-}
-
-/**
- *  Executes a series of btach statements on a given database connection.
- * @param {string} s3FilePath: The path to the object within an S3 Bucket
- * @param {ConnectionPool} pool: The connection to the database.
- */
-async function applyDatabaseSchemaScript(s3FilePath: string, pool: ConnectionPool): Promise<void> {
-    console.info('tenants.service.applyDatabaseSchemaScript');
-
-    const data = await s3Client
-        .getObject({
-            Bucket: `${configService.getStage()}.hr.database-schema-scripts`,
-            Key: s3FilePath,
-        })
-        .promise();
-
-    const script = data.Body.toString();
-    await databaseService.executeBatch(pool, stripBom(script));
-}
-
-/**
- * Builds a Teams message attachment
- * {@link https://docs.microsoft.com/en-us/microsoftteams/platform/}
- * @param {TenantDatabase} dbInfo: The created tenant database details
- * @param {string} rdsInstance: The RDS instance a tenant was created on
- * @param {string} title: Title to be used for the notification
- * @param {string} themeColor: color in hex format for Teams notification border
- * @returns {string}:  A formatted Teams message attachment
- */
-export function buildMessageAttachment(dbInfo: TenantDatabase, rdsInstance: string, title: string, themeColor: string): string {
-    console.info('tenants.service.buildMessageAttachment');
-
-    const messageAttachment = {
-        title,
-        text: `<div>Tenant ID: ${dbInfo.id}</div><div>Tenant URL: ${
-            dbInfo.subdomain
-        }.${configService.getDomain()}</div><div>RDS Instance: ${rdsInstance}</div><div>Environment: ${configService.getStage()}</div>`,
-        themeColor,
-    };
-
-    return JSON.stringify(messageAttachment);
-}
-
 //Old code for Slack
 // export function buildMessageAttachment(dbInfo: TenantDatabase, rdsInstance: string, title: string, color: string): string {
 //     console.info('tenants.service.buildMessageAttachment');
@@ -327,51 +372,6 @@ export function buildMessageAttachment(dbInfo: TenantDatabase, rdsInstance: stri
 
 //     return JSON.stringify(messageAttachment);
 // }
-
-/**
- * Publishes a message to an SNS topic
- * @param {string} message: The message to publish
- * @returns {Promise}: Promise of message publication result
- */
-export async function publishMessage(message: any): Promise<void> {
-    console.info('tenants.service.publishMessage');
-    const sns = new AWS.SNS();
-    const params = {
-        Message: message,
-        Subject: 'RDS Database Creation',
-        TopicArn: `${configService.getTeamNotificationTopicArn()}`,
-    };
-
-    sns.publish(params).promise();
-}
-
-async function addConnectionString(dbInfo: TenantDatabase, rdsInstance: string): Promise<void> {
-    console.info('tenants.service.addConnectionString');
-
-    const connectionString = createConnectionString(dbInfo, rdsInstance);
-
-    const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
-    const params = {
-        TableName: 'ConnectionStrings',
-        Item: connectionString,
-    };
-
-    await dynamoDbClient.put(params).promise();
-}
-
-function createConnectionString(dbInfo: TenantDatabase, rdsInstance: string): any {
-    console.info('tenants.service.createConnectionString');
-
-    const dbConnectionString = `data source=${rdsInstance};initial catalog=${dbInfo.id};`;
-    const domain = `${dbInfo.subdomain}.${configService.getDomain()}`;
-    const tenantId = `${dbInfo.id}`;
-
-    return {
-        ConnectionString: dbConnectionString,
-        Domain: domain,
-        TenantID: tenantId,
-    };
-}
 
 /**
  * Returns the connection string data for a given tenant
