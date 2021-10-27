@@ -25,7 +25,7 @@ describe('esignatureService.product-tier.update', () => {
                 return Promise.resolve(mockData.getBillingEventTypeDBResponse(2, 'EnhancedEsignatureDisabled'));
             }
         });
-        (utilService as any).validateCompany = jest.fn((tenantId, companyId) => {
+        (utilService as any).validateCompany = jest.fn(() => {
             return mockData.legacyCompanyInfo.recordset[0];
         });
 
@@ -83,7 +83,7 @@ describe('esignatureService.product-tier.update', () => {
                 return Promise.resolve(mockData.getBillingEventTypeDBResponse(2, 'EnhancedEsignatureDisabled'));
             }
         });
-        (utilService as any).validateCompany = jest.fn((tenantId, companyId) => {
+        (utilService as any).validateCompany = jest.fn(() => {
             return mockData.companyInfo.recordset[0];
         });
 
@@ -164,7 +164,7 @@ describe('esignatureService.product-tier.update', () => {
                 return Promise.resolve(mockData.getBillingEventTypeDBResponse(1, 'EnhancedEsignatureEnabled'));
             }
         });
-        (utilService as any).validateCompany = jest.fn((tenantId, companyId) => {
+        (utilService as any).validateCompany = jest.fn(() => {
             const company = Object.assign({}, mockData.legacyCompanyInfo.recordset[0]);
             company.EsignatureProductTierID = 1;
             return company;
@@ -222,7 +222,7 @@ describe('esignatureService.product-tier.update', () => {
                 return Promise.resolve(mockData.emptyDBResponse);
             }
         });
-        (utilService as any).validateCompany = jest.fn((tenantId, companyId) => {
+        (utilService as any).validateCompany = jest.fn(() => {
             const company = Object.assign({}, mockData.legacyCompanyInfo.recordset[0]);
             company.EsignatureProductTierID = 1;
             return company;
