@@ -56,35 +56,6 @@ async function logToCloudWatch(message: string): Promise<void> {
 }
 
 /**
- * Logs an event to the audit trail.
- * @param {IAudit} audit: The audit information to log.
- * @return {boolean}: true if an audit event is successfully logged; false, otherwise.
- */
-export async function logAudit(audit: IAudit): Promise<boolean> {
-    console.info('audit.service.logAudit');
-
-    const { isEvoCall, userEmail, tenantId, employeeId } = audit;
-
-    try {
-        const transactionName = await getTransactionName(isEvoCall, audit);
-        const auditId = await createAuditEntry(tenantId, transactionName, userEmail);
-
-        if (auditId && !isEvoCall) {
-            let employeeDisplayName;
-            if (employeeId) {
-                employeeDisplayName = await getEmployeeDisplayName(tenantId, employeeId);
-            }
-            await createAuditDetailEntries(tenantId, auditId, audit, employeeDisplayName);
-        }
-
-        return true;
-    } catch (error) {
-        console.error(`error creating audit: ${error}`);
-        return false;
-    }
-}
-
-/**
  * Constructs a transaction name for the audit.
  * @param {boolean} isEvoCall: Indicates whether or not the current transaction is a call to Evolution.
  * @param {IAudit} audit: The audit information to log.
@@ -203,4 +174,33 @@ async function createAuditDetailEntries(tenantId: string, auditId: number, audit
         queryType: QueryType.Simple,
     } as DatabaseEvent;
     await utilService.invokeInternalService('queryExecutor', payload, InvocationType.Event);
+}
+
+/**
+ * Logs an event to the audit trail.
+ * @param {IAudit} audit: The audit information to log.
+ * @return {boolean}: true if an audit event is successfully logged; false, otherwise.
+ */
+export async function logAudit(audit: IAudit): Promise<boolean> {
+    console.info('audit.service.logAudit');
+
+    const { isEvoCall, userEmail, tenantId, employeeId } = audit;
+
+    try {
+        const transactionName = await getTransactionName(isEvoCall, audit);
+        const auditId = await createAuditEntry(tenantId, transactionName, userEmail);
+
+        if (auditId && !isEvoCall) {
+            let employeeDisplayName;
+            if (employeeId) {
+                employeeDisplayName = await getEmployeeDisplayName(tenantId, employeeId);
+            }
+            await createAuditDetailEntries(tenantId, auditId, audit, employeeDisplayName);
+        }
+
+        return true;
+    } catch (error) {
+        console.error(`error creating audit: ${error}`);
+        return false;
+    }
 }
