@@ -55,7 +55,7 @@ const emailAcknowledgedSchema = {
 /**
  * Adds an SSO global admin account to a specified tenant
  */
-export const addAdmin = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const addAdmin = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
     console.info('tenants.handler.addAdmin');
 
     utilService.normalizeHeaders(event);
@@ -363,7 +363,7 @@ export const getEmployeeById = utilService.gatewayEventHandlerV2(async ({ securi
 /**
  * Returns a listing of the roles that the user belongs to
  */
-export const listUserRoles = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+export const listUserRoles = utilService.gatewayEventHandlerV2(async ({ securityContext }: IGatewayEventInput) => {
     console.info('tenants.handler.listUserRoles');
     return { roles: securityContext.roleMemberships };
 });
