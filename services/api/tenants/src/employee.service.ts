@@ -30,6 +30,44 @@ type Employee = {
 };
 
 /**
+ * Retrieves a listing of employees.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {Query} query: The query to be executed to retrieve a listing of employees.
+ * @param {string} baseUrl: The base URL of the request.
+ * @param {number} page: The page number specified by the user.
+ * @returns {Promise<PaginatedResult>}: Promise of a paginated array of employees
+ */
+async function getEmployees(tenantId: string, query: Query, baseUrl: string, page: number): Promise<PaginatedResult> {
+    const payload = {
+        tenantId,
+        queryName: query.name,
+        query: query.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+    const totalCount = result.recordsets[0][0].totalCount;
+    const recordSet = result.recordsets[1];
+
+    if (recordSet.length === 0) {
+        return undefined;
+    }
+
+    const employees: Employee[] = recordSet.map((record) => {
+        return {
+            id: record.ID,
+            firstName: record.FirstName,
+            lastName: record.LastName,
+            eeCode: record.EmployeeCode,
+            companyName: record.CompanyName,
+            isActive: record.IsActive,
+        } as Employee;
+    });
+
+    return await paginationService.createPaginatedResult(employees, baseUrl, totalCount, page);
+}
+
+/**
  * Returns a listing of employees for a specific user within a tenant
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} email: The email address of the user.
@@ -226,44 +264,6 @@ export async function getById(tenantId: string, companyId: string, employeeId: s
         console.error(error);
         throw errorService.getErrorResponse(0);
     }
-}
-
-/**
- * Retrieves a listing of employees.
- * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
- * @param {Query} query: The query to be executed to retrieve a listing of employees.
- * @param {string} baseUrl: The base URL of the request.
- * @param {number} page: The page number specified by the user.
- * @returns {Promise<PaginatedResult>}: Promise of a paginated array of employees
- */
-async function getEmployees(tenantId: string, query: Query, baseUrl: string, page: number): Promise<PaginatedResult> {
-    const payload = {
-        tenantId,
-        queryName: query.name,
-        query: query.value,
-        queryType: QueryType.Simple,
-    } as DatabaseEvent;
-    const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-
-    const totalCount = result.recordsets[0][0].totalCount;
-    const recordSet = result.recordsets[1];
-
-    if (recordSet.length === 0) {
-        return undefined;
-    }
-
-    const employees: Employee[] = recordSet.map((record) => {
-        return {
-            id: record.ID,
-            firstName: record.FirstName,
-            lastName: record.LastName,
-            eeCode: record.EmployeeCode,
-            companyName: record.CompanyName,
-            isActive: record.IsActive,
-        } as Employee;
-    });
-
-    return await paginationService.createPaginatedResult(employees, baseUrl, totalCount, page);
 }
 
 /**
