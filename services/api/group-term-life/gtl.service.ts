@@ -81,6 +81,40 @@ export async function listGtlRecordsByEmployee(
 }
 
 /**
+ * Updates Evolution employee with GTL data
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to
+ * @param {string} evoKeys: Evo clientId, companyId, and employeeIds
+ * @param {string} accessToken: HR access token
+ * @param {object} gtlData: An object that contains GTL data to be inserted into the database
+ */
+
+async function updateEvolution(tenantId: string, evoKeys: IEvolutionKey, accessToken: string, gtlData: any): Promise<void> {
+    console.info('gtlService.updateEvolution');
+
+    try {
+        const payrollApiAccessToken: string = await utilService.getEvoTokenWithHrToken(tenantId, accessToken);
+        const tenantObject = await ssoService.getTenantById(tenantId, payrollApiAccessToken);
+        const tenantName = tenantObject.subdomain;
+
+        const employeeEvoInfo: any = await payrollService.getEmployeeFromEvo(tenantName, evoKeys, payrollApiAccessToken);
+
+        employeeEvoInfo.groupTermLife.hours = gtlData.workHours;
+        employeeEvoInfo.groupTermLife.policyAmount = gtlData.flatAmount;
+        employeeEvoInfo.groupTermLife.rate = gtlData.earningsMultiplier;
+
+        await payrollService.updateEmployeeInEvo(tenantName, evoKeys, payrollApiAccessToken, employeeEvoInfo);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        } else if (error.httpStatus === 404) {
+            throw errorService.getErrorResponse(51);
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Creates a group term life record
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to
  * @param {string} companyId: The company the specific employee belongs to
@@ -175,40 +209,6 @@ export async function createGtlRecord(
 }
 
 /**
- * Updates Evolution employee with GTL data
- * @param {string} tenantId: The unique identifier for the tenant the user belongs to
- * @param {string} evoKeys: Evo clientId, companyId, and employeeIds
- * @param {string} accessToken: HR access token
- * @param {object} gtlData: An object that contains GTL data to be inserted into the database
- */
-
-async function updateEvolution(tenantId: string, evoKeys: IEvolutionKey, accessToken: string, gtlData: any): Promise<void> {
-    console.info('gtlService.updateEvolution');
-
-    try {
-        const payrollApiAccessToken: string = await utilService.getEvoTokenWithHrToken(tenantId, accessToken);
-        const tenantObject = await ssoService.getTenantById(tenantId, payrollApiAccessToken);
-        const tenantName = tenantObject.subdomain;
-
-        const employeeEvoInfo: any = await payrollService.getEmployeeFromEvo(tenantName, evoKeys, payrollApiAccessToken);
-
-        employeeEvoInfo.groupTermLife.hours = gtlData.workHours;
-        employeeEvoInfo.groupTermLife.policyAmount = gtlData.flatAmount;
-        employeeEvoInfo.groupTermLife.rate = gtlData.earningsMultiplier;
-
-        await payrollService.updateEmployeeInEvo(tenantName, evoKeys, payrollApiAccessToken, employeeEvoInfo);
-    } catch (error) {
-        if (error instanceof ErrorMessage) {
-            throw error;
-        } else if (error.httpStatus === 404) {
-            throw errorService.getErrorResponse(51);
-        }
-        console.error(error);
-        throw errorService.getErrorResponse(0);
-    }
-}
-
-/**
  * Updates a group term life record
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to
  * @param {string} companyId: The company the specific employee belongs to
@@ -220,7 +220,7 @@ async function updateEvolution(tenantId: string, evoKeys: IEvolutionKey, accessT
  * @returns {Promise<GtlRecord>}: Promise of a GTL record
  */
 
- export async function updateGtlRecord(
+export async function updateGtlRecord(
     tenantId: string,
     companyId: string,
     employeeId: string,
@@ -272,8 +272,8 @@ async function updateEvolution(tenantId: string, evoKeys: IEvolutionKey, accessT
             flatCoverage: gtlData.flatCoverage,
             flatAmount: gtlData.flatAmount || null,
             earningsMultiplier: gtlData.earningsMultiplier || null,
-            workHours: gtlData.workHours || null
-        }
+            workHours: gtlData.workHours || null,
+        };
 
         await updateEvolution(tenantId, employee.evoData, accessToken, evoGtlData);
 
@@ -321,7 +321,7 @@ async function updateEvolution(tenantId: string, evoKeys: IEvolutionKey, accessT
  * @returns {Promise<GtlRecord>}: Promise of a GTL record
  */
 
- export async function deleteGtlRecordsByEmployee(
+export async function deleteGtlRecordsByEmployee(
     tenantId: string,
     companyId: string,
     employeeId: string,
@@ -352,7 +352,7 @@ async function updateEvolution(tenantId: string, evoKeys: IEvolutionKey, accessT
             workHours: null,
             flatAmount: null,
             earningsMultiplier: null,
-        }
+        };
 
         await updateEvolution(tenantId, employee.evoData, accessToken, gtlData);
 
@@ -368,7 +368,7 @@ async function updateEvolution(tenantId: string, evoKeys: IEvolutionKey, accessT
 
         await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
 
-        return { statusCode: 200 }
+        return { statusCode: 200 };
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
