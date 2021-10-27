@@ -8,7 +8,62 @@ import * as request from 'superagent';
 import * as uuidV4 from 'uuid/v4';
 import { DebuggingInfo } from './debuggingInfo';
 
+export function getConfig(): any {
+    const configFilename = process.env.INTEGRATION_TEST_CONFIG_FILENAME || 'development.config.json';
+    try {
+        return JSON.parse(fs.readFileSync(`./integration-tests/${configFilename}`, 'utf-8'));
+    } catch (error) {
+        throw new Error(
+            `The environment variable INTEGRATION_TEST_CONFIG_FILENAME was not set or the file ${configFilename} could not be found.`,
+        );
+    }
+}
+
 const configs = getConfig();
+
+async function getSecret(id: string): Promise<string> {
+    const client = new AWS.SecretsManager({
+        endpoint: configs.secretsManager.endpoint,
+        region: configs.secretsManager.region,
+    });
+
+    const data = await client.getSecretValue({ SecretId: id }).promise();
+    return data.SecretString;
+}
+
+function _generateSsoToken(
+    applicationId: string,
+    apiKey: string,
+    apiSecret: string,
+    tenant: { id?: string; name?: string },
+    nbf?: number,
+): string {
+    const claims: any = {
+        iat: new Date().getTime(),
+        iss: apiKey,
+        sub: applicationId,
+        callbackUrl: 'https://adhr-test-1.dev.evolution-software.com/LoginEvoReturn.aspx',
+        tenantId: tenant.id,
+        tenantName: tenant.name,
+        jti: uuidV4(),
+    };
+
+    if (nbf) {
+        claims.nbf = nbf;
+    }
+
+    const token = nJwt.create(claims, apiSecret);
+    return token.compact();
+}
+
+function _getAccessToken(domain: string, tenantId: string, username: string, password: string, ssoToken: string): Promise<string> {
+    return request
+        .post(`${domain}/identity/tenants/${tenantId}/oauth/token`)
+        .set('Content-Type', 'application/json')
+        .set('Authorization', `Bearer ${ssoToken}`)
+        .send(`{ "grant_type": "password", "username": "${username}", "password": "${password}" }`)
+        .then((response) => response.body.access_token);
+}
 
 export async function getAccessToken(
     username: string = configs.user.username,
@@ -25,43 +80,6 @@ export async function getAccessToken(
     }, callback);
 }
 
-function _getAccessToken(domain: string, tenantId: string, username: string, password: string, ssoToken: string): Promise<string> {
-    return request
-        .post(`${domain}/identity/tenants/${tenantId}/oauth/token`)
-        .set('Content-Type', 'application/json')
-        .set('Authorization', `Bearer ${ssoToken}`)
-        .send(`{ "grant_type": "password", "username": "${username}", "password": "${password}" }`)
-        .then((response) => response.body.access_token);
-}
-
-async function getSecret(id: string): Promise<string> {
-    const client = new AWS.SecretsManager({
-        endpoint: configs.secretsManager.endpoint,
-        region: configs.secretsManager.region,
-    });
-
-    const data = await client.getSecretValue({ SecretId: id }).promise();
-    return data.SecretString;
-}
-
-export function getConfig(): any {
-    const configFilename = process.env.INTEGRATION_TEST_CONFIG_FILENAME || 'development.config.json';
-    try {
-        return JSON.parse(fs.readFileSync(`./integration-tests/${configFilename}`, 'utf-8'));
-    } catch (error) {
-        throw new Error(
-            `The environment variable INTEGRATION_TEST_CONFIG_FILENAME was not set or the file ${configFilename} could not be found.`,
-        );
-    }
-}
-
-export function assertJsonOrThrow(schemas: any, schemaName: string, body: object): void {
-    const result = assertJson(schemas, schemaName, body);
-    if (result) {
-        throw result;
-    }
-}
-
 export function assertJson(schemas: any, schemaName: string, body: object): any {
     const ajv = new Ajv();
     ajv.addSchema(schemas);
@@ -73,6 +91,13 @@ export function assertJson(schemas: any, schemaName: string, body: object): any 
         return detailedErrorMsg;
     } else {
         return undefined;
+    }
+}
+
+export function assertJsonOrThrow(schemas: any, schemaName: string, body: object): void {
+    const result = assertJson(schemas, schemaName, body);
+    if (result) {
+        throw result;
     }
 }
 
@@ -89,7 +114,7 @@ const assertHeader = (response: any, name: string, expected: string | RegExp) =>
     }
 };
 
-export function corsAssertions(corsAllowedHeaderList: string): ((response: any) => void) {
+export function corsAssertions(corsAllowedHeaderList: string): (response: any) => void {
     return (response: any): void => {
         // this helper skips these assertions if "corsAllowedHeaderList" is empty (i.e. when using local config)
         if (corsAllowedHeaderList) {
@@ -97,6 +122,29 @@ export function corsAssertions(corsAllowedHeaderList: string): ((response: any) 
             assertHeader(response, 'access-control-allow-origin', '*');
         }
     };
+}
+
+function maskTestFiles(errorMessage: DebuggingInfo): DebuggingInfo {
+    errorMessage = JSON.parse(JSON.stringify(errorMessage)); // errorMessage is partially a stream, this reads the stream and gives us an object
+    if (
+        !(
+            errorMessage.response &&
+            errorMessage.response.req &&
+            errorMessage.response.req.data &&
+            errorMessage.response.req.data.fileObject &&
+            errorMessage.response.req.data.fileObject.file
+        )
+    ) {
+        return errorMessage;
+    }
+    const fileString: string = errorMessage.response.req.data.fileObject.file;
+    const [fileType, fileData] = fileString.substr(4).split(/;base64/);
+    if (fileData) {
+        // If this fileString matches the data:{mimeType};base64,{data} template then we're going to mask the data
+        errorMessage.response.req.data.fileObject.file = `${fileType} [Masking ${fileData.length} Bytes of Data]`;
+    }
+
+    return errorMessage;
 }
 
 export function testResponse(error: any, response: any, done: any, asserts: any): void {
@@ -138,31 +186,6 @@ export function testResponse(error: any, response: any, done: any, asserts: any)
     }
 }
 
-function _generateSsoToken(
-    applicationId: string,
-    apiKey: string,
-    apiSecret: string,
-    tenant: { id?: string; name?: string },
-    nbf?: number,
-): string {
-    const claims: any = {
-        iat: new Date().getTime(),
-        iss: apiKey,
-        sub: applicationId,
-        callbackUrl: 'https://adhr-test-1.dev.evolution-software.com/LoginEvoReturn.aspx',
-        tenantId: tenant.id,
-        tenantName: tenant.name,
-        jti: uuidV4(),
-    };
-
-    if (nbf) {
-        claims.nbf = nbf;
-    }
-
-    const token = nJwt.create(claims, apiSecret);
-    return token.compact();
-}
-
 export function getTokenPayload(token: string): any {
     return jwt.decode(token);
 }
@@ -199,26 +222,3 @@ export const uriEncodeTestFile = (filePath: string): string => {
     const encoding = base64EncodeFile(filePath);
     return `data:${mimeType};base64,${encoding}`;
 };
-
-function maskTestFiles(errorMessage: DebuggingInfo): DebuggingInfo {
-    errorMessage = JSON.parse(JSON.stringify(errorMessage)); // errorMessage is partially a stream, this reads the stream and gives us an object
-    if (
-        !(
-            errorMessage.response &&
-            errorMessage.response.req &&
-            errorMessage.response.req.data &&
-            errorMessage.response.req.data.fileObject &&
-            errorMessage.response.req.data.fileObject.file
-        )
-    ) {
-        return errorMessage;
-    }
-    const fileString: string = errorMessage.response.req.data.fileObject.file;
-    const [fileType, fileData] = fileString.substr(4).split(/;base64/);
-    if (fileData) {
-        // If this fileString matches the data:{mimeType};base64,{data} template then we're going to mask the data
-        errorMessage.response.req.data.fileObject.file = `${fileType} [Masking ${fileData.length} Bytes of Data]`;
-    }
-
-    return errorMessage;
-}
