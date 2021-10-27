@@ -18,7 +18,7 @@ describe('esignatureService.company-document.list', () => {
     beforeEach(() => {
         setup();
         // Moved this out of setup() so that tests for getById work
-        (employeeService as any).getById = jest.fn((params: any) => {
+        (employeeService as any).getById = jest.fn(() => {
             return {};
         });
     });
@@ -171,7 +171,7 @@ describe('esignatureService.employee-document.list', () => {
     });
 
     test('returns a list of employee documents by tenant', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.employeeDocumentsDBResponse);
         });
 
@@ -187,7 +187,7 @@ describe('esignatureService.employee-document.list', () => {
     });
 
     test('returns undefined if no employee documents exist in tenant', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.emptyPaginatedDBResponse);
         });
 
@@ -423,7 +423,7 @@ describe('esignatureService.employee-document.list', () => {
     });
 
     test('throws an error if one occurs while retrieving documents by tenant', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             throw errorService.getErrorResponse(30).setDeveloperMessage('Force an error');
         });
 
@@ -500,13 +500,13 @@ describe('esignatureService.company-document.create', () => {
     beforeEach(() => {
         setup();
 
-        (utilService as any).checkForFileExistence = jest.fn((params: any) => {
+        (utilService as any).checkForFileExistence = jest.fn(() => {
             return mockData.fileExistenceResponseArray;
         });
     });
 
     test('creates a company document', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.documentFileMetadataDBResponse);
         });
 
@@ -519,7 +519,7 @@ describe('esignatureService.company-document.create', () => {
     });
 
     test('throws an error if one occurs', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             throw errorService.getErrorResponse(30).setDeveloperMessage('Force an error');
         });
 
@@ -539,13 +539,13 @@ describe('esignatureService.company-document.update', () => {
     beforeEach(() => {
         setup();
 
-        (utilService as any).checkForFileExistence = jest.fn((params: any) => {
+        (utilService as any).checkForFileExistence = jest.fn(() => {
             return mockData.fileExistenceResponseArray;
         });
     });
 
     test('updates a non-legacy company document', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.documentFileMetadataByIdDBResponse);
         });
 
@@ -563,7 +563,7 @@ describe('esignatureService.company-document.update', () => {
     });
 
     test('updates a legacy company document', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.documentFileMetadataByIdDBResponse);
         });
 
@@ -581,7 +581,7 @@ describe('esignatureService.company-document.update', () => {
     });
 
     test('returns a 404 if non-legacy document is not found', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.emptyDBResponse);
         });
 
@@ -602,7 +602,7 @@ describe('esignatureService.company-document.update', () => {
     });
 
     test('returns a 404 if legacy document is not found', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.emptyDBResponse);
         });
 
@@ -683,7 +683,7 @@ describe('esignatureService.employee-document.update', () => {
             }
         });
 
-        (employeeService as any).getById = jest.fn((transaction, payload) => {
+        (employeeService as any).getById = jest.fn(() => {
             return;
         });
 
@@ -713,7 +713,7 @@ describe('esignatureService.employee-document.update', () => {
             return Promise.resolve(mockData.emptyDBResponse);
         });
 
-        (employeeService as any).getById = jest.fn((params: any) => {
+        (employeeService as any).getById = jest.fn(() => {
             return { eeCode: '1' };
         });
 
@@ -747,7 +747,7 @@ describe('esignatureService.employee-document.update', () => {
             return Promise.resolve(document);
         });
 
-        (employeeService as any).getById = jest.fn((params: any) => {
+        (employeeService as any).getById = jest.fn(() => {
             return { eeCode: '1' };
         });
 
@@ -778,7 +778,7 @@ describe('esignatureService.employee-document.update', () => {
             return Promise.resolve(mockData.emptyDBResponse);
         });
 
-        (employeeService as any).getById = jest.fn((params: any) => {
+        (employeeService as any).getById = jest.fn(() => {
             return { eeCode: '1' };
         });
 
@@ -811,7 +811,7 @@ describe('esignatureService.employee-document.update', () => {
             return Promise.resolve(document);
         });
 
-        (employeeService as any).getById = jest.fn((params: any) => {
+        (employeeService as any).getById = jest.fn(() => {
             return { eeCode: '1' };
         });
 
@@ -846,7 +846,7 @@ describe('esignatureService.employee-document.update', () => {
             return Promise.resolve(document);
         });
 
-        (employeeService as any).getById = jest.fn((params: any) => {
+        (employeeService as any).getById = jest.fn(() => {
             return { eeCode: '1' };
         });
 
@@ -901,7 +901,7 @@ describe('esignatureService.company-document.delete', () => {
             }
         });
 
-        (utilService as any).authorizeAndRunQuery = jest.fn((params: any) => {
+        (utilService as any).authorizeAndRunQuery = jest.fn(() => {
             return [[{ Pointer: 'test' }]];
         });
 
@@ -941,7 +941,7 @@ describe('esignatureService.company-document.delete', () => {
             }
         });
 
-        (utilService as any).authorizeAndRunQuery = jest.fn((params: any) => {
+        (utilService as any).authorizeAndRunQuery = jest.fn(() => {
             return [];
         });
 
@@ -974,7 +974,7 @@ describe('esignatureService.employee-document.delete', () => {
                 }
             });
 
-            (utilService as any).authorizeAndRunQuery = jest.fn((params: any) => {
+            (utilService as any).authorizeAndRunQuery = jest.fn(() => {
                 return [[{ Pointer: 'test' }]];
             });
             const document = await esignatureService.deleteEmployeeDocument(
@@ -1025,7 +1025,7 @@ describe('esignatureService.employee-document.delete', () => {
             }
         });
 
-        (utilService as any).authorizeAndRunQuery = jest.fn((params: any) => {
+        (utilService as any).authorizeAndRunQuery = jest.fn(() => {
             return [];
         });
 
@@ -1056,7 +1056,7 @@ describe('esignatureService.create-upload-url', () => {
     beforeEach(() => {
         setup();
 
-        (utilService as any).checkForFileExistence = jest.fn((params: any) => {
+        (utilService as any).checkForFileExistence = jest.fn(() => {
             return mockData.fileExistenceResponseArray;
         });
     });
