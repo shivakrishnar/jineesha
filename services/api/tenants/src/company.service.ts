@@ -180,53 +180,36 @@ export async function getById(tenantId: string, companyId: string, email: string
 }
 
 /**
- * Updates a company or that company's integrations
+ * Retrieves company info by EvoCompanyCode
  * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
  * @param {string} companyCode: The unique code for the company
- * @param {PatchInstruction[]} patch: The list of instructions the patch is should attempt to execute
- * The patch instructions will be executed in the order provided.
- * The array as a whole is atomic, if an instruction fails, all previous instructions will be rolled back.
+ * @returns {Promise<CompanyDetail>}: A Promise of a company's details
  */
-export async function companyUpdate(tenantId: string, companyCode: string, patch: PatchInstruction[]): Promise<void> {
-    console.info('companyService.companyUpdate');
+async function getCompanyInfoByEvoCompanyCode(tenantId: string, companyCode: string): Promise<CompanyDetail> {
+    console.info('companyService.getCompanyInfoByEvoCompanyCode');
 
-    const rollbackActions = [];
-
-    try {
-        for (const instruction of patch) {
-            switch (instruction.path) {
-                case '/platform/integration':
-                    rollbackActions.push(await updateHelloSignConfigurations(tenantId, companyCode, instruction));
-                    break;
-                case '/sso/account':
-                    rollbackActions.push(await handleSsoPatch(tenantId, companyCode, instruction));
-                    break;
-                case '/esignature':
-                    rollbackActions.push(await handleEsignatureDocs(tenantId, companyCode, instruction));
-                    break;
-                case '/test':
-                    if (instruction.op === PatchOperation.Test) {
-                        throw errorService.getErrorResponse(0).setMoreInfo('Manual failure for unit tests');
-                    }
-                    break;
-                default:
-                // throw unrecognized path error
-            }
-        }
-    } catch (error) {
-        let action = rollbackActions.pop();
-        while (action) {
-            await action();
-            action = rollbackActions.pop();
-        }
-        if (error instanceof ErrorMessage) {
-            if (error.statusCode === 404) {
-                return undefined;
-            }
-            throw error;
-        }
-        throw errorService.getErrorResponse(0);
+    const query = new ParameterizedQuery('GetCompanyInfoByEvoCompanyCode', Queries.getCompanyInfoByEvoCompanyCode);
+    query.setParameter('@evoCompanyCode', companyCode);
+    const payload = {
+        tenantId,
+        queryName: query.name,
+        query: query.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+    const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+    if (result.recordset.length === 0) {
+        throw errorService.getErrorResponse(50).setDeveloperMessage(`The company code: ${companyCode} not found`);
     }
+
+    const companyInfo: CompanyDetail = result.recordset.map((entry) => {
+        return {
+            id: entry.ID,
+            clientId: entry.PRIntegration_ClientID,
+            companyName: entry.CompanyName,
+        };
+    })[0];
+
+    return companyInfo;
 }
 
 /**
@@ -662,31 +645,45 @@ async function handleEsignatureDocs(donorTenantId: string, donorCompanyCode: str
                         });
 
                         // update pointer in db
-                        const query = new ParameterizedQuery('updateFileMetadataPointerById', Queries.updateFileMetadataPointerById);
-                        query.setStringParameter('@pointer', newKey);
-                        query.setParameter('@id', file.ID);
+                        const metadataQuery = new ParameterizedQuery(
+                            'updateFileMetadataPointerById',
+                            Queries.updateFileMetadataPointerById,
+                        );
+                        metadataQuery.setStringParameter('@pointer', newKey);
+                        metadataQuery.setParameter('@id', file.ID);
 
-                        const payload = {
+                        const metadataPayload = {
                             tenantId: recipientTenantId,
-                            queryName: query.name,
-                            query: query.value,
+                            queryName: metadataQuery.name,
+                            query: metadataQuery.value,
                             queryType: QueryType.Simple,
                         } as DatabaseEvent;
 
-                        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+                        await utilService.invokeInternalService(
+                            'queryExecutor',
+                            metadataPayload,
+                            utilService.InvocationType.RequestResponse,
+                        );
                         rollbackActions.push(async () => {
-                            const query = new ParameterizedQuery('updateFileMetadataPointerById', Queries.updateFileMetadataPointerById);
-                            query.setStringParameter('@pointer', file.Pointer);
-                            query.setParameter('@id', file.ID);
+                            const rollbackQuery = new ParameterizedQuery(
+                                'updateFileMetadataPointerById',
+                                Queries.updateFileMetadataPointerById,
+                            );
+                            rollbackQuery.setStringParameter('@pointer', file.Pointer);
+                            rollbackQuery.setParameter('@id', file.ID);
 
-                            const payload = {
+                            const internalPayload = {
                                 tenantId: recipientTenantId,
-                                queryName: query.name,
-                                query: query.value,
+                                queryName: rollbackQuery.name,
+                                query: rollbackQuery.value,
                                 queryType: QueryType.Simple,
                             } as DatabaseEvent;
 
-                            await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+                            await utilService.invokeInternalService(
+                                'queryExecutor',
+                                internalPayload,
+                                utilService.InvocationType.RequestResponse,
+                            );
                         });
 
                         // Note: preserve old s3 docs for now in the event they need to be accessed
@@ -744,36 +741,53 @@ async function handleEsignatureDocs(donorTenantId: string, donorCompanyCode: str
 }
 
 /**
- * Retrieves company info by EvoCompanyCode
+ * Updates a company or that company's integrations
  * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
  * @param {string} companyCode: The unique code for the company
- * @returns {Promise<CompanyDetail>}: A Promise of a company's details
+ * @param {PatchInstruction[]} patch: The list of instructions the patch is should attempt to execute
+ * The patch instructions will be executed in the order provided.
+ * The array as a whole is atomic, if an instruction fails, all previous instructions will be rolled back.
  */
-async function getCompanyInfoByEvoCompanyCode(tenantId: string, companyCode: string): Promise<CompanyDetail> {
-    console.info('companyService.getCompanyInfoByEvoCompanyCode');
+export async function companyUpdate(tenantId: string, companyCode: string, patch: PatchInstruction[]): Promise<void> {
+    console.info('companyService.companyUpdate');
 
-    const query = new ParameterizedQuery('GetCompanyInfoByEvoCompanyCode', Queries.getCompanyInfoByEvoCompanyCode);
-    query.setParameter('@evoCompanyCode', companyCode);
-    const payload = {
-        tenantId,
-        queryName: query.name,
-        query: query.value,
-        queryType: QueryType.Simple,
-    } as DatabaseEvent;
-    const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-    if (result.recordset.length === 0) {
-        throw errorService.getErrorResponse(50).setDeveloperMessage(`The company code: ${companyCode} not found`);
+    const rollbackActions = [];
+
+    try {
+        for (const instruction of patch) {
+            switch (instruction.path) {
+                case '/platform/integration':
+                    rollbackActions.push(await updateHelloSignConfigurations(tenantId, companyCode, instruction));
+                    break;
+                case '/sso/account':
+                    rollbackActions.push(await handleSsoPatch(tenantId, companyCode, instruction));
+                    break;
+                case '/esignature':
+                    rollbackActions.push(await handleEsignatureDocs(tenantId, companyCode, instruction));
+                    break;
+                case '/test':
+                    if (instruction.op === PatchOperation.Test) {
+                        throw errorService.getErrorResponse(0).setMoreInfo('Manual failure for unit tests');
+                    }
+                    break;
+                default:
+                // throw unrecognized path error
+            }
+        }
+    } catch (error) {
+        let action = rollbackActions.pop();
+        while (action) {
+            await action();
+            action = rollbackActions.pop();
+        }
+        if (error instanceof ErrorMessage) {
+            if (error.statusCode === 404) {
+                return undefined;
+            }
+            throw error;
+        }
+        throw errorService.getErrorResponse(0);
     }
-
-    const companyInfo: CompanyDetail = result.recordset.map((entry) => {
-        return {
-            id: entry.ID,
-            clientId: entry.PRIntegration_ClientID,
-            companyName: entry.CompanyName,
-        };
-    })[0];
-
-    return companyInfo;
 }
 
 /**
