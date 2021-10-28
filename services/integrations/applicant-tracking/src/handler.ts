@@ -11,7 +11,7 @@ import { ErrorMessage } from '../../../errors/errorMessage';
  * Handles event callbacks from JazzHR
  */
 
-export const eventCallbackDelegate = async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const eventCallbackDelegate = async ({ event, requestBody }: IGatewayEventInput) => {
     console.info('applicant-tracking.handler.eventCallback');
 
     const validQueryStringParameters: string[] = ['id'];
