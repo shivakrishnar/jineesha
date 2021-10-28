@@ -9,6 +9,36 @@ import { InvocationType } from '../../../util.service';
 import { plainToClass } from 'class-transformer';
 import * as request from 'request-promise-native';
 import * as configService from '../../../config.service';
+import * as crypto from 'crypto';
+
+/**
+ * Calculates the file Size from the document content encoded as base64 string
+ * @param base64String: The document content encoded as base64 string
+ * @returns: Returns the file size
+ */
+function calculateFileSize(base64String: any): number {
+    let padding;
+    const base64StringLength = base64String.length;
+    const inBytes = (base64StringLength / 4) * 3 - padding;
+
+    if (base64String.endsWith('==')) padding = 2;
+    else if (base64String.endsWith('=')) padding = 1;
+    else padding = 0;
+
+    return Math.ceil(inBytes / 1024);
+}
+
+/**
+ * Clear Cache with only tenantId available. ssoToken will be determined
+ * @param {string} tenantId: The unique identifier for  a tenant
+ */
+async function clearCache(tenantId: string) {
+    const secretId: string = configService.getApiSecretId();
+    const secret = await utilService.getSecret(secretId);
+    const applicationId = JSON.parse(secret).applicationId;
+    const ssoToken = await utilService.getSSOToken(tenantId, applicationId);
+    await utilService.clearCache(tenantId, ssoToken);
+}
 
 /**
  * Create Applicant Hired Data from JazzHR into ADHR
@@ -179,35 +209,6 @@ export async function createApplicantData(tenantId: string, companyId: string, r
 }
 
 /**
- * Calculates the file Size from the document content encoded as base64 string
- * @param base64String: The document content encoded as base64 string
- * @returns: Returns the file size
- */
-function calculateFileSize(base64String: any): number {
-    let padding;
-    const base64StringLength = base64String.length;
-    const inBytes = (base64StringLength / 4) * 3 - padding;
-
-    if (base64String.endsWith('==')) padding = 2;
-    else if (base64String.endsWith('=')) padding = 1;
-    else padding = 0;
-
-    return Math.ceil(inBytes / 1024);
-}
-
-/**
- * Clear Cache with only tenantId available. ssoToken will be determined
- * @param {string} tenantId: The unique identifier for  a tenant
- */
-async function clearCache(tenantId: string) {
-    const secretId: string = configService.getApiSecretId();
-    const secret = await utilService.getSecret(secretId);
-    const applicationId = JSON.parse(secret).applicationId;
-    const ssoToken = await utilService.getSSOToken(tenantId, applicationId);
-    await utilService.clearCache(tenantId, ssoToken);
-}
-
-/**
  * Validate the incoming signature with Company Secret
  * @param {string} tenantId: The unique identifier for a tenant
  * @param {string} companyId: The unique identifier for a company within a tenant
@@ -235,8 +236,6 @@ export async function validateCompanySecret(tenantId: string, companyId: string,
         if (result.recordset.length != 0) {
             const jzhrSecretKey = result.recordset[0].JazzhrSecretKey;
 
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const crypto = require('crypto');
             const message = requestBody;
             //create HMAC hex digest using Hash sha256 and secret
             const hash = crypto
