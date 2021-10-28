@@ -1,24 +1,5 @@
 import { ErrorMessage } from './errorMessage';
 
-/**
- * Private function which locates an error message based on the code that is
- * passed in. If a message with the code is not found then the default message
- * with an status code of 500 is returned.
- *
- * @param {number} code
- */
-function findErrorMessage(code: number): ErrorMessage {
-    let message = errorMessages().find((d) => {
-        return d.code === code;
-    });
-
-    if (message === undefined) {
-        message = findErrorMessage(0);
-    }
-
-    return new ErrorMessage(message as ErrorMessage);
-}
-
 function errorMessages(): ErrorMessage[] {
     return JSON.parse(`[
     {
@@ -113,6 +94,25 @@ function errorMessages(): ErrorMessage[] {
       "moreInfo": ""
     }
   ]`);
+}
+
+/**
+ * Private function which locates an error message based on the code that is
+ * passed in. If a message with the code is not found then the default message
+ * with an status code of 500 is returned.
+ *
+ * @param {number} code
+ */
+function findErrorMessage(code: number): ErrorMessage {
+    let message = errorMessages().find((d) => {
+        return d.code === code;
+    });
+
+    if (message === undefined) {
+        message = findErrorMessage(0);
+    }
+
+    return new ErrorMessage(message as ErrorMessage);
 }
 
 /**
