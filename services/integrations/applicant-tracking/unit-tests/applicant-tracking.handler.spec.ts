@@ -14,7 +14,7 @@ describe('Configuring Webhook in JazzHR', () => {
             requestBody: jzMockCallbackData.jzRequestBody,
         };
 
-        (applicantTrackingService as any).validateCompanySecret = jest.fn((params: any) => {
+        (applicantTrackingService as any).validateCompanySecret = jest.fn(() => {
             return {};
         });
 
