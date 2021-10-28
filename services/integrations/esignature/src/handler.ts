@@ -322,7 +322,7 @@ const updateCompanyEsignatureProductTierSchema = Yup.object().shape({
  * Creates a new template of a document to be e-signed
  */
 
-export const createTemplate = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const createTemplate = utilService.gatewayEventHandlerV2(async ({ event, requestBody }: IGatewayEventInput) => {
     console.info('esignature.handler.createTemplate');
 
     const { tenantId, companyId } = event.pathParameters;
