@@ -344,9 +344,7 @@ export const createTemplate = utilService.gatewayEventHandlerV2(async ({ securit
         await utilService.validateCollection(customFieldsSchema, requestBody.customFields);
     }
 
-    const { email } = securityContext.principal;
-
-    return await esignatureService.createTemplate(tenantId, companyId, requestBody, email);
+    return await esignatureService.createTemplate(tenantId, companyId, requestBody);
 });
 
 /**

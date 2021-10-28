@@ -163,7 +163,7 @@ describe('esignatureService.template.create', () => {
         });
 
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
+            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest)
             .then((templates) => {
                 expect(templates).toBeInstanceOf(TemplateDraftResponse);
             });
@@ -172,7 +172,7 @@ describe('esignatureService.template.create', () => {
     test('returns a 500 if an error occurs while creating a temp directory', async () => {
         require('fs').__forceError('mkdir');
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
+            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
@@ -185,7 +185,7 @@ describe('esignatureService.template.create', () => {
     test('returns a 500 if an error occurs while creating a file', async () => {
         require('fs').__forceError('writeFile');
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
+            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
@@ -204,7 +204,7 @@ describe('esignatureService.template.create', () => {
 
         require('fs').__forceError('unlink');
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
+            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest)
             .catch((error) => {
                 console.log(error);
                 expect(error).toBeInstanceOf(ErrorMessage);
@@ -224,7 +224,7 @@ describe('esignatureService.template.create', () => {
 
         require('fs').__forceError('rmdir');
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
+            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
@@ -240,7 +240,7 @@ describe('esignatureService.template.create', () => {
         });
 
         return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest, mockData.userEmail)
+            .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(403);
@@ -251,42 +251,36 @@ describe('esignatureService.template.create', () => {
     });
 
     test('returns a 400 if companyId is not integral', async () => {
-        return await esignatureService
-            .createTemplate(mockData.tenantId, 'abc123', mockData.templatePostRequest, mockData.userEmail)
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(400);
-                expect(error.code).toEqual(30);
-                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-                expect(error.developerMessage).toEqual('abc123 is not a valid number');
-            });
+        return await esignatureService.createTemplate(mockData.tenantId, 'abc123', mockData.templatePostRequest).catch((error) => {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error.statusCode).toEqual(400);
+            expect(error.code).toEqual(30);
+            expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+            expect(error.developerMessage).toEqual('abc123 is not a valid number');
+        });
     });
 
     test('returns a 400 if signerRoles are not strings', async () => {
         const invalidSignerRoles: any = { ...mockData.templatePostRequest };
         invalidSignerRoles.signerRoles = [{ name: 'Onboarding' }];
-        return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, invalidSignerRoles, mockData.userEmail)
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(400);
-                expect(error.code).toEqual(30);
-                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-                expect(error.developerMessage).toEqual('signerRoles must only contain strings');
-            });
+        return await esignatureService.createTemplate(mockData.tenantId, mockData.companyId, invalidSignerRoles).catch((error) => {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error.statusCode).toEqual(400);
+            expect(error.code).toEqual(30);
+            expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+            expect(error.developerMessage).toEqual('signerRoles must only contain strings');
+        });
     });
 
     test('returns a 400 if ccRoles are not strings', async () => {
         const invalidCCRoles: any = { ...mockData.templatePostRequest };
         invalidCCRoles.ccRoles = [{ name: 'Onboarding' }];
-        return await esignatureService
-            .createTemplate(mockData.tenantId, mockData.companyId, invalidCCRoles, mockData.userEmail)
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(400);
-                expect(error.code).toEqual(30);
-                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-                expect(error.developerMessage).toEqual('ccRoles must only contain strings');
-            });
+        return await esignatureService.createTemplate(mockData.tenantId, mockData.companyId, invalidCCRoles).catch((error) => {
+            expect(error).toBeInstanceOf(ErrorMessage);
+            expect(error.statusCode).toEqual(400);
+            expect(error.code).toEqual(30);
+            expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+            expect(error.developerMessage).toEqual('ccRoles must only contain strings');
+        });
     });
 });
