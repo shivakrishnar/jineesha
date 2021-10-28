@@ -5,6 +5,7 @@ import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
 import * as esignatureService from '../src/esignature.service';
 import * as mockData from './mock-data';
+import * as fs from '../../../../__mocks__/fs';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
@@ -152,12 +153,12 @@ describe('esignatureService.template.list', () => {
 describe('esignatureService.template.create', () => {
     beforeEach(() => {
         setup();
-        require('fs').__forceError(false);
+        fs.__forceError(false);
     });
 
     test('creates and returns a template', async () => {
         (utilService as any).invokeInternalService = jest.fn((serviceName, payload) => {
-            if (payload.queryName === 'GetCompanyInfo') {
+            if (payload.queryName === 'GetCompanyInfo' && serviceName) {
                 return Promise.resolve(mockData.companyInfo);
             }
         });
@@ -170,7 +171,13 @@ describe('esignatureService.template.create', () => {
     });
 
     test('returns a 500 if an error occurs while creating a temp directory', async () => {
-        require('fs').__forceError('mkdir');
+        (utilService as any).invokeInternalService = jest.fn((serviceName, payload) => {
+            if (payload.queryName === 'GetCompanyInfo' && serviceName) {
+                return Promise.resolve(mockData.companyInfo);
+            }
+        });
+
+        fs.__forceError('mkdir');
         return await esignatureService
             .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest)
             .catch((error) => {
@@ -183,7 +190,13 @@ describe('esignatureService.template.create', () => {
     });
 
     test('returns a 500 if an error occurs while creating a file', async () => {
-        require('fs').__forceError('writeFile');
+        (utilService as any).invokeInternalService = jest.fn((serviceName, payload) => {
+            if (payload.queryName === 'GetCompanyInfo' && serviceName) {
+                return Promise.resolve(mockData.companyInfo);
+            }
+        });
+
+        fs.__forceError('writeFile');
         return await esignatureService
             .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest)
             .catch((error) => {
@@ -197,12 +210,12 @@ describe('esignatureService.template.create', () => {
 
     test('returns a 500 if an error occurs while unlinking a file', async () => {
         (utilService as any).invokeInternalService = jest.fn((serviceName, payload) => {
-            if (payload.queryName === 'GetCompanyInfo') {
+            if (payload.queryName === 'GetCompanyInfo' && serviceName) {
                 return Promise.resolve(mockData.companyInfo);
             }
         });
 
-        require('fs').__forceError('unlink');
+        fs.__forceError('unlink');
         return await esignatureService
             .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest)
             .catch((error) => {
@@ -217,12 +230,12 @@ describe('esignatureService.template.create', () => {
 
     test('returns a 500 if an error occurs while removing the temp directory', async () => {
         (utilService as any).invokeInternalService = jest.fn((serviceName, payload) => {
-            if (payload.queryName === 'GetCompanyInfo') {
+            if (payload.queryName === 'GetCompanyInfo' && serviceName) {
                 return Promise.resolve(mockData.companyInfo);
             }
         });
 
-        require('fs').__forceError('rmdir');
+        fs.__forceError('rmdir');
         return await esignatureService
             .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest)
             .catch((error) => {
@@ -235,7 +248,7 @@ describe('esignatureService.template.create', () => {
     });
 
     test('throws an error if one occurs', async () => {
-        (utilService as any).invokeInternalService = jest.fn((serviceName, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             throw errorService.getErrorResponse(20).setDeveloperMessage('Force an error');
         });
 
