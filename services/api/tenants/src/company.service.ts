@@ -405,7 +405,7 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, i
             .setDeveloperMessage('Expected value to equal object containing recipient tenantId and companyCode');
     }
 
-    const supportedOperations = [PatchOperation.Copy, PatchOperation.Remove];
+    const supportedOperations = [PatchOperation.Copy, PatchOperation.Remove, PatchOperation.Test];
     if (!supportedOperations.includes(instruction.op)) {
         throw errorService.getErrorResponse(71).setDeveloperMessage(`Supported patch operations: ${supportedOperations.join()}`);
     }
@@ -452,60 +452,68 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, i
         const recipientTenantToken = await utilService.generateAssumedRoleToken(ssoRoles.tenantAdmin, recipientTenantId);
 
         for (const user of users) {
-            if (instruction.op === PatchOperation.Copy) {
+            if (instruction.op === PatchOperation.Test) {
+                const account: SsoAccount = await ssoService.getSsoAccountById(user.key, donorTenantId, donorTenantToken);
+                console.log(account.id, account.evoSbUserId);
+            } else if (instruction.op === PatchOperation.Copy) {
                 const action = async () => {
                     try {
                         const account: SsoAccount = await ssoService.getSsoAccountById(user.key, donorTenantId, donorTenantToken);
+                        console.log(account.evoSbUserId);
                         delete account.href;
                         delete account.id;
                         delete account.tenantId;
                         // generate a cryptographically-secure temp password
                         account.password = await crypto.randomBytes(8).toString('hex');
 
-                        const createdAccount: SsoAccount = await ssoService.createSsoAccount(
-                            recipientTenantId,
-                            account,
-                            recipientTenantToken,
-                        );
-                        createdAccounts.push(user.key);
+                        if (!account.evoSbUserId) {
+                            const createdAccount: SsoAccount = await ssoService.createSsoAccount(
+                                recipientTenantId,
+                                account,
+                                recipientTenantToken,
+                            );
+                            createdAccounts.push(user.key);
 
-                        // Note: (MJ-8259) We cannot delete right now because the endpoint requires the user to have the asure-admin role.
-                        // Previously, we were disabling created accounts as a rollback action. We are now opting to skip rollbacks to allow for smoother migrations.
-                        // rollbackActions.push(async () => {
-                        //     const account: SsoAccount = { enabled: false };
-                        //     await ssoService.updateSsoAccountById(createdAccount.id, recipientTenantId, account, recipientTenantToken);
-                        // });
+                            // Note: (MJ-8259) We cannot delete right now because the endpoint requires the user to have the asure-admin role.
+                            // Previously, we were disabling created accounts as a rollback action. We are now opting to skip rollbacks to allow for smoother migrations.
+                            // rollbackActions.push(async () => {
+                            //     const account: SsoAccount = { enabled: false };
+                            //     await ssoService.updateSsoAccountById(createdAccount.id, recipientTenantId, account, recipientTenantToken);
+                            // });
 
-                        // update PR_Integration_PK in recipient database
-                        const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
-                        query.setStringParameter('@ssoId', createdAccount.id);
-                        query.setParameter('@userId', user.id);
+                            // update PR_Integration_PK in recipient database
+                            const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
+                            query.setStringParameter('@ssoId', createdAccount.id);
+                            query.setParameter('@userId', user.id);
 
-                        const payload = {
-                            tenantId: recipientTenantId,
-                            queryName: query.name,
-                            query: query.value,
-                            queryType: QueryType.Simple,
-                        } as DatabaseEvent;
+                            const payload = {
+                                tenantId: recipientTenantId,
+                                queryName: query.name,
+                                query: query.value,
+                                queryType: QueryType.Simple,
+                            } as DatabaseEvent;
 
-                        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-                        // Note: (MJ-8259) Opting to skip database update rollbacks to allow for smoother migrations.
-                        // rollbackActions.push(async () => {
-                        //     const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
-                        //     query.setStringParameter('@ssoId', user.key);
-                        //     query.setParameter('@userId', user.id);
+                            await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+                            // Note: (MJ-8259) Opting to skip database update rollbacks to allow for smoother migrations.
+                            // rollbackActions.push(async () => {
+                            //     const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
+                            //     query.setStringParameter('@ssoId', user.key);
+                            //     query.setParameter('@userId', user.id);
 
-                        //     const payload = {
-                        //         tenantId: recipientTenantId,
-                        //         queryName: query.name,
-                        //         query: query.value,
-                        //         queryType: QueryType.Simple,
-                        //     } as DatabaseEvent;
+                            //     const payload = {
+                            //         tenantId: recipientTenantId,
+                            //         queryName: query.name,
+                            //         query: query.value,
+                            //         queryType: QueryType.Simple,
+                            //     } as DatabaseEvent;
 
-                        //     await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-                        // });
+                            //     await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+                            // });
 
-                        updatedUsers.push(user.key);
+                            updatedUsers.push(user.key);
+                        } else {
+                            console.log(`Skipping user with id ${account.id} and evoSbUserId ${account.evoSbUserId}`);
+                        }
                     } catch (e) {
                         console.error(`${user.key}: ${e}`);
                     }

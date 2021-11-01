@@ -233,7 +233,7 @@ describe('company.service.update.sso.account', () => {
             expect(error.statusCode).toEqual(422);
             expect(error.code).toEqual(71);
             expect(error.message).toEqual('Invalid patch operation supplied.');
-            expect(error.developerMessage).toEqual('Supported patch operations: copy,remove');
+            expect(error.developerMessage).toEqual('Supported patch operations: copy,remove,test');
         });
     });
 
