@@ -1,7 +1,7 @@
 declare @_employeeId bigint = @employeeId;
 declare @_flatCoverage bit = @flatCoverage;
 declare @_flatAmount numeric(18,2) = @flatAmount;
-declare @_earningsMultiplier int = @earningsMultiplier;
+declare @_earningsMultiplier numeric(18,2) = @earningsMultiplier;
 declare @_workHours int = @workHours;
 
 insert into dbo.GroupTermLife (
