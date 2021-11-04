@@ -23,11 +23,13 @@ describe('gtl.service.update', () => {
         });
 
         (employeeService as any).getById = jest.fn(() => {
-            return Promise.resolve({ evoData: {
-                employeeId: mockData.employeeId,
-                companyId: mockData.companyId,
-                clientId: mockData.clientId,
-            }});
+            return Promise.resolve({
+                evoData: {
+                    employeeId: mockData.employeeId,
+                    companyId: mockData.companyId,
+                    clientId: mockData.clientId,
+                },
+            });
         });
 
         return gtlService
@@ -38,7 +40,7 @@ describe('gtl.service.update', () => {
                 mockData.flatCoveragePayload,
                 mockData.emailAddress,
                 [],
-                mockData.accessToken
+                mockData.accessToken,
             )
             .then((response) => {
                 expect(response).toEqual(mockData.updateGtlRecordMockResult);
@@ -66,7 +68,7 @@ describe('gtl.service.update', () => {
                 mockData.flatCoveragePayload,
                 mockData.emailAddress,
                 [],
-                mockData.accessToken
+                mockData.accessToken,
             )
             .then(() => {
                 done.fail(new Error('Test should throw an exception.'));
@@ -102,7 +104,7 @@ describe('gtl.service.update', () => {
                 mockData.flatCoveragePayload,
                 mockData.emailAddress,
                 [],
-                mockData.accessToken
+                mockData.accessToken,
             )
             .then(() => {
                 done.fail(new Error('Test should throw an exception.'));
@@ -134,7 +136,15 @@ describe('gtl.service.update', () => {
         delete payload.flatAmount;
 
         await gtlService
-            .updateGtlRecord(mockData.tenantId, mockData.companyId, mockData.employeeId, payload, mockData.emailAddress, [], mockData.accessToken)
+            .updateGtlRecord(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                payload,
+                mockData.emailAddress,
+                [],
+                mockData.accessToken,
+            )
             .then(() => {
                 done.fail(new Error('Test should throw an exception.'));
             })
@@ -164,7 +174,15 @@ describe('gtl.service.update', () => {
         const payload = Object.assign({ earningsMultiplier: 2000 }, mockData.flatCoveragePayload);
 
         await gtlService
-            .updateGtlRecord(mockData.tenantId, mockData.companyId, mockData.employeeId, payload, mockData.emailAddress, [], mockData.accessToken)
+            .updateGtlRecord(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                payload,
+                mockData.emailAddress,
+                [],
+                mockData.accessToken,
+            )
             .then(() => {
                 done.fail(new Error('Test should throw an exception.'));
             })
@@ -195,7 +213,15 @@ describe('gtl.service.update', () => {
         delete payload.earningsMultiplier;
 
         await gtlService
-            .updateGtlRecord(mockData.tenantId, mockData.companyId, mockData.employeeId, payload, mockData.emailAddress, [], mockData.accessToken)
+            .updateGtlRecord(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                payload,
+                mockData.emailAddress,
+                [],
+                mockData.accessToken,
+            )
             .then(() => {
                 done.fail(new Error('Test should throw an exception.'));
             })
@@ -230,7 +256,7 @@ describe('gtl.service.update', () => {
                 mockData.earningsMultiplierPayload,
                 mockData.emailAddress,
                 [],
-                mockData.accessToken
+                mockData.accessToken,
             )
             .then(() => {
                 done.fail(new Error('Test should throw an exception.'));
@@ -261,7 +287,15 @@ describe('gtl.service.update', () => {
         const payload = Object.assign({ flatAmount: 20000 }, mockData.earningsMultiplierPayload);
 
         await gtlService
-            .updateGtlRecord(mockData.tenantId, mockData.companyId, mockData.employeeId, payload, mockData.emailAddress, [], mockData.accessToken)
+            .updateGtlRecord(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                payload,
+                mockData.emailAddress,
+                [],
+                mockData.accessToken,
+            )
             .then(() => {
                 done.fail(new Error('Test should throw an exception.'));
             })

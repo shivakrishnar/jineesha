@@ -6,18 +6,6 @@ import * as utils from '../utils';
 
 const configs = utils.getConfig();
 
-export async function setup(domain: string, accessToken: string): Promise<DirectDeposit> {
-    const directDepositsUri: string = getDirectDepositsUri(domain);
-    /**
-     * Note: Use of clearAll() within the setup function requires that integration
-     * test suites be run sequentially for valid results. Otherwise, there exists the risk
-     * of direct deposits setup for a particular test suite being deleted by another test suite's
-     * execution
-     */
-    await clearAll(directDepositsUri, accessToken);
-    return await createDirectDeposit(directDepositsUri, getValidDirectDepositObject(), accessToken);
-}
-
 export function createDirectDeposit(url: string, directDeposit: DirectDeposit, accessToken: string): Promise<DirectDeposit> {
     return new Promise((resolve, reject) => {
         request
@@ -33,16 +21,6 @@ export function createDirectDeposit(url: string, directDeposit: DirectDeposit, a
                 }
             });
     });
-}
-
-export function tearDown(domain: string, directDeposit: DirectDeposit, accessToken: string, callback: any): void {
-    deleteDirectDeposit(getDirectDepositUri(domain, directDeposit.id), accessToken)
-        .then((result) => {
-            callback(undefined, undefined);
-        })
-        .catch((error) => {
-            callback(error);
-        });
 }
 
 export function deleteDirectDeposit(url: string, accessToken: string): Promise<{}> {
@@ -82,9 +60,7 @@ export function getDirectDepositsUri(domain: string): string {
 }
 
 export function getDirectDepositUri(domain: string, directDepositId: number): string {
-    return `${domain}/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-        configs.employeeId
-    }/direct-deposits/${directDepositId}`;
+    return `${domain}/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/direct-deposits/${directDepositId}`;
 }
 
 export async function clearAll(directDepositsUri: string, accessToken: string): Promise<void> {
@@ -100,4 +76,26 @@ export async function clearAll(directDepositsUri: string, accessToken: string): 
     } catch (error) {
         console.error(`Unable to clear direct deposits. Reason: ${error}`);
     }
+}
+
+export async function setup(domain: string, accessToken: string): Promise<DirectDeposit> {
+    const directDepositsUri: string = getDirectDepositsUri(domain);
+    /**
+     * Note: Use of clearAll() within the setup function requires that integration
+     * test suites be run sequentially for valid results. Otherwise, there exists the risk
+     * of direct deposits setup for a particular test suite being deleted by another test suite's
+     * execution
+     */
+    await clearAll(directDepositsUri, accessToken);
+    return await createDirectDeposit(directDepositsUri, getValidDirectDepositObject(), accessToken);
+}
+
+export function tearDown(domain: string, directDeposit: DirectDeposit, accessToken: string, callback: any): void {
+    deleteDirectDeposit(getDirectDepositUri(domain, directDeposit.id), accessToken)
+        .then(() => {
+            callback(undefined, undefined);
+        })
+        .catch((error) => {
+            callback(error);
+        });
 }

@@ -37,6 +37,10 @@ export async function createPaginatedResult(
     return new PaginatedResult(limit, results, baseUrl, totalResults, previousPageToken, nextPageToken, firstPageToken, lastPageToken);
 }
 
+async function decodeKey(pageToken: any): Promise<string> {
+    return new Buffer(pageToken, 'base64').toString('ascii');
+}
+
 /**
  * Retrieves and returns pagination data.
  * @param {string[]} validQueryStringParameters: A collection of valid query parameters
@@ -93,8 +97,4 @@ export async function appendPaginationFilter(query: Query, page = 1, useMaxLimit
         false,
     );
     return query;
-}
-
-async function decodeKey(pageToken: any): Promise<string> {
-    return new Buffer(pageToken, 'base64').toString('ascii');
 }

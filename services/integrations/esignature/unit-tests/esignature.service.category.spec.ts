@@ -50,7 +50,7 @@ describe('esignatureService.company-categories.list', () => {
     });
 
     test('returns an error if one occurs', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             throw errorService.getErrorResponse(50).setDeveloperMessage('Force an error');
         });
 

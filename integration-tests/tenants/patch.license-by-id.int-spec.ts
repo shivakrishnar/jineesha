@@ -29,9 +29,7 @@ describe('update employee license EmailAcknowledged column By Id as an admin use
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/licenses/${
-            configs.licenses.id
-        }`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/licenses/${configs.licenses.id}`;
         request(baseUri)
             .patch(uri)
             .send(setUpEmailAcknowledgedBody(true))
@@ -45,9 +43,7 @@ describe('update employee license EmailAcknowledged column By Id as an admin use
     });
 
     test('must return a 400 if body is not provided', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/licenses/${
-            configs.licenses.id
-        }`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/licenses/${configs.licenses.id}`;
 
         request(baseUri)
             .patch(uri)
@@ -62,9 +58,7 @@ describe('update employee license EmailAcknowledged column By Id as an admin use
     });
 
     test('must return a 400 if body return and invalid value for emailAcknowledged', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/licenses/${
-            configs.licenses.id
-        }`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/licenses/${configs.licenses.id}`;
 
         request(baseUri)
             .patch(uri)
@@ -80,9 +74,7 @@ describe('update employee license EmailAcknowledged column By Id as an admin use
     });
 
     test('must return a 400 if body is invalid', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/licenses/${
-            configs.licenses.id
-        }`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/licenses/${configs.licenses.id}`;
 
         request(baseUri)
             .patch(uri)
@@ -148,9 +140,7 @@ describe('update employee license EmailAcknowledged column By Id as an admin use
     });
 
     test('must return 200 if emailAcknowledged is patched', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-            configs.licenses.employeeWithExpiringLicenses
-        }/licenses/${configs.licenses.id}`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.licenses.employeeWithExpiringLicenses}/licenses/${configs.licenses.id}`;
         request(baseUri)
             .patch(uri)
             .set('Authorization', `Bearer ${adminAccessToken}`)
@@ -171,14 +161,14 @@ describe('update employee license EmailAcknowledged column By Id as an admin use
                     .send(setUpEmailAcknowledgedBody(false))
                     .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
                     .expect(200)
-                    .end((error, response) => {
-                        utils.testResponse(error, response, done, () => {
-                            return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, response.body);
+                    .end((requestError, requestResponse) => {
+                        utils.testResponse(requestError, requestResponse, done, () => {
+                            return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, requestResponse.body);
                         });
 
-                        expect(response.body.id).toBe(configs.licenses.id);
-                        expect(response.body.oldEmailAcknowledged).toBe(true);
-                        expect(response.body.newEmailAcknowledged).toBe(false);
+                        expect(requestResponse.body.id).toBe(configs.licenses.id);
+                        expect(requestResponse.body.oldEmailAcknowledged).toBe(true);
+                        expect(requestResponse.body.newEmailAcknowledged).toBe(false);
                     });
             });
     });
@@ -195,9 +185,7 @@ describe('update license by id as an employee user', () => {
     });
 
     test('must return 401 error if employee level user is not tied to the requested employee', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-            configs.licenses.userAccessTest.unrightfulEmployee
-        }/licenses/${configs.licenses.userAccessTest.unrightfulEmployeeLicenseId}`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.licenses.userAccessTest.unrightfulEmployee}/licenses/${configs.licenses.userAccessTest.unrightfulEmployeeLicenseId}`;
         request(baseUri)
             .patch(uri)
             .set('Authorization', `Bearer ${employeeAccessToken}`)
@@ -212,9 +200,7 @@ describe('update license by id as an employee user', () => {
     });
 
     test('must return a 200 if employee level user is tied to the requested employee', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-            configs.licenses.userAccessTest.rightfulEmployee
-        }/licenses/${configs.licenses.userAccessTest.rightfulEmployeeLicenseId}`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.licenses.userAccessTest.rightfulEmployee}/licenses/${configs.licenses.userAccessTest.rightfulEmployeeLicenseId}`;
 
         request(baseUri)
             .patch(uri)
@@ -235,13 +221,13 @@ describe('update license by id as an employee user', () => {
                     .send(setUpEmailAcknowledgedBody(false))
                     .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
                     .expect(200)
-                    .end((error, response) => {
-                        utils.testResponse(error, response, done, () => {
-                            return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, response.body);
+                    .end((requestError, requestResponse) => {
+                        utils.testResponse(requestError, requestResponse, done, () => {
+                            return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, requestResponse.body);
                         });
-                        expect(response.body.id).toBe(configs.licenses.userAccessTest.rightfulEmployeeLicenseId);
-                        expect(response.body.oldEmailAcknowledged).toBe(true);
-                        expect(response.body.newEmailAcknowledged).toBe(false);
+                        expect(requestResponse.body.id).toBe(configs.licenses.userAccessTest.rightfulEmployeeLicenseId);
+                        expect(requestResponse.body.oldEmailAcknowledged).toBe(true);
+                        expect(requestResponse.body.newEmailAcknowledged).toBe(false);
                     });
             });
     });

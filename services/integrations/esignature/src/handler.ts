@@ -322,7 +322,7 @@ const updateCompanyEsignatureProductTierSchema = Yup.object().shape({
  * Creates a new template of a document to be e-signed
  */
 
-export const createTemplate = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const createTemplate = utilService.gatewayEventHandlerV2(async ({ event, requestBody }: IGatewayEventInput) => {
     console.info('esignature.handler.createTemplate');
 
     const { tenantId, companyId } = event.pathParameters;
@@ -344,9 +344,7 @@ export const createTemplate = utilService.gatewayEventHandlerV2(async ({ securit
         await utilService.validateCollection(customFieldsSchema, requestBody.customFields);
     }
 
-    const { email } = securityContext.principal;
-
-    return await esignatureService.createTemplate(tenantId, companyId, requestBody, email);
+    return await esignatureService.createTemplate(tenantId, companyId, requestBody);
 });
 
 /**
@@ -440,7 +438,7 @@ export const generateBillingReport = utilService.gatewayEventHandlerV2(
 
 export const generateInternalBillingReport = utilService.gatewayEventHandlerV2({
     allowAnonymous: true,
-    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    delegate: async () => {
         console.info('esignature.handler.generateInternalBillingReport');
         return await esignatureService.generateBillingReport({ returnReport: false, targetEmail: '', month: 0, year: 0 });
     },
@@ -449,7 +447,7 @@ export const generateInternalBillingReport = utilService.gatewayEventHandlerV2({
 /**
  * Lists all templates under a given company
  */
-export const listTemplates = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+export const listTemplates = utilService.gatewayEventHandlerV2(async ({ event }: IGatewayEventInput) => {
     console.info('esignature.handler.listTemplates');
 
     const { tenantId, companyId } = event.pathParameters;
@@ -474,7 +472,7 @@ export const listTemplates = utilService.gatewayEventHandlerV2(async ({ security
  */
 export const createSignUrl = utilService.gatewayEventHandlerV2({
     allowAnonymous: true,
-    delegate: async ({ securityContext, event }: IGatewayEventInput) => {
+    delegate: async ({ event }: IGatewayEventInput) => {
         console.info('esignature.handler.createSignUrl');
 
         const {
@@ -498,7 +496,7 @@ export const createSignUrl = utilService.gatewayEventHandlerV2({
 /**
  * Generates an edit url for a specific e-signature template
  */
-export const createEditUrl = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+export const createEditUrl = utilService.gatewayEventHandlerV2(async ({ event }: IGatewayEventInput) => {
     console.info('esignature.handler.createEditUrl');
 
     utilService.normalizeHeaders(event);
@@ -544,7 +542,7 @@ export const sendReminderEmail = utilService.gatewayEventHandlerV2(async ({ secu
 /**
  *  List documents uploaded for E-Signing
  */
-export const listDocuments = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+export const listDocuments = utilService.gatewayEventHandlerV2(async ({ event }: IGatewayEventInput) => {
     console.info('esignature.handler.listDocuments');
 
     utilService.normalizeHeaders(event);
@@ -697,7 +695,7 @@ export const listEmployeeDocumentCategories = utilService.gatewayEventHandlerV2(
 /**
  * List each document category among a company's documents
  */
-export const listCompanyDocumentCategories = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+export const listCompanyDocumentCategories = utilService.gatewayEventHandlerV2(async ({ event }: IGatewayEventInput) => {
     console.info('esignature.handler.listCompanyDocumentCategories');
 
     utilService.normalizeHeaders(event);
@@ -723,7 +721,7 @@ export const listCompanyDocumentCategories = utilService.gatewayEventHandlerV2(a
 /**
  * Handles event callbacks from HelloSign
  */
-export const eventCallbackDelegate = async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const eventCallbackDelegate = async ({ event }: IGatewayEventInput) => {
     console.info('esignature.handler.eventCallback');
 
     const hellosignEvent = JSON.parse(new Buffer(event.body, 'base64').toString('ascii').match(/\{(.*)\}/g)[0]);
@@ -752,7 +750,7 @@ export const eventCallback = utilService.gatewayEventHandlerV2({
  */
 export const onboarding = utilService.gatewayEventHandlerV2({
     allowAnonymous: true,
-    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    delegate: async ({ event, requestBody }: IGatewayEventInput) => {
         console.info('esignature.handler.onboarding');
 
         const {
@@ -788,33 +786,31 @@ export const onboarding = utilService.gatewayEventHandlerV2({
 /**
  * Remove signed onboarding documents from the database if the onboarding they're associated with is incomplete.
  */
-export const deleteOnboardingDocuments = utilService.gatewayEventHandlerV2(
-    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.deleteOnboardingDocuments');
+export const deleteOnboardingDocuments = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('esignature.handler.deleteOnboardingDocuments');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, onboardingResourceUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, onboardingResourceUriSchema);
 
-        const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
-            console.log(`User Role: ${role}`);
-            return role === Role.globalAdmin;
-        });
+    const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+        console.log(`User Role: ${role}`);
+        return role === Role.globalAdmin;
+    });
 
-        if (!isAuthorized) {
-            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
-        }
+    if (!isAuthorized) {
+        throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+    }
 
-        const { tenantId, companyId, onboardingId } = event.pathParameters;
+    const { tenantId, companyId, onboardingId } = event.pathParameters;
 
-        return await esignatureService.deleteOnboardingDocuments(tenantId, companyId, onboardingId);
-    },
-);
+    return await esignatureService.deleteOnboardingDocuments(tenantId, companyId, onboardingId);
+});
 
 /**
  *  Adds/Remove e-signature functionality for a specified company within a tenant
  */
-export const configure = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const configure = utilService.gatewayEventHandlerV2(async ({ event, requestBody }: IGatewayEventInput) => {
     console.info('esignature.handler.configure');
 
     utilService.normalizeHeaders(event);
@@ -955,7 +951,7 @@ export const listEmployeeDocuments = utilService.gatewayEventHandlerV2(async ({ 
 
 export const getOnboardingDocumentPreview = utilService.gatewayEventHandlerV2({
     allowAnonymous: true,
-    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    delegate: async ({ event, requestBody }: IGatewayEventInput) => {
         console.info('esignature.handler.getOnboardingDocumentPreview');
 
         utilService.validateAndThrow(event.pathParameters, tenantResourceUriSchema);
@@ -1048,7 +1044,7 @@ export const getDocumentPreviewByCompany = utilService.gatewayEventHandlerV2(asy
 /**
  * Generates a preview of an employee's saved document
  */
-export const getDocumentPreview = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+export const getDocumentPreview = utilService.gatewayEventHandlerV2(async ({ event }: IGatewayEventInput) => {
     console.info('esignature.handler.getDocumentPreview');
 
     utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
@@ -1061,7 +1057,7 @@ export const getDocumentPreview = utilService.gatewayEventHandlerV2(async ({ sec
 /**
  * Persists an upload document metadata
  */
-export const saveUploadedDocumentMetadata = async (event: any, context: any, callback: any) => {
+export const saveUploadedDocumentMetadata = async (event: any) => {
     console.info('esignature.handler.saveUploadedDocumentMetadata');
 
     console.info(`Received Event: ${JSON.stringify(event)}`);
@@ -1133,52 +1129,48 @@ export const createCompanyDocument = utilService.gatewayEventHandlerV2(
 /**
  * Updates the status of a signature request (EsignatureMetadata).
  */
-export const updateSignatureRequestStatus = utilService.gatewayEventHandlerV2(
-    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.updateSignatureRequestStatus');
+export const updateSignatureRequestStatus = utilService.gatewayEventHandlerV2(async ({ event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.updateSignatureRequestStatus');
 
-        const { tenantId, companyId, employeeId, documentId } = event.pathParameters;
+    const { tenantId, companyId, employeeId, documentId } = event.pathParameters;
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
 
-        await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, updateSignatureRequestStatusValidationSchema);
-        utilService.checkAdditionalProperties(updateSignatureRequestStatusValidationSchema, requestBody, 'Update Esignature Metadata');
-        await utilService.validateRequestBody(updateSignatureRequestStatusSchema, requestBody);
+    await utilService.requirePayload(requestBody);
+    utilService.validateAndThrow(requestBody, updateSignatureRequestStatusValidationSchema);
+    utilService.checkAdditionalProperties(updateSignatureRequestStatusValidationSchema, requestBody, 'Update Esignature Metadata');
+    await utilService.validateRequestBody(updateSignatureRequestStatusSchema, requestBody);
 
-        return await esignatureService.updateSignatureRequestStatus(tenantId, companyId, employeeId, documentId, requestBody);
-    },
-);
+    return await esignatureService.updateSignatureRequestStatus(tenantId, companyId, employeeId, documentId, requestBody);
+});
 
 /**
  * Updates a specified document record for a company
  */
-export const updateCompanyDocument = utilService.gatewayEventHandlerV2(
-    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.updateCompanyDocument');
+export const updateCompanyDocument = utilService.gatewayEventHandlerV2(async ({ event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.updateCompanyDocument');
 
-        const { tenantId, companyId, documentId } = event.pathParameters;
+    const { tenantId, companyId, documentId } = event.pathParameters;
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyResourceUriSchema);
 
-        await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, updateCompanyDocumentValidationSchema);
-        utilService.checkAdditionalProperties(updateCompanyDocumentValidationSchema, requestBody, 'Update Company Document');
-        await utilService.validateRequestBody(updateCompanyDocumentSchema, requestBody);
-        if (requestBody.fileObject) {
-            await utilService.requirePayload(requestBody.fileObject);
-            utilService.validateAndThrow(requestBody.fileObject, fileObjectValidationSchema);
-            utilService.checkAdditionalProperties(fileObjectValidationSchema, requestBody.fileObject, 'File Object');
-            await utilService.validateRequestBody(fileObjectSchema, requestBody.fileObject);
-        }
+    await utilService.requirePayload(requestBody);
+    utilService.validateAndThrow(requestBody, updateCompanyDocumentValidationSchema);
+    utilService.checkAdditionalProperties(updateCompanyDocumentValidationSchema, requestBody, 'Update Company Document');
+    await utilService.validateRequestBody(updateCompanyDocumentSchema, requestBody);
+    if (requestBody.fileObject) {
+        await utilService.requirePayload(requestBody.fileObject);
+        utilService.validateAndThrow(requestBody.fileObject, fileObjectValidationSchema);
+        utilService.checkAdditionalProperties(fileObjectValidationSchema, requestBody.fileObject, 'File Object');
+        await utilService.validateRequestBody(fileObjectSchema, requestBody.fileObject);
+    }
 
-        return await esignatureService.updateCompanyDocument(tenantId, companyId, documentId, requestBody);
-    },
-);
+    return await esignatureService.updateCompanyDocument(tenantId, companyId, documentId, requestBody);
+});
 
 /**
  * Updates a specified document record for a company
@@ -1299,37 +1291,35 @@ export const deleteEmployeeDocument = utilService.gatewayEventHandlerV2(async ({
 /**
  * Creates a signed version of a simple sign document for an employee
  */
-export const createSimpleSignDocument = utilService.gatewayEventHandlerV2(
-    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('esignature.handler.createSimpleSignDocument');
+export const createSimpleSignDocument = utilService.gatewayEventHandlerV2(async ({ event, requestBody }: IGatewayEventInput) => {
+    console.info('esignature.handler.createSimpleSignDocument');
 
-        const { tenantId, companyId, employeeId } = event.pathParameters;
+    const { tenantId, companyId, employeeId } = event.pathParameters;
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeResourceUriSchema);
 
-        await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, createSimpleSignDocumentValidationSchema);
-        utilService.checkAdditionalProperties(createSimpleSignDocumentValidationSchema, requestBody, 'Create Simple Sign Document');
-        await utilService.validateRequestBody(createSimpleSignDocumentSchema, requestBody);
+    await utilService.requirePayload(requestBody);
+    utilService.validateAndThrow(requestBody, createSimpleSignDocumentValidationSchema);
+    utilService.checkAdditionalProperties(createSimpleSignDocumentValidationSchema, requestBody, 'Create Simple Sign Document');
+    await utilService.validateRequestBody(createSimpleSignDocumentSchema, requestBody);
 
-        return await esignatureService.createSimpleSignDocument(
-            tenantId,
-            companyId,
-            requestBody,
-            event.requestContext.identity.sourceIp,
-            employeeId,
-        );
-    },
-);
+    return await esignatureService.createSimpleSignDocument(
+        tenantId,
+        companyId,
+        requestBody,
+        event.requestContext.identity.sourceIp,
+        employeeId,
+    );
+});
 
 /**
  * Creates a signed version of an onboarding simple sign document for an employee
  */
 export const createOnboardingSimpleSignDocument = utilService.gatewayEventHandlerV2({
     allowAnonymous: true,
-    delegate: async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    delegate: async ({ event, requestBody }: IGatewayEventInput) => {
         console.info('esignature.handler.createOnboardingSimpleSignDocument');
 
         const { tenantId, companyId, onboardingId } = event.pathParameters;

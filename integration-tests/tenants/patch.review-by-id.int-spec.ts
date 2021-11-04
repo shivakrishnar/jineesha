@@ -8,9 +8,7 @@ let adminAccessToken: string;
 let employeeAccessToken: string;
 
 const errorMessageSchema = JSON.parse(fs.readFileSync('services/api/models/ErrorMessage.json').toString());
-const updateEmailAcknowledgedSchema = JSON.parse(
-    fs.readFileSync('services/api/models/updateEmailAcknowledged.json').toString(),
-);
+const updateEmailAcknowledgedSchema = JSON.parse(fs.readFileSync('services/api/models/updateEmailAcknowledged.json').toString());
 const schemas = [errorMessageSchema, updateEmailAcknowledgedSchema];
 const errorMessageSchemaName = 'ErrorMessage';
 
@@ -31,9 +29,7 @@ describe('update employee review EmailAcknowledged column By Id as an admin user
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/reviews/${
-            configs.reviews.id
-        }`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/reviews/${configs.reviews.id}`;
         request(baseUri)
             .patch(uri)
             .send(setUpEmailAcknowledgedBody(true))
@@ -47,9 +43,7 @@ describe('update employee review EmailAcknowledged column By Id as an admin user
     });
 
     test('must return a 400 if body is not provided', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/reviews/${
-            configs.reviews.id
-        }`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/reviews/${configs.reviews.id}`;
 
         request(baseUri)
             .patch(uri)
@@ -64,9 +58,7 @@ describe('update employee review EmailAcknowledged column By Id as an admin user
     });
 
     test('return a 400 if an invalid value for emailAcknowledged is provided', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/reviews/${
-            configs.reviews.id
-        }`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/reviews/${configs.reviews.id}`;
 
         request(baseUri)
             .patch(uri)
@@ -82,9 +74,7 @@ describe('update employee review EmailAcknowledged column By Id as an admin user
     });
 
     test('must return a 400 if body is invalid', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/reviews/${
-            configs.reviews.id
-        }`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/reviews/${configs.reviews.id}`;
 
         request(baseUri)
             .patch(uri)
@@ -150,9 +140,7 @@ describe('update employee review EmailAcknowledged column By Id as an admin user
     });
 
     test('must return 200 if emailAcknowledged is patched', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-            configs.reviews.employeeWithUpcomingReviews
-        }/reviews/${configs.reviews.id}`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.reviews.employeeWithUpcomingReviews}/reviews/${configs.reviews.id}`;
         request(baseUri)
             .patch(uri)
             .set('Authorization', `Bearer ${adminAccessToken}`)
@@ -167,19 +155,19 @@ describe('update employee review EmailAcknowledged column By Id as an admin user
                 expect(response.body.newEmailAcknowledged).toBe(true);
 
                 request(baseUri)
-                .patch(uri)
-                .set('Authorization', `Bearer ${adminAccessToken}`)
-                .send(setUpEmailAcknowledgedBody(false))
-                .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-                .expect(200)
-                .end((error, response) => {
-                    utils.testResponse(error, response, done, () => {
-                        return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, response.body);
+                    .patch(uri)
+                    .set('Authorization', `Bearer ${adminAccessToken}`)
+                    .send(setUpEmailAcknowledgedBody(false))
+                    .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
+                    .expect(200)
+                    .end((requestError, requestResponse) => {
+                        utils.testResponse(requestError, requestResponse, done, () => {
+                            return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, requestResponse.body);
+                        });
+                        expect(requestResponse.body.id).toBe(configs.reviews.id);
+                        expect(requestResponse.body.oldEmailAcknowledged).toBe(true);
+                        expect(requestResponse.body.newEmailAcknowledged).toBe(false);
                     });
-                    expect(response.body.id).toBe(configs.reviews.id);
-                    expect(response.body.oldEmailAcknowledged).toBe(true);
-                    expect(response.body.newEmailAcknowledged).toBe(false);
-                });
             });
     });
 });
@@ -195,9 +183,7 @@ describe('update review by id as an employee user', () => {
     });
 
     test('must return 401 error if employee level user is not tied to the requested employee', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-            configs.reviews.userAccessTest.unrightfulEmployee
-        }/reviews/${configs.reviews.userAccessTest.unrightfulEmployeeReviewId}`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.reviews.userAccessTest.unrightfulEmployee}/reviews/${configs.reviews.userAccessTest.unrightfulEmployeeReviewId}`;
 
         request(baseUri)
             .patch(uri)
@@ -213,9 +199,7 @@ describe('update review by id as an employee user', () => {
     });
 
     test('must return a 200 if employee level user is tied to the requested employee', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
-            configs.reviews.userAccessTest.rightfulEmployee
-        }/reviews/${configs.reviews.userAccessTest.rightfulEmployeeReviewId}`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.reviews.userAccessTest.rightfulEmployee}/reviews/${configs.reviews.userAccessTest.rightfulEmployeeReviewId}`;
 
         request(baseUri)
             .patch(uri)
@@ -236,13 +220,13 @@ describe('update review by id as an employee user', () => {
                     .send(setUpEmailAcknowledgedBody(false))
                     .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
                     .expect(200)
-                    .end((error, response) => {
-                        utils.testResponse(error, response, done, () => {
-                            return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, response.body);
+                    .end((requestError, requestResponse) => {
+                        utils.testResponse(requestError, requestResponse, done, () => {
+                            return utils.assertJsonOrThrow(schemas, updateEmailAcknowledgedSchema, requestResponse.body);
                         });
-                        expect(response.body.id).toBe(configs.reviews.userAccessTest.rightfulEmployeeReviewId);
-                        expect(response.body.oldEmailAcknowledged).toBe(true);
-                        expect(response.body.newEmailAcknowledged).toBe(false);
+                        expect(requestResponse.body.id).toBe(configs.reviews.userAccessTest.rightfulEmployeeReviewId);
+                        expect(requestResponse.body.oldEmailAcknowledged).toBe(true);
+                        expect(requestResponse.body.newEmailAcknowledged).toBe(false);
                     });
             });
     });

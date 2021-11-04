@@ -23,11 +23,13 @@ describe('gtl.service.delete', () => {
         });
 
         (employeeService as any).getById = jest.fn(() => {
-            return Promise.resolve({ evoData: {
-                employeeId: mockData.employeeId,
-                companyId: mockData.companyId,
-                clientId: mockData.clientId,
-            }});
+            return Promise.resolve({
+                evoData: {
+                    employeeId: mockData.employeeId,
+                    companyId: mockData.companyId,
+                    clientId: mockData.clientId,
+                },
+            });
         });
 
         return gtlService
@@ -37,7 +39,7 @@ describe('gtl.service.delete', () => {
                 mockData.employeeId,
                 mockData.emailAddress,
                 [],
-                mockData.accessToken
+                mockData.accessToken,
             )
             .then((response) => {
                 expect(response.statusCode).toEqual(200);
@@ -64,7 +66,7 @@ describe('gtl.service.delete', () => {
                 mockData.employeeId,
                 mockData.emailAddress,
                 [],
-                mockData.accessToken
+                mockData.accessToken,
             )
             .then(() => {
                 done.fail(new Error('Test should throw an exception.'));
@@ -99,7 +101,7 @@ describe('gtl.service.delete', () => {
                 mockData.employeeId,
                 mockData.emailAddress,
                 [],
-                mockData.accessToken
+                mockData.accessToken,
             )
             .then(() => {
                 done.fail(new Error('Test should throw an exception.'));

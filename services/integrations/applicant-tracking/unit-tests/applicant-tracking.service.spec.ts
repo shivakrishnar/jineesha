@@ -13,7 +13,7 @@ describe('applicantTrackingService.applicantDataImport', () => {
     });
 
     test('creates applicant data', async () => {
-        (request as any).get = jest.fn((url: any) => {
+        (request as any).get = jest.fn(() => {
             return Promise.resolve(JSON.stringify(mockData.documentResponse));
         });
 

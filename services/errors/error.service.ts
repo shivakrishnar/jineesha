@@ -1,49 +1,5 @@
 import { ErrorMessage } from './errorMessage';
 
-/**
- * Returns a properly formatted ErrorMessage object with messaging for the
- * code that was requested. If no matching code is found it will default to the
- * messaging for a 500 error.
- *
- * @param {number} code
- */
-export function getErrorResponse(code: number): ErrorMessage {
-    return findErrorMessage(code);
-}
-
-export function notAuthenticated(): ErrorMessage {
-    return findErrorMessage(10);
-}
-
-export function notAuthorized(role: string): ErrorMessage {
-    const errorMessage = findErrorMessage(20);
-    errorMessage.setDeveloperMessage(`The principal does not have the required role (${role}).`);
-    return errorMessage;
-}
-
-export function notFound(): ErrorMessage {
-    return findErrorMessage(50);
-}
-
-/**
- * Private function which locates an error message based on the code that is
- * passed in. If a message with the code is not found then the default message
- * with an status code of 500 is returned.
- *
- * @param {number} code
- */
-function findErrorMessage(code: number): ErrorMessage {
-    let message = errorMessages().find((d) => {
-        return d.code === code;
-    });
-
-    if (message === undefined) {
-        message = findErrorMessage(0);
-    }
-
-    return new ErrorMessage(message as ErrorMessage);
-}
-
 function errorMessages(): ErrorMessage[] {
     return JSON.parse(`[
     {
@@ -138,4 +94,48 @@ function errorMessages(): ErrorMessage[] {
       "moreInfo": ""
     }
   ]`);
+}
+
+/**
+ * Private function which locates an error message based on the code that is
+ * passed in. If a message with the code is not found then the default message
+ * with an status code of 500 is returned.
+ *
+ * @param {number} code
+ */
+function findErrorMessage(code: number): ErrorMessage {
+    let message = errorMessages().find((d) => {
+        return d.code === code;
+    });
+
+    if (message === undefined) {
+        message = findErrorMessage(0);
+    }
+
+    return new ErrorMessage(message as ErrorMessage);
+}
+
+/**
+ * Returns a properly formatted ErrorMessage object with messaging for the
+ * code that was requested. If no matching code is found it will default to the
+ * messaging for a 500 error.
+ *
+ * @param {number} code
+ */
+export function getErrorResponse(code: number): ErrorMessage {
+    return findErrorMessage(code);
+}
+
+export function notAuthenticated(): ErrorMessage {
+    return findErrorMessage(10);
+}
+
+export function notAuthorized(role: string): ErrorMessage {
+    const errorMessage = findErrorMessage(20);
+    errorMessage.setDeveloperMessage(`The principal does not have the required role (${role}).`);
+    return errorMessage;
+}
+
+export function notFound(): ErrorMessage {
+    return findErrorMessage(50);
 }

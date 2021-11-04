@@ -99,6 +99,44 @@ export async function executeBatch(pool: ConnectionPool, batchStatement: string)
 }
 
 /**
+ * List all client databases with the exception of restricted system-only versions
+ * within a given RDS instance. System-only databases are: master, model,
+ * tempdb, msdb and rdsadmin
+ * @param {string} rdsInstanceEndpoint: The RDS instance endpoint
+ * @returns {Promise<string[]>}: Promise of an array of database names
+ */
+export async function listAvailableDatabases(rdsInstanceEndpoint: string): Promise<string[]> {
+    console.info('database.service.listAvailableDatabases');
+
+    const restrictedDatabases = ['master', 'model', 'tempdb', 'msdb', 'rdsadmin'];
+    let databaseList: string[] = [];
+    let pool: ConnectionPool;
+
+    // Filter out restricted databases
+    try {
+        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
+
+        pool = await createConnectionPool(rdsCredentials.username, rdsCredentials.password, rdsInstanceEndpoint);
+
+        const query = new Query('DatabaseList', Queries.databaseList);
+        const results: IResult<{}> = await executeQuery(pool.transaction(), query.name, query.value);
+        const recordSet = results.recordset;
+        databaseList = Object.keys(recordSet)
+            .map((key) => recordSet[key].name)
+            .filter((database) => !restrictedDatabases.includes(database));
+    } catch (error) {
+        console.error('unable to list databases');
+        throw error;
+    } finally {
+        if (pool && pool.connected) {
+            await pool.close();
+        }
+    }
+
+    return databaseList;
+}
+
+/**
  *  Finds the RDS instance and associated database name  a given tenant is hosted on.
  * @param {string} tenantId: The unique identifier for a tenant.
  * @return {Promise<ConnectionString>}: Returns a promise of the RDS endpoint and database name.
@@ -155,44 +193,6 @@ export async function findConnectionString(tenantId: string): Promise<Connection
         console.error(`Error determining RDS connection parameters: ${JSON.stringify(error)}`);
         throw getErrorResponse(0);
     }
-}
-
-/**
- * List all client databases with the exception of restricted system-only versions
- * within a given RDS instance. System-only databases are: master, model,
- * tempdb, msdb and rdsadmin
- * @param {string} rdsInstanceEndpoint: The RDS instance endpoint
- * @returns {Promise<string[]>}: Promise of an array of database names
- */
-export async function listAvailableDatabases(rdsInstanceEndpoint: string): Promise<string[]> {
-    console.info('database.service.listAvailableDatabases');
-
-    const restrictedDatabases = ['master', 'model', 'tempdb', 'msdb', 'rdsadmin'];
-    let databaseList: string[] = [];
-    let pool: ConnectionPool;
-
-    // Filter out restricted databases
-    try {
-        const rdsCredentials = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
-
-        pool = await createConnectionPool(rdsCredentials.username, rdsCredentials.password, rdsInstanceEndpoint);
-
-        const query = new Query('DatabaseList', Queries.databaseList);
-        const results: IResult<{}> = await executeQuery(pool.transaction(), query.name, query.value);
-        const recordSet = results.recordset;
-        databaseList = Object.keys(recordSet)
-            .map((key) => recordSet[key].name)
-            .filter((database) => !restrictedDatabases.includes(database));
-    } catch (error) {
-        console.error('unable to list databases');
-        throw error;
-    } finally {
-        if (pool && pool.connected) {
-            await pool.close();
-        }
-    }
-
-    return databaseList;
 }
 
 const s3Client = new AWS.S3({

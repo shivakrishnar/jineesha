@@ -31,64 +31,64 @@ import * as mockData from './mock-data';
     return 30;
 });
 
-(utilService as any).getSecret = jest.fn((params: any) => {
+(utilService as any).getSecret = jest.fn(() => {
     return `{
     "username": "user",
     "password": "password"
   }`;
 });
 
-(utilService as any).logToAuditTrail = jest.fn((params: any) => {
+(utilService as any).logToAuditTrail = jest.fn(() => {
     return {};
 });
 
-(utilService as any).clearCache = jest.fn((pool: any, accessToken: string) => {
+(utilService as any).clearCache = jest.fn(() => {
     return;
 });
 
-(utilService as any).getSSOToken = jest.fn((params: any) => {
+(utilService as any).getSSOToken = jest.fn(() => {
     return 'token';
 });
 
-(utilService as any).invokeInternalService = jest.fn((params: any) => {
+(utilService as any).invokeInternalService = jest.fn(() => {
     return {};
 });
 
-(utilService as any).getPayrollApiCredentials = jest.fn((params: any) => {
+(utilService as any).getPayrollApiCredentials = jest.fn(() => {
     return 'token';
 });
 
-(payrollService as any).getEvolutionEarningAndDeduction = jest.fn((params: any) => {
+(payrollService as any).getEvolutionEarningAndDeduction = jest.fn(() => {
     return {};
 });
 
-(payrollService as any).updateEvolutionEarningAndDeduction = jest.fn((params: any) => {
+(payrollService as any).updateEvolutionEarningAndDeduction = jest.fn(() => {
     return {};
 });
 
-(ssoService as any).getAccessToken = jest.fn((params: any) => {
+(ssoService as any).getAccessToken = jest.fn(() => {
     return {};
 });
 
-(ssoService as any).getTenantById = jest.fn((params: any) => {
+(ssoService as any).getTenantById = jest.fn(() => {
     return {};
 });
 
-(databaseService as any).createConnectionPool = jest.fn((params: any) => {
+(databaseService as any).createConnectionPool = jest.fn(() => {
     const pool = new ConnectionPool('dummyConnectionString');
     return Promise.resolve(pool);
 });
 
-(databaseService as any).findConnectionString = jest.fn((params: any) => {
+(databaseService as any).findConnectionString = jest.fn(() => {
     return Promise.resolve('');
 });
 
-(paginationService as any).appendPaginationFilter = jest.fn((params: any) => {
+(paginationService as any).appendPaginationFilter = jest.fn(() => {
     return Promise.resolve('');
 });
 
 describe('directDepositService.list', () => {
-    (utilService as any).invokeInternalService = jest.fn((params: any) => {
+    (utilService as any).invokeInternalService = jest.fn(() => {
         return Promise.resolve(mockData.listResponseObject);
     });
 
@@ -147,7 +147,7 @@ describe('directDepositService.create', () => {
     });
 
     test('returns a 409 error when a record already exists with the same routing or account number', () => {
-        (utilService as any).invokeInternalService = jest.fn((params: any) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.duplicateBankAccountResponseObject);
         });
         return directDepositService
@@ -366,7 +366,7 @@ describe('directDepositService.delete', () => {
     });
 
     test('returns a 404 when the requested resource does not exist', () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, query) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.emptyResponseObject);
         });
         return directDepositService

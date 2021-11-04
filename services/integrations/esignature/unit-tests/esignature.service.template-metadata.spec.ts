@@ -56,7 +56,7 @@ describe('esignatureService.template-metadata.create', () => {
     });
 
     test('throws an error if one occurs', async () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             throw errorService.getErrorResponse(30).setDeveloperMessage('Force an error');
         });
 

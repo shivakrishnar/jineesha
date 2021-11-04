@@ -10,7 +10,7 @@ describe('databaseService.saveDocumentToS3', () => {
     beforeEach(() => {
         setup();
 
-        (utilService as any).checkForFileExistence = jest.fn((params: any) => {
+        (utilService as any).checkForFileExistence = jest.fn(() => {
             return dbServiceMockData.fileExistenceResponseArray;
         });
     });

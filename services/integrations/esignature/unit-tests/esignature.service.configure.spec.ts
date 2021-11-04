@@ -34,7 +34,7 @@ describe('esignatureService.configure.add', () => {
             }
         });
 
-        (integrationsService as any).getIntegrationConfigurationByCompany = jest.fn((params) => {
+        (integrationsService as any).getIntegrationConfigurationByCompany = jest.fn(() => {
             return undefined;
         });
 
@@ -45,15 +45,15 @@ describe('esignatureService.configure.add', () => {
     });
 
     test('throws an error if one occurs while adding a configuration', async (done) => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             throw errorService.getErrorResponse(0);
         });
 
-        (integrationsService as any).getIntegrationConfigurationByCompany = jest.fn((params) => {
+        (integrationsService as any).getIntegrationConfigurationByCompany = jest.fn(() => {
             return undefined;
         });
 
-        (integrationsService as any).createIntegrationConfiguration = jest.fn((params) => {
+        (integrationsService as any).createIntegrationConfiguration = jest.fn(() => {
             throw new Error('Manually throw an error');
         });
 
@@ -73,7 +73,7 @@ describe('esignatureService.configure.add', () => {
     });
 
     test('throws an error if one occurs', async (done) => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             throw errorService.getErrorResponse(0);
         });
 
@@ -118,7 +118,7 @@ describe('esignatureService.configure.remove', () => {
             }
         });
 
-        (integrationsService as any).getIntegrationConfigurationByCompany = jest.fn((params) => {
+        (integrationsService as any).getIntegrationConfigurationByCompany = jest.fn(() => {
             return undefined;
         });
 
@@ -159,7 +159,7 @@ describe('esignatureService.configure.delete', () => {
             }
         });
 
-        (integrationsService as any).getIntegrationConfigurationByCompany = jest.fn((params) => {
+        (integrationsService as any).getIntegrationConfigurationByCompany = jest.fn(() => {
             return undefined;
         });
 

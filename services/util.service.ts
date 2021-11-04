@@ -97,6 +97,32 @@ function isHttpResponse<T>(response: any): response is IHttpResponse<T> {
 }
 
 /**
+ * Determines if an event invocation is purely for warm-up purposes
+ * @param { ApiInvocationEvent} event: The lambda invocation event
+ * @returns {boolean}: True, if for warm-up purposes; otherwise, false.
+ */
+export function isLambdaWarmupInvocation(event: ApiInvocationEvent): event is ScheduledEvent {
+    return (event as ScheduledEvent).source === 'serverless-plugin-warmup';
+}
+
+/**
+ * Builds a Lambda response object which can be returned to API Gateway.
+ */
+export function buildLambdaResponse(statusCode: number, headers: Headers, input: any, uri: string, isBase64Encoded?: boolean): ProxyResult {
+    console.info(`utilService.buildLambdaResponse (httpStatusCode : ${statusCode}; uri : ${uri})`);
+    if (headers) {
+        headers.accessControlHeader();
+    } else {
+        headers = new Headers().accessControlHeader();
+    }
+
+    const body = isBase64Encoded ? input : JSON.stringify(input);
+    const response: ProxyResult = { statusCode, headers: headers.toJSON(), body, isBase64Encoded };
+
+    return response;
+}
+
+/**
  * Handle an API Gateway event and make the appropriate callback. Response from delegate can be a POJO or an IHttpResponse.
  *
  * This is an enhanced version of gatewayEventHander() (above), supporting V2 access tokens (in addition to V1 tokens).
@@ -171,23 +197,6 @@ export function gatewayEventHandlerV2<T>(
             }
         })();
     };
-}
-
-/**
- * Builds a Lambda response object which can be returned to API Gateway.
- */
-export function buildLambdaResponse(statusCode: number, headers: Headers, input: any, uri: string, isBase64Encoded?: boolean): ProxyResult {
-    console.info(`utilService.buildLambdaResponse (httpStatusCode : ${statusCode}; uri : ${uri})`);
-    if (headers) {
-        headers.accessControlHeader();
-    } else {
-        headers = new Headers().accessControlHeader();
-    }
-
-    const body = isBase64Encoded ? input : JSON.stringify(input);
-    const response: ProxyResult = { statusCode, headers: headers.toJSON(), body, isBase64Encoded };
-
-    return response;
 }
 
 /**
@@ -370,25 +379,6 @@ export function makeSerializable(error: any): any {
     return serializableError;
 }
 
-export async function getApplicationSecret(applicationId: string): Promise<string> {
-    console.info(`getApplicationSecret(applicationId: ${applicationId})`);
-    try {
-        let secretId: string;
-        if (applicationId === configService.getGoldilocksApplicationId()) {
-            secretId = configService.getSsoCredentialsId();
-        } else if (applicationId === configService.getHrApplicationId()) {
-            secretId = configService.getHrCredentialsId();
-        } else {
-            // assume evolution application
-            secretId = configService.getApiSecretId();
-        }
-        const secret = await getSecret(secretId);
-        return JSON.parse(secret).apiSecret;
-    } catch (e) {
-        throw new Error(`Failed to get secret for applicationId ${applicationId}: ${e.message}`);
-    }
-}
-
 export async function getSecret(id: string): Promise<string> {
     console.info('utilService.getSecret');
     const [endpoint, region] = [configService.getSecretsAwsEndpoint(), configService.getAwsRegion()];
@@ -409,6 +399,25 @@ export async function getSecret(id: string): Promise<string> {
     } catch (error) {
         console.error(`something blew up: ${JSON.stringify(error)}`);
         throw new Error('Something went wrong');
+    }
+}
+
+export async function getApplicationSecret(applicationId: string): Promise<string> {
+    console.info(`getApplicationSecret(applicationId: ${applicationId})`);
+    try {
+        let secretId: string;
+        if (applicationId === configService.getGoldilocksApplicationId()) {
+            secretId = configService.getSsoCredentialsId();
+        } else if (applicationId === configService.getHrApplicationId()) {
+            secretId = configService.getHrCredentialsId();
+        } else {
+            // assume evolution application
+            secretId = configService.getApiSecretId();
+        }
+        const secret = await getSecret(secretId);
+        return JSON.parse(secret).apiSecret;
+    } catch (e) {
+        throw new Error(`Failed to get secret for applicationId ${applicationId}: ${e.message}`);
     }
 }
 
@@ -455,15 +464,6 @@ export function hasAllKeysDefined(object: any): boolean {
         return true;
     }
     return false;
-}
-
-/**
- * Determines if an event invocation is purely for warm-up purposes
- * @param { ApiInvocationEvent} event: The lambda invocation event
- * @returns {boolean}: True, if for warm-up purposes; otherwise, false.
- */
-export function isLambdaWarmupInvocation(event: ApiInvocationEvent): event is ScheduledEvent {
-    return (event as ScheduledEvent).source === 'serverless-plugin-warmup';
 }
 
 /**
@@ -1138,6 +1138,20 @@ const s3Client = new AWS.S3({
     useAccelerateEndpoint: true,
 });
 
+/**
+ * Appends a guid suffix to a filename to indicate duplication
+ * @example
+ *  // returns duplicate-PPBqWA9.pdf
+ *  letappendDuplicationSuffix('duplicate.pdf');
+ * @param {string} filenameWithExtension
+ * @returns {string}: The file name with a duplication suffix
+ */
+export function appendDuplicationSuffix(filenameWithExtension: string): string {
+    console.info('util.service.appendDuplicationSuffix');
+    const [filename, extension] = splitFilename(filenameWithExtension);
+    return `${filename}-${shortid.generate()}${extension}`;
+}
+
 export async function checkForFileExistence(
     key: string,
     fileName: string,
@@ -1165,20 +1179,6 @@ export async function checkForFileExistence(
         // We really don't mind since we expect it to be missing
         return [fileName, key];
     }
-}
-
-/**
- * Appends a guid suffix to a filename to indicate duplication
- * @example
- *  // returns duplicate-PPBqWA9.pdf
- *  letappendDuplicationSuffix('duplicate.pdf');
- * @param {string} filenameWithExtension
- * @returns {string}: The file name with a duplication suffix
- */
-export function appendDuplicationSuffix(filenameWithExtension: string): string {
-    console.info('util.service.appendDuplicationSuffix');
-    const [filename, extension] = splitFilename(filenameWithExtension);
-    return `${filename}-${shortid.generate()}${extension}`;
 }
 
 export async function withTimeout(callee: any, timeout: number): Promise<any> {

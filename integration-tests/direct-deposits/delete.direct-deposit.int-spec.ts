@@ -74,9 +74,7 @@ describe('delete direct deposit', () => {
 
     test('must return a 404 when the tenant id is non-existent', (done) => {
         const invalidTenantId = uuidV4();
-        const unknownTenantUri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
-            configs.employeeId
-        }/direct-deposits`;
+        const unknownTenantUri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/direct-deposits`;
         request(baseUri)
             .del(`${unknownTenantUri}/${initialDirectDeposit.id}`)
             .set('Authorization', `Bearer ${accessToken}`)
@@ -129,7 +127,7 @@ describe('delete direct deposit', () => {
     });
 
     afterAll(() => {
-        directDepositService.tearDown(configs.apiDomain, initialDirectDeposit, accessToken, (error, result) => {
+        directDepositService.tearDown(configs.apiDomain, initialDirectDeposit, accessToken, () => {
             return;
         });
     });
