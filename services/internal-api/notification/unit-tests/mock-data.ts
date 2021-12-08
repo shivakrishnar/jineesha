@@ -11,7 +11,7 @@ export const signInUrl = 'sign-in-url';
 export const reminderEvent: IEsignatureEvent = {
     urlParameters: { tenantId, companyId, employeeId, documentId },
     invokerEmail: 'test@test.com',
-    type: NotificationEventType.EsignatureReminderEvent,
+    type: NotificationEventType.EsignatureEvent,
     actions: [EsignatureAction.EsignatureReminder],
     accessToken: 'blahblahblah',
     metadata: { employeeCode, signInUrl } as IESignatureMetadata,
@@ -24,6 +24,15 @@ export const requestEvent: IEsignatureEvent = {
     actions: [EsignatureAction.EsignatureRequest],
     accessToken: 'blahblahblah',
     metadata: { employeeCode, signInUrl, signatureRequests: someEmployeesSignatureRequestsResponse } as IESignatureMetadata,
+};
+
+export const deleteEvent: IEsignatureEvent = {
+    urlParameters: { tenantId, companyId, employeeId, documentId },
+    invokerEmail: 'test@test.com',
+    type: NotificationEventType.EsignatureEvent,
+    actions: [EsignatureAction.EsignatureDelete],
+    accessToken: 'blahblahblah',
+    metadata: { employeeCode } as IESignatureMetadata,
 };
 
 export const alertDBResponse = {

@@ -31,9 +31,9 @@ describe('esignatureService.deleteSignatureRequest', () => {
 
         const mockRequestId = `${mockData.esignatureSimpleSignMetadataDBResponse.recordset[0].ID}`;
 
-        let query = new ParameterizedQuery('CancelSignatureRequestById', Queries.cancelSignatureRequestById);
+        const query = new ParameterizedQuery('CancelSignatureRequestById', Queries.cancelSignatureRequestById);
         query.setStringParameter('@documentId', mockRequestId);
-        let payload = {
+        const payload = {
             tenantId: mockData.tenantId,
             queryName: query.name,
             query: query.value,
@@ -41,7 +41,20 @@ describe('esignatureService.deleteSignatureRequest', () => {
         } as DatabaseEvent;
 
         return esignatureService
-            .deleteSignatureRequest(mockData.tenantId, mockData.companyId, mockData.employeeId, mockRequestId)
+            .deleteSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                mockRequestId,
+                {
+                    tenantId: mockData.tenantId,
+                    companyId: mockData.companyId,
+                    employeeId: mockData.employeeId,
+                    documentId: mockData.signatureRequestId,
+                },
+                mockData.userEmail,
+                'issatoken',
+            )
             .then(() => {
                 expect(utilService.invokeInternalService).toHaveBeenCalledWith('queryExecutor', payload, InvocationType.RequestResponse);
             });
@@ -61,9 +74,9 @@ describe('esignatureService.deleteSignatureRequest', () => {
         });
 
         const mockRequestId = `${mockData.esignatureSimpleSignMetadataDBResponse.recordset[0].ID}`;
-        let query = new ParameterizedQuery('CancelSignatureRequestById', Queries.cancelSignatureRequestById);
+        const query = new ParameterizedQuery('CancelSignatureRequestById', Queries.cancelSignatureRequestById);
         query.setStringParameter('@documentId', mockRequestId);
-        let payload = {
+        const payload = {
             tenantId: mockData.tenantId,
             queryName: query.name,
             query: query.value,
@@ -71,7 +84,20 @@ describe('esignatureService.deleteSignatureRequest', () => {
         } as DatabaseEvent;
 
         return esignatureService
-            .deleteSignatureRequest(mockData.tenantId, mockData.companyId, mockData.employeeId, mockRequestId)
+            .deleteSignatureRequest(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                mockRequestId,
+                {
+                    tenantId: mockData.tenantId,
+                    companyId: mockData.companyId,
+                    employeeId: mockData.employeeId,
+                    documentId: mockData.signatureRequestId,
+                },
+                mockData.userEmail,
+                'issatoken',
+            )
             .then(() => {
                 expect(utilService.invokeInternalService).toHaveBeenCalledWith('queryExecutor', payload, InvocationType.RequestResponse);
                 expect(cancelMock).toHaveBeenCalledWith(mockRequestId);
