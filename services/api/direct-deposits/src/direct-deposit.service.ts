@@ -369,31 +369,22 @@ function applyDirectDepositBusinessRules(ed: any, amount: number, amountType: st
 
 /**
  *  Updates an existing direct deposit in Evolution
- * @param {string} hrAccessToken: The access token for the HR user.
  * @param {string} tenantId: The unqiue identifier for the tenant.
  * @param {IEvolutionKey} evolutionKeys: The Evolution-equivalent identifiers for entities in HR
- * @param {IPayrollApiCredentials} payrollApiCredentials: The credentials of the HR global admin.
  * @param {number} amount: The amount tied to the direct deposit.
  * @param {string} amountType: The type of amount.
  * @param {string} method: The method of the desired call.
+ * @param {string} existingPayrollApiToken: If an existing payroll API token exists, pass it, to avoid duplicate token generation.
  */
 async function updateEvolutionDirectDeposit(
-    hrAccessToken: string,
     tenantId: string,
     evolutionKeys: IEvolutionKey,
-    payrollApiCredentials: IPayrollApiCredentials,
     amount: number,
     amountType: string,
     method: string,
+    existingPayrollApiToken: string,
 ): Promise<void> {
-    const decodedToken: any = jwt.decode(hrAccessToken);
-    const ssoToken = await utilService.getSSOToken(tenantId, decodedToken.applicationId);
-    const payrollApiAccessToken = await ssoService.getAccessToken(
-        tenantId,
-        ssoToken,
-        payrollApiCredentials.evoApiUsername,
-        payrollApiCredentials.evoApiPassword,
-    );
+    const payrollApiAccessToken = existingPayrollApiToken;
     const tenantObject = await ssoService.getTenantById(tenantId, payrollApiAccessToken);
     const tenantName = tenantObject.subdomain;
 
@@ -514,9 +505,8 @@ export async function update(
                 throw errorService.getErrorResponse(0).setMoreInfo('Associated direct deposit missing in Evolution');
             }
             const payrollApiCredentials = await utilService.getPayrollApiCredentials(tenantId);
-            // TODO: Refactor to only generate payroll API token once
-            await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, amount, amountType, method);
             payrollApiToken = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
+            await updateEvolutionDirectDeposit(tenantId, evolutionKeys, amount, amountType, method, payrollApiToken);
 
             utilService.logToAuditTrail({
                 isEvoCall: true,
@@ -669,6 +659,7 @@ export async function remove(
 
         const directDeposit = directDeposits[0];
         const payrollApiCredentials = await utilService.getPayrollApiCredentials(tenantId);
+        const payrollApiToken: string = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
 
         if (directDeposit.status === 'Pending') {
             await deleteDirectDeposit(id, userEmail, companyId, tenantId, employeeId);
@@ -678,7 +669,7 @@ export async function remove(
             if (!utilService.hasAllKeysDefined(evolutionKeys)) {
                 throw errorService.getErrorResponse(0);
             }
-            await updateEvolutionDirectDeposit(accessToken, tenantId, evolutionKeys, payrollApiCredentials, 0, '', method);
+            await updateEvolutionDirectDeposit(tenantId, evolutionKeys, 0, '', method, payrollApiToken);
             await endDateDirectDeposit(id, userEmail, companyId, tenantId, employeeId);
 
             utilService.logToAuditTrail({
@@ -693,7 +684,6 @@ export async function remove(
             } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
         }
 
-        const payrollApiToken: string = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
         await utilService.clearCache(tenantId, payrollApiToken);
     } catch (error) {
         console.error(error);
