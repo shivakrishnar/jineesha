@@ -341,6 +341,39 @@ export const esignatureMetadataDBResponse = {
             Title: 'Test',
             Filename: 'test.png',
             Category: 'test',
+            Type: 'SimpleSignatureRequest',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const esignatureSimpleSignMetadataDBResponse = {
+    recordset: [
+        {
+            ID: 1,
+            UploadDate: '1/1/2020',
+            UploadedBy: 'Admin',
+            Title: 'Test',
+            Filename: 'test.png',
+            Category: 'test',
+            Type: 'SimpleSignatureRequest',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const esignatureEnhancedSignMetadataDBResponse = {
+    recordset: [
+        {
+            ID: 1,
+            UploadDate: '1/1/2020',
+            UploadedBy: 'Admin',
+            Title: 'Test',
+            Filename: 'test.png',
+            Category: 'test',
+            Type: 'SignatureRequest',
         },
     ],
     output: {},

@@ -187,6 +187,15 @@ functions:
             cors:
               origin: '*'
 
+  deleteSignatureRequest:
+    handler: esignature/src/handler.deleteSignatureRequestStatus
+    events:
+      - http:
+          path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/esignatures/requests/{documentId}
+          method: delete
+          cors:
+            origin: '*'
+
   listTemplates:
     handler: esignature/src/handler.listTemplates
     events:

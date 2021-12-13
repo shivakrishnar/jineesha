@@ -1,5 +1,6 @@
 'use strict';
 
+const cancelMock = require('mockFunctions/helloSignCancelSignatureRequest').cancelMock;
 let hellosign = jest.genMockFromModule('hellosign-sdk');
 const mockData = require('../esignature/unit-tests/mock-data');
 const listSignatureRequests = require('../esignature/unit-tests/mock-functions/hellosign-list-requests');
@@ -44,6 +45,7 @@ hellosign = (params) => {
                     template: mockData.helloSignEditUrl,
                 };
             },
+            cancel: cancelMock,
         },
         embedded: {
             getSignUrl: () => {
