@@ -900,10 +900,10 @@ export async function validateEmployeeWithCompany(tenantId: string, companyId: s
 /**
  * Validates a user to exist in a company.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
- * @param {string} username: The string a user uses to login.
+ * @param {string} email: The email address associated with the user.
  * @param {string} companyId: The unique identifier for the company the user belongs to.
  */
-export async function validateUserIsInCompany(tenantId: string, username: string, companyId: string): Promise<boolean> {
+export async function validateUserIsInCompany(tenantId: string, email: string, companyId: string): Promise<boolean> {
     console.info('utilService.validateUserIsInCompany');
     try {
         // companyId value must be integral
@@ -913,7 +913,8 @@ export async function validateUserIsInCompany(tenantId: string, username: string
         }
 
         const query: ParameterizedQuery = new ParameterizedQuery('userExistsInCompany', Queries.userExistsInCompany);
-        query.setParameter('@username', username);
+        // note: the email in the token equates to the username in the AHR database
+        query.setParameter('@username', email);
         query.setParameter('@companyId', companyId);
         const companyExistsInTenantPayload: DatabaseEvent = {
             tenantId,
@@ -928,7 +929,7 @@ export async function validateUserIsInCompany(tenantId: string, username: string
             InvocationType.RequestResponse,
         );
 
-        const userExistsInCompany = result.recordset.length > 0;
+        const userExistsInCompany = result?.recordset[0]?.UserExistsInCompany === 1;
 
         return Promise.resolve(userExistsInCompany);
     } catch (error) {
@@ -944,11 +945,12 @@ export async function validateUserIsInCompany(tenantId: string, username: string
 /**
  * Validates that a user belongs to a specific employee.
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
- * @param {string} username: The string a user uses to login.
+ * @param {string} email: The email address associated with the user.
  * @param {string} employeeId: The unique identifier for an employee.
  */
-export async function validateUserWithEmployee(tenantId: string, username: string, employeeId: string): Promise<boolean> {
+export async function validateUserWithEmployee(tenantId: string, email: string, employeeId: string): Promise<boolean> {
     console.info('utilService.validateUserWithEmployee');
+
     try {
         // employeeId value must be integral
         if (Number.isNaN(Number(employeeId))) {
@@ -956,8 +958,10 @@ export async function validateUserWithEmployee(tenantId: string, username: strin
             throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
         }
 
+        // TODO: (MJ-8842) enhance the logic in this query to perform different checks based on the roles of the user.
         const query: ParameterizedQuery = new ParameterizedQuery('getEmployeesByEmailAddress', Queries.getEmployeesByEmailAddress);
-        query.setParameter('@emailAddresses', username);
+        // note: the email in the token equates to the username in the AHR database
+        query.setParameter('@emailAddresses', email);
 
         const companyExistsInTenantPayload: DatabaseEvent = {
             tenantId,
@@ -999,7 +1003,7 @@ export async function checkAuthorization(
     console.info('utilService.checkAuthorization');
     const { tenantId, companyId, employeeId } = event.pathParameters;
     const {
-        principal: { username },
+        principal: { email },
         roleMemberships,
     } = securityContext;
 
@@ -1014,8 +1018,8 @@ export async function checkAuthorization(
 
         // If the function is checking for the role hrEmployee(hr.persona.user), it validates the user with their own employee or company
         if (userIsEmployee && checkingIfUserIsEmployee) {
-            if (companyId && employeeId) isAuthorized = await utilService.validateUserWithEmployee(tenantId, username, employeeId);
-            if (companyId && !employeeId) isAuthorized = await utilService.validateUserIsInCompany(tenantId, username, companyId);
+            if (companyId && employeeId) isAuthorized = await utilService.validateUserWithEmployee(tenantId, email, employeeId);
+            if (companyId && !employeeId) isAuthorized = await utilService.validateUserIsInCompany(tenantId, email, companyId);
 
             // Otherwise check if the user has any of the remaining roles not including hrEmployee(hr.persona.user)
         } else {

@@ -107,8 +107,8 @@ export const userDoesNotExistInCompany = {
 };
 
 export const userExistsInCompany = {
-    recordsets: [[{ HRnextUserID: '1870', CompanyID: '600395' }]],
-    recordset: [{ HRnextUserID: '1870', CompanyID: '600395' }],
+    recordsets: [[{ UserExistsInCompany: 1 }]],
+    recordset: [{ UserExistsInCompany: 1 }],
     output: {},
     rowsAffected: [1, 1, 1],
 };
