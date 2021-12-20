@@ -8,6 +8,7 @@ import * as mockData from './unit-test-mocks/mock-data/mock-data';
 import * as utilServiceMockData from './unit-test-mocks/mock-data/util-service-mock-data';
 import * as utilService from './util.service';
 import { ErrorMessage } from './errors/errorMessage';
+import { Role } from './api/models/Role';
 
 jest.mock('./internal-api/authentication/securityContextProvider');
 
@@ -410,6 +411,125 @@ describe('utilService.validateUserWithEmployee', () => {
 
         return utilService.validateUserWithEmployee(mockData.tenantId, mockData.username, mockData.employeeId).then((result) => {
             expect(result).toEqual(true);
+        });
+    });
+});
+
+describe('utilService.checkAuthorization', () => {
+    beforeEach(() => {
+        setup();
+    });
+
+    describe('accessing company data', () => {
+        test('throws an error when the user does not have the right role', async () => {
+            const event: any = {
+                pathParameters: {
+                    tenantId: mockData.tenantId,
+                    companyId: mockData.companyId,
+                },
+            };
+            const authorizedRoles = [Role.hrAdmin];
+            const securityContext: any = {
+                principal: {
+                    email: 'test@test.com',
+                    username: 'tester',
+                },
+                roleMemberships: [Role.hrEmployee],
+            };
+
+            const expectedError = {
+                statusCode: 401,
+                code: 11,
+                message: 'User is not authorized.',
+                developerMessage: 'The user does not have authorization to use this endpoint.',
+                moreInfo: 'The user does not have the access right to use this endpoint',
+            };
+
+            await utilService.checkAuthorization(securityContext, event, authorizedRoles).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error).toEqual(expectedError);
+            });
+        });
+
+        test('validates that the user belongs to the requested company', (done) => {
+            const event: any = {
+                pathParameters: {
+                    tenantId: mockData.tenantId,
+                    companyId: mockData.companyId,
+                },
+            };
+            const authorizedRoles = [Role.hrAdmin, Role.hrEmployee];
+            const securityContext: any = {
+                principal: {
+                    email: 'test@test.com',
+                    username: 'tester',
+                },
+                roleMemberships: [Role.hrEmployee],
+            };
+
+            (utilService as any).validateUserIsInCompany = jest.fn(() => {
+                return Promise.resolve(true);
+            });
+
+            utilService.checkAuthorization(securityContext, event, authorizedRoles).catch(() => {
+                done.fail(new Error('Test should not throw an exception.'));
+            });
+            done();
+        });
+
+        test('succeeds when the user has the right role', (done) => {
+            const event: any = {
+                pathParameters: {
+                    tenantId: mockData.tenantId,
+                    companyId: mockData.companyId,
+                },
+            };
+            const authorizedRoles = [Role.hrAdmin];
+            const securityContext: any = {
+                principal: {
+                    email: 'test@test.com',
+                    username: 'tester',
+                },
+                roleMemberships: [Role.hrAdmin],
+            };
+
+            utilService.checkAuthorization(securityContext, event, authorizedRoles).catch(() => {
+                done.fail(new Error('Test should not throw an exception.'));
+            });
+            done();
+        });
+    });
+
+    describe('accessing employee data', () => {
+        test('validates that the user belongs to the requested employee', (done) => {
+            const event: any = {
+                pathParameters: {
+                    tenantId: mockData.tenantId,
+                    companyId: mockData.companyId,
+                    employeeId: mockData.employeeId,
+                },
+            };
+            const authorizedRoles = [Role.hrAdmin, Role.hrEmployee];
+            const securityContext: any = {
+                principal: {
+                    email: 'test@test.com',
+                    username: 'tester',
+                },
+                roleMemberships: [Role.hrEmployee],
+            };
+
+            (utilService as any).validateUserWithEmployee = jest.fn(() => {
+                return Promise.resolve(true);
+            });
+
+            (utilService as any).validateUserIsInCompany = jest.fn(() => {
+                return Promise.resolve(true);
+            });
+
+            utilService.checkAuthorization(securityContext, event, authorizedRoles).catch(() => {
+                done.fail(new Error('Test should not throw an exception.'));
+            });
+            done();
         });
     });
 });
