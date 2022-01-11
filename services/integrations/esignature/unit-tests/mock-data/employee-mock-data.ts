@@ -25,6 +25,20 @@ export const employeeInfoDBResponse = {
     rowsAffected: [1],
 };
 
+export const employeeObject = {
+        id: 22244,
+        firstName: 'The',
+        lastName: 'Rock',
+        eeCode: '123',
+        companyName: 'Rock Enterprises',
+        isSalary: false,
+        evoData: {
+            employeeId: '123',
+            companyId: '123',
+            clientId: '123'
+        }
+};
+
 export const employeeInfoWithoutEmailDBResponse = {
     recordset: [
         {

@@ -45,4 +45,4 @@ export const userDBResponse = {
     rowsAffected: [1],
 };
 
-export const roles = ['employee'];
+export const roles = ['hr.persona.user'];
