@@ -6,7 +6,8 @@ insert into dbo.HRnextAuditDetail (
     FieldChanged,
     OldValue,
     NewValue,
-    AreaOfChange
+    AreaOfChange,
+    KeyDetails
 ) values (
     @auditId,
     @companyId,
@@ -15,5 +16,6 @@ insert into dbo.HRnextAuditDetail (
     '@fieldChanged',
     '@oldValue',
     '@newValue',
-    '@areaOfChange'
+    '@areaOfChange',
+    @keyDetails
 )

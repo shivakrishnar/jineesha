@@ -570,6 +570,45 @@ export const documentDBResponse = {
     rowsAffected: [1],
 };
 
+export const deleteEmployeeDocumentDBResponse = {
+    recordset: [
+        {
+            ID: 533,
+            CompanyID: 600351,
+            EmployeeCode: null,
+            Title: 'Doesnt matter',
+            Category: 'Also doesnt matter',
+            UploadData: '2019-07-16 15:34:21.281',
+            Pointer: 'c807d7f9-b391-4525-ac0e-31dbc0cf202b/600351/Update company document integration test-Mv_Hr2SH9.png',
+            UploadedBy: 'DirectDepositTester User',
+            IsPublishedToEmployee: 0,
+            EsignatureMetadataID: 'EsigMetadataID',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const deleteEmployeeLegacyDocumentDBResponse = {
+    recordset: [
+        {
+            ID: 533,
+            CompanyID: 600351,
+            EmployeeCode: null,
+            Title: 'Doesnt matter',
+            Category: 'Also doesnt matter',
+            UploadData: '2019-07-16 15:34:21.281',
+            Pointer: '',
+            UploadByUsername: 'DirectDepositTester User',
+            IsPublishedToEmployee: 0,
+            EsignatureMetadataID: null,
+            Filename: 'dah dah dah',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
 export const documentSavedToS3Response = {
     s3Key: 'path/to/object.pdf',
     extension: '.pdf',

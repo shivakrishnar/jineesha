@@ -969,9 +969,16 @@ describe('esignatureService.employee-document.delete', () => {
     test('deletes an non-signature employee document', async (done) => {
         try {
             (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-                if (payload.queryName === 'GetEmployeeByCompanyIdAndId') {
+                if (payload.queryName === 'DeleteFileMetadataById') {
+                    return Promise.resolve(mockData.deleteEmployeeDocumentDBResponse);
+                }
+                else if (payload.queryName === 'GetEmployeeByCompanyIdAndId') {
                     return Promise.resolve(mockData.employeeDBResponse);
                 }
+            });
+
+            (employeeService as any).getById = jest.fn(() => {
+                return mockData.employeeObject
             });
 
             (utilService as any).authorizeAndRunQuery = jest.fn(() => {
@@ -993,14 +1000,25 @@ describe('esignatureService.employee-document.delete', () => {
         }
     });
 
-    test('deletes a legacy employee document', (done) => {
+    test('deletes a legacy employee document', async (done) => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetEmployeeByCompanyIdAndId') {
                 return Promise.resolve(mockData.employeeDBResponse);
             }
+            if (payload.queryName === 'DeleteDocumentById') {
+                return Promise.resolve(mockData.deleteEmployeeLegacyDocumentDBResponse);
+            }
         });
 
-        esignatureService
+        (employeeService as any).getById = jest.fn(() => {
+            return mockData.employeeObject
+        });
+
+        (utilService as any).authorizeAndRunQuery = jest.fn(() => {
+            return [[{ Pointer: 'test' }]];
+        });
+
+        await esignatureService
             .deleteEmployeeDocument(
                 mockData.tenantId,
                 mockData.companyId,
@@ -1018,18 +1036,28 @@ describe('esignatureService.employee-document.delete', () => {
         done();
     });
 
-    test('returns a 404 if no employee documents are found', (done) => {
+    test('returns a 404 if no employee documents are found', async (done) => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetCompanyInfo') {
                 return Promise.resolve(mockData.companyInfo);
             }
+            if (payload.queryName === 'GetEmployeeByCompanyIdAndId') {
+                return Promise.resolve(mockData.employeeDBResponse);
+            }
+            if (payload.queryName === 'DeleteFileMetadataById') {
+                return Promise.resolve(mockData.deleteEmployeeDocumentDBResponse);
+            }
+        });
+
+        (employeeService as any).getById = jest.fn(() => {
+            return mockData.employeeObject
         });
 
         (utilService as any).authorizeAndRunQuery = jest.fn(() => {
             return [];
         });
 
-        esignatureService
+        await esignatureService
             .deleteEmployeeDocument(
                 mockData.tenantId,
                 mockData.companyId,
@@ -1046,7 +1074,7 @@ describe('esignatureService.employee-document.delete', () => {
                 expect(error.statusCode).toEqual(404);
                 expect(error.code).toEqual(50);
                 expect(error.message).toEqual('The requested resource does not exist.');
-                expect(error.developerMessage).toEqual('The document id: abc123 not found');
+                expect(error.developerMessage).toEqual('Document with ID abc123 not found.');
             });
         done();
     });

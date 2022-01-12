@@ -122,8 +122,11 @@ async function getEmployeeDisplayName(tenantId: string, employeeId: string): Pro
  * @param {string} employeeDisplayName: The employee's display name.
  */
 async function createAuditDetailEntries(tenantId: string, auditId: number, audit: IAudit, employeeDisplayName?: string): Promise<void> {
-    const { oldFields, newFields, type, companyId, areaOfChange } = audit;
-
+    const { oldFields, newFields, type, companyId, areaOfChange, keyDetails } = audit;
+    if (!oldFields && !newFields) {
+        console.log('You must supply either old fields or new fields to the query!');
+        return;
+    }
     const fieldKeys = Object.keys(oldFields || newFields);
     const oldValues: any[] = oldFields ? Object.values(oldFields) : [];
     const newValues: any[] = newFields ? Object.values(newFields) : [];
@@ -138,6 +141,7 @@ async function createAuditDetailEntries(tenantId: string, auditId: number, audit
         fieldQuery.setParameter('@oldValue', [undefined, null, 'null'].includes(oldValues[i]) ? '[Blank]' : oldValues[i]);
         fieldQuery.setParameter('@newValue', [undefined, null, 'null'].includes(newValues[i]) ? '[Blank]' : newValues[i]);
         fieldQuery.setParameter('@areaOfChange', areaOfChange);
+        fieldQuery.setParameter('@keyDetails', keyDetails)
         auditDetailQuery.appendFilter(fieldQuery.value, false);
 
         const companyDetails: CompanyInfo = await utilService.validateCompany(tenantId, companyId);

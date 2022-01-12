@@ -4914,7 +4914,7 @@ export async function deleteCompanyDocument(tenantId: string, companyId: string,
     }
 }
 
-async function deleteEmployeeDocumentRecord(tenantId: string, docType: DocType, recordId: number | string, s3Key?: string): Promise<void> {
+async function deleteEmployeeDocumentRecord(tenantId: string, docType: DocType, recordId: number | string, s3Key?: string): Promise<any> {
     console.info('esignature.service.deleteEmployeeDocumentRecord');
 
     if (s3Key) {
@@ -4950,7 +4950,7 @@ async function deleteEmployeeDocumentRecord(tenantId: string, docType: DocType, 
             query: query.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
+        return await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -5065,10 +5065,35 @@ export async function deleteEmployeeDocument(
         }
 
         const s3Key = resultSet[0][0].Pointer;
+        
+        const result: any = await deleteEmployeeDocumentRecord(tenantId, docType, docId, s3Key);
 
-        return await deleteEmployeeDocumentRecord(tenantId, docType, docId, s3Key);
+        if (!result?.recordset || result.recordset.length === 0) throw errorService.getErrorResponse(50);
+        
+        const docData = result.recordset[0];
+        
+        let keyDetails;
+        
+        if (docData.EsignatureMetadataID) {
+            keyDetails = `'Document deleted: "${docData.Title}" - Uploaded by: "${docData.UploadedBy}"'`
+        } else {
+            keyDetails = `'Document deleted: "${docData.Filename}" - Uploaded by: "${docData.UploadByUsername}"'`
+        }
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: docData,
+            type: AuditActionType.Delete,
+            companyId,
+            areaOfChange: AuditAreaOfChange.Documents,
+            tenantId,
+            employeeId,
+            keyDetails,
+        } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
+
     } catch (error) {
         if (error instanceof ErrorMessage) {
+            console.log(error);
             throw error;
         }
 
