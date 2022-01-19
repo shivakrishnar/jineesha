@@ -15,6 +15,7 @@ import * as ssoService from '../../../remote-services/sso.service';
 import { EmployeeLicense } from './EmployeeLicense';
 import { EmployeeCertificate } from './EmployeeCertificate';
 import { EmployeeReview } from './EmployeeReview';
+import { EmployeeClass } from './EmployeeClass';
 import { IEvolutionKey } from '../../models/IEvolutionKey';
 import { EmployeeAbsenceSummary, EmployeeAbsenceSummaryCategory } from './EmployeeAbsenceSummary';
 
@@ -694,6 +695,95 @@ export async function updateEmployeeReviewById(
             oldEmailAcknowledged: result.recordsets[0][0].EmailAcknowledged === '1',
             newEmailAcknowledged: result.recordsets[1][0].EmailAcknowledged === '1',
         };
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Lists all the classes for a specific employee
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the specified company.
+ * @param {string} employeeId: The unique identifier employee.
+ * @param {any} queryParams: The query parameters that were specified by the user.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @returns {PaginatedResult}: A Promise of a paginated collection of employee's classes.
+ */
+ export async function listClassesByEmployeeId(
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
+    console.info('employeeService.listClassesByEmployeeId');
+
+    const validQueryStringParameters = ['pageToken', 'upcoming'];
+
+    // Pagination validation
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    try {
+        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+
+        let query;
+        query = new ParameterizedQuery('listClassesByEmployeeId', Queries.listClassesByEmployeeId);
+
+        if (queryParams) {
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+
+            const upcoming = utilService.parseQueryParamsBoolean(queryParams, 'upcoming');
+
+            if (upcoming) {
+                query = new ParameterizedQuery('listUpcomingClassesByEmployeeId', Queries.listUpcomingClassesByEmployeeId);
+                query.setParameter('@companyId', companyId);
+            }
+        }
+
+        query.setParameter('@employeeId', employeeId);
+
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+
+        const payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        const totalCount = result.recordsets[0][0].totalCount;
+
+        const classes: EmployeeClass[] = result.recordsets[1].map((record) => {
+            return {
+                id: record.ID,
+                employeeId: record.EmployeeID,
+                classId: record.ClassID,
+                title: record.Title,
+                description: record.Description,
+                duration:record.Duration,
+                instructor: record.Instructor,
+                location: record.Location,
+                credits: record.Credits,
+                isOpen: record.IsOpen,
+                classTime: record.ClassTime,
+                completionDate:record.CompletionDate,
+                expirationDate: record.ExpirationDate,
+                gradeOrResult: record.GradeOrResult,
+                notes: record.Notes,
+                emailAcknowledged: record.EmailAcknowledged,
+            } as EmployeeClass;
+        });
+
+        return await paginationService.createPaginatedResult(classes, baseUrl, totalCount, page);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
