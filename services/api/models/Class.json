@@ -1,0 +1,72 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Class Schema",
+    "$id": "Class",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "Unique identifier of the class record.",
+            "type": "string"
+        },
+        "employeeId": {
+            "description": "Unique identifier associated to the employee.",
+            "type": "string"
+        },
+        "classId": {
+            "description": "Unique identifier associated to the class type.",
+            "type": "string"
+        },
+        "classTitle": {
+            "description": "Title of the class.",
+            "type": "string"
+        },
+        "classDescription": {
+            "description": "Description of the class",
+            "type": ["string", "null"]
+        },
+        "classDuration": {
+            "description": "Class duration",
+            "type": ["string", "null"]
+        },
+        "instructor": {
+            "description": "Name of the class instructor",
+            "type": ["string", "null"]
+        },
+        "location": {
+            "description": "Class location",
+            "type": ["string", "null"]
+        },
+        "credits": {
+            "description": "Number of credits",
+            "type": ["number", "null"]
+        },
+        "isOpen": {
+            "description": "Indicates if the class is currently open for enrollment",
+            "type": ["boolean", "null"]
+        },
+        "classTime": {
+            "description": "Scheduled time of the class.",
+            "type": ["string"]
+        },
+        "completionDate": {
+            "description": "Date at which class is completed by employee",
+            "type": ["string", "null"]
+        },
+        "expirationDate": {
+            "description": "Date at which class enrollment expires",
+            "type": ["string", "null"]
+        },
+        "gradeOrResult": {
+            "description": "Grade of the class or result (ex. A- / pass).",
+            "type": ["string", "null"]
+        },
+        "notes": {
+            "description": "Additional notes for this class.",
+            "type": ["string", "null"]
+        },
+        "emailAcknowledged": {
+            "description": "Status of class notification acknowledgment by email.",
+            "type": ["boolean", "null"]
+        }
+    }
+}

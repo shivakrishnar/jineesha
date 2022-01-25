@@ -124,6 +124,20 @@
             "unrightfulEmployeeReviewId": 106
         }
     },
+    "classes": {
+        "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
+        "companyId": 600351,
+        "employeeId": 29355,
+        "invalidId": "abc",
+        "id": 124,
+        "nonExistentId": 99999,
+        "userAccessTest": {
+            "rightfulEmployee": 29355,
+            "unrightfulEmployee": 34456,
+            "rightfulEmployeeClassId": 374,
+            "unrightfulEmployeeClassId": 106
+        }
+    },
     "timeOff": {
         "existingTimeOffs": [
             {

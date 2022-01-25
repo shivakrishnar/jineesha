@@ -329,6 +329,15 @@ functions:
             cors:
               origin: '*'
 
+  listClassesByEmployeeId:
+    handler: src/handler.listClassesByEmployeeId
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/classes
+            method: get
+            cors:
+              origin: '*'
+
   listUserRoles:
     handler: src/handler.listUserRoles
     events:
