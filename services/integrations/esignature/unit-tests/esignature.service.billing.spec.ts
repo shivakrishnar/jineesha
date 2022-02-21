@@ -22,7 +22,17 @@ describe('esignatureService.billing.generate-report', () => {
             .generateBillingReport({ returnReport: true, targetEmail: 'test@test.com', month: 0, year: 0 })
             .then((results) => {
                 expect(typeof results).toBe('string');
-                expect(results).toEqual('Domain,Company,Billable Documents\r\nTest,HRN IT Services (1),2\r\n');
+
+                const expectedCsv = [];
+                expectedCsv.push('Domain,Company,Billable Documents');
+                expectedCsv.push('Test,HRN IT Services (0),2');
+                // deleted companies
+                expectedCsv.push('Test,Company One (1),15'); // non-legacy
+                expectedCsv.push('Test,Company Two (2),5'); // legacy
+                expectedCsv.push('Test,Company Three (3),0'); // no requests, enhanced billing tier
+                expectedCsv.push('Test,Company Four (4),0'); // no requests, simple billing tier, has existing billing events
+                expect(results).toEqual(expectedCsv.join('\r\n') + '\r\n');
+                expect(results).not.toContain('Test,Company Five (5),0');
             });
     });
 });
