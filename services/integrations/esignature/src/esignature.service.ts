@@ -1098,7 +1098,25 @@ export async function generateBillingReport(options: BillingReportOptions): Prom
         if (queryResult.isFulfilled && !queryResult.value.error) {
             successfulTenants.push(queryResult.value.tenantId);
             queryResult.value.recordsets[0].forEach((row) => {
-                csvOut += `${tenantDomains[row.tenantID]},${row.company},${row.billableDocuments}\r\n`;
+                if (row.BillingEventType === 'CompanyDeleted') {
+                    // handle deleted companies
+                    const {
+                        companyName,
+                        companyCode,
+                        companyCreateDate,
+                        allBillableSignRequests,
+                        nonOnboardingBillableSignRequests,
+                        esignatureStatus,
+                        existingEsignatureBillingEvents,
+                    } = JSON.parse(row.Metadata);
+                    const company = `${companyName} (${companyCode})`;
+                    const billableDocs = new Date(companyCreateDate) <= new Date(legacyClientCutOffDate) ? nonOnboardingBillableSignRequests : allBillableSignRequests;
+                    if (billableDocs > 0 || esignatureStatus === 'E Sign' || existingEsignatureBillingEvents) {
+                        csvOut += `${tenantDomains[row.tenantID]},${company},${billableDocs}\r\n`;
+                    }
+                } else {
+                    csvOut += `${tenantDomains[row.tenantID]},${row.company},${row.billableDocuments}\r\n`;
+                }
             });
         }
     });

@@ -1,4 +1,4 @@
-# 4. Use hierarchical step numbers for signature request statuses
+# 5. Use hierarchical step numbers for signature request statuses
 
 Date: 2021-03-26
 
