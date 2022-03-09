@@ -1,0 +1,9 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "OpenEnrollments Schema",
+    "$id": "OpenEnrollments",
+    "type": "array",
+    "items": {
+        "$ref": "OpenEnrollment"
+    }
+}

@@ -18,6 +18,7 @@ import { EmployeeReview } from './EmployeeReview';
 import { EmployeeClass } from './EmployeeClass';
 import { IEvolutionKey } from '../../models/IEvolutionKey';
 import { EmployeeAbsenceSummary, EmployeeAbsenceSummaryCategory } from './EmployeeAbsenceSummary';
+import { EmployeeBenefit } from './EmployeeBenefit';
 
 type Employee = {
     id: number;
@@ -890,3 +891,84 @@ export async function getEmployeeAbsenceSummary(
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+* Lists benefits for a specific employee
+* @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+* @param {string} companyId: The unique identifier for the specified company.
+* @param {string} employeeId: The unique identifier employee.
+* @param {any} queryParams: The query parameters that were specified by the user.
+* @param {string} domainName: The domain name of the request.
+* @param {string} path: The path of the endpoint.
+* @returns {PaginatedResult}: A Promise of a paginated collection of employee's benefits.
+*/
+export async function listBenefitsByEmployeeId( //we’ll want to separate BenefitPlan into its own endpoint and just add PlanID to the EmployeeBenefit record
+    tenantId: string,
+    companyId: string,
+    employeeId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
+    console.info('employeeService.listBenefitsByEmployeeId');
+
+    const validQueryStringParameters = ['pageToken'];
+
+    // Pagination validation
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    try {
+        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+
+        let query = new ParameterizedQuery('listBenefitsByEmployeeId', Queries.listBenefitsByEmployeeId);
+
+        if (queryParams) {
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+        }
+        query.setParameter('@companyId', companyId);
+        query.setParameter('@employeeId', employeeId);
+
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+
+        const payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        const totalCount = result.recordsets[0][0].totalCount;
+
+        const benefits: EmployeeBenefit[] = result.recordsets[1].map((record) => {
+            return {
+                id: record.ID,
+                companyId: record.CompanyID,
+                code: record.Code,
+                description: record.Description,
+                policyNumber: record.PolicyNumber,
+                startDate: record.StartDate,
+                endDate: record.EndDate,
+                planTypeId: record.PlanTypeID,
+                planTypeCode: record.PlanTypeCode,
+                planTypeDescription: record.PlanTypeDescription,
+                carrierName: record.CarrierName,
+                carrierURL: record.CarrierURL,
+                premium: record.Premium,
+                elected: record.Elected
+            } as EmployeeBenefit;
+        });
+
+        return await paginationService.createPaginatedResult(benefits, baseUrl, totalCount, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+

@@ -1,0 +1,36 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "OpenEnrollment Schema",
+    "$id": "OpenEnrollment",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "Unique identifier of the OpenEnrollment",
+            "type": "string"
+        },
+        "companyId": {
+            "description": "Unique identifier associated with the company",
+            "type": "string"
+        }, 
+        "name": {
+            "description": "Title of the OpenEnrollment",
+            "type": "string"
+        }, 
+        "startDate": {
+            "description": "Date enrollment started",
+            "type": "string"
+        },
+        "endDate": {
+            "description": "Date enrollment will end",
+            "type": "string"
+        },
+        "introduction": {
+            "description": "Optional description",
+            "type": ["string", "null"]
+        },
+        "currentlyOpen": {
+            "description": "Optional description",
+            "type": "boolean"
+        }
+    }
+}

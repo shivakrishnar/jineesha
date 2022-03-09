@@ -1,0 +1,64 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Benefit Schema",
+    "$id": "Benefit",
+    "type": "object",
+    "properties": {
+        "id": {
+            "description": "Unique identifier of the benefit",
+            "type": "string"
+        },
+        "companyId": {
+            "description": "Unique identifier associated to the company",
+            "type": "string"
+        },
+        "code": {
+            "description": "Plan code/name",
+            "type": ["string", "null"]
+        },
+        "description": {
+            "description": "Description of the plan",
+            "type": ["string", "null"]
+        },
+        "policyNumber": {
+            "description": "Unique identifier of the plan policy",
+            "type": ["string", "null"]
+        },
+        "startDate": {
+            "description": "Date benefit's plan will start ",
+            "type": "string"
+        },
+        "endDate": {
+            "description": "Date benefit's plan will expire",
+            "type": ["string", "null"]
+        },
+        "planTypeId": {
+            "description": "Unique identifier associated to the plan Id",
+            "type": "string"
+        },
+        "planTypeCode": {
+            "description": "Code/Name of type of the plan (ex. dental/basic life..etc)",
+            "type": "string"
+        },
+        "planTypeDescription": {
+            "description": "Description of the benefit type (ex. Medical/Dental/Vision..etc)",
+            "type": ["string", "null"]
+        },
+        "carrierName": {
+            "description": "Name of the plan carrier",
+            "type": ["string", "null"]
+        },
+        "carrierURL": {
+            "description": "URL to the carrier website",
+            "type": ["string", "null"]
+        },
+        "premium": {
+            "description": "Plan premium amount",
+            "type": ["number", "null"]
+        },
+        "elected": {
+            "description": "Indicate whether employee elected or waived this plan",
+            "type": "boolean"
+        }  
+    }
+}
