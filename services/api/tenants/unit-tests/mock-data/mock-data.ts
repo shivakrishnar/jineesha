@@ -814,7 +814,7 @@ export const upcomingClassesResult = {
 export const upcomingClassesResponse = [
     {
         id: '36',
-        employeeId: "21",
+        employeeId: '21',
         classId: '20',
         title: 'not2',
         description: null,
@@ -1144,6 +1144,198 @@ export const companyAnnouncementsResponse = {
             expiresDate: '2021-10-22T00:00:00.000Z',
             isOn: true,
             isHighPriority: false,
+        },
+    ],
+};
+
+export const benefitsResult = {
+    recordsets: [
+        [
+            {
+                totalCount: 3,
+            },
+        ],
+        [
+            {
+                ID: '1',
+                CompanyID: "12",
+                Code: 'Medical 2022',
+                Description: 'Medical 2022',
+                PolicyNumber: null,
+                StartDate: '2022-09-30T00:00:00.000Z',
+                EndDate: '2023-12-31T00:00:00.000Z',
+                PlanTypeID: '10001',
+                PlanTypeCode: 'Medical',
+                PlanTypeDescription: 'Medical Insurance',
+                CarrierName: 'BCBS',
+                CarrierURL: null,
+                Premium: null,
+                Elected: 0,
+            },
+            {
+                ID: '17',
+                CompanyID: "12",
+                Code: 'Medical 2021',
+                Description: 'Medical 2021',
+                PolicyNumber: null,
+                StartDate: '2021-01-01T00:00:00.000Z',
+                EndDate: '2022-03-11T00:00:00.000Z',
+                PlanTypeID: '10001',
+                PlanTypeCode: 'Medical',
+                PlanTypeDescription: 'Medical Insurance',
+                CarrierName: 'BCBS',
+                CarrierURL: null,
+                Premium: 500,
+                Elected: 0,
+            },
+            {
+                ID: '3',
+                CompanyID: "12",
+                Code: 'Vision 2022',
+                Description: 'Vision 2022',
+                PolicyNumber: null,
+                StartDate: '2022-01-01T00:00:00.000Z',
+                EndDate: '2022-12-31T00:00:00.000Z',
+                PlanTypeID: "10003",
+                PlanTypeCode: 'Vision',
+                PlanTypeDescription: 'Vision Insurance',
+                CarrierName: 'BCBS',
+                CarrierURL: null,
+                Premium: null,
+                Elected: 0,
+            },
+        ],
+    ],
+    recordset: [
+        {
+            totalCount: 3,
+        },
+    ],
+    output: {},
+    rowsAffected: [1, 1, 1, 3],
+};
+
+export const benefitsResponse = [
+    {
+        id: '1',
+        companyId: '12',
+        code: 'Medical 2022',
+        description: 'Medical 2022',
+        policyNumber: null,
+        startDate: '2022-09-30T00:00:00.000Z',
+        endDate: '2023-12-31T00:00:00.000Z',
+        planTypeId: '10001',
+        planTypeCode: 'Medical',
+        planTypeDescription: 'Medical Insurance',
+        carrierName: 'BCBS',
+        carrierURL: null,
+        premium: null,
+        elected: 0,
+    },
+    {
+        id: '17',
+        companyId: '12',
+        code: 'Medical 2021',
+        description: 'Medical 2021',
+        policyNumber: null,
+        startDate: '2021-01-01T00:00:00.000Z',
+        endDate: '2022-03-11T00:00:00.000Z',
+        planTypeId: '10001',
+        planTypeCode: 'Medical',
+        planTypeDescription: 'Medical Insurance',
+        carrierName: 'BCBS',
+        carrierURL: null,
+        premium: 500,
+        elected: 0,
+    },
+    {
+        id: '3',
+        companyId: '12',
+        code: 'Vision 2022',
+        description: 'Vision 2022',
+        policyNumber: null,
+        startDate: '2022-01-01T00:00:00.000Z',
+        endDate: '2022-12-31T00:00:00.000Z',
+        planTypeId: '10003',
+        planTypeCode: 'Vision',
+        planTypeDescription: 'Vision Insurance',
+        carrierName: 'BCBS',
+        carrierURL: null,
+        premium: null,
+        elected: 0,
+    },
+];
+
+export const emptyBenefitsResult = {
+    recordsets: [[{ totalCount: 0 }], []],
+    recordset: [{ totalCount: 0 }],
+    output: {},
+    rowsAffected: [1, 1, 1, 0],
+};
+
+export const companyOpenEnrollments = {
+    recordsets: [
+        [{ totalCount: 3 }],
+        [
+            {
+                ID: '50',
+                CompanyID: '600351',
+                Name: 'Medical',
+                StartDate: '2019-04-22T00:00:00.000Z',
+                EndDate: '2019-08-15T00:00:00.000Z',
+                Introduction: null,
+            },
+            {
+                ID: '52',
+                CompanyID: '600351',
+                Name: 'Medical 2019',
+                StartDate: '2019-06-25T00:00:00.000Z',
+                EndDate: '2019-06-27T00:00:00.000Z',
+                Introduction: 'Hello this is OE season!',
+            },
+            {
+                ID: '53',
+                CompanyID: '600351',
+                Name: 'MOJOJOJO',
+                StartDate: '2022-02-01T00:00:00.000Z',
+                EndDate: '2022-04-15T00:00:00.000Z',
+                Introduction: null,
+            },
+        ],
+    ],
+    recordset: [{ totalCount: 3 }],
+    output: {},
+    rowsAffected: [1, 1, 3],
+};
+
+export const companyOpenEnrollmentResponse = {
+    limit: 30,
+    count: 3,
+    totalCount: 3,
+    results: [
+        {
+            id: '50',
+            companyId: '600351',
+            name: 'Medical',
+            startDate: '2019-04-22T00:00:00.000Z',
+            endDate: '2019-08-15T00:00:00.000Z',
+            introduction: null,
+        },
+        {
+            id: '52',
+            companyId: '600351',
+            name: 'Medical 2019',
+            startDate: '2019-06-25T00:00:00.000Z',
+            endDate: '2019-06-27T00:00:00.000Z',
+            introduction: 'Hello this is OE season!',
+        },
+        {
+            id: '53',
+            companyId: '600351',
+            name: 'MOJOJOJO',
+            startDate: '2022-02-01T00:00:00.000Z',
+            endDate: '2022-04-15T00:00:00.000Z',
+            introduction: null,
         },
     ],
 };
