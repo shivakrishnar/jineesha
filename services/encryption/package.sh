@@ -8,4 +8,4 @@ then
 fi
 
 dotnet restore
-dotnet lambda package --configuration release --framework netcoreapp2.1 --output-package bin/release/netcoreapp2.1/asure.encryption.zip
+dotnet lambda package --configuration release --framework net6.0 --output-package bin/release/net6.0/asure.encryption.zip
