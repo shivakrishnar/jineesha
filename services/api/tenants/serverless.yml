@@ -356,6 +356,15 @@ functions:
             cors:
               origin: '*'
 
+  updateEmployeeClassById:
+    handler: src/handler.updateEmployeeClassById
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/classes/{id}
+            method: patch
+            cors:
+              origin: '*'
+
   listUserRoles:
     handler: src/handler.listUserRoles
     events:
