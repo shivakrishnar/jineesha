@@ -19,7 +19,7 @@
     "scopeBaseDomain": "https://www.asuresoftware.com/iam/",
     "stage": "development",
     "domain": "dev.evolution-software.com",
-    "domainCertificateArn": "arn:aws:acm:us-east-1:317299412255:certificate/95362386-6ead-4960-a02d-1f6510c88424",
+    "domainCertificateArn": "arn:aws:acm:us-east-1:317299412255:certificate/82c1b73f-b233-4977-bb21-3c489000112b",
     "apiDomain": "https://api.dev.evolution-software.com",
     "sesSmtpCredentialsId": "SesSmtpCredentials",
     "sesSmtpServerHost": "email-smtp.us-east-1.amazonaws.com",

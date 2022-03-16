@@ -718,3 +718,58 @@ export const listCompanyAnnouncements = utilService.gatewayEventHandlerV2(async 
     ]);
     return await employeeService.listClassesByEmployeeId(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
 });
+
+/**
+ * Return the list of benefits for an employee.
+ */
+ export const listBenefitsByEmployeeId = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('tenants.handler.listBenefitsByEmployeeId');
+
+    const { tenantId, companyId, employeeId } = event.pathParameters;
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+    await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+        Role.hrEmployee,
+    ]);
+    return await employeeService.listBenefitsByEmployeeId(tenantId, companyId, employeeId, event.queryStringParameters, domainName, path);
+});
+
+
+/**
+ * Returns a list of benefits open-enrollments of a company
+ */
+
+ export const listCompanyOpenEnrollments = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('tenants.handler.listCompanyOpenEnrollments');
+
+    const { tenantId, companyId } = event.pathParameters;
+    const {
+        requestContext: { domainName, path },
+    } = event;
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+    await utilService.validateCompany(tenantId, companyId);
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+        Role.hrEmployee,
+    ]);
+
+    return await companyService.listCompanyOpenEnrollments(tenantId, companyId, event.queryStringParameters, domainName, path);
+});

@@ -230,6 +230,15 @@ functions:
           cors:
             origin: '*'
 
+  listCompanyOpenEnrollments:
+    handler: src/handler.listCompanyOpenEnrollments
+    events:
+      - http:
+          path: /tenants/{tenantId}/companies/{companyId}/open-enrollments
+          method: get
+          cors:
+            origin: '*'
+
   listEmployeeCompaniesBySsoAccount:
     handler: src/handler.listEmployeeCompaniesBySsoAccount
     events:
@@ -307,6 +316,15 @@ functions:
     events:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/reviews
+            method: get
+            cors:
+              origin: '*'
+
+  listBenefitsByEmployeeId:
+    handler: src/handler.listBenefitsByEmployeeId
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/employees/{employeeId}/benefits
             method: get
             cors:
               origin: '*'

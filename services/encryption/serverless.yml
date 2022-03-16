@@ -5,7 +5,7 @@ service: asure-encryption
 provider:
   stage: ${file(${self:custom.configFile}):stage}
   name: aws
-  runtime: dotnetcore2.1
+  runtime: dotnet6
   timeout: 60
   versionFunctions: false
   memorySize: 256

@@ -158,6 +158,8 @@ export const Queries = {
     listCompanyAnnouncements: fs.readFileSync(path.join(basePath, 'companies/listCompanyAnnouncements.sql')).toString(),
     listActiveCompanyAnnouncements: fs.readFileSync(path.join(basePath, 'companies/listActiveCompanyAnnouncements.sql')).toString(),
     listIndefiniteCompanyAnnouncements: fs.readFileSync(path.join(basePath, 'companies/listIndefiniteCompanyAnnouncements.sql')).toString(),
+    listCompanyOpenEnrollments: fs.readFileSync(path.join(basePath, 'companies/listCompanyOpenEnrollments.sql')).toString(),
+    listCompanyCurrentOpenEnrollments: fs.readFileSync(path.join(basePath, 'companies/listCompanyCurrentOpenEnrollments.sql')).toString(),
 
     // Employees
     getEmployeeByCompanyIdAndId: fs.readFileSync(path.join(basePath, 'employees/getEmployeeByCompanyIdAndId.sql')).toString(),
@@ -179,9 +181,7 @@ export const Queries = {
     listExpiringLicensesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listExpiringLicensesByEmployeeId.sql')).toString(),
     updateEmployeeLicenseById: fs.readFileSync(path.join(basePath, 'employees/updateEmployeeLicenseById.sql')).toString(),
     listCertificatesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listCertificatesByEmployeeId.sql')).toString(),
-    listExpiringCertificatesByEmployeeId: fs
-        .readFileSync(path.join(basePath, 'employees/listExpiringCertificatesByEmployeeId.sql'))
-        .toString(),
+    listExpiringCertificatesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listExpiringCertificatesByEmployeeId.sql')).toString(),
     updateEmployeeCertificateById: fs.readFileSync(path.join(basePath, 'employees/updateEmployeeCertificateById.sql')).toString(),
     listReviewsByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listReviewsByEmployeeId.sql')).toString(),
     listUpcomingReviewsByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listUpcomingReviewsByEmployeeId.sql')).toString(),
@@ -189,6 +189,7 @@ export const Queries = {
     listEmployeeAbsenceByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listEmployeeAbsenceByEmployeeId.sql')).toString(),
     listClassesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listClassesByEmployeeId.sql')).toString(),
     listUpcomingClassesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listUpcomingClassesByEmployeeId.sql')).toString(),
+    listBenefitsByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listBenefitsByEmployeeId.sql')).toString(),
 
     // Group Term Life
     createGtlRecord: fs.readFileSync(path.join(basePath, 'gtl/createGtlRecord.sql')).toString(),
