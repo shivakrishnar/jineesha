@@ -773,3 +773,29 @@ export const listCompanyAnnouncements = utilService.gatewayEventHandlerV2(async 
 
     return await companyService.listCompanyOpenEnrollments(tenantId, companyId, event.queryStringParameters, domainName, path);
 });
+//Updates EmployeeClass's record by ID
+export const updateEmployeeClassById = utilService.gatewayEventHandlerV2(
+    async ({ event, requestBody, securityContext }: IGatewayEventInput) => {
+        console.info('tenants.handler.updateEmployeeClassById');
+
+        const { tenantId, companyId, employeeId, id } = event.pathParameters;
+
+        await utilService.requirePayload(requestBody);
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, employeeUriSchema);
+        utilService.validateAndThrow(requestBody, emailAcknowledgedSchema);
+        utilService.checkAdditionalProperties(emailAcknowledgedSchema, requestBody, 'Update Class Email Acknowledged');
+        utilService.checkBoundedIntegralValues(event.pathParameters);
+        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
+        await utilService.checkAuthorization(securityContext, event, [
+            Role.globalAdmin,
+            Role.serviceBureauAdmin,
+            Role.superAdmin,
+            Role.hrAdmin,
+            Role.hrEmployee,
+        ]);
+
+        return await employeeService.updateEmployeeClassById(tenantId, companyId, employeeId, id, requestBody);
+    },
+);

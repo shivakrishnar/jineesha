@@ -190,6 +190,7 @@ export const Queries = {
     listClassesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listClassesByEmployeeId.sql')).toString(),
     listUpcomingClassesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listUpcomingClassesByEmployeeId.sql')).toString(),
     listBenefitsByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listBenefitsByEmployeeId.sql')).toString(),
+    updateEmployeeClassById: fs.readFileSync(path.join(basePath, 'employees/updateEmployeeClassById.sql')).toString(),
 
     // Group Term Life
     createGtlRecord: fs.readFileSync(path.join(basePath, 'gtl/createGtlRecord.sql')).toString(),

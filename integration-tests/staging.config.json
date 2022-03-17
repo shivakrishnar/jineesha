@@ -28,6 +28,10 @@
         "timeOff": {
             "username": "kento@huh2.com",
             "password": "Demo123!"
+        },
+        "class": {
+            "username": "test-employee@sharklasers.com",
+            "password": "Demo123!"
         }
     },
     "sbAdminUser": {
