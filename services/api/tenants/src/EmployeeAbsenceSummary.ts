@@ -9,4 +9,5 @@ export type EmployeeAbsenceSummaryCategory = {
   scheduledHours: number;
   pendingApprovalHours: number;
   availableBalance: number;
+  timeOffDates: [];
 }
