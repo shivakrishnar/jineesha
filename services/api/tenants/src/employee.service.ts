@@ -919,6 +919,20 @@ export async function getEmployeeAbsenceSummary(
                 )
                 .reduce((accumulator, currentValue) => accumulator + currentValue.HoursTaken, 0);
 
+        const absenceArray = result.recordset.map((absence) => {
+            return {
+                submitDate: absence.SubmitDate,
+                startDate: absence.StartDate,
+                returnDate: absence.ReturnDate,
+                hoursTaken: absence.HoursTaken,
+                requestStatus: absence.Description,
+                evoTimeOffCategoryId: absence.EvoFK_TimeOffCategoryId,
+            }
+        })
+
+        const filterAbsencesByCategory = (timeOffCategoryId: number) =>
+            absenceArray.filter((timeOffRequest) => parseInt(timeOffRequest.evoTimeOffCategoryId) === timeOffCategoryId)
+        
         let totalAvailableBalance: number = 0;
 
         const categories: EmployeeAbsenceSummaryCategory[] = employeeTimeOffCategories.results.map((category) => {
@@ -926,6 +940,7 @@ export async function getEmployeeAbsenceSummary(
             const currentBalance = employeeSummary.accruedHours - employeeSummary.usedHours;
             const pendingApprovalHours = calculateCategoryPendingHours(category.id);
             const availableBalance = currentBalance - (employeeSummary.approvedHours + pendingApprovalHours);
+            const timeOffDates = filterAbsencesByCategory(category.id);
 
             totalAvailableBalance += availableBalance;
 
@@ -935,6 +950,7 @@ export async function getEmployeeAbsenceSummary(
                 scheduledHours: employeeSummary.approvedHours,
                 pendingApprovalHours,
                 availableBalance,
+                timeOffDates,
             };
         });
 
