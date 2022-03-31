@@ -915,7 +915,7 @@ export async function listCompanyAnnouncements(
 ): Promise<PaginatedResult> {
     console.info('companyService.listCompanyAnnouncements');
 
-    const validQueryStringParameters = ['pageToken', 'active', 'indefinite'];
+    const validQueryStringParameters = ['pageToken', 'expiring', 'indefinite'];
 
     // Pagination validation
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
@@ -926,22 +926,12 @@ export async function listCompanyAnnouncements(
         if (queryParams) {
             utilService.validateQueryParams(queryParams, validQueryStringParameters);
 
-            const requestedQueryParams = Object.keys(queryParams);
-            const nonPairableParams = ['active', 'indefinite'];
-            const foundInvalidParamPair = nonPairableParams.every((param) => requestedQueryParams.includes(param));
-
-            if (foundInvalidParamPair) {
-                throw errorService
-                    .getErrorResponse(60)
-                    .setDeveloperMessage(`The query params ${nonPairableParams.join(' and ')} cannot be used together`);
-            }
-
-            const active = queryParams.active && utilService.parseQueryParamsBoolean(queryParams, 'active');
+            const expiring = queryParams.expiring && utilService.parseQueryParamsBoolean(queryParams, 'expiring');
             const indefinite = queryParams.indefinite && utilService.parseQueryParamsBoolean(queryParams, 'indefinite');
 
-            if (active) query = new ParameterizedQuery('listActiveCompanyAnnouncements', Queries.listActiveCompanyAnnouncements);
-            if (indefinite)
-                query = new ParameterizedQuery('listIndefiniteCompanyAnnouncements', Queries.listIndefiniteCompanyAnnouncements);
+            if (expiring && indefinite) query = new ParameterizedQuery('listIndefiniteCompanyAnnouncements', Queries.listExpiringAndIndefiniteCompanyAnnouncements);
+            else if (expiring) query = new ParameterizedQuery('listExpiringCompanyAnnouncements', Queries.listExpiringCompanyAnnouncements);
+            else if (indefinite) query = new ParameterizedQuery('listIndefiniteCompanyAnnouncements', Queries.listIndefiniteCompanyAnnouncements);
         }
 
         query.setParameter('@companyId', companyId);

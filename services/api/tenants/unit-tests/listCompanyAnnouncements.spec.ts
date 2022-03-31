@@ -38,13 +38,13 @@ describe('listCompanyAnnouncements Service', () => {
     });
 
     describe('queryParams', () => {
-        test('should return resources with active param', () => {
+        test('should return resources with expiring param', () => {
             (utilService as any).invokeInternalService = jest.fn(() => {
                 return Promise.resolve(mockData.companyAnnouncements);
             });
 
             return service
-                .listCompanyAnnouncements(mockData.tenantId, mockData.companyId, { active: 'true' }, mockData.domainName, mockData.path)
+                .listCompanyAnnouncements(mockData.tenantId, mockData.companyId, { expiring: 'true' }, mockData.domainName, mockData.path)
                 .then((announcements) => {
                     expect(announcements.results).toBeTruthy();
                 });
@@ -80,37 +80,13 @@ describe('listCompanyAnnouncements Service', () => {
                 });
         });
 
-        test('should return error when using active and indefinite query params together', () => {
+        test('should return error when using non-boolean strings in the query params for expiring and indefinite', () => {
             (utilService as any).invokeInternalService = jest.fn(() => {
                 return Promise.resolve(mockData.companyAnnouncements);
             });
 
             return service
-                .listCompanyAnnouncements(
-                    mockData.tenantId,
-                    mockData.companyId,
-                    { active: 'true', indefinite: 'false' },
-                    mockData.domainName,
-                    mockData.path,
-                )
-                .catch((error) => {
-                    expect(error).toEqual({
-                        statusCode: 400,
-                        code: 60,
-                        message: 'Invalid url parameter value',
-                        developerMessage: 'The query params active and indefinite cannot be used together',
-                        moreInfo: '',
-                    });
-                });
-        });
-
-        test('should return error when using non-boolean strings in the query params for active and indefinite', () => {
-            (utilService as any).invokeInternalService = jest.fn(() => {
-                return Promise.resolve(mockData.companyAnnouncements);
-            });
-
-            return service
-                .listCompanyAnnouncements(mockData.tenantId, mockData.companyId, { active: 'abc' }, mockData.domainName, mockData.path)
+                .listCompanyAnnouncements(mockData.tenantId, mockData.companyId, { expiring: 'abc' }, mockData.domainName, mockData.path)
                 .catch((error) => {
                     expect(error).toEqual({
                         statusCode: 400,
