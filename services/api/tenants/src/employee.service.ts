@@ -992,7 +992,7 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
     try {
         await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
 
-        let query = new ParameterizedQuery('listBenefitsByEmployeeId', Queries.listBenefitsByEmployeeId);
+        const query = new ParameterizedQuery('listBenefitsByEmployeeId', Queries.listBenefitsByEmployeeId);
 
         if (queryParams) {
             utilService.validateQueryParams(queryParams, validQueryStringParameters);
