@@ -25,21 +25,15 @@ describe('listCompanyAnnouncements Service', () => {
             });
     });
 
-    test('should return a 404 if no announcements were found', () => {
+    test('returns empty resources', () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.emptyResult);
         });
 
         return service
             .listCompanyAnnouncements(mockData.tenantId, mockData.companyId, undefined, mockData.domainName, mockData.path)
-            .catch((error) => {
-                expect(error).toEqual({
-                    statusCode: 404,
-                    code: 50,
-                    message: 'The requested resource does not exist.',
-                    developerMessage: `Announcements for company with the ID ${mockData.companyId} not found.`,
-                    moreInfo: '',
-                });
+            .then((announcements) => {
+                expect(announcements).toEqual(undefined);
             });
     });
 

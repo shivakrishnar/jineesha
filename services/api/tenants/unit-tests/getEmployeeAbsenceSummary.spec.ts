@@ -77,7 +77,7 @@ describe('getEmployeeAbsenceSummary Service', () => {
             });
     });
 
-    test('should return time off record not found when there is no record in EVO', () => {
+    test('returns empty resources', () => {
         (payrollService as any).getEvolutionTimeOffCategoriesByEmployeeId = jest.fn(() => {
             return mockData.getEvolutionTimeOffCategoriesByEmployeeIdResult;
         });
@@ -102,14 +102,8 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.roles,
                 mockData.accessToken,
             )
-            .catch((error) => {
-                expect(error).toEqual({
-                    code: 50,
-                    developerMessage: 'No time off records found.',
-                    message: 'The requested resource does not exist.',
-                    moreInfo: '',
-                    statusCode: 404,
-                });
+            .then((employeeAbsenceSummary) => {
+                expect(employeeAbsenceSummary).toEqual(undefined);
             });
     });
 
