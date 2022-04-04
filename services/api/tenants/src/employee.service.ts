@@ -716,7 +716,7 @@ export async function updateEmployeeReviewById(
  * @param {string} path: The path of the endpoint.
  * @returns {PaginatedResult}: A Promise of a paginated collection of employee's classes.
  */
- export async function listClassesByEmployeeId(
+export async function listClassesByEmployeeId(
     tenantId: string,
     companyId: string,
     employeeId: string,
@@ -770,13 +770,13 @@ export async function updateEmployeeReviewById(
                 classId: record.ClassID,
                 title: record.Title,
                 description: record.Description,
-                duration:record.Duration,
+                duration: record.Duration,
                 instructor: record.Instructor,
                 location: record.Location,
                 credits: record.Credits,
                 isOpen: record.IsOpen,
                 classTime: record.ClassTime,
-                completionDate:record.CompletionDate,
+                completionDate: record.CompletionDate,
                 expirationDate: record.ExpirationDate,
                 gradeOrResult: record.GradeOrResult,
                 notes: record.Notes,
@@ -804,7 +804,7 @@ export async function updateEmployeeReviewById(
  * @param {any} request: The body that comes with the PATCH request.
  * @returns {any}: A Promise of the update response.
  */
- export async function updateEmployeeClassById(
+export async function updateEmployeeClassById(
     tenantId: string,
     companyId: string,
     employeeId: string,
@@ -899,12 +899,8 @@ export async function getEmployeeAbsenceSummary(
             utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse),
         ]);
 
-        if (!employeeTimeOffCategories) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`No time off categories found.`);
-        }
-
-        if (employeeTimeOffSummaries.results.length === 0 || result.recordset.length === 0) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`No time off records found.`);
+        if (!employeeTimeOffCategories || employeeTimeOffSummaries.results.length === 0 || result.recordset.length === 0) {
+            return undefined;
         }
 
         const getEmployeeTimeOffSummaryByCategoryId = (id) => {
@@ -927,12 +923,12 @@ export async function getEmployeeAbsenceSummary(
                 hoursTaken: absence.HoursTaken,
                 requestStatus: absence.Description,
                 evoTimeOffCategoryId: absence.EvoFK_TimeOffCategoryId,
-            }
-        })
+            };
+        });
 
         const filterAbsencesByCategory = (timeOffCategoryId: number) =>
-            absenceArray.filter((timeOffRequest) => parseInt(timeOffRequest.evoTimeOffCategoryId) === timeOffCategoryId)
-        
+            absenceArray.filter((timeOffRequest) => parseInt(timeOffRequest.evoTimeOffCategoryId) === timeOffCategoryId);
+
         let totalAvailableBalance: number = 0;
 
         const categories: EmployeeAbsenceSummaryCategory[] = employeeTimeOffCategories.results.map((category) => {
@@ -969,15 +965,15 @@ export async function getEmployeeAbsenceSummary(
 }
 
 /**
-* Lists benefits for a specific employee
-* @param {string} tenantId: The unique identifier for the tenant the user belongs to.
-* @param {string} companyId: The unique identifier for the specified company.
-* @param {string} employeeId: The unique identifier employee.
-* @param {any} queryParams: The query parameters that were specified by the user.
-* @param {string} domainName: The domain name of the request.
-* @param {string} path: The path of the endpoint.
-* @returns {PaginatedResult}: A Promise of a paginated collection of employee's benefits.
-*/
+ * Lists benefits for a specific employee
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} companyId: The unique identifier for the specified company.
+ * @param {string} employeeId: The unique identifier employee.
+ * @param {any} queryParams: The query parameters that were specified by the user.
+ * @param {string} domainName: The domain name of the request.
+ * @param {string} path: The path of the endpoint.
+ * @returns {PaginatedResult}: A Promise of a paginated collection of employee's benefits.
+ */
 export async function listBenefitsByEmployeeId( //we’ll want to separate BenefitPlan into its own endpoint and just add PlanID to the EmployeeBenefit record
     tenantId: string,
     companyId: string,
@@ -1032,7 +1028,7 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
                 carrierName: record.CarrierName,
                 carrierURL: record.CarrierURL,
                 premium: record.Premium,
-                elected: record.Elected
+                elected: record.Elected,
             } as EmployeeBenefit;
         });
 
@@ -1046,5 +1042,3 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
         throw errorService.getErrorResponse(0);
     }
 }
-
-
