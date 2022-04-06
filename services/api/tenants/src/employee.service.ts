@@ -893,18 +893,24 @@ export async function getEmployeeAbsenceSummary(
             queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        const [employeeTimeOffCategories, employeeTimeOffSummaries, result]: any[] = await Promise.all([
+        const [employeeTimeOffCategories, employeeTimeOffSummaries, companyTimeOffCategories, result]: any[] = await Promise.all([
             payrollService.getEvolutionTimeOffCategoriesByEmployeeId(tenantName, employee.evoData, payrollApiAccessToken),
             payrollService.getEvolutionTimeOffSummariesByEmployeeId(tenantName, employee.evoData, payrollApiAccessToken),
+            payrollService.getEvolutionCompanyTimeOffCategoriesByCompanyId(tenantName, employee.evoData, payrollApiAccessToken),
             utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse),
         ]);
 
-        if (!employeeTimeOffCategories || employeeTimeOffSummaries.results.length === 0 || result.recordset.length === 0) {
+        if (
+            !employeeTimeOffCategories ||
+            employeeTimeOffSummaries.results.length === 0 ||
+            !companyTimeOffCategories || companyTimeOffCategories.length === 0 ||
+            result.recordset.length === 0
+        ) {
             return undefined;
         }
 
         const getEmployeeTimeOffSummaryByCategoryId = (id) => {
-            return employeeTimeOffSummaries.results.find((summary) => summary.id === id);
+            return employeeTimeOffSummaries.results.find((summary) => summary.timeOffCategoryId === id);
         };
 
         const calculateCategoryPendingHours = (timeOffCategoryId: number) =>
@@ -926,24 +932,30 @@ export async function getEmployeeAbsenceSummary(
             };
         });
 
-        const filterAbsencesByCategory = (timeOffCategoryId: number) =>
-            absenceArray.filter((timeOffRequest) => parseInt(timeOffRequest.evoTimeOffCategoryId) === timeOffCategoryId);
+        const filterAbsencesByCategory = (companyTimeOffCategoryId: number) =>
+            absenceArray.filter((timeOffRequest) => parseInt(timeOffRequest.evoTimeOffCategoryId) === companyTimeOffCategoryId);
 
         let totalAvailableBalance: number = 0;
 
         const categories: EmployeeAbsenceSummaryCategory[] = employeeTimeOffCategories.results.map((category) => {
-            const employeeSummary = getEmployeeTimeOffSummaryByCategoryId(category.id);
-            const currentBalance = employeeSummary.accruedHours - employeeSummary.usedHours;
+            const companyCategory = companyTimeOffCategories.find((companyCat) => companyCat.Description === category.categoryDescription); 
+            // this should never happen, but if it does, console.error it and include it in the summary with a balance of 0
+            if (!companyCategory) {
+                console.error(`No corresponding company category found for EE category ${category.categoryDescription} under ee ${employeeId}, company ${companyId}, tenant ${tenantId}`);
+            }
+            const employeeSummary = companyCategory ? getEmployeeTimeOffSummaryByCategoryId(companyCategory.Id) : undefined;
+            const { accruedHours = 0, usedHours = 0, approvedHours = 0 } = (employeeSummary || {});
+            const currentBalance = accruedHours - usedHours;
             const pendingApprovalHours = calculateCategoryPendingHours(category.id);
-            const availableBalance = currentBalance - (employeeSummary.approvedHours + pendingApprovalHours);
-            const timeOffDates = filterAbsencesByCategory(category.id);
+            const availableBalance = currentBalance - (approvedHours + pendingApprovalHours);
+            const timeOffDates = filterAbsencesByCategory(companyCategory.Id);
 
             totalAvailableBalance += availableBalance;
 
             return {
                 category: category.categoryDescription,
                 currentBalance,
-                scheduledHours: employeeSummary.approvedHours,
+                scheduledHours: approvedHours,
                 pendingApprovalHours,
                 availableBalance,
                 timeOffDates,
