@@ -24,7 +24,6 @@ import * as ssoService from '../../../remote-services/sso.service';
 import { CompanyAnnouncement } from './CompanyAnnouncement';
 import { CompanyOpenEnrollment } from './CompanyOpenEnrollment';
 
-
 /**
  * Returns a listing of companies for a specific user within a tenant
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
@@ -959,7 +958,7 @@ export async function listCompanyAnnouncements(
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
 
         if (result.recordsets[1].length === 0) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`Announcements for company with the ID ${companyId} not found.`);
+            return undefined;
         }
 
         const totalCount = result.recordsets[0][0].totalCount;
@@ -997,7 +996,7 @@ export async function listCompanyAnnouncements(
  * @param {string} path: The path of the endpoint.
  * @returns {PaginatedResult}: A Promise of a paginated collection of company's open enrollments
  */
- export async function listCompanyOpenEnrollments(
+export async function listCompanyOpenEnrollments(
     tenantId: string,
     companyId: string,
     queryParams: any,
@@ -1036,7 +1035,7 @@ export async function listCompanyAnnouncements(
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
 
         if (result.recordsets[1].length === 0) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`No open enrollments for company with the ID ${companyId} were found.`);
+            return undefined;
         }
 
         const totalCount = result.recordsets[0][0].totalCount;

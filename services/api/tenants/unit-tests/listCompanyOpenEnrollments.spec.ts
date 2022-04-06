@@ -25,21 +25,15 @@ describe('list Company benefits Open-Enrollments', () => {
             });
     });
 
-    test('should return a 404 if no open-enrollments were found', () => {
+    test('returns empty resources', () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.emptyResult);
         });
 
         return service
             .listCompanyOpenEnrollments(mockData.tenantId, mockData.companyId, undefined, mockData.domainName, mockData.path)
-            .catch((error) => {
-                expect(error).toEqual({
-                    statusCode: 404,
-                    code: 50,
-                    message: 'The requested resource does not exist.',
-                    developerMessage: `No open enrollments for company with the ID ${mockData.companyId} were found.`,
-                    moreInfo: '',
-                });
+            .then((openEnrollments) => {
+                expect(openEnrollments).toEqual(undefined);
             });
     });
 
