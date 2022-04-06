@@ -19,6 +19,11 @@ describe('getEmployeeAbsenceSummary Service', () => {
         (payrollService as any).getEvolutionTimeOffSummariesByEmployeeId = jest.fn(() => {
             return mockData.getEvolutionTimeOffSummariesByEmployeeId;
         });
+
+        (payrollService as any).getEvolutionCompanyTimeOffCategoriesByCompanyId = jest.fn(() => {
+            return mockData.getEvolutionCompanyTimeOffCategoriesByCompanyId;
+        });
+
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetEmployeeById') {
                 return Promise.resolve(mockData.getEmployeeByIdResult);
@@ -49,6 +54,11 @@ describe('getEmployeeAbsenceSummary Service', () => {
         (payrollService as any).getEvolutionTimeOffSummariesByEmployeeId = jest.fn(() => {
             return mockData.getEvolutionTimeOffSummariesByEmployeeId;
         });
+
+        (payrollService as any).getEvolutionCompanyTimeOffCategoriesByCompanyId = jest.fn(() => {
+            return mockData.getEvolutionCompanyTimeOffCategoriesByCompanyId;
+        });
+
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetEmployeeById') {
                 return Promise.resolve(mockData.getEmployeeByIdResult);
@@ -66,14 +76,43 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.roles,
                 mockData.accessToken,
             )
-            .catch((error) => {
-                expect(error).toEqual({
-                    code: 50,
-                    developerMessage: 'No time off categories found.',
-                    message: 'The requested resource does not exist.',
-                    moreInfo: '',
-                    statusCode: 404,
-                });
+            .then((result) => {
+                expect(result).toEqual(undefined);
+            });
+    });
+
+    test('should return empty result when no company time off categories are found', () => {
+        (payrollService as any).getEvolutionTimeOffCategoriesByEmployeeId = jest.fn(() => {
+            return mockData.getEvolutionTimeOffCategoriesByEmployeeIdResult;
+        });
+
+        (payrollService as any).getEvolutionTimeOffSummariesByEmployeeId = jest.fn(() => {
+            return mockData.getEvolutionTimeOffSummariesByEmployeeId;
+        });
+
+        (payrollService as any).getEvolutionCompanyTimeOffCategoriesByCompanyId = jest.fn(() => {
+            return [];
+        });
+
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetEmployeeById') {
+                return Promise.resolve(mockData.getEmployeeByIdResult);
+            } else if (payload.queryName === 'listEmployeeAbsenceByEmployeeId') {
+                return Promise.resolve(mockData.listEmployeeAbsenceByEmployeeIdResult);
+            }
+        });
+
+        return service
+            .getEmployeeAbsenceSummary(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                mockData.email,
+                mockData.roles,
+                mockData.accessToken,
+            )
+            .then((result) => {
+                expect(result).toEqual(undefined);
             });
     });
 
@@ -85,6 +124,11 @@ describe('getEmployeeAbsenceSummary Service', () => {
         (payrollService as any).getEvolutionTimeOffSummariesByEmployeeId = jest.fn(() => {
             return { results: [] };
         });
+
+        (payrollService as any).getEvolutionCompanyTimeOffCategoriesByCompanyId = jest.fn(() => {
+            return mockData.getEvolutionCompanyTimeOffCategoriesByCompanyId;
+        });
+
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetEmployeeById') {
                 return Promise.resolve(mockData.getEmployeeByIdResult);
@@ -115,6 +159,11 @@ describe('getEmployeeAbsenceSummary Service', () => {
         (payrollService as any).getEvolutionTimeOffSummariesByEmployeeId = jest.fn(() => {
             return mockData.getEvolutionTimeOffSummariesByEmployeeId;
         });
+
+        (payrollService as any).getEvolutionCompanyTimeOffCategoriesByCompanyId = jest.fn(() => {
+            return mockData.getEvolutionCompanyTimeOffCategoriesByCompanyId;
+        });
+
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'GetEmployeeById') {
                 return Promise.resolve(mockData.getEmployeeByIdResult);
@@ -132,14 +181,8 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.roles,
                 mockData.accessToken,
             )
-            .catch((error) => {
-                expect(error).toEqual({
-                    code: 50,
-                    developerMessage: 'No time off records found.',
-                    message: 'The requested resource does not exist.',
-                    moreInfo: '',
-                    statusCode: 404,
-                });
+            .then((result) => {
+                expect(result).toEqual(undefined);
             });
     });
 });
