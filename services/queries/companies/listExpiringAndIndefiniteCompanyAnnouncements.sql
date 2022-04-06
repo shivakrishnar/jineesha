@@ -4,13 +4,12 @@ select count(*) as totalCount
 from Announcement
 where CompanyID = @_companyId
 and IsOn = 1
-and ExpiresDate is null
+AND (ExpiresDate is null OR convert(date, GETDATE()) <= ExpiresDate)
 and convert(date, GETDATE()) >= PostDate
 
-select *
-from Announcement
+select * from Announcement
 where CompanyID = @_companyId
 and IsOn = 1
-and ExpiresDate is null
+AND (ExpiresDate is null OR convert(date, GETDATE()) <= ExpiresDate)
 and convert(date, GETDATE()) >= PostDate
-order by IsHighPriority desc, postDate desc
+order by IsHighPriority desc, ExpiresDate

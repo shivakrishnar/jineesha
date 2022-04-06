@@ -92,8 +92,8 @@ describe('get announcements by company id as an admin user', () => {
             });
     });
 
-    test('should return 200 with the active param', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/announcements?active=true`;
+    test('should return 200 with the expiring param', (done) => {
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/announcements?expiring=true`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${adminAccessToken}`)
@@ -154,19 +154,6 @@ describe('get announcements by company id as an admin user', () => {
             });
     });
 
-    test('should return 400 with unpairable params', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/announcements?indefinite=true&active=true`;
-        request(baseUri)
-            .get(uri)
-            .set('Authorization', `Bearer ${adminAccessToken}`)
-            .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(400)
-            .end((error, response) => {
-                utils.testResponse(error, response, done, () => {
-                    return utils.assertJson(schemas, schemaNames.ErrorMessage, response.body);
-                });
-            });
-    });
 });
 
 describe('get announcements by company Id as an employee user', () => {
