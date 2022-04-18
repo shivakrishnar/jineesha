@@ -391,6 +391,15 @@ functions:
             method: get
             cors:
               origin: '*'
+  
+  listTenants:
+    handler: src/handler.listTenants
+    events:
+        - http:
+            path: /tenants
+            method: get
+            cors:
+              origin: '*'
 
 stepFunctions:
   stateMachines:

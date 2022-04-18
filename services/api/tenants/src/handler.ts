@@ -799,3 +799,17 @@ export const updateEmployeeClassById = utilService.gatewayEventHandlerV2(
         return await employeeService.updateEmployeeClassById(tenantId, companyId, employeeId, id, requestBody);
     },
 );
+
+/**
+ * Returns a listing of all AHR tenants.
+ */
+ export const listTenants = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('tenants.handler.listTenants');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin]);
+
+    return await tenantService.listAll(event.queryStringParameters);
+});
