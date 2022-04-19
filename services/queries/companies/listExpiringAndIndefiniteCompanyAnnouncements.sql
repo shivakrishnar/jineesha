@@ -1,15 +1,15 @@
-declare @_companyId as int = @companyId
+DECLARE @_companyId AS INT = @companyId
 
-select count(*) as totalCount
-from Announcement
-where CompanyID = @_companyId
-and IsOn = 1
-AND (ExpiresDate is null OR convert(date, GETDATE()) <= ExpiresDate)
-and convert(date, GETDATE()) >= PostDate
+SELECT count(*) AS totalCount
+FROM Announcement
+WHERE CompanyID = @_companyId
+AND IsOn = 1
+AND (convert(date, GETDATE()) <= ExpiresDate OR ExpiresDate IS NULL)
+AND (convert(date, GETDATE()) >= PostDate OR PostDate IS NULL)
 
-select * from Announcement
-where CompanyID = @_companyId
-and IsOn = 1
-AND (ExpiresDate is null OR convert(date, GETDATE()) <= ExpiresDate)
-and convert(date, GETDATE()) >= PostDate
-order by IsHighPriority desc, ExpiresDate
+SELECT * FROM Announcement
+WHERE CompanyID = @_companyId
+AND IsOn = 1
+AND (convert(date, GETDATE()) <= ExpiresDate OR ExpiresDate IS NULL)
+AND (convert(date, GETDATE()) >= PostDate OR PostDate IS NULL)
+ORDER BY IsHighPriority DESC, ExpiresDate DESC, PostDate DESC
