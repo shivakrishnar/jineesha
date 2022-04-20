@@ -7,6 +7,22 @@ export const newTenantId = '5678';
 export const oldCompanyCode = '1';
 export const newCompanyCode = '2';
 
+export const getUserDBResponse = (IsGA = true, IsSuperAdmin = false) => {
+    return {
+        recordset: [
+            {
+                ID: 1,
+                IsGA,
+                IsSuperAdmin,
+                FirstName: 'Bobby',
+                LastName: 'Bob',
+            },
+        ],
+        output: {},
+        rowsAffected: [1],
+    };
+}
+
 export const platformIntegrationPatchInstructions: PatchInstruction[] = [
     {
         op: PatchOperation.Test,
@@ -205,6 +221,13 @@ export const createdSsoAccountResponse: SsoAccount = {
 };
 
 export const emptyDBResponse = {
+    recordset: [],
+    output: {},
+    rowsAffected: [0],
+};
+
+export const emptyPaginatedDBResponse = {
+    recordsets: [[{ totalCount: 0 }], []],
     recordset: [],
     output: {},
     rowsAffected: [0],
