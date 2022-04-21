@@ -122,6 +122,23 @@ provider:
       Action:
         - ssm:GetParameter
       Resource: arn:aws:ssm:us-east-1:*:parameter/hr/esignature/simplesign/legacyClientCutOffDate
+    
+    - Effect: Allow
+      Action:
+        - "dynamodb:PutItem"
+        - "dynamodb:GetItem"
+        - "dynamodb:UpdateItem"
+        - "dynamodb:DeleteItem"
+        - "dynamodb:BatchGetItem"
+        - "dynamodb:BatchWriteItem"
+        - "dynamodb:Query"
+        - "dynamodb:Scan"
+      Resource:
+        - Fn::GetAtt: [HrCompanyMigrations, Arn]
+        - Fn::Join:
+            - '/'
+            - - Fn::GetAtt: [HrCompanyMigrations, Arn]
+              - '*'
 
   apiGateway:
     binaryMediaTypes:
@@ -401,6 +418,15 @@ functions:
             cors:
               origin: '*'
 
+  listCompanyMigrations:
+    handler: src/handler.listCompanyMigrations
+    events:
+        - http:
+            path: /migrations
+            method: get
+            cors:
+              origin: '*'
+
 stepFunctions:
   stateMachines:
      HrDatabaseCreator:
@@ -471,6 +497,24 @@ resources:
         ResponseType: DEFAULT_4XX
         RestApiId:
           Ref: 'ApiGatewayRestApi'
+    HrCompanyMigrations:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: HrCompanyMigrations
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: ID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ID
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: ID-Index
+            KeySchema:
+              - AttributeName: ID
+                KeyType: HASH
+            Projection:
+              ProjectionType: 'ALL'
 
 plugins:
   - serverless-plugin-warmup

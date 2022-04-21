@@ -813,3 +813,17 @@ export const updateEmployeeClassById = utilService.gatewayEventHandlerV2(
 
     return await tenantService.listAll(event.queryStringParameters);
 });
+
+/*
+ * Returns a listing of HR company migrations.
+ */
+export const listCompanyMigrations = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('tenants.handler.listCompanyMigrations');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin]);
+
+    return await tenantService.listCompanyMigrations();
+});

@@ -447,3 +447,31 @@ export async function listAll(queryParams?: any): Promise<any> {
         console.error(error);
     }
 }
+
+/**
+ * Returns a list of company migrations.
+ * @returns {Promise}: Promise of the company migration data
+ */
+export async function listCompanyMigrations(): Promise<any> {
+    console.info('company.service.listCompanyMigrations');
+
+    try {
+        const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+        const params = {
+            TableName: 'HrCompanyMigrations',
+            IndexName: 'ID-Index',
+        };
+
+        const results = await dynamoDbClient.scan(params).promise();
+        return results.Items.map((migration) => ({
+            id: migration.ID,
+            status: migration.Status,
+            source: migration.Details.source,
+            destination: migration.Details.destination,
+            timestamp: migration.Timestamp
+        }));
+    } catch(error) {
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
