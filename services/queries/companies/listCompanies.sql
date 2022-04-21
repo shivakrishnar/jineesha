@@ -7,6 +7,7 @@ from
     dbo.Company
 where
     concat(CompanyName, PRIntegrationCompanyCode) like @_search
+    and IsActive = 1
 
 select
     ID,
@@ -17,3 +18,4 @@ from
     dbo.Company
 where
     concat(CompanyName, PRIntegrationCompanyCode) like @_search
+    and IsActive = 1
