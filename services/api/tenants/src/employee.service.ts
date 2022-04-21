@@ -931,9 +931,8 @@ export async function getEmployeeAbsenceSummary(
                 evoTimeOffCategoryId: absence.EvoFK_TimeOffCategoryId,
             };
         });
-
-        const filterAbsencesByCategory = (companyTimeOffCategoryId: number) =>
-            absenceArray.filter((timeOffRequest) => parseInt(timeOffRequest.evoTimeOffCategoryId) === companyTimeOffCategoryId);
+       
+        const filterAbsencesByCategory = (employeeCategoryId: number) =>  absenceArray.filter((timeOffRequest) => timeOffRequest.evoTimeOffCategoryId === employeeCategoryId.toString())
 
         let totalAvailableBalance: number = 0;
 
@@ -948,8 +947,7 @@ export async function getEmployeeAbsenceSummary(
             const currentBalance = accruedHours - usedHours;
             const pendingApprovalHours = calculateCategoryPendingHours(category.id);
             const availableBalance = currentBalance - (approvedHours + pendingApprovalHours);
-            const timeOffDates = filterAbsencesByCategory(companyCategory.Id);
-
+            const timeOffDates = filterAbsencesByCategory(category.id);
             totalAvailableBalance += availableBalance;
 
             return {
