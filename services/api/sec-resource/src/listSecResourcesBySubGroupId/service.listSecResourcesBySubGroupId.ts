@@ -15,9 +15,10 @@ import { SecResource } from '../models/SecResource';
  * @param {string} domainName: The domain name of the request.
  * @param {string} path: The path of the endpoint.
  * @param {any} queryParams: The query parameters that were specified by the user.
+ * @param {string} userEmail: The email address of user making the request.
  * @returns {any}: A Promise of all SecResources data.
  */
- export async function listSecResourcesBySubGroupId( tenantId: string, subGroupId: string, domainName: string, path: string, queryParams: any): Promise<PaginatedResult> {
+ export async function listSecResourcesBySubGroupId( tenantId: string, subGroupId: string, domainName: string, path: string, queryParams: any, userEmail?: string): Promise<PaginatedResult> {
     console.info('sec-resource.service.listSecResourcesBySubGroupId');
 
     // subGroupId must be integral
@@ -25,7 +26,7 @@ import { SecResource } from '../models/SecResource';
         throw errorService.getErrorResponse(30).setDeveloperMessage(`${subGroupId} is not a valid subGroupId.`);
     }
 
-    const validQueryStringParameters = ['pageToken'];
+    const validQueryStringParameters = ['pageToken', 'quickLinks'];
 
     // Pagination validation
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
@@ -60,8 +61,8 @@ import { SecResource } from '../models/SecResource';
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
 
         const totalCount = result.recordsets[0][0].totalCount;
-
-        const resources: SecResource[] = result.recordsets[1].map((record) => {
+        
+        let resources: SecResource[] = result.recordsets[1].map((record) => {
             return {
                 id: record.ID,
                 resourceGroupId: record.ResourceGroupID,
@@ -84,6 +85,53 @@ import { SecResource } from '../models/SecResource';
             } as SecResource;
         });
 
+        if (queryParams) {
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+
+            const quickLinks = utilService.parseQueryParamsBoolean(queryParams, 'quickLinks');
+
+            if (quickLinks) {
+                try {
+                    const quickLinkObjMap = {
+                        timeOff: {
+                            secResourceName: 'Time Off',
+                            secPermissionName: 'My Time Off'
+                        },
+                        directDeposit: {
+                            secResourceName: 'Direct Deposit',
+                            secPermissionName: 'My Direct Deposit'
+                        },
+                        payStub: {
+                            secResourceName: 'View Paystubs',
+                            secPermissionName: 'My Pay Stub'
+                        }
+                    }
+
+                    for (const quickLink in quickLinkObjMap) {
+                        const quickLinksQuery = new ParameterizedQuery('getQuickLinkVisibilityByUsername', Queries.getQuickLinkVisibilityByUsername);
+                        quickLinksQuery.setParameter('@username', userEmail);
+                        quickLinksQuery.setParameter('@quickLink', quickLinkObjMap[quickLink].secPermissionName)
+
+                        const quickLinksPayload = {
+                            tenantId,
+                            queryName: quickLinksQuery.name,
+                            query: quickLinksQuery.value,
+                            queryType: QueryType.Simple, 
+                        } as DatabaseEvent;
+
+                        const quickLinksResult: any = await utilService.invokeInternalService('queryExecutor', quickLinksPayload, utilService.InvocationType.RequestResponse);
+                        
+                        resources = resources.filter((resource) => !quickLinksResult.recordset[0] || !(resource.name === quickLinkObjMap[quickLink].secResourceName && !quickLinksResult.recordset[0]?.IsVisible))
+                    }
+                } catch (error) {
+                    if (error instanceof ErrorMessage) {
+                        throw error;
+                    }
+                    console.error(error);
+                    throw errorService.getErrorResponse(0);
+                }
+            }
+        }
         return await paginationService.createPaginatedResult(resources, baseUrl, totalCount, page);
     } catch (error) {
         if (error instanceof ErrorMessage) {
