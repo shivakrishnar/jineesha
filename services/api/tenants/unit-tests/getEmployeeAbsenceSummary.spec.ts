@@ -40,6 +40,7 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.email,
                 mockData.roles,
                 mockData.accessToken,
+                undefined,
             )
             .then((employeeAbsenceSummary) => {
                 expect(employeeAbsenceSummary).toEqual(mockData.expectedEmployeeAbsenceSummary);
@@ -75,6 +76,7 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.email,
                 mockData.roles,
                 mockData.accessToken,
+                undefined,
             )
             .then((result) => {
                 expect(result).toEqual(undefined);
@@ -110,6 +112,7 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.email,
                 mockData.roles,
                 mockData.accessToken,
+                undefined
             )
             .then((result) => {
                 expect(result).toEqual(undefined);
@@ -145,13 +148,14 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.email,
                 mockData.roles,
                 mockData.accessToken,
+                undefined,
             )
             .then((employeeAbsenceSummary) => {
                 expect(employeeAbsenceSummary).toEqual(undefined);
             });
     });
 
-    test('should return time off record not found when there is no record in AHR', () => {
+    test('should return time off record and empty timeOffDates if no records in AHR', () => {
         (payrollService as any).getEvolutionTimeOffCategoriesByEmployeeId = jest.fn(() => {
             return mockData.getEvolutionTimeOffCategoriesByEmployeeIdResult;
         });
@@ -180,9 +184,115 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.email,
                 mockData.roles,
                 mockData.accessToken,
+                undefined
             )
             .then((result) => {
-                expect(result).toEqual(undefined);
+                expect(result).toEqual(mockData.expectedEmptyDBEmployeeAbsenceSummary );
+            });
+    });
+    test('returns only approved entries and employee absence summary', () => {
+        (payrollService as any).getEvolutionTimeOffCategoriesByEmployeeId = jest.fn(() => {
+            return mockData.getEvolutionTimeOffCategoriesByEmployeeIdResult;
+        });
+
+        (payrollService as any).getEvolutionTimeOffSummariesByEmployeeId = jest.fn(() => {
+            return mockData.getEvolutionTimeOffSummariesByEmployeeId;
+        });
+
+        (payrollService as any).getEvolutionCompanyTimeOffCategoriesByCompanyId = jest.fn(() => {
+            return mockData.getEvolutionCompanyTimeOffCategoriesByCompanyId;
+        });
+
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetEmployeeById') {
+                return Promise.resolve(mockData.getEmployeeByIdResult);
+            } else if (payload.queryName === 'listEmployeeAbsenceByEmployeeId') {
+                return Promise.resolve(mockData.listEmployeeAbsenceByEmployeeIdResult);
+            }
+        });
+
+        return service
+            .getEmployeeAbsenceSummary(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                mockData.email,
+                mockData.roles,
+                mockData.accessToken,
+                {approved: 'true'},
+            )
+            .then((employeeAbsenceSummary) => {
+                expect(employeeAbsenceSummary).toEqual(mockData.expectedApprovedEmployeeAbsenceSummary);
+            });
+    });
+    test('returns only upcoming entries and employee absence summary', () => {
+        (payrollService as any).getEvolutionTimeOffCategoriesByEmployeeId = jest.fn(() => {
+            return mockData.getEvolutionTimeOffCategoriesByEmployeeIdResult;
+        });
+
+        (payrollService as any).getEvolutionTimeOffSummariesByEmployeeId = jest.fn(() => {
+            return mockData.getEvolutionTimeOffSummariesByEmployeeId;
+        });
+
+        (payrollService as any).getEvolutionCompanyTimeOffCategoriesByCompanyId = jest.fn(() => {
+            return mockData.getEvolutionCompanyTimeOffCategoriesByCompanyId;
+        });
+
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetEmployeeById') {
+                return Promise.resolve(mockData.getEmployeeByIdResult);
+            } else if (payload.queryName === 'listEmployeeAbsenceByEmployeeId') {
+                return Promise.resolve(mockData.listEmployeeAbsenceByEmployeeIdResult);
+            }
+        });
+
+        return service
+            .getEmployeeAbsenceSummary(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                mockData.email,
+                mockData.roles,
+                mockData.accessToken,
+                {upcoming: 'true'},
+            )
+            .then((employeeAbsenceSummary) => {
+                expect(employeeAbsenceSummary).toEqual(mockData.expectedUpcomingEmployeeAbsenceSummary);
+            });
+    });
+    test('returns approved/upcoming entries and employee absence summary', () => {
+        (payrollService as any).getEvolutionTimeOffCategoriesByEmployeeId = jest.fn(() => {
+            return mockData.getEvolutionTimeOffCategoriesByEmployeeIdResult;
+        });
+
+        (payrollService as any).getEvolutionTimeOffSummariesByEmployeeId = jest.fn(() => {
+            return mockData.getEvolutionTimeOffSummariesByEmployeeId;
+        });
+
+        (payrollService as any).getEvolutionCompanyTimeOffCategoriesByCompanyId = jest.fn(() => {
+            return mockData.getEvolutionCompanyTimeOffCategoriesByCompanyId;
+        });
+
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetEmployeeById') {
+                return Promise.resolve(mockData.getEmployeeByIdResult);
+            } else if (payload.queryName === 'listEmployeeAbsenceByEmployeeId') {
+                return Promise.resolve(mockData.listEmployeeAbsenceByEmployeeIdResult);
+            }
+        });
+
+        return service
+            .getEmployeeAbsenceSummary(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeId,
+                mockData.email,
+                mockData.roles,
+                mockData.accessToken,
+                {approved: 'true', upcoming: 'true'},
+            )
+            .then((employeeAbsenceSummary) => {
+                expect(employeeAbsenceSummary).toEqual(mockData.expectedApprovedUpcomingEmployeeAbsenceSummary);
             });
     });
 });

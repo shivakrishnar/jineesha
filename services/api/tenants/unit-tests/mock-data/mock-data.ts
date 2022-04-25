@@ -1084,7 +1084,99 @@ export const expectedEmployeeAbsenceSummary = {
         },
     ],
 };
-
+export const expectedApprovedEmployeeAbsenceSummary = {
+    totalAvailableBalance: 46,
+    categories: [
+        {
+            category: 'Vacation',
+            currentBalance: 22,
+            scheduledHours: 16,
+            pendingApprovalHours: 0,
+            availableBalance: 6,
+            timeOffDates: [
+                {
+                    submitDate: '2021-09-27T00:00:00.000Z',
+                    startDate: '2021-10-01T00:00:00.000Z',
+                    returnDate: '2021-10-06T00:00:00.000Z',
+                    hoursTaken: 16,
+                    requestStatus: 'Approved',
+                    evoTimeOffCategoryId: "1",
+                },
+            ]
+        },
+        {
+            category: 'Sick',
+            currentBalance: 48,
+            scheduledHours: 0,
+            pendingApprovalHours: 8,
+            availableBalance: 40,
+            timeOffDates: []
+        },
+    ],
+};
+export const expectedUpcomingEmployeeAbsenceSummary = {
+    totalAvailableBalance: 46,
+    categories: [
+        {
+            category: 'Vacation',
+            currentBalance: 22,
+            scheduledHours: 16,
+            pendingApprovalHours: 0,
+            availableBalance: 6,
+            timeOffDates: []
+        },
+        {
+            category: 'Sick',
+            currentBalance: 48,
+            scheduledHours: 0,
+            pendingApprovalHours: 8,
+            availableBalance: 40,
+            timeOffDates: []
+        },
+    ],
+};
+export const expectedApprovedUpcomingEmployeeAbsenceSummary = {
+    totalAvailableBalance: 46,
+    categories: [
+        {
+            category: 'Vacation',
+            currentBalance: 22,
+            scheduledHours: 16,
+            pendingApprovalHours: 0,
+            availableBalance: 6,
+            timeOffDates: []
+        },
+        {
+            category: 'Sick',
+            currentBalance: 48,
+            scheduledHours: 0,
+            pendingApprovalHours: 8,
+            availableBalance: 40,
+            timeOffDates: []
+        },
+    ],
+};
+export const expectedEmptyDBEmployeeAbsenceSummary = {
+    totalAvailableBalance: 54,
+    categories: [
+        {
+            category: 'Vacation',
+            currentBalance: 22,
+            scheduledHours: 16,
+            pendingApprovalHours: 0,
+            availableBalance: 6,
+            timeOffDates: []
+        },
+        {
+            category: 'Sick',
+            currentBalance: 48,
+            scheduledHours: 0,
+            pendingApprovalHours: 0,
+            availableBalance: 48,
+            timeOffDates: []
+        },
+    ],
+};
 export const companyAnnouncements = {
     recordsets: [
         [{ totalCount: 5 }],
