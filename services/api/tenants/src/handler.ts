@@ -608,7 +608,6 @@ export const listReviewsByEmployeeId = utilService.gatewayEventHandlerV2(async (
  */
 export const getEmployeeAbsenceSummary = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
     console.info('tenants.handler.getEmployeeAbsenceSummary');
-
     const {
         pathParameters: { tenantId, companyId, employeeId },
         headers: { Authorization },
@@ -635,7 +634,7 @@ export const getEmployeeAbsenceSummary = utilService.gatewayEventHandlerV2(async
         Role.hrAdmin,
     ]);
 
-    return await employeeService.getEmployeeAbsenceSummary(tenantId, companyId, employeeId, email, roleMemberships, accessToken);
+    return await employeeService.getEmployeeAbsenceSummary(tenantId, companyId, employeeId,  email, roleMemberships, accessToken, event.queryStringParameters);
 });
 
 //Updates EmployeeReview's record by ID
