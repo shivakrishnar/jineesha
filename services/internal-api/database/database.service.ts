@@ -45,7 +45,7 @@ export function createConnectionPool(user: string, password: string, server: str
 }
 
 /**
- * Executes a SQL query on a given database connection
+ * Executes a SQL query within a transaction on a given database connection
  * @param {Transaction} transaction: The connection to the database
  * @param {string} query: The name of query to be executed
  * @param {string} query: The SQL-string representation of the query
@@ -81,6 +81,19 @@ export function executeQuery(transaction: Transaction, name: string, query: stri
             }
         });
     });
+}
+
+/**
+ * Executes a stored procedure on a given database connection
+ * @param {ConnectionPool} pool: The connection to the database
+ * @param {string} query: The SQL-string representation of the query
+ * @returns {Promise<IResult<{}>>}: Promise of the stored procedure's execution result set
+ */
+ export async function executeStoredProcedure(pool: ConnectionPool, query: string): Promise<IResult<any>> {
+    console.info('database.service.executeStoredProcedure');
+
+    const request = new Request(pool);
+    return await request.query(query);
 }
 
 /**
