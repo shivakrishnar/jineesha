@@ -40,7 +40,7 @@ provider:
     tlmWriteRole: ${file(${self:custom.configFile}):tlmWriteRole}
     fileBucketName: ${file(${self:custom.configFile}):fileBucketName}
     payrollBaseUrl: ${file(${self:custom.configFile}):payrollBaseUrl}
-
+    dbBackupBucket: ${file(${self:custom.configFile}):dbBackupBucket}
 
   iamRoleStatements:
     - Effect: Allow
@@ -110,6 +110,7 @@ provider:
         - dynamodb:Query
         - dynamodb:Scan
         - dynamodb:GetItem
+        - dynamodb:UpdateItem
       Resource: "arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings"
     - Effect: Allow
       Action:
@@ -201,6 +202,11 @@ functions:
 
   errorHandler:
     handler: src/handler.errorHandler
+
+  deleteTenantDatabase:
+    handler: src/handler.deleteTenantDatabase
+    events:
+      - stream: ${file(${self:custom.configFile}):connectionStringsStreamArn}
 
   listCompanies:
     handler: src/handler.companyList
@@ -424,6 +430,15 @@ functions:
         - http:
             path: /migrations
             method: get
+            cors:
+              origin: '*'
+
+  scheduleTenantDeletion:
+    handler: src/handler.scheduleTenantDeletion
+    events:
+        - http:
+            path: /tenants/{tenantId}
+            method: patch
             cors:
               origin: '*'
 

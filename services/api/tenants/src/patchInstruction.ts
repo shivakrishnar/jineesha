@@ -4,6 +4,7 @@ export enum PatchOperation {
     Replace = 'replace',
     Copy = 'copy',
     Move = 'move',
+    Undo = 'undo',
     Test = 'test',
 }
 
