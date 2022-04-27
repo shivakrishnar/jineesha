@@ -16,12 +16,12 @@ const tenantResourceUriSchema = {
 /**
  * Returns all SecResources based on the ResourceSubGroupId.
  */
-export const listSecResourcesBySubGroupId = utilService.gatewayEventHandlerV2(async ({ event }: IGatewayEventInput) => {
+export const listSecResourcesBySubGroupId = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
     console.info('sec-resource.handler.listSecResourcesBySubGroupId');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, tenantResourceUriSchema);
 
-    return await service(event.pathParameters.tenantId, event.pathParameters.subGroupId, event.requestContext.domainName, event.requestContext.path, event.queryStringParameters);
+    return await service(event.pathParameters.tenantId, event.pathParameters.subGroupId, event.requestContext.domainName, event.requestContext.path, event.queryStringParameters, securityContext.principal.email);
 });

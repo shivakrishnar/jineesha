@@ -213,4 +213,5 @@ export const Queries = {
     listSecResourcesBySubGroupId: fs.readFileSync(path.join(basePath, 'sec-resource/listSecResourcesBySubGroupId.sql')).toString(),
     getSecResourceSubGroupById: fs.readFileSync(path.join(basePath, 'sec-resource/getSecResourceSubGroupById.sql')).toString(),
     listSecResourceSubGroups: fs.readFileSync(path.join(basePath, 'sec-resource/listSecResourceSubGroups.sql')).toString(),
+    getQuickLinkVisibilityByUsername: fs.readFileSync(path.join(basePath, 'sec-resource/getQuickLinkVisibilityByUsername.sql')).toString(),
 };
