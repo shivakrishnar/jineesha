@@ -5,7 +5,6 @@ import * as crypto from 'crypto';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
-import { Query } from '../../../queries/query';
 import { Company } from './company';
 
 import * as configService from '../../../config.service';
@@ -36,12 +35,14 @@ import { CompanyOpenEnrollment } from './CompanyOpenEnrollment';
 export async function list(tenantId: string, email: string, domainName: string, path: string, queryParams: any): Promise<PaginatedResult> {
     console.info('companyService.list');
 
-    const validQueryStringParameters = ['pageToken'];
+    const validQueryStringParameters = ['pageToken', 'search'];
 
     // Pagination validation
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
+        if (queryParams) utilService.validateQueryParams(queryParams, validQueryStringParameters);
+
         // Get user info
         const userQuery = new ParameterizedQuery('GetUserById', Queries.getUserById);
         userQuery.setParameter('@username', email);
@@ -58,13 +59,13 @@ export async function list(tenantId: string, email: string, domainName: string, 
         );
 
         if (userResult.recordset.length === 0) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(`Could not find user with email ${email}`);
+            throw errorService.notFound().setDeveloperMessage(`Could not find user with email ${email}`);
         }
 
         const isGaOrSuperAdmin = userResult.recordset[0].IsGA === true || userResult.recordset[0].IsSuperAdmin === true;
         const userId = userResult.recordset[0].ID;
 
-        const query = new Query('ListCompanies', Queries.listCompanies);
+        const query = new ParameterizedQuery('ListCompanies', Queries.listCompanies);
 
         if (!isGaOrSuperAdmin) {
             const userCompaniesQuery = new ParameterizedQuery('GetUserCompaniesById', Queries.getUserCompaniesById);
@@ -82,8 +83,11 @@ export async function list(tenantId: string, email: string, domainName: string, 
             }
 
             const companyIds = userCompaniesResult.recordset.map(({ CompanyID }) => CompanyID).join(',');
-            query.appendFilter(`where ID in (${companyIds})`, false);
+            query.appendFilter(`ID in (${companyIds})`, true);
         }
+
+        const searchString = queryParams?.search || '';
+        query.setStringParameter('@search', searchString);
 
         query.appendFilter(' order by ID', false);
         const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
@@ -99,8 +103,13 @@ export async function list(tenantId: string, email: string, domainName: string, 
             return undefined;
         }
 
-        const companies: Company[] = recordSet.map(({ ID: id, CompanyName: name }) => {
-            return { id, name } as Company;
+        const companies: Company[] = recordSet.map(({
+            ID: id,
+            CompanyName: name,
+            PRIntegrationCompanyCode: code,
+            CreateDate: createDate
+        }) => {
+            return { id, name, code, createDate } as Company;
         });
 
         return await paginationService.createPaginatedResult(companies, baseUrl, totalCount, page);
