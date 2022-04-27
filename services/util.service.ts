@@ -1001,7 +1001,7 @@ export async function checkAuthorization(
     authorizedRoles: string[],
 ): Promise<void> {
     console.info('utilService.checkAuthorization');
-    const { tenantId, companyId, employeeId } = event.pathParameters;
+    const { tenantId, companyId, employeeId } = event.pathParameters || {};
     const {
         principal: { email },
         roleMemberships,

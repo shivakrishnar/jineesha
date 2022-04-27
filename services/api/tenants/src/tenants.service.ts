@@ -4,6 +4,8 @@ import * as stripBom from 'strip-bom';
 import * as configService from '../../../config.service';
 import * as errorService from '../../../errors/error.service';
 import * as ssoService from '../../../remote-services/sso.service';
+// tenantsService is being imported in itself so that jest can mock this function
+import * as tenantsService from './tenants.service';
 
 import * as utilService from '../../../util.service';
 
@@ -410,6 +412,37 @@ export async function listConnectionStrings(): Promise<any> {
     };
     try {
         return dynamoDbClient.scan(params).promise();
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+/**
+ * Returns a list of all AHR tenants
+ * @param {any} queryParams: The query parameters that were specified by the user.
+ * @returns {Promise}: Promise of the tenant data
+ */
+export async function listAll(queryParams?: any): Promise<any> {
+    console.info('tenants.service.listAll');
+
+    const validQueryStringParameters = ['direct'];
+
+    try {
+        if (queryParams) {
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+        }
+
+        const directFilter = queryParams?.direct && utilService.parseQueryParamsBoolean(queryParams, 'direct');
+
+        const connectionStrings = await tenantsService.listConnectionStrings();
+        return (directFilter === undefined
+            ? connectionStrings.Items
+            : connectionStrings.Items.filter((conn) => !!conn.IsDirectClient === directFilter))
+            .map((conn) => ({
+                id: conn.TenantID,
+                name: conn.Domain.split('.')[0],
+                isDirect: conn.IsDirectClient || false,
+            }));
     } catch (error) {
         console.error(error);
     }
