@@ -2,7 +2,13 @@
 
 let AWS = jest.genMockFromModule('aws-sdk');
 const mockData = require('../services/integrations/esignature/unit-tests/mock-data');
+const { awsMockMethods, catchMethod } = require('../services/unit-test-mocks/aws-sdk-mock');
 
+const promise = () => {
+    return { catch: catchMethod };
+};
+
+// TODO: refactor this to utilize new mocking solution
 AWS = {
     S3: class {
         constructor({ region }) {
@@ -98,6 +104,8 @@ AWS = {
                     },
                 };
             }
+
+            scan = awsMockMethods.dynamodb.scan
         },
     },
     SSM: class {
@@ -125,11 +133,5 @@ AWS = {
     },
 };
 
-const promise = () => {
-    return { catch: catchMethod };
-};
-const catchMethod = () => {
-    console.log('catch');
-};
 
 module.exports = AWS;
