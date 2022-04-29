@@ -859,22 +859,25 @@ export async function updateEmployeeClassById(
  * Get the absence summary for a specific employee
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for the specified company.
- * @param {string} employeeId: The unique identifier employee.
+ * @param {string} employeeId: The unique identifier employee. 
  * @param {string} emailAddress: The email address of the user.
  * @param {string[]} roles: The roles memberships that are associated with the user.
  * @param {string} accessToken: The access token of the user making the request.
+ * @param {any} queryParams: Query parameters
  * @returns {EmployeeAbsenceSummary}: A Promise of an employee's absence summary.
  */
 export async function getEmployeeAbsenceSummary(
     tenantId: string,
     companyId: string,
-    employeeId: string,
+    employeeId: string, 
     emailAddress: string,
     roles: string[],
-    accessToken: string,
+    accessToken: string,       
+    queryParams: any,  
 ): Promise<EmployeeAbsenceSummary> {
     console.info('employeeService.getEmployeeAbsenceSummary');
 
+    const validQueryStringParameters = ['approved', 'upcoming'];
     try {
         const [employee, payrollApiAccessToken]: any[] = await Promise.all([
             getById(tenantId, companyId, employeeId, emailAddress, roles),
@@ -883,7 +886,16 @@ export async function getEmployeeAbsenceSummary(
         const tenantObject = await ssoService.getTenantById(tenantId, payrollApiAccessToken);
         const tenantName = tenantObject.subdomain;
 
-        const query = new ParameterizedQuery('listEmployeeAbsenceByEmployeeId', Queries.listEmployeeAbsenceByEmployeeId);
+        let query = new ParameterizedQuery('listEmployeeAbsenceByEmployeeId', Queries.listEmployeeAbsenceByEmployeeId);
+        let approved = false;
+        let upcoming = false;
+        let currentDate = new Date();
+        if (queryParams) {
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+            approved = queryParams.approved && utilService.parseQueryParamsBoolean(queryParams, 'approved');
+            upcoming = queryParams.upcoming && utilService.parseQueryParamsBoolean(queryParams, 'upcoming');
+        }
+
         query.setParameter('@employeeId', employeeId);
 
         const payload = {
@@ -903,8 +915,7 @@ export async function getEmployeeAbsenceSummary(
         if (
             !employeeTimeOffCategories ||
             employeeTimeOffSummaries.results.length === 0 ||
-            !companyTimeOffCategories || companyTimeOffCategories.length === 0 ||
-            result.recordset.length === 0
+            !companyTimeOffCategories || companyTimeOffCategories.length === 0 
         ) {
             return undefined;
         }
@@ -931,9 +942,17 @@ export async function getEmployeeAbsenceSummary(
                 evoTimeOffCategoryId: absence.EvoFK_TimeOffCategoryId,
             };
         });
-
-        const filterAbsencesByCategory = (companyTimeOffCategoryId: number) =>
-            absenceArray.filter((timeOffRequest) => parseInt(timeOffRequest.evoTimeOffCategoryId) === companyTimeOffCategoryId);
+       
+        const filterAbsences = (employeeCategoryId: number) =>  absenceArray.filter((timeOffRequest) => {
+            if(parseInt(timeOffRequest.evoTimeOffCategoryId) ===employeeCategoryId) {
+                if(((approved && timeOffRequest.requestStatus === 'Approved') && (upcoming && new Date(timeOffRequest.startDate) >= currentDate))
+                    || ((approved && timeOffRequest.requestStatus === 'Approved') && !upcoming)
+                    || ((upcoming && new Date(timeOffRequest.startDate) >= currentDate) && !approved)
+                    || (!approved && !upcoming)) {
+                    return timeOffRequest;
+                }
+            }
+        })
 
         let totalAvailableBalance: number = 0;
 
@@ -948,8 +967,7 @@ export async function getEmployeeAbsenceSummary(
             const currentBalance = accruedHours - usedHours;
             const pendingApprovalHours = calculateCategoryPendingHours(category.id);
             const availableBalance = currentBalance - (approvedHours + pendingApprovalHours);
-            const timeOffDates = filterAbsencesByCategory(companyCategory.Id);
-
+            const timeOffDates = filterAbsences(category.id);
             totalAvailableBalance += availableBalance;
 
             return {
