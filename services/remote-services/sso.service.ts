@@ -22,6 +22,7 @@ export type SsoAccount = {
     modifiedBy?: any,
     href?: string,
     password?: string,
+    evoSbUserId?: number,
 }
 
 export async function getAccessToken(tenantId: string, token: string, username: string, password: string): Promise<string> {
