@@ -10,7 +10,7 @@ export type EmployeeBenefit = {
     planTypeCode: string;
     planTypeDescription?: string;
     carrierName?: string;
-    carrierURL?: string;
-    premium?: number;
+    carrierUrl?: string;
     elected: boolean;
+    planInformation: [];
 }
