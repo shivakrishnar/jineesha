@@ -25,8 +25,14 @@ describe('listBenefitsByEmployeeId Service', () => {
             return Promise.resolve();
         });
 
-        (utilService as any).invokeInternalService = jest.fn(() => {
-            return Promise.resolve(mockData.benefitsResult);
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'listBenefitsByEmployeeId') {
+                return Promise.resolve(mockData.benefitsResult);
+            } else if (payload.queryName === 'listCoveredDependentsByEmployeeId') {
+                return Promise.resolve(mockData.coveredDependentsResult);
+            } else if (payload.queryName === 'listCoveredBeneficiariesByEmployeeId') {
+                return Promise.resolve(mockData.coveredBeneficiariesResult)
+            }
         });
 
         return service

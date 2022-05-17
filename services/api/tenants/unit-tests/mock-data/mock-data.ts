@@ -1312,12 +1312,26 @@ export const benefitsResult = {
                 PolicyNumber: null,
                 StartDate: '2022-09-30T00:00:00.000Z',
                 EndDate: '2023-12-31T00:00:00.000Z',
+                EmployeeBenefitID: '84',
                 PlanTypeID: '10001',
                 PlanTypeCode: 'Medical',
                 PlanTypeDescription: 'Medical Insurance',
                 CarrierName: 'BCBS',
-                CarrierURL: null,
-                Premium: null,
+                CarrierUrl: null,
+                Premium: 500,
+                DeductionFrequency: 'EveryPay',
+                AnnualHSALimitSingle: null,
+                AnnualHSALimitFamily: null,
+                AnnualHSAEmployerContributionSingle: null,
+                AnnualHSAEmployerContributionFamily: null,
+                EmployeeContribution: null,
+                AnnualFSALimit: null,
+                AnnualDCALimit: null,
+                CoverageAmount: null,
+                DisabilityPercent: null,
+                LifeGuaranteedIssueAmount: null,
+                BenefitMinimum: null,
+                BenefitMaximum: null,
                 Elected: 0,
             },
             {
@@ -1328,12 +1342,26 @@ export const benefitsResult = {
                 PolicyNumber: null,
                 StartDate: '2021-01-01T00:00:00.000Z',
                 EndDate: '2022-03-11T00:00:00.000Z',
+                EmployeeBenefitID: '22',
                 PlanTypeID: '10001',
                 PlanTypeCode: 'Medical',
                 PlanTypeDescription: 'Medical Insurance',
                 CarrierName: 'BCBS',
-                CarrierURL: null,
+                CarrierUrl: null,
                 Premium: 500,
+                DeductionFrequency: 'EveryPay',
+                AnnualHSALimitSingle: null,
+                AnnualHSALimitFamily: null,
+                AnnualHSAEmployerContributionSingle: null,
+                AnnualHSAEmployerContributionFamily: null,
+                EmployeeContribution: null,
+                AnnualFSALimit: null,
+                AnnualDCALimit: null,
+                CoverageAmount: null,
+                DisabilityPercent: null,
+                LifeGuaranteedIssueAmount: null,
+                BenefitMinimum: null,
+                BenefitMaximum: null,
                 Elected: 0,
             },
             {
@@ -1348,8 +1376,21 @@ export const benefitsResult = {
                 PlanTypeCode: 'Vision',
                 PlanTypeDescription: 'Vision Insurance',
                 CarrierName: 'BCBS',
-                CarrierURL: null,
-                Premium: null,
+                CarrierUrl: null,
+                Premium: 500,
+                DeductionFrequency: 'EveryPay',
+                AnnualHSALimitSingle: null,
+                AnnualHSALimitFamily: null,
+                AnnualHSAEmployerContributionSingle: null,
+                AnnualHSAEmployerContributionFamily: null,
+                EmployeeContribution: null,
+                AnnualFSALimit: null,
+                AnnualDCALimit: null,
+                CoverageAmount: null,
+                DisabilityPercent: null,
+                LifeGuaranteedIssueAmount: null,
+                BenefitMinimum: null,
+                BenefitMaximum: null,
                 Elected: 0,
             },
         ],
@@ -1376,9 +1417,26 @@ export const benefitsResponse = [
         planTypeCode: 'Medical',
         planTypeDescription: 'Medical Insurance',
         carrierName: 'BCBS',
-        carrierURL: null,
-        premium: null,
+        carrierUrl: null,
         elected: 0,
+        planInformation: [
+            {
+                Key: "covered",
+                Value: [
+                    {
+                        "relationship": "Self",
+                    },
+                ],
+            },
+            {
+                Key: "premium",
+                Value: 500,
+            },
+            {
+                Key: "term",
+                Value: "EveryPay",
+            },
+        ],
     },
     {
         id: '17',
@@ -1392,9 +1450,26 @@ export const benefitsResponse = [
         planTypeCode: 'Medical',
         planTypeDescription: 'Medical Insurance',
         carrierName: 'BCBS',
-        carrierURL: null,
-        premium: 500,
+        carrierUrl: null,
         elected: 0,
+        planInformation: [
+            {
+                Key: "covered",
+                Value: [
+                    {
+                        "relationship": "Self",
+                    },
+                ],
+            },
+            {
+                Key: "premium",
+                Value: 500,
+            },
+            {
+                Key: "term",
+                Value: "EveryPay",
+            },
+        ],            
     },
     {
         id: '3',
@@ -1408,11 +1483,51 @@ export const benefitsResponse = [
         planTypeCode: 'Vision',
         planTypeDescription: 'Vision Insurance',
         carrierName: 'BCBS',
-        carrierURL: null,
-        premium: null,
+        carrierUrl: null,
         elected: 0,
+        planInformation: [
+            {
+                Key: "covered",
+                Value: [
+                    {
+                        "relationship": "Self",
+                    },
+                ],
+            },
+            {
+                Key: "premium",
+                Value: 500,
+            },
+            {
+                Key: "term",
+                Value: "EveryPay",
+            },
+        ],
     },
 ];
+
+export const coveredDependentsResult = {
+    recordset: [
+        {
+            EmployeeBenefitID: 42,
+            FirstName: 'Sally',
+            LastName: 'Fields',
+            Relationship: 'Child'
+        }
+    ]
+}
+
+export const coveredBeneficiariesResult = {
+    recordset: [
+        {
+            EmployeeBenefitID: 25,
+            FirstName: 'John',
+            LastName: 'Fields',
+            Relationship: 'Spouse',
+            IsPrimary: true
+        }
+    ]
+}
 
 export const emptyBenefitsResult = {
     recordsets: [[{ totalCount: 0 }], []],

@@ -886,10 +886,10 @@ export async function getEmployeeAbsenceSummary(
         const tenantObject = await ssoService.getTenantById(tenantId, payrollApiAccessToken);
         const tenantName = tenantObject.subdomain;
 
-        let query = new ParameterizedQuery('listEmployeeAbsenceByEmployeeId', Queries.listEmployeeAbsenceByEmployeeId);
+        const query = new ParameterizedQuery('listEmployeeAbsenceByEmployeeId', Queries.listEmployeeAbsenceByEmployeeId);
         let approved = false;
         let upcoming = false;
-        let currentDate = new Date();
+        const currentDate = new Date();
         if (queryParams) {
             utilService.validateQueryParams(queryParams, validQueryStringParameters);
             approved = queryParams.approved && utilService.parseQueryParamsBoolean(queryParams, 'approved');
@@ -1043,7 +1043,164 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
 
         const totalCount = result.recordsets[0][0].totalCount;
 
+        // Get covered dependents
+        const coveredDependentsQuery = new ParameterizedQuery('listCoveredDependentsByEmployeeId', Queries.listCoveredDependentsByEmployeeId)
+        
+        coveredDependentsQuery.setParameter('@employeeId', employeeId)
+
+        const coveredDependentsPayload = {
+            tenantId,
+            queryName: coveredDependentsQuery.name,
+            query: coveredDependentsQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        
+        
+        // Get listed beneficiaries
+        const beneficiariesQuery = new ParameterizedQuery('listCoveredBeneficiariesByEmployeeId', Queries.listCoveredBeneficiariesByEmployeeId)
+        
+        beneficiariesQuery.setParameter('@employeeId', employeeId)
+        
+        const coveredBeneficiariesPayload = {
+            tenantId,
+            queryName: beneficiariesQuery.name,
+            query: beneficiariesQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        
+        const [coveredDependentsResult, coveredBeneficiariesResult] = await Promise.all<any>([
+            utilService.invokeInternalService('queryExecutor', coveredDependentsPayload, utilService.InvocationType.RequestResponse),
+            utilService.invokeInternalService('queryExecutor', coveredBeneficiariesPayload, utilService.InvocationType.RequestResponse)
+        ])
+        
+        const coveredDependentsArray = coveredDependentsResult.recordset.map((dependent) => {
+            return {
+                employeeBenefitId: dependent.EmployeeBenefitID,
+                firstName: dependent.FirstName,
+                lastName: dependent.LastName,
+                relationship: dependent.RelationshipType
+            }
+        })
+
+        const beneficiariesArray = coveredBeneficiariesResult.recordset.map((beneficiary) => {
+            return {
+                employeeBenefitId: beneficiary.EmployeeBenefitID,
+                firstName: beneficiary.FirstName,
+                lastName: beneficiary.LastName,
+                relationship: beneficiary.RelationshipType,
+                isPrimary: beneficiary.IsPrimary
+            }
+        })
+
+        function planInfoTemplate(benefitObj: any) {
+            const selfArray = [
+                {
+                    relationship: 'Self'
+                }
+            ];
+
+            const filteredCoveredDependentArray = coveredDependentsArray.filter(dependent => {
+                return benefitObj.EmployeeBenefitID && parseInt(dependent.employeeBenefitId) === parseInt(benefitObj.EmployeeBenefitID)
+            });
+            const filteredBeneficiariesArray = beneficiariesArray.filter(beneficiary => {
+                return benefitObj.EmployeeBenefitID && parseInt(beneficiary.employeeBenefitId) === parseInt(benefitObj.EmployeeBenefitID)
+            });
+
+            const selfIncludedCoveredArray = [...selfArray, ...filteredCoveredDependentArray];
+
+            const planInfoArray = [];
+            
+            const planObj = {
+                'Medical': {
+                    covered: selfIncludedCoveredArray,
+                    premium: 'Premium',
+                    term: 'DeductionFrequency'
+                },
+                'Dental': {
+                    covered: selfIncludedCoveredArray,
+                    premium: 'Premium',
+                    term: 'DeductionFrequency'
+                },
+                'Vision': {
+                    covered: selfIncludedCoveredArray,
+                    premium: 'Premium',
+                    term: 'DeductionFrequency'
+                },
+                'HSA': {
+                    contribution: 'EmployeeContribution',
+                    annualLimitSingle: 'AnnualHSALimitSingle',
+                    annualLimitFamily: 'AnnualHSALimitFamily',
+                    annualEmployerContributionSingle: 'AnnualHSAEmployerContributionSingle',
+                    annualEmployerContributionFamily: 'AnnualHSAEmployerContributionFamily'
+                },
+                'FSA': {
+                    contribution: 'EmployeeContribution',
+                    annualLimit: 'AnnualFSALimit'
+                },
+                'DCA': {
+                    contribution: 'EmployeeContribution',
+                    annualLimit: 'AnnualDCALimit'
+                },
+                'STD': {
+                    covered: selfArray,
+                    cost: 'Premium',
+                    benefitAmount: 'DisabilityPercent',
+                    minBenefitAmount: 'BenefitMinimum',
+                    maxBenefitAmount: 'BenefitMaximum'
+                },
+                'LTD': {
+                    covered: selfArray,
+                    cost: 'Premium',
+                    benefitAmount: 'DisabilityPercent',
+                    minBenefitAmount: 'BenefitMinimum',
+                    maxBenefitAmount: 'BenefitMaximum' 
+                },
+                'Basic Life': {
+                    covered: selfArray,
+                    coverageAmount: 'CoverageAmount',
+                    guaranteedIssueAmount: 'LifeGuaranteedIssueAmount',
+                    minBenefitAmount: 'BenefitMinimum',
+                    beneficiaries: filteredBeneficiariesArray
+                },
+                'Voluntary Life': {
+                    covered: selfArray,
+                    coverageAmount: 'CoverageAmount',
+                    guaranteedIssueAmount: 'LifeGuaranteedIssueAmount',
+                    minBenefitAmount: 'BenefitMinimum',
+                    beneficiaries: filteredBeneficiariesArray
+                },
+                'Dependent Voluntary Life': {
+                    covered: filteredCoveredDependentArray,
+                    coverageAmount: 'CoverageAmount',
+                    guaranteedIssueAmount: 'LifeGuaranteedIssueAmount',
+                    minBenefitAmount: 'BenefitMinimum',
+                },
+                'Spouse Voluntary Life': {
+                    covered: filteredCoveredDependentArray,
+                    coverageAmount: 'CoverageAmount',
+                    guaranteedIssueAmount: 'LifeGuaranteedIssueAmount',
+                    minBenefitAmount: 'BenefitMinimum',
+                }
+            }
+
+            const plan = planObj[benefitObj.PlanTypeCode]
+
+            for (const infoKey in plan) {
+                let value = plan[infoKey];
+                if (typeof value === 'string') {
+                    value = benefitObj[value]
+                }
+                planInfoArray.push({ Key: infoKey, Value: value })
+            }
+        
+            return planInfoArray;
+        }
+
+
         const benefits: EmployeeBenefit[] = result.recordsets[1].map((record) => {
+
+            const planInfo = planInfoTemplate(record);
+
             return {
                 id: record.ID,
                 companyId: record.CompanyID,
@@ -1056,9 +1213,9 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
                 planTypeCode: record.PlanTypeCode,
                 planTypeDescription: record.PlanTypeDescription,
                 carrierName: record.CarrierName,
-                carrierURL: record.CarrierURL,
-                premium: record.Premium,
+                carrierUrl: record.CarrierUrl,
                 elected: record.Elected,
+                planInformation: planInfo,
             } as EmployeeBenefit;
         });
 
