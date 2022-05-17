@@ -153,3 +153,41 @@ export async function getEvolutionCompanyTimeOffCategoriesByCompanyId(
         console.log(e);
     }
 }
+
+export async function getPayrollsByCompanyId(
+    tenantName: string,
+    evolutionKeys: IEvolutionKey,
+    token: string,
+): Promise<any> {
+    console.info('payrollService.getPayrollsByCompanyId');
+    const { clientId, companyId } = evolutionKeys;
+    const apiUrl = `${unproxiedBaseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/payrolls`;
+    try {
+        return await request.get({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            json: true,
+        });
+    } catch (e) {
+        console.log(e);
+    }
+}
+export async function getPayrollBatchesByPayrollId(
+    tenantName: string,
+    evolutionKeys: IEvolutionKey,
+    token: string,
+    payrollId,
+): Promise<any> {
+    console.info('payrollService.getPayrollBatchesByPayrollId');
+    const { clientId, companyId } = evolutionKeys;
+    const apiUrl = `${unproxiedBaseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/payrolls/${payrollId}/batches`;
+    try {
+        return await request.get({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            json: true,
+        });
+    } catch (e) {
+        console.log(e);
+    }
+}

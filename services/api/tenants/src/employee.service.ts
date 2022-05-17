@@ -854,7 +854,20 @@ export async function updateEmployeeClassById(
         throw errorService.getErrorResponse(0);
     }
 }
-
+/**
+ * Retrieves a periodEnd date on the most recent payroll.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {employeeEvoData} IEvolutionKey: Evo employee object.
+ * @param {string} token: The evo accesstoken.
+ * @returns {Promise<String>}: Promise of date string
+ */
+ async function getLastPayrollPeriodEnd(tenantId: string, employeeEvoData: IEvolutionKey, token: string): Promise<String> {
+        const payrolls = await payrollService.getPayrollsByCompanyId(tenantId, employeeEvoData, token);
+        const lastPayroll = payrolls.filter((payroll) => payroll.Status === "Processed").sort((a,b) => b.Id - a.Id)[0];
+        const batches = await payrollService.getPayrollBatchesByPayrollId(tenantId, employeeEvoData, token, lastPayroll.Id);
+        const lastBatch = batches.sort((a,b) => b.Id - a.Id)[0];
+        return lastBatch.PeriodEnd;
+}
 /**
  * Get the absence summary for a specific employee
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
@@ -924,37 +937,27 @@ export async function getEmployeeAbsenceSummary(
             return employeeTimeOffSummaries.results.find((summary) => summary.timeOffCategoryId === id);
         };
 
-        const calculateCategoryPendingHours = (timeOffCategoryId: number) =>
-            result.recordset
-                .filter(
-                    (timeOffRequest) =>
-                        timeOffRequest.Description === 'Pending' && parseInt(timeOffRequest.EvoFK_TimeOffCategoryId) === timeOffCategoryId,
-                )
-                .reduce((accumulator, currentValue) => accumulator + currentValue.HoursTaken, 0);
-
-        const absenceArray = result.recordset.map((absence) => {
-            return {
-                submitDate: absence.SubmitDate,
-                startDate: absence.StartDate,
-                returnDate: absence.ReturnDate,
-                hoursTaken: absence.HoursTaken,
-                requestStatus: absence.Description,
-                evoTimeOffCategoryId: absence.EvoFK_TimeOffCategoryId,
-            };
-        });
-       
-        const filterAbsences = (employeeCategoryId: number) =>  absenceArray.filter((timeOffRequest) => {
-            if(parseInt(timeOffRequest.evoTimeOffCategoryId) ===employeeCategoryId) {
-                if(((approved && timeOffRequest.requestStatus === 'Approved') && (upcoming && new Date(timeOffRequest.startDate) >= currentDate))
-                    || ((approved && timeOffRequest.requestStatus === 'Approved') && !upcoming)
-                    || ((upcoming && new Date(timeOffRequest.startDate) >= currentDate) && !approved)
-                    || (!approved && !upcoming)) {
-                    return timeOffRequest;
+        const filterAbsenceData  = (timeOffCategoryId: number, lastAccrualDate) => {
+            let scheduledApprovedHours = 0;
+            let pendingApprovalHours = 0;
+            let timeOffDates = [];           
+            result.recordset.map((timeOffRequest) => {
+                if(parseInt(timeOffRequest.EvoFK_TimeOffCategoryId) === timeOffCategoryId) {
+                    if(timeOffRequest.Description === 'Pending'  && new Date(timeOffRequest.StartDate) >= new Date(lastAccrualDate)) pendingApprovalHours += timeOffRequest.HoursTaken;
+                    if(timeOffRequest.Description === 'Approved' && new Date(timeOffRequest.StartDate) > new Date(lastAccrualDate)) scheduledApprovedHours += timeOffRequest.HoursTaken;
+                     if(((approved && timeOffRequest.Description === 'Approved') && (upcoming && new Date(timeOffRequest.StartDate) >= currentDate))
+                        || ((approved && timeOffRequest.Description === 'Approved') && !upcoming)
+                        || ((upcoming && new Date(timeOffRequest.StartDate) >= currentDate) && !approved)
+                        || (!approved && !upcoming)) {
+                        timeOffDates.push(timeOffRequest);
+                    }
                 }
-            }
-        })
-
+            })
+            return { scheduledApprovedHours, pendingApprovalHours, timeOffDates};
+        }
+        
         let totalAvailableBalance: number = 0;
+        const lastAccrualPeriodEndDate = await getLastPayrollPeriodEnd(tenantName, employee.evoData, payrollApiAccessToken)
 
         const categories: EmployeeAbsenceSummaryCategory[] = employeeTimeOffCategories.results.map((category) => {
             const companyCategory = companyTimeOffCategories.find((companyCat) => companyCat.Description === category.categoryDescription); 
@@ -963,17 +966,15 @@ export async function getEmployeeAbsenceSummary(
                 console.error(`No corresponding company category found for EE category ${category.categoryDescription} under ee ${employeeId}, company ${companyId}, tenant ${tenantId}`);
             }
             const employeeSummary = companyCategory ? getEmployeeTimeOffSummaryByCategoryId(companyCategory.Id) : undefined;
-            const { accruedHours = 0, usedHours = 0, approvedHours = 0 } = (employeeSummary || {});
-            const currentBalance = accruedHours - usedHours;
-            const pendingApprovalHours = calculateCategoryPendingHours(category.id);
-            const availableBalance = currentBalance - (approvedHours + pendingApprovalHours);
-            const timeOffDates = filterAbsences(category.id);
+            const { accruedHours = 0, usedHours = 0 } = (employeeSummary || {});            
+            const { scheduledApprovedHours, pendingApprovalHours, timeOffDates } = filterAbsenceData(category.id, lastAccrualPeriodEndDate);
+            const availableBalance = accruedHours - scheduledApprovedHours - pendingApprovalHours - usedHours;
             totalAvailableBalance += availableBalance;
 
             return {
                 category: category.categoryDescription,
-                currentBalance,
-                scheduledHours: approvedHours,
+                currentBalance: accruedHours - usedHours,
+                scheduledHours: scheduledApprovedHours,
                 pendingApprovalHours,
                 availableBalance,
                 timeOffDates,
