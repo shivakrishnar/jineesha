@@ -1,6 +1,6 @@
 {
     "name": "asure.hr.services",
-    "version": "2.5.1",
+    "version": "2.6.0",
     "description": "Collection of HR-related services for Asure Software Evolution HCM suite",
     "main": "index.js",
     "scripts": {
