@@ -13,4 +13,5 @@ into @tmp
 where EmployeeID = @_employeeId
 and ID = @_id;
 
-select oldEmailAcknowledged, newEmailAcknowledged as EmailAcknowledged from @tmp
+select oldEmailAcknowledged as EmailAcknowledged from @tmp
+select newEmailAcknowledged as EmailAcknowledged from @tmp
