@@ -62,6 +62,9 @@ export const setup = () => {
     (configService as any).getSesSmtpServerPort = jest.fn(() => {
         return '12345';
     });
+    (configService as any).getDbBackupBucket = jest.fn(() => {
+        return 'bucketname';
+    });
 
     (utilService as any).getPayrollApiCredentials = jest.fn(() => {
         return { evoApiUsername: 'username', evoApiPassword: 'pass' } as IPayrollApiCredentials;

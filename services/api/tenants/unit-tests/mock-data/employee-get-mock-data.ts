@@ -1,4 +1,5 @@
 export const tenantId = 'c807d7f9-b391-4525-ac0e-31dbc0cf202b';
+export const tenantUrl = 'test.test.com';
 export const employeeId = '42242';
 export const companyId = '600424';
 export const roles = ['global.admin', 'hr.persona.user'];

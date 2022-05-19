@@ -517,7 +517,7 @@ async function updateConnectionString(domain: string, updateDictionary: object):
         for (const key in updateDictionary) {
             if (updateDictionary[key]) {
                 updateExpression += `set #${key} = :${key} `;
-            expressionAttributeValues[`:${key}`] = updateDictionary[key];
+                expressionAttributeValues[`:${key}`] = updateDictionary[key];
             } else {
                 updateExpression += `remove #${key} `
             }

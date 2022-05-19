@@ -11,7 +11,7 @@ export enum PatchOperation {
 export class PatchInstruction {
     op: PatchOperation;
 
-    path: string;
+    path?: string;
 
     value?: any;
 

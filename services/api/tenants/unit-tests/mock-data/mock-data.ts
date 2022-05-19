@@ -72,6 +72,49 @@ export const testPatchInstruction: PatchInstruction = {
     path: '/test',
 };
 
+export const tenantDeletionRemovePatchInstructions: PatchInstruction = {
+    op: PatchOperation.Remove,
+    value: 7
+};
+
+export const tenantDeletionUndoPatchInstructions: PatchInstruction = {
+    op: PatchOperation.Undo,
+};
+
+export const tenantInfoDBResponse = {
+    recordset: [
+        {
+            AccountName: 'test',
+            TenantUrls: 'test.test.com;racecar.evolution-software.com',
+            ContactFirstName: 'Ricky',
+            ContactLastName: 'Bobby',
+            ContactEmailAddress: 'rickybobby@racecar.com',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+}
+
+export const databaseBackupDBResponse = {
+    recordset: [
+        {
+            task_id: '123',
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+}
+
+export const databaseBackupStatusDBResponse = (lifecycle) => ({
+    recordset: [
+        {
+            lifecycle,
+        },
+    ],
+    output: {},
+    rowsAffected: [1],
+})
+
 export const oldIntegrationConfiguration: EsignatureAppConfiguration = {
     id: '1234',
     integrationId: '1234',
