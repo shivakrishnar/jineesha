@@ -940,7 +940,7 @@ export async function getEmployeeAbsenceSummary(
         const filterAbsenceData  = (timeOffCategoryId: number, lastAccrualDate) => {
             let scheduledApprovedHours = 0;
             let pendingApprovalHours = 0;
-            let timeOffDates = [];           
+            const timeOffDates = [];           
             result.recordset.map((timeOffRequest) => {
                 if(parseInt(timeOffRequest.EvoFK_TimeOffCategoryId) === timeOffCategoryId) {
                     if(timeOffRequest.Description === 'Pending'  && new Date(timeOffRequest.StartDate) >= new Date(lastAccrualDate)) pendingApprovalHours += timeOffRequest.HoursTaken;
@@ -956,7 +956,7 @@ export async function getEmployeeAbsenceSummary(
             return { scheduledApprovedHours, pendingApprovalHours, timeOffDates};
         }
         
-        let totalAvailableBalance: number = 0;
+        let unroundedTotalAvailableBalance: number = 0;
         const lastAccrualPeriodEndDate = await getLastPayrollPeriodEnd(tenantName, employee.evoData, payrollApiAccessToken)
 
         const categories: EmployeeAbsenceSummaryCategory[] = employeeTimeOffCategories.results.map((category) => {
@@ -968,8 +968,9 @@ export async function getEmployeeAbsenceSummary(
             const employeeSummary = companyCategory ? getEmployeeTimeOffSummaryByCategoryId(companyCategory.Id) : undefined;
             const { accruedHours = 0, usedHours = 0 } = (employeeSummary || {});            
             const { scheduledApprovedHours, pendingApprovalHours, timeOffDates } = filterAbsenceData(category.id, lastAccrualPeriodEndDate);
-            const availableBalance = accruedHours - scheduledApprovedHours - pendingApprovalHours - usedHours;
-            totalAvailableBalance += availableBalance;
+            const unroundedAvailableBalance = accruedHours - scheduledApprovedHours - pendingApprovalHours - usedHours;
+            const availableBalance = Math.round((unroundedAvailableBalance + Number.EPSILON) * 100) / 100; //using Number.EPSILON to ensure numbers like 1.005 is rounded correctly
+            unroundedTotalAvailableBalance += unroundedAvailableBalance;
 
             return {
                 category: category.categoryDescription,
@@ -980,7 +981,7 @@ export async function getEmployeeAbsenceSummary(
                 timeOffDates,
             };
         });
-
+        const totalAvailableBalance = Math.round((unroundedTotalAvailableBalance + Number.EPSILON) * 100) / 100;
         return {
             totalAvailableBalance,
             categories,

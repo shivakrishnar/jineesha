@@ -125,7 +125,7 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.email,
                 mockData.roles,
                 mockData.accessToken,
-                undefined
+                undefined,
             )
             .then((result) => {
                 expect(result).toEqual(undefined);
@@ -209,10 +209,10 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.email,
                 mockData.roles,
                 mockData.accessToken,
-                undefined
+                undefined,
             )
             .then((result) => {
-                expect(result).toEqual(mockEmployeeAbsence.expectedEmptyDBEmployeeAbsenceSummary );
+                expect(result).toEqual(mockEmployeeAbsence.expectedEmptyDBEmployeeAbsenceSummary);
             });
     });
     test('returns only approved entries and employee absence summary', () => {
@@ -250,7 +250,7 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.email,
                 mockData.roles,
                 mockData.accessToken,
-                {approved: 'true'},
+                { approved: 'true' },
             )
             .then((employeeAbsenceSummary) => {
                 expect(employeeAbsenceSummary).toEqual(mockEmployeeAbsence.expectedApprovedEmployeeAbsenceSummary);
@@ -291,7 +291,7 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.email,
                 mockData.roles,
                 mockData.accessToken,
-                {upcoming: 'true'},
+                { upcoming: 'true' },
             )
             .then((employeeAbsenceSummary) => {
                 expect(employeeAbsenceSummary).toEqual(mockEmployeeAbsence.expectedUpcomingEmployeeAbsenceSummary);
@@ -332,7 +332,7 @@ describe('getEmployeeAbsenceSummary Service', () => {
                 mockData.email,
                 mockData.roles,
                 mockData.accessToken,
-                {approved: 'true', upcoming: 'true'},
+                { approved: 'true', upcoming: 'true' },
             )
             .then((employeeAbsenceSummary) => {
                 expect(employeeAbsenceSummary).toEqual(mockEmployeeAbsence.expectedApprovedUpcomingEmployeeAbsenceSummary);
