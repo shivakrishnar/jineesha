@@ -1,3 +1,5 @@
+const todayPlusOne = new Date(Date.now() + (3600 * 1000 * 24))
+const todayPlusTwo = new Date(Date.now() + (3600 * 1000 * 48))
 export const listEmployeeAbsenceByEmployeeIdResult = {
   recordsets: [[[Object], [Object], [Object], [Object], [Object], [Object], [Object]]],
   recordset: [
@@ -11,8 +13,8 @@ export const listEmployeeAbsenceByEmployeeIdResult = {
       },
       {
           SubmitDate: '2021-09-27T00:00:00.000Z',
-          StartDate: new Date(Date.now() + (3600 * 1000 * 24)),
-          ReturnDate: new Date(Date.now() + (3600 * 1000 * 48)),
+          StartDate: todayPlusOne.setSeconds(0,0),
+          ReturnDate: todayPlusTwo.setSeconds(0,0),
           HoursTaken: 16,
           EvoFK_TimeOffCategoryId: '1',
           Description: 'Approved',
@@ -27,8 +29,8 @@ export const listEmployeeAbsenceByEmployeeIdResult = {
       },
       {
           SubmitDate: '2021-09-27T00:00:00.000Z',
-          StartDate: new Date(Date.now() + (3600 * 1000 * 24)),
-          ReturnDate: new Date(Date.now() + (3600 * 1000 * 48)),
+          StartDate: todayPlusOne.setSeconds(0,0),
+          ReturnDate: todayPlusTwo.setSeconds(0,0),
           HoursTaken: 8,
           EvoFK_TimeOffCategoryId: '2',
           Description: 'Pending',
@@ -151,8 +153,8 @@ export const expectedEmployeeAbsenceSummary = {
             },
             {
                 SubmitDate: '2021-09-27T00:00:00.000Z',
-                StartDate: new Date(Date.now() + (3600 * 1000 * 24)),
-                ReturnDate: new Date(Date.now() + (3600 * 1000 * 48)),
+                StartDate: todayPlusOne.setSeconds(0,0),
+                ReturnDate: todayPlusTwo.setSeconds(0,0),
                 HoursTaken: 16,
                 EvoFK_TimeOffCategoryId: '1',
                 Description: 'Approved',
@@ -176,8 +178,8 @@ export const expectedEmployeeAbsenceSummary = {
             },
             {
                 SubmitDate: '2021-09-27T00:00:00.000Z',
-                StartDate: new Date(Date.now() + (3600 * 1000 * 24)),
-                ReturnDate: new Date(Date.now() + (3600 * 1000 * 48)),
+                StartDate: todayPlusOne.setSeconds(0,0),
+                ReturnDate: todayPlusTwo.setSeconds(0,0),
                 HoursTaken: 8,
                 EvoFK_TimeOffCategoryId: '2',
                 Description: 'Pending',
@@ -206,8 +208,8 @@ export const expectedApprovedEmployeeAbsenceSummary = {
           },
           {
               SubmitDate: '2021-09-27T00:00:00.000Z',
-              StartDate: new Date(Date.now() + (3600 * 1000 * 24)),
-              ReturnDate: new Date(Date.now() + (3600 * 1000 * 48)),
+              StartDate: todayPlusOne.setSeconds(0,0),
+              ReturnDate: todayPlusTwo.setSeconds(0,0),
               HoursTaken: 16,
               EvoFK_TimeOffCategoryId: '1',
               Description: 'Approved',
@@ -236,8 +238,8 @@ export const expectedUpcomingEmployeeAbsenceSummary = {
           timeOffDates: [
             {
               SubmitDate: '2021-09-27T00:00:00.000Z',
-              StartDate: new Date(Date.now() + (3600 * 1000 * 24)),
-              ReturnDate: new Date(Date.now() + (3600 * 1000 * 48)),
+              StartDate: todayPlusOne.setSeconds(0,0),
+              ReturnDate: todayPlusTwo.setSeconds(0,0),
               HoursTaken: 16,
               EvoFK_TimeOffCategoryId: '1',
               Description: 'Approved',
@@ -253,8 +255,8 @@ export const expectedUpcomingEmployeeAbsenceSummary = {
           timeOffDates: [
             {
               SubmitDate: '2021-09-27T00:00:00.000Z',
-              StartDate: new Date(Date.now() + (3600 * 1000 * 24)),
-              ReturnDate: new Date(Date.now() + (3600 * 1000 * 48)),
+              StartDate: todayPlusOne.setSeconds(0,0),
+              ReturnDate: todayPlusTwo.setSeconds(0,0),
               HoursTaken: 8,
               EvoFK_TimeOffCategoryId: '2',
               Description: 'Pending',
@@ -275,8 +277,8 @@ export const expectedApprovedUpcomingEmployeeAbsenceSummary = {
           timeOffDates: [
             {
               SubmitDate: '2021-09-27T00:00:00.000Z',
-              StartDate: new Date(Date.now() + (3600 * 1000 * 24)),
-              ReturnDate: new Date(Date.now() + (3600 * 1000 * 48)),
+              StartDate: todayPlusOne.setSeconds(0,0),
+              ReturnDate: todayPlusTwo.setSeconds(0,0),
               HoursTaken: 16,
               EvoFK_TimeOffCategoryId: '1',
               Description: 'Approved',
