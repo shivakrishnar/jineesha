@@ -9,6 +9,11 @@ import * as path from 'path';
 const basePath = process.cwd() === '/var/task' ? path.join(process.cwd(), 'queries') : __dirname;
 
 export const Queries = {
+    // Database
+    backupDatabase: fs.readFileSync(path.join(basePath, 'database/backupDatabase.sql')).toString(),
+    dropDatabase: fs.readFileSync(path.join(basePath, 'database/dropDatabase.sql')).toString(),
+    getBackupStatus: fs.readFileSync(path.join(basePath, 'database/getBackupStatus.sql')).toString(),
+
     // Security
     checkSecurityRoles: fs.readFileSync(path.join(basePath, 'security/checkSecurityRoles.sql')).toString(),
     companyAccess: fs.readFileSync(path.join(basePath, 'security/companyAccess.sql')).toString(),

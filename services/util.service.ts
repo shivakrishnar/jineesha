@@ -1273,3 +1273,26 @@ export async function getEvoTokenWithHrToken(tenantId: string, accessToken: stri
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * Pauses code execution based on the provided amount of time
+ * @param {number} ms: the number of milliseconds to wait
+ */
+export async function sleep(ms) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+}
+
+/**
+ * Performs an API call to check if a URL is live
+ * @param {string} url: the URL to check
+ */
+export async function urlExists(url: string): Promise<boolean> {
+    try {
+        await request(`https://${url}`);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}

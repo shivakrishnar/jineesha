@@ -14,4 +14,5 @@ export type DatabaseEvent = {
 export enum QueryType {
     Simple = 'simple',
     Batched = 'batched',
+    StoredProcedure = 'storedProcedure',
 }

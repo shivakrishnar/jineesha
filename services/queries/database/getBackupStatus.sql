@@ -1,0 +1,1 @@
+exec msdb.dbo.rds_task_status @db_name='@tenantId', @task_id=@taskId;

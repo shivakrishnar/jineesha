@@ -826,3 +826,62 @@ export const listCompanyMigrations = utilService.gatewayEventHandlerV2(async ({ 
 
     return await tenantService.listCompanyMigrations();
 });
+
+/**
+ * Schedules a tenant deletion
+ */
+ export const scheduleTenantDeletion = utilService.gatewayEventHandlerV2(async ({ event, securityContext, requestBody }: IGatewayEventInput) => {
+    console.info('tenants.handler.scheduleTenantDeletion');
+
+    const { tenantId } = event.pathParameters;
+
+    // Note: this is to guard against at-will deletion of databases in the Production tier
+    const requiredPolicy = {
+        action: 'tenant:add-ahr-database',
+        resource: `tenants/${tenantId}`,
+    };
+
+    securityContext.requireAuthorizedTo(requiredPolicy);
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, adminsUriSchema);
+
+    const { patch } = requestBody;
+
+    return await tenantService.scheduleTenantDeletion(tenantId, patch);
+});
+
+/*
+ * Deletes a tenant's database
+ */
+export async function deleteTenantDatabase(event: any, context: Context, callback: ProxyCallback): Promise<void> {
+    console.info('tenants.handler.deleteTenantDatabase');
+
+    console.log(JSON.stringify(event.Records[0]));
+
+    try {
+        const { eventName, userIdentity, dynamodb } = (event?.Records || [])[0] || {};
+        const tenantId = dynamodb?.OldImage?.TenantID?.S;
+        const domain = dynamodb?.OldImage?.Domain?.S;
+
+        if (eventName !== 'REMOVE') {
+            console.log('not a deletion');
+            return;
+        }
+
+        if (!userIdentity || userIdentity.type !== 'Service' || userIdentity.principalId !== 'dynamodb.amazonaws.com') {
+            console.log('skipping manual deletion');
+            return;
+        }
+
+        if (!tenantId || !domain) {
+            console.log('tenantId or domain not found');
+            return;
+        }
+
+        await tenantService.deleteTenantDatabase(tenantId, domain);
+    } catch (e) {
+        console.error(e);
+    }
+}

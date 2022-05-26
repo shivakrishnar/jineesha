@@ -46,5 +46,7 @@
     "signaturePageFontUrl": "https://fonts.gstatic.com/s/roboto/v20/KFOmCnqEu92Fr1Me5Q.ttf",
     "tlmReadRole": "ed5e0f18-1af8-49de-a4ce-07ca626f342f",
     "tlmWriteRole": "3a3c1eb7-26a3-4177-8e6b-db8411bd16f5",
-    "payrollBaseUrl": "evolution-software.com"
+    "payrollBaseUrl": "evolution-software.com",
+    "dbBackupBucket": "staging.gremlins",
+    "connectionStringsStreamArn": "arn:aws:dynamodb:us-east-1:049280833483:table/ConnectionStrings/stream/2022-05-20T20:11:19.244"
 }

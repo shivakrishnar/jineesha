@@ -4,13 +4,14 @@ export enum PatchOperation {
     Replace = 'replace',
     Copy = 'copy',
     Move = 'move',
+    Undo = 'undo',
     Test = 'test',
 }
 
 export class PatchInstruction {
     op: PatchOperation;
 
-    path: string;
+    path?: string;
 
     value?: any;
 

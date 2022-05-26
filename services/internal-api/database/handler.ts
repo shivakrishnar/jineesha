@@ -5,7 +5,7 @@ import { IResult } from 'mssql';
 import * as configService from '../../config.service';
 import { ErrorMessage } from '../../errors/errorMessage';
 import * as utilService from '../../util.service';
-import { createConnectionPool, executeBatch, executeQuery, findConnectionString, saveDocumentToS3 } from './database.service';
+import { createConnectionPool, executeBatch, executeQuery, executeStoredProcedure, findConnectionString, saveDocumentToS3 } from './database.service';
 import { DatabaseEvent, QueryType } from './events';
 
 /**
@@ -53,6 +53,12 @@ export const execute = async (event: DatabaseEvent, context: Context, callback: 
                     }),
                 });
             }
+            return callback(undefined, {
+                statusCode: 200,
+                body: JSON.stringify(result),
+            });
+        } else if (queryType === QueryType.StoredProcedure) {
+            const result: IResult<any> = await executeStoredProcedure(pool, query);
             return callback(undefined, {
                 statusCode: 200,
                 body: JSON.stringify(result),

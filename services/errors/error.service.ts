@@ -92,6 +92,13 @@ function errorMessages(): ErrorMessage[] {
       "message": "Data already exists for this user.",
       "developerMessage": "",
       "moreInfo": ""
+    },
+    {
+      "statusCode": 422,
+      "code": 74,
+      "message": "Cannot perform the specified operation.",
+      "developerMessage": "",
+      "moreInfo": ""
     }
   ]`);
 }
