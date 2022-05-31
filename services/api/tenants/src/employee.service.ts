@@ -296,8 +296,6 @@ export async function listLicensesByEmployeeId(
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-
         let query;
         query = new ParameterizedQuery('listLicensesByEmployeeId', Queries.listLicensesByEmployeeId);
 
@@ -375,8 +373,6 @@ export async function updateEmployeeLicenseById(
 ): Promise<any> {
     console.info('employeeService.updateEmployeeLicenseById');
 
-    await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-
     if (Number.isNaN(Number(id))) throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid id.`);
 
     try {
@@ -439,8 +435,6 @@ export async function listCertificatesByEmployeeId(
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-
         let query;
         query = new ParameterizedQuery('listCertificatesByEmployeeId', Queries.listCertificatesByEmployeeId);
 
@@ -518,8 +512,6 @@ export async function updateEmployeeCertificateById(
 ): Promise<any> {
     console.info('employeeService.updateEmployeeCertificateById');
 
-    await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-
     if (Number.isNaN(Number(id))) throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid id.`);
 
     try {
@@ -586,8 +578,6 @@ export async function listReviewsByEmployeeId(
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-
         let query;
         query = new ParameterizedQuery('listReviewsByEmployeeId', Queries.listReviewsByEmployeeId);
 
@@ -666,8 +656,6 @@ export async function updateEmployeeReviewById(
 ): Promise<any> {
     console.info('employeeService.updateEmployeeReviewById');
 
-    await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-
     if (Number.isNaN(Number(id))) throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid id.`);
 
     try {
@@ -734,8 +722,6 @@ export async function listClassesByEmployeeId(
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-
         let query;
         query = new ParameterizedQuery('listClassesByEmployeeId', Queries.listClassesByEmployeeId);
 
@@ -815,8 +801,6 @@ export async function updateEmployeeClassById(
 ): Promise<any> {
     console.info('employeeService.updateEmployeeClassById');
 
-    await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-
     if (Number.isNaN(Number(id))) throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid id.`);
 
     try {
@@ -863,18 +847,18 @@ export async function updateEmployeeClassById(
  * @param {string} token: The evo accesstoken.
  * @returns {Promise<String>}: Promise of date string
  */
- async function getLastPayrollPeriodEnd(tenantId: string, employeeEvoData: IEvolutionKey, token: string): Promise<String> {
-        const payrolls = await payrollService.getPayrollsByCompanyId(tenantId, employeeEvoData, token);
-        const lastPayroll = payrolls.filter((payroll) => payroll.Status === "Processed").sort((a,b) => b.Id - a.Id)[0];
-        const batches = await payrollService.getPayrollBatchesByPayrollId(tenantId, employeeEvoData, token, lastPayroll.Id);
-        const lastBatch = batches.sort((a,b) => b.Id - a.Id)[0];
-        return lastBatch.PeriodEnd;
+async function getLastPayrollPeriodEnd(tenantId: string, employeeEvoData: IEvolutionKey, token: string): Promise<String> {
+    const payrolls = await payrollService.getPayrollsByCompanyId(tenantId, employeeEvoData, token);
+    const lastPayroll = payrolls.filter((payroll) => payroll.Status === 'Processed').sort((a, b) => b.Id - a.Id)[0];
+    const batches = await payrollService.getPayrollBatchesByPayrollId(tenantId, employeeEvoData, token, lastPayroll.Id);
+    const lastBatch = batches.sort((a, b) => b.Id - a.Id)[0];
+    return lastBatch.PeriodEnd;
 }
 /**
  * Get the absence summary for a specific employee
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} companyId: The unique identifier for the specified company.
- * @param {string} employeeId: The unique identifier employee. 
+ * @param {string} employeeId: The unique identifier employee.
  * @param {string} emailAddress: The email address of the user.
  * @param {string[]} roles: The roles memberships that are associated with the user.
  * @param {string} accessToken: The access token of the user making the request.
@@ -884,11 +868,11 @@ export async function updateEmployeeClassById(
 export async function getEmployeeAbsenceSummary(
     tenantId: string,
     companyId: string,
-    employeeId: string, 
+    employeeId: string,
     emailAddress: string,
     roles: string[],
-    accessToken: string,       
-    queryParams: any,  
+    accessToken: string,
+    queryParams: any,
 ): Promise<EmployeeAbsenceSummary> {
     console.info('employeeService.getEmployeeAbsenceSummary');
 
@@ -930,7 +914,8 @@ export async function getEmployeeAbsenceSummary(
         if (
             !employeeTimeOffCategories ||
             employeeTimeOffSummaries.results.length === 0 ||
-            !companyTimeOffCategories || companyTimeOffCategories.length === 0 
+            !companyTimeOffCategories ||
+            companyTimeOffCategories.length === 0
         ) {
             return undefined;
         }
@@ -939,18 +924,25 @@ export async function getEmployeeAbsenceSummary(
             return employeeTimeOffSummaries.results.find((summary) => summary.timeOffCategoryId === id);
         };
 
-        const filterAbsenceData  = (timeOffCategoryId: number, lastAccrualDate) => {
+        const filterAbsenceData = (timeOffCategoryId: number, lastAccrualDate) => {
             let scheduledApprovedHours = 0;
             let pendingApprovalHours = 0;
             const timeOffDates = [];           
             result.recordset.map((timeOffRequest) => {
-                if(parseInt(timeOffRequest.EvoFK_TimeOffCategoryId) === timeOffCategoryId) {
-                    if(timeOffRequest.Description === 'Pending'  && new Date(timeOffRequest.StartDate) >= new Date(lastAccrualDate)) pendingApprovalHours += timeOffRequest.HoursTaken;
-                    if(timeOffRequest.Description === 'Approved' && new Date(timeOffRequest.StartDate) > new Date(lastAccrualDate)) scheduledApprovedHours += timeOffRequest.HoursTaken;
-                     if(((approved && timeOffRequest.Description === 'Approved') && (upcoming && new Date(timeOffRequest.StartDate) >= currentDate))
-                        || ((approved && timeOffRequest.Description === 'Approved') && !upcoming)
-                        || ((upcoming && new Date(timeOffRequest.StartDate) >= currentDate) && !approved)
-                        || (!approved && !upcoming)) {
+                if (parseInt(timeOffRequest.EvoFK_TimeOffCategoryId) === timeOffCategoryId) {
+                    if (timeOffRequest.Description === 'Pending' && new Date(timeOffRequest.StartDate) >= new Date(lastAccrualDate))
+                        pendingApprovalHours += timeOffRequest.HoursTaken;
+                    if (timeOffRequest.Description === 'Approved' && new Date(timeOffRequest.StartDate) > new Date(lastAccrualDate))
+                        scheduledApprovedHours += timeOffRequest.HoursTaken;
+                    if (
+                        (approved &&
+                            timeOffRequest.Description === 'Approved' &&
+                            upcoming &&
+                            new Date(timeOffRequest.StartDate) >= currentDate) ||
+                        (approved && timeOffRequest.Description === 'Approved' && !upcoming) ||
+                        (upcoming && new Date(timeOffRequest.StartDate) >= currentDate && !approved) ||
+                        (!approved && !upcoming)
+                    ) {
                         timeOffDates.push(timeOffRequest);
                     }
                 }
@@ -962,13 +954,15 @@ export async function getEmployeeAbsenceSummary(
         const lastAccrualPeriodEndDate = await getLastPayrollPeriodEnd(tenantName, employee.evoData, payrollApiAccessToken)
 
         const categories: EmployeeAbsenceSummaryCategory[] = employeeTimeOffCategories.results.map((category) => {
-            const companyCategory = companyTimeOffCategories.find((companyCat) => companyCat.Description === category.categoryDescription); 
+            const companyCategory = companyTimeOffCategories.find((companyCat) => companyCat.Description === category.categoryDescription);
             // this should never happen, but if it does, console.error it and include it in the summary with a balance of 0
             if (!companyCategory) {
-                console.error(`No corresponding company category found for EE category ${category.categoryDescription} under ee ${employeeId}, company ${companyId}, tenant ${tenantId}`);
+                console.error(
+                    `No corresponding company category found for EE category ${category.categoryDescription} under ee ${employeeId}, company ${companyId}, tenant ${tenantId}`,
+                );
             }
             const employeeSummary = companyCategory ? getEmployeeTimeOffSummaryByCategoryId(companyCategory.Id) : undefined;
-            const { accruedHours = 0, usedHours = 0 } = (employeeSummary || {});            
+            const { accruedHours = 0, usedHours = 0 } = employeeSummary || {};
             const { scheduledApprovedHours, pendingApprovalHours, timeOffDates } = filterAbsenceData(category.id, lastAccrualPeriodEndDate);
             const unroundedAvailableBalance = accruedHours - scheduledApprovedHours - pendingApprovalHours - usedHours;
             const availableBalance = Math.round((unroundedAvailableBalance + Number.EPSILON) * 100) / 100; //using Number.EPSILON to ensure numbers like 1.005 is rounded correctly
@@ -1074,8 +1068,6 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-        await utilService.validateEmployeeWithCompany(tenantId, companyId, employeeId);
-
         const query = new ParameterizedQuery('listBenefitsByEmployeeId', Queries.listBenefitsByEmployeeId);
 
         if (queryParams) {
@@ -1098,9 +1090,12 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
         const totalCount = result.recordsets[0][0].totalCount;
 
         // Get covered dependents
-        const coveredDependentsQuery = new ParameterizedQuery('listCoveredDependentsByEmployeeId', Queries.listCoveredDependentsByEmployeeId)
-        
-        coveredDependentsQuery.setParameter('@employeeId', employeeId)
+        const coveredDependentsQuery = new ParameterizedQuery(
+            'listCoveredDependentsByEmployeeId',
+            Queries.listCoveredDependentsByEmployeeId,
+        );
+
+        coveredDependentsQuery.setParameter('@employeeId', employeeId);
 
         const coveredDependentsPayload = {
             tenantId,
@@ -1108,33 +1103,35 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
             query: coveredDependentsQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        
-        
+
         // Get listed beneficiaries
-        const beneficiariesQuery = new ParameterizedQuery('listCoveredBeneficiariesByEmployeeId', Queries.listCoveredBeneficiariesByEmployeeId)
-        
-        beneficiariesQuery.setParameter('@employeeId', employeeId)
-        
+        const beneficiariesQuery = new ParameterizedQuery(
+            'listCoveredBeneficiariesByEmployeeId',
+            Queries.listCoveredBeneficiariesByEmployeeId,
+        );
+
+        beneficiariesQuery.setParameter('@employeeId', employeeId);
+
         const coveredBeneficiariesPayload = {
             tenantId,
             queryName: beneficiariesQuery.name,
             query: beneficiariesQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        
+
         const [coveredDependentsResult, coveredBeneficiariesResult] = await Promise.all<any>([
             utilService.invokeInternalService('queryExecutor', coveredDependentsPayload, utilService.InvocationType.RequestResponse),
-            utilService.invokeInternalService('queryExecutor', coveredBeneficiariesPayload, utilService.InvocationType.RequestResponse)
-        ])
-        
+            utilService.invokeInternalService('queryExecutor', coveredBeneficiariesPayload, utilService.InvocationType.RequestResponse),
+        ]);
+
         const coveredDependentsArray = coveredDependentsResult.recordset.map((dependent) => {
             return {
                 employeeBenefitId: dependent.EmployeeBenefitID,
                 firstName: dependent.FirstName,
                 lastName: dependent.LastName,
-                relationship: dependent.RelationshipType
-            }
-        })
+                relationship: dependent.RelationshipType,
+            };
+        });
 
         const beneficiariesArray = coveredBeneficiariesResult.recordset.map((beneficiary) => {
             return {
@@ -1153,15 +1150,15 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
 
             const selfArray = [
                 {
-                    relationship: 'Self'
-                }
+                    relationship: 'Self',
+                },
             ];
 
-            const filteredCoveredDependentArray = coveredDependentsArray.filter(dependent => {
-                return benefitObj.EmployeeBenefitID && parseInt(dependent.employeeBenefitId) === parseInt(benefitObj.EmployeeBenefitID)
+            const filteredCoveredDependentArray = coveredDependentsArray.filter((dependent) => {
+                return benefitObj.EmployeeBenefitID && parseInt(dependent.employeeBenefitId) === parseInt(benefitObj.EmployeeBenefitID);
             });
-            const filteredBeneficiariesArray = beneficiariesArray.filter(beneficiary => {
-                return benefitObj.EmployeeBenefitID && parseInt(beneficiary.employeeBenefitId) === parseInt(benefitObj.EmployeeBenefitID)
+            const filteredBeneficiariesArray = beneficiariesArray.filter((beneficiary) => {
+                return benefitObj.EmployeeBenefitID && parseInt(beneficiary.employeeBenefitId) === parseInt(benefitObj.EmployeeBenefitID);
             });
 
             const selfIncludedCoveredArray = [...selfArray, ...filteredCoveredDependentArray];
@@ -1180,58 +1177,58 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
             }
 
             const planInfoArray = [];
-            
+
             const planObj = {
                 [PlanCode.Medical]: {
                     covered: selfIncludedCoveredArray,
                     premium: 'Premium',
-                    term: 'DeductionFrequency'
+                    term: 'DeductionFrequency',
                 },
                 [PlanCode.Dental]: {
                     covered: selfIncludedCoveredArray,
                     premium: 'Premium',
-                    term: 'DeductionFrequency'
+                    term: 'DeductionFrequency',
                 },
                 [PlanCode.Vision]: {
                     covered: selfIncludedCoveredArray,
                     premium: 'Premium',
-                    term: 'DeductionFrequency'
+                    term: 'DeductionFrequency',
                 },
                 [PlanCode.HSA]: {
                     contribution: 'EmployeeContribution',
                     annualLimitSingle: 'AnnualHSALimitSingle',
                     annualLimitFamily: 'AnnualHSALimitFamily',
                     annualEmployerContributionSingle: 'AnnualHSAEmployerContributionSingle',
-                    annualEmployerContributionFamily: 'AnnualHSAEmployerContributionFamily'
+                    annualEmployerContributionFamily: 'AnnualHSAEmployerContributionFamily',
                 },
                 [PlanCode.FSA]: {
                     contribution: 'EmployeeContribution',
-                    annualLimit: 'AnnualFSALimit'
+                    annualLimit: 'AnnualFSALimit',
                 },
                 [PlanCode.DCA]: {
                     contribution: 'EmployeeContribution',
-                    annualLimit: 'AnnualDCALimit'
+                    annualLimit: 'AnnualDCALimit',
                 },
                 [PlanCode.STD]: {
                     covered: selfArray,
                     cost: 'Premium',
                     benefitAmount: 'DisabilityPercent',
                     minBenefitAmount: 'BenefitMinimum',
-                    maxBenefitAmount: 'BenefitMaximum'
+                    maxBenefitAmount: 'BenefitMaximum',
                 },
                 [PlanCode.LTD]: {
                     covered: selfArray,
                     cost: 'Premium',
                     benefitAmount: 'DisabilityPercent',
                     minBenefitAmount: 'BenefitMinimum',
-                    maxBenefitAmount: 'BenefitMaximum' 
+                    maxBenefitAmount: 'BenefitMaximum',
                 },
                 [PlanCode.BasicLife]: {
                     covered: selfArray,
                     coverageAmount: 'CoverageAmount',
                     guaranteedIssueAmount: 'LifeGuaranteedIssueAmount',
                     minBenefitAmount: 'BenefitMinimum',
-                    beneficiaries: filteredBeneficiariesArray
+                    beneficiaries: filteredBeneficiariesArray,
                 },
                 [PlanCode.VoluntaryLife]: {
                     covered: selfArray,
@@ -1239,7 +1236,7 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
                     coverageAmount: 'CoverageAmount',
                     guaranteedIssueAmount: 'LifeGuaranteedIssueAmount',
                     minBenefitAmount: 'BenefitMinimum',
-                    beneficiaries: filteredBeneficiariesArray
+                    beneficiaries: filteredBeneficiariesArray,
                 },
                 [PlanCode.DVL]: {
                     covered: filteredCoveredDependentArray,
@@ -1254,19 +1251,19 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
                     coverageAmount: 'CoverageAmount',
                     guaranteedIssueAmount: 'LifeGuaranteedIssueAmount',
                     minBenefitAmount: 'BenefitMinimum',
-                }
-            }
+                },
+            };
 
-            const plan = planObj[benefitObj.PlanTypeCode]
+            const plan = planObj[benefitObj.PlanTypeCode];
 
             for (const infoKey in plan) {
                 let value = plan[infoKey];
                 if (typeof value === 'string') {
-                    value = benefitObj[value]
+                    value = benefitObj[value];
                 }
-                planInfoArray.push({ Key: infoKey, Value: value })
+                planInfoArray.push({ Key: infoKey, Value: value });
             }
-        
+
             return planInfoArray;
         }
 
