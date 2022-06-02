@@ -24,6 +24,14 @@ SELECT
 	bc.WebsiteURL AS CarrierUrl,
 	eb.Premium,
 	eb.DeductionFrequencyCode AS DeductionFrequency,
+    ft.Code AS PayFrequency,
+    e.BirthDate,
+    e.IsSmoker,
+    bp.DependentVoluntaryLifeRate,
+    bp.LifeEmployeeContributionPercent,
+    bp.ADDRate,
+    bp.ADDRequiresElection,
+    eb.ADDIncluded,
 	bp.AnnualHSALimitSingle,
 	bp.AnnualHSALimitFamily,
 	bp.AnnualHSAEmployerContributionSingle,
@@ -43,9 +51,11 @@ END AS Elected
 FROM BenefitPlan bp -- get all Company plans
 LEFT JOIN EmployeeBenefit eb ON eb.PlanID = bp.ID AND (eb.EmployeeID = @_employeeId OR eb.EmployeeID = NULL) -- getting any employee benefit rows that match employeeID
 LEFT JOIN BenefitCarrier AS bc ON bp.CarrierID = bc.ID
-left join BenefitPlanType AS bpt ON bp.PlanTypeID = bpt.ID
+LEFT JOIN BenefitPlanType AS bpt ON bp.PlanTypeID = bpt.ID
 LEFT JOIN BenefitPlanRate AS bpr ON bp.ID = bpr.PlanID and eb.CoverageTypeID = bpr.CoverageTypeID
 LEFT JOIN BenefitCoverageType AS bct ON bpr.CoverageTypeID = bct.ID
+LEFT JOIN Employee AS e ON e.ID = @_employeeId
+LEFT JOIN FrequencyType AS ft ON ft.ID = e.FrequencyTypeID_EVO
 WHERE bp.CompanyID = @_companyId
 AND GETDATE() between bp.StartDate and bp.EndDate
 ORDER BY bp.StartDate
