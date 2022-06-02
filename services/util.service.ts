@@ -1296,3 +1296,60 @@ export async function urlExists(url: string): Promise<boolean> {
         return false;
     }
 }
+
+/**
+ * Returns the age on a benefit plan start date as an integer based on a date string and plan start date
+ * @param {string} birthDateString: birth date string
+ * @param {string} planStartDateString: benefit plan start date string
+ * @returns {number} Returns age of insured on benefit plan start date
+ */
+export async function getAgeOnBenefitPlanStartDate(birthDateString, planStartDateString): Promise<number> {
+    const planStartDate = new Date(planStartDateString);
+    const birthDate = new Date(birthDateString);
+    let age = planStartDate.getFullYear() - birthDate.getFullYear();
+    const m = planStartDate.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && planStartDate.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+}
+
+/**
+ * Calculates number of pay periods per year based on pay frequency code and deduction frequency code
+ * @param {string} payFrequencyCode: pay frequency string 
+ * @param {string} deductionFrequencyCode: deduction frequency string
+ * @returns {number} Returns number of pay periods per year
+ */
+export async function getPaysPerYear(payFrequencyCode, deductionFrequencyCode): Promise<number> {
+    // We assume monthly pay frequency if no code exists
+    let paysPerYear = 12;
+    switch(payFrequencyCode) {
+        case 'Weekly':
+            switch(deductionFrequencyCode) {
+                case 'EveryPay':
+                    paysPerYear = 52;
+                    break;
+                case 'Block5':
+                    paysPerYear = 50;
+                    break;
+            }
+        case 'BiWeekly':
+            switch(deductionFrequencyCode) {
+                case 'EveryPay':
+                    paysPerYear = 26;
+                    break;
+                case 'Block5':
+                    paysPerYear = 24;
+                    break;
+            }
+        case 'SemiMonthly': 
+            paysPerYear = 24;
+            break;
+        case 'Quarterly':
+            paysPerYear = 4;
+            break;
+        case 'Daily':
+            paysPerYear = 365;
+    }
+    return paysPerYear
+}

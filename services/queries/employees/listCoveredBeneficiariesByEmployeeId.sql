@@ -3,7 +3,9 @@ SELECT
     eb.FirstName,
     eb.LastName,
     brt.RelationshipType,
-	cb.IsPrimary
+	cb.IsPrimary,
+    eb.IsSmoker,
+    eb.BirthDate
 FROM
     dbo.CoveredBeneficiary cb
 LEFT JOIN dbo.EmployeeBeneficiary eb ON eb.ID = cb.EmployeeBeneficiaryID 

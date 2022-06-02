@@ -6,6 +6,8 @@ import { PaginatedResult } from '../../../pagination/paginatedResult';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Query } from '../../../queries/query';
 import { Role } from '../../models/Role';
+import { PlanCode } from '../../models/PlanCode';
+import { EmployeeRelationship } from '../../models/EmployeeRelationship';
 
 import * as errorService from '../../../errors/error.service';
 import * as paginationService from '../../../pagination/pagination.service';
@@ -953,7 +955,7 @@ export async function getEmployeeAbsenceSummary(
                     }
                 }
             })
-            return { scheduledApprovedHours, pendingApprovalHours, timeOffDates};
+            return { scheduledApprovedHours, pendingApprovalHours, timeOffDates };
         }
         
         let unroundedTotalAvailableBalance: number = 0;
@@ -994,6 +996,56 @@ export async function getEmployeeAbsenceSummary(
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
     }
+}
+
+/**
+ * Calculates voluntary life insurance rates per pay period for the various voluntary life insurance types
+ * @param {string} tenantId 
+ * @param {any} plan: Benefit plan object 
+ * @param {number} dvlMultiplier: Optional param for dependent voluntary life multiplier
+ * @param {date} birthDate: Optional param for birth date
+ * @param {boolean} isSmoker: Whether the covered individual is a smoker or not
+ * @returns {number} Voluntary Life Rate per pay period 
+ */
+async function calculateLifeRate(tenantId: string, plan: any, dvlMultiplier?: number, birthDate?: string, isSmoker?: boolean): Promise<number> {
+    let lifeRate = 0;
+    let addRate = 0;
+    const yearlyPays = await utilService.getPaysPerYear(plan.PayFrequency, plan.DeductionFrequency)
+    if (plan.ADDRate && !plan.ADDRequiresElection || (plan.ADDRequiresElection && plan.ADDIncluded)) {
+        addRate = plan.ADDRate;
+    }
+    if (plan.CoverageAmount) {
+        if (dvlMultiplier) {
+            lifeRate = dvlMultiplier * plan.CoverageAmount / 1000;
+        }
+    
+        if (birthDate) {
+            const getAgeBandRate = new ParameterizedQuery('getAgeBandPremiumByAge', Queries.getAgeBandPremiumByAgeAndPlanId)
+            const age = await utilService.getAgeOnBenefitPlanStartDate(birthDate, plan.StartDate);
+            getAgeBandRate.setParameter('@age', age)
+            getAgeBandRate.setParameter('@planId', plan.ID)
+
+            const ageBandPayload = {
+                tenantId,
+                queryName: getAgeBandRate.name,
+                query: getAgeBandRate.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+
+            const ageBandPremiumResult: any = await utilService.invokeInternalService('queryExecutor', ageBandPayload, utilService.InvocationType.RequestResponse)
+            const ageBandPremium = ageBandPremiumResult.recordset[0];
+
+            if (isSmoker) {
+                lifeRate = ageBandPremium.SmokerPremium * plan.CoverageAmount / 1000;
+            } else {
+                lifeRate = ageBandPremium.Premium * plan.CoverageAmount / 1000;
+            }
+        }
+        if (plan.IncludeADD && plan.EmployeeIncludedADD) {
+            lifeRate += addRate * plan.CoverageAmount / 1000;
+        }
+    }
+    return (((lifeRate * 12) / yearlyPays) * (plan.LifeEmployeeContributionPercent / 100)) || 0;
 }
 
 /**
@@ -1090,11 +1142,15 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
                 firstName: beneficiary.FirstName,
                 lastName: beneficiary.LastName,
                 relationship: beneficiary.RelationshipType,
-                isPrimary: beneficiary.IsPrimary
+                birthDate: beneficiary.BirthDate,
+                isPrimary: beneficiary.IsPrimary,
+                isSmoker: beneficiary.IsSmoker
             }
         })
 
-        function planInfoTemplate(benefitObj: any) {
+        async function planInfoTemplate(benefitObj: any) {
+
+
             const selfArray = [
                 {
                     relationship: 'Self'
@@ -1110,75 +1166,91 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
 
             const selfIncludedCoveredArray = [...selfArray, ...filteredCoveredDependentArray];
 
+            let lifeCostPerPay = 0;
+            
+            if(benefitObj.PlanTypeCode === PlanCode.VoluntaryLife) {
+                lifeCostPerPay = await calculateLifeRate(tenantId, benefitObj, null, benefitObj.BirthDate, benefitObj.IsSmoker)
+            } else if (benefitObj.PlanTypeCode === PlanCode.SVL) {
+                const spouse = beneficiariesArray.filter(beneficiary => {
+                    return beneficiary.relationship === EmployeeRelationship.Spouse
+                })
+                lifeCostPerPay = await calculateLifeRate(tenantId, benefitObj, null, spouse[0].birthDate, spouse[0].isSmoker)
+            } else if (benefitObj.PlanTypeCode === PlanCode.DVL) {
+                lifeCostPerPay = await calculateLifeRate(tenantId, benefitObj, benefitObj.DependentVoluntaryLifeRate)
+            }
+
             const planInfoArray = [];
             
             const planObj = {
-                'Medical': {
+                [PlanCode.Medical]: {
                     covered: selfIncludedCoveredArray,
                     premium: 'Premium',
                     term: 'DeductionFrequency'
                 },
-                'Dental': {
+                [PlanCode.Dental]: {
                     covered: selfIncludedCoveredArray,
                     premium: 'Premium',
                     term: 'DeductionFrequency'
                 },
-                'Vision': {
+                [PlanCode.Vision]: {
                     covered: selfIncludedCoveredArray,
                     premium: 'Premium',
                     term: 'DeductionFrequency'
                 },
-                'HSA': {
+                [PlanCode.HSA]: {
                     contribution: 'EmployeeContribution',
                     annualLimitSingle: 'AnnualHSALimitSingle',
                     annualLimitFamily: 'AnnualHSALimitFamily',
                     annualEmployerContributionSingle: 'AnnualHSAEmployerContributionSingle',
                     annualEmployerContributionFamily: 'AnnualHSAEmployerContributionFamily'
                 },
-                'FSA': {
+                [PlanCode.FSA]: {
                     contribution: 'EmployeeContribution',
                     annualLimit: 'AnnualFSALimit'
                 },
-                'DCA': {
+                [PlanCode.DCA]: {
                     contribution: 'EmployeeContribution',
                     annualLimit: 'AnnualDCALimit'
                 },
-                'STD': {
+                [PlanCode.STD]: {
                     covered: selfArray,
                     cost: 'Premium',
                     benefitAmount: 'DisabilityPercent',
                     minBenefitAmount: 'BenefitMinimum',
                     maxBenefitAmount: 'BenefitMaximum'
                 },
-                'LTD': {
+                [PlanCode.LTD]: {
                     covered: selfArray,
                     cost: 'Premium',
                     benefitAmount: 'DisabilityPercent',
                     minBenefitAmount: 'BenefitMinimum',
                     maxBenefitAmount: 'BenefitMaximum' 
                 },
-                'Basic Life': {
+                [PlanCode.BasicLife]: {
                     covered: selfArray,
                     coverageAmount: 'CoverageAmount',
                     guaranteedIssueAmount: 'LifeGuaranteedIssueAmount',
                     minBenefitAmount: 'BenefitMinimum',
                     beneficiaries: filteredBeneficiariesArray
                 },
-                'Voluntary Life': {
+                [PlanCode.VoluntaryLife]: {
                     covered: selfArray,
+                    cost: lifeCostPerPay,
                     coverageAmount: 'CoverageAmount',
                     guaranteedIssueAmount: 'LifeGuaranteedIssueAmount',
                     minBenefitAmount: 'BenefitMinimum',
                     beneficiaries: filteredBeneficiariesArray
                 },
-                'Dependent Voluntary Life': {
+                [PlanCode.DVL]: {
                     covered: filteredCoveredDependentArray,
+                    cost: lifeCostPerPay,
                     coverageAmount: 'CoverageAmount',
                     guaranteedIssueAmount: 'LifeGuaranteedIssueAmount',
                     minBenefitAmount: 'BenefitMinimum',
                 },
-                'Spouse Voluntary Life': {
+                [PlanCode.SVL]: {
                     covered: filteredCoveredDependentArray,
+                    cost: lifeCostPerPay,
                     coverageAmount: 'CoverageAmount',
                     guaranteedIssueAmount: 'LifeGuaranteedIssueAmount',
                     minBenefitAmount: 'BenefitMinimum',
@@ -1199,9 +1271,9 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
         }
 
 
-        const benefits: EmployeeBenefit[] = result.recordsets[1].map((record) => {
+        const benefits: EmployeeBenefit[] = await Promise.all(result.recordsets[1].map(async (record) => {
 
-            const planInfo = planInfoTemplate(record);
+            const planInfo: any = await planInfoTemplate(record);
 
             return {
                 id: record.ID,
@@ -1219,7 +1291,7 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
                 elected: record.Elected,
                 planInformation: planInfo,
             } as EmployeeBenefit;
-        });
+        }));
 
         return await paginationService.createPaginatedResult(benefits, baseUrl, totalCount, page);
     } catch (error) {
