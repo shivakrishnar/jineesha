@@ -1,6 +1,8 @@
 import * as AWS from 'aws-sdk';
-import { Queries } from '../../../queries/queries';
+import { Queries, basePath } from '../../../queries/queries';
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
@@ -22,6 +24,8 @@ import { ssoRoles, SsoAccount } from '../../../remote-services/sso.service';
 import * as ssoService from '../../../remote-services/sso.service';
 import { CompanyAnnouncement } from './CompanyAnnouncement';
 import { CompanyOpenEnrollment } from './CompanyOpenEnrollment';
+import * as databaseService from '../../../internal-api/database/database.service';
+import * as uniqueifier from 'uuid/v4';
 
 /**
  * Returns a listing of companies for a specific user within a tenant
@@ -1068,4 +1072,173 @@ export async function listCompanyOpenEnrollments(
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
     }
+}
+
+/**
+ * migrates company HR data from a donor to a recipient
+ * @param {string} donorTenantId: The unique identifier for the donor tenant
+ * @param {string} donorCompanyId: The unique identifier for the donor company
+ * @param {string} recipientTenantId: The unique identifier for the recipient tenant
+ * @param {string} recipientCompanyId: The unique identifier for the recipient company
+ */
+export async function createCompanyMigration(
+    donorTenantId,
+    donorCompanyId,
+    recipientTenantId,
+    recipientCompanyId
+): Promise<any> {
+    console.info('company.service.createCompanyMigration');
+
+    const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+    const migrationId = uniqueifier();
+
+    try {
+        //1-updating the DB migration table with 'Pending' status 
+        let params = {
+            TableName: 'HrCompanyMigrations',
+            Item: {
+                ID: migrationId,
+                Status: 'Pending',
+                Details: {
+                    source: {
+                        tenantId: donorTenantId,
+                        companyId: donorCompanyId
+                    },
+                    destination: {
+                        tenantId: recipientTenantId,
+                        companyId: recipientCompanyId
+                    }
+                },
+                Timestamp: new Date().toISOString()
+            }
+        };
+
+        await dynamoDbClient.put(params).promise();
+
+        //2-linked server connection creation 
+        const { rdsEndpoint } = await databaseService.findConnectionString(recipientTenantId);
+        const { username, password }  = JSON.parse(
+            await utilService.getSecret(configService.getRdsCredentials()),
+        );
+        
+        const connectionQuery = new ParameterizedQuery('createLinkedServerConnection', Queries.createLinkedServerConnection);
+
+        connectionQuery.setParameter('@password', password);
+        connectionQuery.setParameter('@username', username);
+        connectionQuery.setParameter('@rdsEndpoint', rdsEndpoint);
+
+        const connectionPayload = {
+            tenantId: donorTenantId,
+            queryName: connectionQuery.name,
+            query: connectionQuery.value,
+            queryType: QueryType.StoredProcedure,
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', connectionPayload, utilService.InvocationType.RequestResponse, true);
+
+        //3-running premigration scripts
+        const preMigrationPayload = {
+            tenantId: donorTenantId,
+            queryType: QueryType.StoredProcedure,
+        } as DatabaseEvent;
+
+        //getting the list of premigration scripts into in array
+        const scripts = fs.readdirSync(path.join(basePath, 'companyMigrationScripts'));
+
+        //rearranging the scripts array to execute 'usp_EIN_Cons_Dynamic_V1.sql' first
+        let tmp = scripts[scripts.indexOf('usp_EIN_Cons_Dynamic_V1.sql')];
+        scripts[scripts.indexOf('usp_EIN_Cons_Dynamic_V1.sql')] = scripts[0];
+        scripts[0] = tmp;
+        
+        for(let i = 0; i < scripts.length; i++) {
+            let preMigrationQuery = new ParameterizedQuery(scripts[i].split('.')[0], Queries[scripts[i]]);
+            preMigrationPayload.queryName = preMigrationQuery.name;
+            preMigrationPayload.query = preMigrationQuery.value;
+
+            await utilService.invokeInternalService('queryExecutor', preMigrationPayload, utilService.InvocationType.RequestResponse, true);
+        }
+
+        //4-migration creation 
+        const migrationQuery = new ParameterizedQuery('createCompanyMigration', Queries.createCompanyMigration);
+
+        migrationQuery.setParameter('@donorTenantId', donorTenantId);
+        migrationQuery.setParameter('@donorCompanyId', donorCompanyId);
+        migrationQuery.setParameter('@recipTenantId', recipientTenantId);
+        migrationQuery.setParameter('@recipCompanyId', recipientCompanyId);
+        
+        const migrationPayload = {
+            tenantId: donorTenantId,
+            queryName: migrationQuery.name,
+            query: migrationQuery.value,
+            queryType: QueryType.StoredProcedure,
+        } as DatabaseEvent;
+        await utilService.invokeInternalService('queryExecutor', migrationPayload, utilService.InvocationType.RequestResponse, true);
+
+        //5-updating migration table to 'Success' if migration done successfully
+        const updateParams = {
+            TableName: 'HrCompanyMigrations',
+            Key: { ID: migrationId },
+            UpdateExpression: 'set #a = :x',
+            ExpressionAttributeNames: {'#a' : 'Status'},
+            ExpressionAttributeValues: {
+            ':x' : 'Success',
+            }
+        }
+        await dynamoDbClient.update(updateParams).promise();
+    }
+    catch (error) {
+        //updating migration table to 'Failed' if migration failed
+        const updateParams = {
+            TableName: 'HrCompanyMigrations',
+            Key: { ID: migrationId },
+            UpdateExpression: 'set #a = :x, #b.#c = :y',
+            ExpressionAttributeNames: {
+             '#a': 'Status',
+             '#b': 'Details',
+             '#c': 'errorMessage'
+            },
+            ExpressionAttributeValues: {
+             ':x': 'Failed',
+             ':y': JSON.stringify(error)
+            }
+        }
+        await dynamoDbClient.update(updateParams).promise();
+
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+    finally {
+        //6-dropping linked server connection
+        const dropConnectionQuery = new ParameterizedQuery('dropLinkedServerConnection', Queries.dropLinkedServerConnection);
+
+        const dropConnectionPayload = {
+            tenantId: donorTenantId,
+            queryName: dropConnectionQuery.name,
+            query: dropConnectionQuery.value,
+            queryType: QueryType.StoredProcedure,
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', dropConnectionPayload, utilService.InvocationType.RequestResponse, true);
+    }
+}
+
+//executes the step function to create the company migration 
+export async function runCompanyMigration(donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId) {
+    console.info('company.service.runCompanyMigration');
+
+    const stepFunctions = new AWS.StepFunctions();
+
+    const params = {
+        stateMachineArn: configService.getHrCompanyMigratorStateMachineArn(),
+        input: JSON.stringify({
+            donorTenantId,
+            donorCompanyId,
+            recipientTenantId,
+            recipientCompanyId
+        })
+    }
+    await stepFunctions.startExecution(params).promise();
 }

@@ -530,7 +530,7 @@ export enum InvocationType {
  * @param {invocationType} invocationType: How to invoke lambda - synchronously(RequestResponse) | asynchronously(Event)
  * @returns {Promise<unknown>}: A Promise of the invocation result
  */
-export async function invokeInternalService(serviceName: string, payload: any, invocationType: InvocationType): Promise<unknown> {
+export async function invokeInternalService(serviceName: string, payload: any, invocationType: InvocationType, throwServiceError?: boolean): Promise<unknown> {
     console.info('utilService.invokeInternalService');
 
     AWS.config.update({
@@ -558,8 +558,12 @@ export async function invokeInternalService(serviceName: string, payload: any, i
 
         // Internal Error
         if (responsePayload.errorMessage) {
+
             const errorMessage = JSON.parse(responsePayload.errorMessage);
             console.error(`invocation failed. Reason: ${JSON.stringify(errorMessage)}`);
+            if(throwServiceError) {
+                throw errorMessage;
+            }
             throw errorService.getErrorResponse(0);
         }
     }

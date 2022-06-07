@@ -885,3 +885,38 @@ export async function deleteTenantDatabase(event: any, context: Context, callbac
         console.error(e);
     }
 }
+
+/*
+ * create company HR data migration 
+ */
+export async function createCompanyMigration(event: any, context: Context, callback: ProxyCallback): Promise<void> {
+    console.info('tenants.handler.createCompanyMigration');
+
+    console.info(`received event: ${JSON.stringify(event)}`);
+
+    try {
+        const { donorCompanyId, donorTenantId, recipientCompanyId, recipientTenantId } = event;
+        
+        await companyService.createCompanyMigration(donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId);
+        return callback(undefined, { statusCode: 200, body: JSON.stringify('companyMigrationSuccessful') });
+        
+    } catch (error) {
+        console.error(`unable to create company migration: ${JSON.stringify(error)}`);
+        return callback(error);
+    }
+}
+
+/*
+ * run company migration 
+ */
+export const runCompanyMigration = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('tenants.handler.runCompanyMigration');
+    const { donorCompanyId, donorTenantId, recipientCompanyId, recipientTenantId } = requestBody;
+   
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin]);
+
+    return await companyService.runCompanyMigration( donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId);
+});
