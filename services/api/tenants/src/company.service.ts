@@ -187,16 +187,16 @@ export async function getById(tenantId: string, companyId: string, email: string
 }
 
 /**
- * Retrieves company info by EvoCompanyCode
+ * Retrieves company info by companyId
  * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
- * @param {string} companyCode: The unique code for the company
+ * @param {string} companyId: The unique identifier for the company
  * @returns {Promise<CompanyDetail>}: A Promise of a company's details
  */
-async function getCompanyInfoByEvoCompanyCode(tenantId: string, companyCode: string): Promise<CompanyDetail> {
-    console.info('companyService.getCompanyInfoByEvoCompanyCode');
+async function getCompanyInfoByCompanyId(tenantId: string, companyId: string): Promise<CompanyDetail> {
+    console.info('companyService.getCompanyInfoByCompanyId');
 
-    const query = new ParameterizedQuery('GetCompanyInfoByEvoCompanyCode', Queries.getCompanyInfoByEvoCompanyCode);
-    query.setParameter('@evoCompanyCode', companyCode);
+    const query = new ParameterizedQuery('GetCompanyInfoByCompanyId', Queries.getCompanyInfoByCompanyId);
+    query.setParameter('@companyId', companyId);
     const payload = {
         tenantId,
         queryName: query.name,
@@ -205,13 +205,14 @@ async function getCompanyInfoByEvoCompanyCode(tenantId: string, companyCode: str
     } as DatabaseEvent;
     const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
     if (result.recordset.length === 0) {
-        throw errorService.getErrorResponse(50).setDeveloperMessage(`The company code: ${companyCode} not found`);
+        throw errorService.getErrorResponse(50).setDeveloperMessage(`The company id: ${companyId} not found`);
     }
 
     const companyInfo: CompanyDetail = result.recordset.map((entry) => {
         return {
             id: entry.ID,
             clientId: entry.PRIntegration_ClientID,
+            companyCode: entry.PRIntegrationCompanyCode,
             companyName: entry.CompanyName,
         };
     })[0];
@@ -221,92 +222,93 @@ async function getCompanyInfoByEvoCompanyCode(tenantId: string, companyCode: str
 
 /**
  * Updates a company's HelloSign configurations
- * @param {string} oldTenantId: The unique identifier (SSO tenantId GUID) for the old (donor) tenant
- * @param {string} evoCompanyCode: The unique code for the company
+ * @param {string} donorTenantId: The unique identifier (SSO tenantId GUID) for the donor (donor) tenant
+ * @param {string} donorCompanyId: The unique identifier for the company
  * @param {PatchInstruction} patch: The instruction the patch should attempt to execute
  * @returns {Promise<() => void>}: A Promise of a rollback function
  */
-async function updateHelloSignConfigurations(oldTenantId: string, oldCompanyCode: string, patch: PatchInstruction): Promise<() => void> {
+async function updateHelloSignConfigurations(donorTenantId: string, donorCompanyId: string, patch: PatchInstruction): Promise<() => void> {
     console.info('companyService.updateHelloSignConfigurations');
 
-    const { tenantId: newTenantId, companyCode: newCompanyCode } = patch.value || {};
-
-    if (!newTenantId || !newCompanyCode) {
+    const { tenantId: recipientTenantId, companyId: recipientCompanyId } = patch.value || {};
+    
+    if (!recipientTenantId || !recipientCompanyId) {
         throw errorService
             .getErrorResponse(30)
-            .setDeveloperMessage('Expected value to equal object containing recipient tenantId and companyCode');
+            .setDeveloperMessage('Expected value to equal object containing recipient tenantId and companyId');
     }
 
     const rollbackActions = [];
 
     try {
-        const [oldCompanyInfo, newCompanyInfo, adminToken]: any[] = await Promise.all([
-            getCompanyInfoByEvoCompanyCode(oldTenantId, oldCompanyCode),
-            getCompanyInfoByEvoCompanyCode(newTenantId, newCompanyCode),
+
+        const [donorCompanyInfo, recipientCompanyInfo, adminToken]: any[] = await Promise.all([
+            getCompanyInfoByCompanyId(donorTenantId, donorCompanyId),
+            getCompanyInfoByCompanyId(recipientTenantId, recipientCompanyId),
             utilService.generateAdminToken(),
         ]);
 
-        const oldIntegrationConfiguration: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
-            oldTenantId,
-            oldCompanyInfo.clientId,
-            oldCompanyInfo.id,
+        const donorIntegrationConfiguration: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            donorTenantId,
+            donorCompanyInfo.clientId,
+            donorCompanyInfo.id,
             adminToken,
         );
-        console.log('oldIntegrationConfiguration', JSON.stringify(oldIntegrationConfiguration));
+        console.log('donorIntegrationConfiguration', JSON.stringify(donorIntegrationConfiguration));
 
-        if (!oldIntegrationConfiguration) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage('oldIntegrationConfiguration not found for this company');
+        if (!donorIntegrationConfiguration) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage('donorIntegrationConfiguration not found for this company');
         }
 
-        // update new integration configuration for company with old eSignatureAppClientId
-        const newIntegrationConfiguration: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
-            newTenantId,
-            newCompanyInfo.clientId,
-            newCompanyInfo.id,
+        // update new integration configuration for company with donor eSignatureAppClientId
+        const recipientIntegrationConfiguration: EsignatureAppConfiguration = await integrationsService.getIntegrationConfigurationByCompany(
+            recipientTenantId,
+            recipientCompanyInfo.clientId,
+            recipientCompanyInfo.id,
             adminToken,
         );
-        console.log('newIntegrationConfiguration', JSON.stringify(newIntegrationConfiguration));
+        console.log('recipientIntegrationConfiguration', JSON.stringify(recipientIntegrationConfiguration));
 
-        if (!newIntegrationConfiguration) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage('newIntegrationConfiguration not found for this company');
+        if (!recipientIntegrationConfiguration) {
+            throw errorService.getErrorResponse(50).setDeveloperMessage('recipientIntegrationConfiguration not found for this company');
         }
 
-        const newEsignatureAppClientId = newIntegrationConfiguration.integrationDetails.eSignatureAppClientId;
-        const oldEsignatureAppClientId = oldIntegrationConfiguration.integrationDetails.eSignatureAppClientId;
-        newIntegrationConfiguration.integrationDetails.eSignatureAppClientId = oldEsignatureAppClientId;
+        const recipientEsignatureAppClientId = recipientIntegrationConfiguration.integrationDetails.eSignatureAppClientId;
+        const donorEsignatureAppClientId = donorIntegrationConfiguration.integrationDetails.eSignatureAppClientId;
+        recipientIntegrationConfiguration.integrationDetails.eSignatureAppClientId = donorEsignatureAppClientId;
 
         await integrationsService.updateIntegrationConfigurationById(
-            newTenantId,
-            newCompanyInfo.clientId,
-            newCompanyInfo.id,
-            newIntegrationConfiguration,
+            recipientTenantId,
+            recipientCompanyInfo.clientId,
+            recipientCompanyInfo.id,
+            recipientIntegrationConfiguration,
             adminToken,
         );
         rollbackActions.push(async () => {
-            newIntegrationConfiguration.integrationDetails.eSignatureAppClientId = newEsignatureAppClientId;
+            recipientIntegrationConfiguration.integrationDetails.eSignatureAppClientId = recipientEsignatureAppClientId;
             await integrationsService.updateIntegrationConfigurationById(
-                newTenantId,
-                newCompanyInfo.clientId,
-                newCompanyInfo.id,
-                newIntegrationConfiguration,
+                recipientTenantId,
+                recipientCompanyInfo.clientId,
+                recipientCompanyInfo.id,
+                recipientIntegrationConfiguration,
                 adminToken,
             );
         });
 
-        const newHsApp: any = JSON.parse(await hellosignService.getApplicationForCompany(newEsignatureAppClientId));
-        const oldHsApp: any = JSON.parse(await hellosignService.getApplicationForCompany(oldEsignatureAppClientId));
+        const recipientHsApp: any = JSON.parse(await hellosignService.getApplicationForCompany(recipientEsignatureAppClientId));
+        const donorHsApp: any = JSON.parse(await hellosignService.getApplicationForCompany(donorEsignatureAppClientId));
 
-        // update new HelloSign app name to temp name - HelloSign does not allow apps with duplicate names
+        // update recipient HelloSign app name to temp name - HelloSign does not allow apps with duplicate names
         let helloSignApplication: HelloSignApplication = {
-            name: newHsApp.api_app.name + ' old',
+            name: recipientHsApp.api_app.name + ' donor',
         };
-        await hellosignService.updateApplicationForCompany(newEsignatureAppClientId, helloSignApplication);
+        await hellosignService.updateApplicationForCompany(recipientEsignatureAppClientId, helloSignApplication);
         rollbackActions.push(async () => {
             try {
                 helloSignApplication = {
-                    name: newHsApp.api_app.name,
+                    name: recipientHsApp.api_app.name,
                 };
-                await hellosignService.updateApplicationForCompany(newEsignatureAppClientId, helloSignApplication);
+                await hellosignService.updateApplicationForCompany(recipientEsignatureAppClientId, helloSignApplication);
             } catch (error) {
                 // Note: we are eating the exception here because the update will not work if the HelloSign application
                 // has already been deleted. Just log the error and continue.
@@ -314,57 +316,57 @@ async function updateHelloSignConfigurations(oldTenantId: string, oldCompanyCode
             }
         });
 
-        // update old HelloSign app name and domain
+        // update donor HelloSign app name and domain
         helloSignApplication = {
-            name: newHsApp.api_app.name,
-            domain: newHsApp.api_app.domain,
+            name: recipientHsApp.api_app.name,
+            domain: recipientHsApp.api_app.domain,
         };
-        await hellosignService.updateApplicationForCompany(oldEsignatureAppClientId, helloSignApplication);
+        await hellosignService.updateApplicationForCompany(donorEsignatureAppClientId, helloSignApplication);
         rollbackActions.push(async () => {
             helloSignApplication = {
-                name: oldHsApp.api_app.name,
-                domain: oldHsApp.api_app.domain,
+                name: donorHsApp.api_app.name,
+                domain: donorHsApp.api_app.domain,
             };
-            await hellosignService.updateApplicationForCompany(oldEsignatureAppClientId, helloSignApplication);
+            await hellosignService.updateApplicationForCompany(donorEsignatureAppClientId, helloSignApplication);
         });
 
-        // delete new HelloSign app
-        await hellosignService.deleteApplicationById(newEsignatureAppClientId);
+        // delete recipient HelloSign app
+        await hellosignService.deleteApplicationById(recipientEsignatureAppClientId);
         rollbackActions.push(async () => {
             const {
                 api_app: { client_id: eSignatureClientId },
             } = await hellosignService.createApplicationForCompany(
-                newCompanyInfo.id,
-                newHsApp.api_app.domain,
-                newHsApp.api_app.callback_url,
+                recipientCompanyInfo.id,
+                recipientHsApp.api_app.domain,
+                recipientHsApp.api_app.callback_url,
             );
 
-            newIntegrationConfiguration.integrationDetails.eSignatureAppClientId = eSignatureClientId;
+            recipientIntegrationConfiguration.integrationDetails.eSignatureAppClientId = eSignatureClientId;
             await integrationsService.updateIntegrationConfigurationById(
-                newTenantId,
-                newCompanyInfo.clientId,
-                newCompanyInfo.id,
-                newIntegrationConfiguration,
+                recipientTenantId,
+                recipientCompanyInfo.clientId,
+                recipientCompanyInfo.id,
+                recipientIntegrationConfiguration,
                 adminToken,
             );
         });
 
-        // delete old integration configuration
+        // delete donor integration configuration
         await integrationsService.deleteIntegrationConfigurationbyId(
-            oldTenantId,
-            oldCompanyInfo.clientId,
-            oldCompanyInfo.id,
-            oldIntegrationConfiguration,
+            donorTenantId,
+            donorCompanyInfo.clientId,
+            donorCompanyInfo.id,
+            donorIntegrationConfiguration,
             adminToken,
         );
         rollbackActions.push(async () => {
             await integrationsService.createIntegrationConfiguration(
-                oldTenantId,
-                oldCompanyInfo.clientId,
-                oldCompanyInfo.id,
-                oldCompanyInfo.companyName,
-                oldHsApp.api_app.domain,
-                oldEsignatureAppClientId,
+                donorTenantId,
+                donorCompanyInfo.clientId,
+                donorCompanyInfo.id,
+                donorCompanyInfo.companyName,
+                donorHsApp.api_app.domain,
+                donorEsignatureAppClientId,
                 adminToken,
             );
         });
@@ -391,19 +393,15 @@ async function updateHelloSignConfigurations(oldTenantId: string, oldCompanyCode
     };
 }
 
-async function handleSsoPatch(
-    donorTenantId: string,
-    donorCompanyCode: string,
-    instruction: PatchInstruction,
-): Promise<{ response?: any; rollbackAction: () => void }> {
+async function handleSsoPatch(donorTenantId: string, donorCompanyId: string,  instruction: PatchInstruction): Promise<{ response?: any; rollbackAction: () => void }> {
     console.info('companyService.handleSsoPatch');
 
-    const { tenantId: recipientTenantId, companyCode: recipientCompanyCode } = instruction.value || {};
+    const { tenantId: recipientTenantId, companyId: recipientCompanyId } = instruction.value || {};
 
-    if (!recipientTenantId || !recipientCompanyCode) {
+    if (!recipientTenantId || !recipientCompanyId) {
         throw errorService
             .getErrorResponse(30)
-            .setDeveloperMessage('Expected value to equal object containing recipient tenantId and companyCode');
+            .setDeveloperMessage('Expected value to equal object containing recipient tenantId and companyId');
     }
 
     const supportedOperations = [PatchOperation.Copy, PatchOperation.Remove, PatchOperation.Test];
@@ -415,22 +413,21 @@ async function handleSsoPatch(
     const skippedUsers = [];
 
     try {
-        await Promise.all([
-            getCompanyInfoByEvoCompanyCode(donorTenantId, donorCompanyCode),
-            getCompanyInfoByEvoCompanyCode(recipientTenantId, recipientCompanyCode),
+
+        const [donorCompanyInfo, recipientCompanyInfo]: any[] = await Promise.all([
+            getCompanyInfoByCompanyId(donorTenantId, donorCompanyId),
+            getCompanyInfoByCompanyId(recipientTenantId, recipientCompanyId)
         ]);
 
         // get all hr accounts under a company from recipient database
         const usersQuery = new ParameterizedQuery('GetUserSsoIdByEvoCompanyCode', Queries.getUserSsoIdByEvoCompanyCode);
-        usersQuery.setStringParameter('@companyCode', instruction.op === PatchOperation.Remove ? donorCompanyCode : recipientCompanyCode);
-
+        usersQuery.setParameter('@companyCode', instruction.op === PatchOperation.Remove ? donorCompanyInfo.PRIntegrationCompanyCode : recipientCompanyInfo.PRIntegrationCompanyCode);
         const usersPayload = {
             tenantId: instruction.op === PatchOperation.Remove ? donorTenantId : recipientTenantId,
             queryName: usersQuery.name,
             query: usersQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-
         const usersResult: any = await utilService.invokeInternalService(
             'queryExecutor',
             usersPayload,
@@ -596,15 +593,15 @@ const s3Client = new AWS.S3({
     useAccelerateEndpoint: true,
 });
 
-async function handleEsignatureDocs(donorTenantId: string, donorCompanyCode: string, instruction: PatchInstruction): Promise<() => void> {
+async function handleEsignatureDocs(donorTenantId: string, donorCompanyId: string, instruction: PatchInstruction): Promise<() => void> {
     console.info('companyService.handleEsignatureDocs');
 
-    const { tenantId: recipientTenantId, companyCode: recipientCompanyCode } = instruction.value || {};
+    const { tenantId: recipientTenantId, companyId: recipientCompanyId } = instruction.value || {};
 
-    if (!recipientTenantId || !recipientCompanyCode) {
+    if (!recipientTenantId || !recipientCompanyId) {
         throw errorService
             .getErrorResponse(30)
-            .setDeveloperMessage('Expected value to equal object containing recipient tenantId and companyCode');
+            .setDeveloperMessage('Expected value to equal object containing recipient tenantId and companyId');
     }
 
     const supportedOperations = [PatchOperation.Move];
@@ -616,10 +613,8 @@ async function handleEsignatureDocs(donorTenantId: string, donorCompanyCode: str
     const failedActions = [];
 
     try {
-        // company code validation & retrieve hr company ids
-        const [recipientCompanyInfo]: CompanyDetail[] = await Promise.all([
-            getCompanyInfoByEvoCompanyCode(recipientTenantId, recipientCompanyCode),
-            getCompanyInfoByEvoCompanyCode(donorTenantId, donorCompanyCode),
+        const [recipientCompanyInfo]: any[] = await Promise.all([
+            getCompanyInfoByCompanyId(recipientTenantId, recipientCompanyId)
         ]);
 
         if (instruction.op === PatchOperation.Move) {
@@ -712,7 +707,7 @@ async function handleEsignatureDocs(donorTenantId: string, donorCompanyCode: str
                             );
                         });
 
-                        // Note: preserve old s3 docs for now in the event they need to be accessed
+                        // Note: preserve donor s3 docs for now in the event they need to be accessed
                         // await s3Client.deleteObject({
                         //     Bucket: configService.getFileBucketName(),
                         //     Key: file.Pointer,
@@ -769,12 +764,12 @@ async function handleEsignatureDocs(donorTenantId: string, donorCompanyCode: str
 /**
  * Updates a company or that company's integrations
  * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
- * @param {string} companyCode: The unique code for the company
+ * @param {string} companyId: The unique identifier for the company.
  * @param {PatchInstruction[]} patch: The list of instructions the patch is should attempt to execute
  * The patch instructions will be executed in the order provided.
  * The array as a whole is atomic, if an instruction fails, all previous instructions will be rolled back.
  */
-export async function companyUpdate(tenantId: string, companyCode: string, patch: PatchInstruction[]): Promise<any> {
+ export async function companyUpdate(tenantId: string, companyId: string, patch: PatchInstruction[]): Promise<any> {
     console.info('companyService.companyUpdate');
 
     const rollbackActions = [];
@@ -784,15 +779,15 @@ export async function companyUpdate(tenantId: string, companyCode: string, patch
         for (const instruction of patch) {
             switch (instruction.path) {
                 case '/platform/integration':
-                    rollbackActions.push(await updateHelloSignConfigurations(tenantId, companyCode, instruction));
+                    rollbackActions.push(await updateHelloSignConfigurations(tenantId, companyId, instruction));
                     break;
                 case '/sso/account':
-                    const ssoResponse = await handleSsoPatch(tenantId, companyCode, instruction);
+                    const ssoResponse = await handleSsoPatch(tenantId, companyId, instruction);
                     rollbackActions.push(ssoResponse.rollbackAction);
                     response = { ...response, ...ssoResponse.response };
                     break;
                 case '/esignature':
-                    rollbackActions.push(await handleEsignatureDocs(tenantId, companyCode, instruction));
+                    rollbackActions.push(await handleEsignatureDocs(tenantId, companyId, instruction));
                     break;
                 case '/test':
                     if (instruction.op === PatchOperation.Test) {

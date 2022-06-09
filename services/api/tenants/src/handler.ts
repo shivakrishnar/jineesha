@@ -269,9 +269,9 @@ export const companyUpdate = utilService.gatewayEventHandlerV2(async ({ security
     await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin]);
 
     const { patch } = requestBody;
-    const { tenantId, companyId: companyCode } = event.pathParameters;
+    const { tenantId, companyId } = event.pathParameters;
 
-    return await companyService.companyUpdate(tenantId, companyCode, patch);
+    return await companyService.companyUpdate(tenantId, companyId, patch);
 });
 
 /**
