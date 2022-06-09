@@ -18,7 +18,7 @@ describe('company.service.update.platform.integration', () => {
 
     test('updates a configuration for a company', async (done) => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
                 if (payload.tenantId === mockData.oldTenantId) {
                     return Promise.resolve(mockData.oldCompanyDBResponse);
                 } else {
@@ -44,7 +44,7 @@ describe('company.service.update.platform.integration', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.platformIntegrationPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.platformIntegrationPatchInstructions)
             .catch(() => {
                 done.fail(new Error('Test should not throw an exception.'));
             });
@@ -55,18 +55,18 @@ describe('company.service.update.platform.integration', () => {
         const instruction: PatchInstruction = Object.assign({}, mockData.platformIntegrationPatchInstructions[0]);
         instruction.value = undefined;
 
-        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, [instruction]).catch((error) => {
+        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, [instruction]).catch((error) => {
             expect(error).toBeInstanceOf(ErrorMessage);
             expect(error.statusCode).toEqual(400);
             expect(error.code).toEqual(30);
             expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-            expect(error.developerMessage).toEqual('Expected value to equal object containing recipient tenantId and companyCode');
+            expect(error.developerMessage).toEqual('Expected value to equal object containing recipient tenantId and companyId');
         });
     });
 
     test('throws a 404 when old integration configuration is not found', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
                 if (payload.tenantId === mockData.oldTenantId) {
                     return Promise.resolve(mockData.oldCompanyDBResponse);
                 } else {
@@ -84,7 +84,7 @@ describe('company.service.update.platform.integration', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.platformIntegrationPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.platformIntegrationPatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -96,7 +96,7 @@ describe('company.service.update.platform.integration', () => {
 
     test('throws a 404 when new integration configuration is not found', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
                 if (payload.tenantId === mockData.oldTenantId) {
                     return Promise.resolve(mockData.oldCompanyDBResponse);
                 } else {
@@ -114,7 +114,7 @@ describe('company.service.update.platform.integration', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.platformIntegrationPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.platformIntegrationPatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -126,7 +126,7 @@ describe('company.service.update.platform.integration', () => {
 
     test('performs rollback when error occurs', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
                 if (payload.tenantId === mockData.oldTenantId) {
                     return Promise.resolve(mockData.oldCompanyDBResponse);
                 } else {
@@ -154,7 +154,7 @@ describe('company.service.update.platform.integration', () => {
         mockData.platformIntegrationPatchInstructions.push(mockData.testPatchInstruction);
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.platformIntegrationPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.platformIntegrationPatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
@@ -173,7 +173,7 @@ describe('company.service.update.sso.account', () => {
 
     test('copies all sso accounts for a company', async (done) => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
                 if (payload.tenantId === mockData.oldTenantId) {
                     return Promise.resolve(mockData.oldCompanyDBResponse);
                 } else {
@@ -192,7 +192,7 @@ describe('company.service.update.sso.account', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.ssoAccountCopyPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.ssoAccountCopyPatchInstructions)
             .catch(() => {
                 done.fail(new Error('Test should not throw an exception.'));
             });
@@ -201,7 +201,7 @@ describe('company.service.update.sso.account', () => {
 
     test('removes all sso accounts for a company', async (done) => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
                 if (payload.tenantId === mockData.oldTenantId) {
                     return Promise.resolve(mockData.oldCompanyDBResponse);
                 } else {
@@ -217,7 +217,7 @@ describe('company.service.update.sso.account', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.ssoAccountRemovePatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.ssoAccountRemovePatchInstructions)
             .catch(() => {
                 done.fail(new Error('Test should not throw an exception.'));
             });
@@ -228,7 +228,7 @@ describe('company.service.update.sso.account', () => {
         const instruction: PatchInstruction = Object.assign({}, mockData.ssoAccountCopyPatchInstructions[0]);
         instruction.op = PatchOperation.Move;
 
-        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, [instruction]).catch((error) => {
+        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, [instruction]).catch((error) => {
             expect(error).toBeInstanceOf(ErrorMessage);
             expect(error.statusCode).toEqual(422);
             expect(error.code).toEqual(71);
@@ -241,18 +241,18 @@ describe('company.service.update.sso.account', () => {
         const instruction: PatchInstruction = Object.assign({}, mockData.ssoAccountCopyPatchInstructions[0]);
         instruction.value = undefined;
 
-        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, [instruction]).catch((error) => {
+        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, [instruction]).catch((error) => {
             expect(error).toBeInstanceOf(ErrorMessage);
             expect(error.statusCode).toEqual(400);
             expect(error.code).toEqual(30);
             expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-            expect(error.developerMessage).toEqual('Expected value to equal object containing recipient tenantId and companyCode');
+            expect(error.developerMessage).toEqual('Expected value to equal object containing recipient tenantId and companyId');
         });
     });
 
     test('throws a 404 when no users are found', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
                 if (payload.tenantId === mockData.oldTenantId) {
                     return Promise.resolve(mockData.oldCompanyDBResponse);
                 } else {
@@ -264,7 +264,7 @@ describe('company.service.update.sso.account', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.ssoAccountCopyPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.ssoAccountCopyPatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -274,9 +274,80 @@ describe('company.service.update.sso.account', () => {
             });
     });
 
+    test('performs rollback when error occurs after a remove operation', async () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
+                if (payload.tenantId === mockData.oldTenantId) {
+                    return Promise.resolve(mockData.oldCompanyDBResponse);
+                } else {
+                    return Promise.resolve(mockData.newCompanyDBResponse);
+                }
+            } else if (payload.queryName === 'GetUserSsoIdByEvoCompanyCode') {
+                return Promise.resolve(mockData.usersDBResponse);
+            }
+        });
+
+        (ssoService as any).updateSsoAccountById = jest.fn(() => {
+            return;
+        });
+
+        mockData.ssoAccountRemovePatchInstructions.push(mockData.testPatchInstruction);
+
+        await companyService
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.ssoAccountRemovePatchInstructions)
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(500);
+                expect(error.code).toEqual(0);
+                expect(error.message).toEqual('Unexpected error occurred.');
+                expect(error.developerMessage).toEqual('Something happened on the server and we have no idea what. Blame the architect.');
+                expect(error.moreInfo).toEqual('Manual failure for unit tests');
+            });
+    });
+
+    test('performs rollback when error occurs during a copy operation', async () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
+                if (payload.tenantId === mockData.oldTenantId) {
+                    return Promise.resolve(mockData.oldCompanyDBResponse);
+                } else {
+                    return Promise.resolve(mockData.newCompanyDBResponse);
+                }
+            } else if (payload.queryName === 'GetUserSsoIdByEvoCompanyCode') {
+                return Promise.resolve(mockData.usersDBResponse);
+            } else if (payload.queryName === 'UpdateUserSsoIdByCode') {
+                throw {};
+            }
+        });
+
+        (ssoService as any).getSsoAccountById = jest.fn(() => {
+            return mockData.ssoAccountResponse;
+        });
+        (ssoService as any).createSsoAccount = jest.fn(() => {
+            return mockData.createdSsoAccountResponse;
+        });
+        (ssoService as any).updateSsoAccountById = jest.fn(() => {
+            return;
+        });
+
+        await companyService
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.ssoAccountCopyPatchInstructions)
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(500);
+                expect(error.code).toEqual(0);
+                expect(error.message).toEqual('Unexpected error occurred.');
+                expect(error.developerMessage).toEqual('Error occurred while performing patch operation. Check CloudWatch logs for more info.');
+                expect(error.moreInfo).toEqual({
+                    "fullyFailedUpdates": [],
+                    "partialFailedUpdates": ["1", "2"],
+                    "totalFailedUpdates": [{ "id": 1, "key": "1" }, { "id": 2, "key": "2" }]
+                });
+            });
+    });
     test('performs rollback when error occurs after a copy operation', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
                 if (payload.tenantId === mockData.oldTenantId) {
                     return Promise.resolve(mockData.oldCompanyDBResponse);
                 } else {
@@ -300,7 +371,7 @@ describe('company.service.update.sso.account', () => {
         mockData.ssoAccountCopyPatchInstructions.push(mockData.testPatchInstruction);
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.ssoAccountCopyPatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.ssoAccountCopyPatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
@@ -308,78 +379,6 @@ describe('company.service.update.sso.account', () => {
                 expect(error.message).toEqual('Unexpected error occurred.');
                 expect(error.developerMessage).toEqual('Something happened on the server and we have no idea what. Blame the architect.');
                 expect(error.moreInfo).toEqual('Manual failure for unit tests');
-            });
-    });
-
-    test('performs rollback when error occurs after a remove operation', async () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
-                if (payload.tenantId === mockData.oldTenantId) {
-                    return Promise.resolve(mockData.oldCompanyDBResponse);
-                } else {
-                    return Promise.resolve(mockData.newCompanyDBResponse);
-                }
-            } else if (payload.queryName === 'GetUserSsoIdByEvoCompanyCode') {
-                return Promise.resolve(mockData.usersDBResponse);
-            }
-        });
-
-        (ssoService as any).updateSsoAccountById = jest.fn(() => {
-            return;
-        });
-
-        mockData.ssoAccountRemovePatchInstructions.push(mockData.testPatchInstruction);
-
-        await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.ssoAccountRemovePatchInstructions)
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(500);
-                expect(error.code).toEqual(0);
-                expect(error.message).toEqual('Unexpected error occurred.');
-                expect(error.developerMessage).toEqual('Something happened on the server and we have no idea what. Blame the architect.');
-                expect(error.moreInfo).toEqual('Manual failure for unit tests');
-            });
-    });
-
-    test('performs rollback when error occurs during a copy operation', async () => {
-        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
-                if (payload.tenantId === mockData.oldTenantId) {
-                    return Promise.resolve(mockData.oldCompanyDBResponse);
-                } else {
-                    return Promise.resolve(mockData.newCompanyDBResponse);
-                }
-            } else if (payload.queryName === 'GetUserSsoIdByEvoCompanyCode') {
-                return Promise.resolve(mockData.usersDBResponse);
-            } else if (payload.queryName === 'UpdateUserSsoIdById') {
-                throw {};
-            }
-        });
-
-        (ssoService as any).getSsoAccountById = jest.fn(() => {
-            return mockData.ssoAccountResponse;
-        });
-        (ssoService as any).createSsoAccount = jest.fn(() => {
-            return mockData.createdSsoAccountResponse;
-        });
-        (ssoService as any).updateSsoAccountById = jest.fn(() => {
-            return;
-        });
-
-        await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.ssoAccountCopyPatchInstructions)
-            .catch((error) => {
-                expect(error).toBeInstanceOf(ErrorMessage);
-                expect(error.statusCode).toEqual(500);
-                expect(error.code).toEqual(0);
-                expect(error.message).toEqual('Unexpected error occurred.');
-                expect(error.developerMessage).toEqual('Error occurred while performing patch operation. Check CloudWatch logs for more info.');
-                expect(error.moreInfo).toEqual({
-                    "fullyFailedUpdates": [],
-                    "partialFailedUpdates": ["1", "2"],
-                    "totalFailedUpdates": [{ "id": 1, "key": "1" }, { "id": 2, "key": "2" }]
-                });
             });
     });
 });
@@ -391,7 +390,7 @@ describe('company.service.update.esignature', () => {
 
     test('moves all s3 documents for a company', async (done) => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
                 if (payload.tenantId === mockData.oldTenantId) {
                     return Promise.resolve(mockData.oldCompanyDBResponse);
                 } else {
@@ -403,7 +402,7 @@ describe('company.service.update.esignature', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.esignatureMovePatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.esignatureMovePatchInstructions)
             .catch(() => {
                 done.fail(new Error('Test should not throw an exception.'));
             });
@@ -414,7 +413,7 @@ describe('company.service.update.esignature', () => {
         const instruction: PatchInstruction = Object.assign({}, mockData.esignatureMovePatchInstructions[0]);
         instruction.op = PatchOperation.Copy;
 
-        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, [instruction]).catch((error) => {
+        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, [instruction]).catch((error) => {
             expect(error).toBeInstanceOf(ErrorMessage);
             expect(error.statusCode).toEqual(422);
             expect(error.code).toEqual(71);
@@ -427,18 +426,18 @@ describe('company.service.update.esignature', () => {
         const instruction: PatchInstruction = Object.assign({}, mockData.esignatureMovePatchInstructions[0]);
         instruction.value = undefined;
 
-        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, [instruction]).catch((error) => {
+        await companyService.companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, [instruction]).catch((error) => {
             expect(error).toBeInstanceOf(ErrorMessage);
             expect(error.statusCode).toEqual(400);
             expect(error.code).toEqual(30);
             expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-            expect(error.developerMessage).toEqual('Expected value to equal object containing recipient tenantId and companyCode');
+            expect(error.developerMessage).toEqual('Expected value to equal object containing recipient tenantId and companyId');
         });
     });
 
     test('throws a 404 when no documents are found', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
                 if (payload.tenantId === mockData.oldTenantId) {
                     return Promise.resolve(mockData.oldCompanyDBResponse);
                 } else {
@@ -450,7 +449,7 @@ describe('company.service.update.esignature', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.esignatureMovePatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.esignatureMovePatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
@@ -462,7 +461,7 @@ describe('company.service.update.esignature', () => {
 
     test('performs rollback when error occurs after a move operation', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
                 if (payload.tenantId === mockData.oldTenantId) {
                     return Promise.resolve(mockData.oldCompanyDBResponse);
                 } else {
@@ -476,7 +475,7 @@ describe('company.service.update.esignature', () => {
         mockData.esignatureMovePatchInstructions.push(mockData.testPatchInstruction);
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.esignatureMovePatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.esignatureMovePatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
@@ -489,7 +488,7 @@ describe('company.service.update.esignature', () => {
 
     test('performs rollback when error occurs during a move operation', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-            if (payload.queryName === 'GetCompanyInfoByEvoCompanyCode') {
+            if (payload.queryName === 'GetCompanyInfoByCompanyId') {
                 if (payload.tenantId === mockData.oldTenantId) {
                     return Promise.resolve(mockData.oldCompanyDBResponse);
                 } else {
@@ -503,7 +502,7 @@ describe('company.service.update.esignature', () => {
         });
 
         await companyService
-            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyCode, mockData.esignatureMovePatchInstructions)
+            .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.esignatureMovePatchInstructions)
             .catch((error) => {
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
