@@ -107,6 +107,7 @@ AWS = {
 
             scan = awsMockMethods.dynamodb.scan
             update = awsMockMethods.dynamodb.update || promiseResult
+            put = awsMockMethods.dynamodb.put || promiseResult
         },
     },
     SSM: class {
