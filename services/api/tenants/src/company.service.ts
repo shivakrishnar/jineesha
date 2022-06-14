@@ -103,14 +103,11 @@ export async function list(tenantId: string, email: string, domainName: string, 
             return undefined;
         }
 
-        const companies: Company[] = recordSet.map(({
-            ID: id,
-            CompanyName: name,
-            PRIntegrationCompanyCode: code,
-            CreateDate: createDate
-        }) => {
-            return { id, name, code, createDate } as Company;
-        });
+        const companies: Company[] = recordSet.map(
+            ({ ID: id, CompanyName: name, PRIntegrationCompanyCode: code, CreateDate: createDate }) => {
+                return { id, name, code, createDate } as Company;
+            },
+        );
 
         return await paginationService.createPaginatedResult(companies, baseUrl, totalCount, page);
     } catch (error) {
@@ -394,7 +391,11 @@ async function updateHelloSignConfigurations(oldTenantId: string, oldCompanyCode
     };
 }
 
-async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, instruction: PatchInstruction): Promise<() => void> {
+async function handleSsoPatch(
+    donorTenantId: string,
+    donorCompanyCode: string,
+    instruction: PatchInstruction,
+): Promise<{ response?: any; rollbackAction: () => void }> {
     console.info('companyService.handleSsoPatch');
 
     const { tenantId: recipientTenantId, companyCode: recipientCompanyCode } = instruction.value || {};
@@ -411,6 +412,7 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, i
     }
 
     const rollbackActions = [];
+    const skippedUsers = [];
 
     try {
         await Promise.all([
@@ -513,6 +515,7 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, i
                             updatedUsers.push(user.key);
                         } else {
                             console.log(`Skipping user with id ${account.id} and evoSbUserId ${account.evoSbUserId}`);
+                            skippedUsers.push(user.key);
                         }
                     } catch (e) {
                         console.error(`${user.key}: ${e}`);
@@ -535,29 +538,31 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, i
                 };
                 actions.push(action());
             } else {
-                return Function;
+                return { rollbackAction: Function };
             }
         }
 
         await Promise.allSettled(actions);
         if (updatedUsers.length !== users.length) {
-            const totalFailedUpdates = users.filter(({ key }) => updatedUsers.indexOf(key) === -1);
-            const partialFailedUpdates = createdAccounts.filter((key) => !updatedUsers.includes(key));
-            const fullyFailedUpdates = totalFailedUpdates.filter(({ key }) => !partialFailedUpdates.includes(key));
-            console.log(`The following user(s) failed to update ${JSON.stringify(totalFailedUpdates)}, attempting rollback`);
-            console.log(
-                `The following account(s) were created in SSO but failed to update in the db: ${JSON.stringify(partialFailedUpdates)}`,
-            );
-            console.log(`The following account(s) completely failed to migrate: ${JSON.stringify(fullyFailedUpdates)}`);
-            throw errorService
-                .getErrorResponse(0)
-                .setDeveloperMessage(`Failed to migrate the following user(s): ${JSON.stringify(totalFailedUpdates)}`)
-                .setDeveloperMessage('Error occurred while performing patch operation. Check CloudWatch logs for more info.')
-                .setMoreInfo({
-                    totalFailedUpdates,
-                    partialFailedUpdates,
-                    fullyFailedUpdates,
-                });
+            if (users.length - updatedUsers.length !== skippedUsers.length) {
+                const totalFailedUpdates = users.filter(({ key }) => updatedUsers.indexOf(key) === -1);
+                const partialFailedUpdates = createdAccounts.filter((key) => !updatedUsers.includes(key));
+                const fullyFailedUpdates = totalFailedUpdates.filter(({ key }) => !partialFailedUpdates.includes(key));
+                console.log(`The following user(s) failed to update ${JSON.stringify(totalFailedUpdates)}, attempting rollback`);
+                console.log(
+                    `The following account(s) were created in SSO but failed to update in the db: ${JSON.stringify(partialFailedUpdates)}`,
+                );
+                console.log(`The following account(s) completely failed to migrate: ${JSON.stringify(fullyFailedUpdates)}`);
+                throw errorService
+                    .getErrorResponse(0)
+                    .setDeveloperMessage(`Failed to migrate the following user(s): ${JSON.stringify(totalFailedUpdates)}`)
+                    .setDeveloperMessage('Error occurred while performing patch operation. Check CloudWatch logs for more info.')
+                    .setMoreInfo({
+                        totalFailedUpdates,
+                        partialFailedUpdates,
+                        fullyFailedUpdates,
+                    });
+            }
         }
     } catch (error) {
         console.log('Update SSO accounts failed, rolling back');
@@ -574,12 +579,15 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyCode: string, i
     }
 
     // return rollback function
-    return async () => {
-        let action = rollbackActions.shift();
-        while (action) {
-            await action();
-            action = rollbackActions.shift();
-        }
+    return {
+        response: { skippedUsers },
+        rollbackAction: async () => {
+            let action = rollbackActions.shift();
+            while (action) {
+                await action();
+                action = rollbackActions.shift();
+            }
+        },
     };
 }
 
@@ -766,19 +774,22 @@ async function handleEsignatureDocs(donorTenantId: string, donorCompanyCode: str
  * The patch instructions will be executed in the order provided.
  * The array as a whole is atomic, if an instruction fails, all previous instructions will be rolled back.
  */
-export async function companyUpdate(tenantId: string, companyCode: string, patch: PatchInstruction[]): Promise<void> {
+export async function companyUpdate(tenantId: string, companyCode: string, patch: PatchInstruction[]): Promise<any> {
     console.info('companyService.companyUpdate');
 
     const rollbackActions = [];
 
     try {
+        let response = {};
         for (const instruction of patch) {
             switch (instruction.path) {
                 case '/platform/integration':
                     rollbackActions.push(await updateHelloSignConfigurations(tenantId, companyCode, instruction));
                     break;
                 case '/sso/account':
-                    rollbackActions.push(await handleSsoPatch(tenantId, companyCode, instruction));
+                    const ssoResponse = await handleSsoPatch(tenantId, companyCode, instruction);
+                    rollbackActions.push(ssoResponse.rollbackAction);
+                    response = { ...response, ...ssoResponse.response };
                     break;
                 case '/esignature':
                     rollbackActions.push(await handleEsignatureDocs(tenantId, companyCode, instruction));
@@ -792,6 +803,7 @@ export async function companyUpdate(tenantId: string, companyCode: string, patch
                 // throw unrecognized path error
             }
         }
+        return response;
     } catch (error) {
         let action = rollbackActions.pop();
         while (action) {
@@ -946,9 +958,11 @@ export async function listCompanyAnnouncements(
             const expiring = queryParams.expiring && utilService.parseQueryParamsBoolean(queryParams, 'expiring');
             const indefinite = queryParams.indefinite && utilService.parseQueryParamsBoolean(queryParams, 'indefinite');
 
-            if (expiring && indefinite) query = new ParameterizedQuery('listIndefiniteCompanyAnnouncements', Queries.listExpiringAndIndefiniteCompanyAnnouncements);
+            if (expiring && indefinite)
+                query = new ParameterizedQuery('listIndefiniteCompanyAnnouncements', Queries.listExpiringAndIndefiniteCompanyAnnouncements);
             else if (expiring) query = new ParameterizedQuery('listExpiringCompanyAnnouncements', Queries.listExpiringCompanyAnnouncements);
-            else if (indefinite) query = new ParameterizedQuery('listIndefiniteCompanyAnnouncements', Queries.listIndefiniteCompanyAnnouncements);
+            else if (indefinite)
+                query = new ParameterizedQuery('listIndefiniteCompanyAnnouncements', Queries.listIndefiniteCompanyAnnouncements);
         }
 
         query.setParameter('@companyId', companyId);
