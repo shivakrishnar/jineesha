@@ -4,8 +4,8 @@ import { PatchInstruction, PatchOperation } from '../../src/patchInstruction';
 
 export const oldTenantId = '1234';
 export const newTenantId = '5678';
-export const oldCompanyCode = '1';
-export const newCompanyCode = '2';
+export const oldCompanyId = '1234';
+export const newCompanyId = '5678';
 
 export const getUserDBResponse = (IsGA = true, IsSuperAdmin = false) => {
     return {
@@ -29,9 +29,9 @@ export const platformIntegrationPatchInstructions: PatchInstruction[] = [
         path: '/platform/integration',
         value: {
             tenantId: newTenantId,
-            companyCode: newCompanyCode,
-        },
-    },
+            companyId: newCompanyId,
+        },        
+    }
 ];
 
 export const ssoAccountCopyPatchInstructions: PatchInstruction[] = [
@@ -40,7 +40,7 @@ export const ssoAccountCopyPatchInstructions: PatchInstruction[] = [
         path: '/sso/account',
         value: {
             tenantId: newTenantId,
-            companyCode: newCompanyCode,
+            companyId: newCompanyId,
         },
     },
 ];
@@ -51,7 +51,7 @@ export const ssoAccountRemovePatchInstructions: PatchInstruction[] = [
         path: '/sso/account',
         value: {
             tenantId: newTenantId,
-            companyCode: newCompanyCode,
+            companyId: newCompanyId,
         },
     },
 ];
@@ -62,7 +62,7 @@ export const esignatureMovePatchInstructions: PatchInstruction[] = [
         path: '/esignature',
         value: {
             tenantId: newTenantId,
-            companyCode: newCompanyCode,
+            companyId: newCompanyId,
         },
     },
 ];
@@ -172,6 +172,7 @@ export const oldCompanyDBResponse = {
         {
             ID: 1234,
             PRIntegration_ClientID: '1234',
+            PRIntegrationCompanyCode: '1'
         },
     ],
     output: {},
@@ -183,6 +184,7 @@ export const newCompanyDBResponse = {
         {
             ID: 5678,
             PRIntegration_ClientID: '5678',
+            PRIntegrationCompanyCode: '2'
         },
     ],
     output: {},

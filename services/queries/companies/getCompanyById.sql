@@ -25,7 +25,8 @@ begin
         ProductTierID,
         IsLandingSectionOnUpcomingTimeOff,
         IsLandingSectionOnAnnouncements,
-        PRIntegration_ClientID
+        PRIntegration_ClientID,
+        PRIntegrationCompanyCode
     from
         dbo.Company
     where
@@ -42,7 +43,8 @@ begin
         ProductTierID,
         IsLandingSectionOnUpcomingTimeOff,
         IsLandingSectionOnAnnouncements,
-        PRIntegration_ClientID
+        PRIntegration_ClientID,
+        PRIntegrationCompanyCode
     from
         dbo.Company
     where
@@ -67,7 +69,8 @@ begin
         ProductTierID,
         IsLandingSectionOnUpcomingTimeOff,
         IsLandingSectionOnAnnouncements,
-        PRIntegration_ClientID
+        PRIntegration_ClientID,
+        PRIntegrationCompanyCode
     from
         dbo.Company
     where
