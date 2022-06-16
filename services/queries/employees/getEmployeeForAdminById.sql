@@ -17,15 +17,6 @@ with Roles as (
         sru.UserID = @_userId and
         srl.Level = @_adminRoleLevel
 ),
-EmployeeCompanies as (
-    select
-        ee.CompanyID
-    from
-        dbo.Employee ee
-    left join dbo.HRnextUserEmployee ue on ue.EmployeeID = ee.ID
-    where
-        ue.HRnextUserID = @_userId
-),
 AssignedCompanies as
 (
     select
@@ -48,11 +39,10 @@ select
     c.PRIntegration_ClientID as evoClientId
 from
     dbo.Employee ee
-    inner join EmployeeCompanies ec on ee.CompanyID = ec.CompanyID
     inner join AssignedCompanies ac on ee.CompanyID = ac.CompanyID
     inner join Roles r on ee.CompanyID = r.CompanyID
     inner join dbo.Company c on ee.CompanyID = c.ID
-left join dbo.EmployeeCompensation ec on ec.EmployeeID = ee.ID
-left join dbo.PayType pt on pt.ID = ec.PayTypeID
+left join dbo.EmployeeCompensation ecomp on ecomp.EmployeeID = ee.ID
+left join dbo.PayType pt on pt.ID = ecomp.PayTypeID
 where 
     ee.ID = @_employeeId
