@@ -1,12 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+
 // Note: The queries are bundled into the deployed service package and since multiple services reference
 //       them, the path to the files differ depending upon the invocation context - that is, whether within
 //       the AWS Lambda container or a regular Node process. This provides a sanity check for the
 //       directory to these files.
 //       Service packages deployed to AWS Lambda are executed within the /var/task directory in the container.
-const basePath = process.cwd() === '/var/task' ? path.join(process.cwd(), 'queries') : __dirname;
+export const basePath = process.cwd() === '/var/task' ? path.join(process.cwd(), 'queries') : __dirname;
 
 export const Queries = {
     // Database
@@ -166,6 +167,22 @@ export const Queries = {
     listExpiringAndIndefiniteCompanyAnnouncements: fs.readFileSync(path.join(basePath, 'companies/listExpiringAndIndefiniteCompanyAnnouncements.sql')).toString(),
     listCompanyOpenEnrollments: fs.readFileSync(path.join(basePath, 'companies/listCompanyOpenEnrollments.sql')).toString(),
     listCompanyCurrentOpenEnrollments: fs.readFileSync(path.join(basePath, 'companies/listCompanyCurrentOpenEnrollments.sql')).toString(),
+    //company migrations scripts
+    usp_EIN_Cons_Dynamic_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_Dynamic_V1.sql')).toString(),
+    usp_EIN_Cons_ApplTrack_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_ApplTrack_V1.sql')).toString(),
+    usp_EIN_Cons_Benefits_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_Benefits_V1.sql')).toString(),
+    usp_EIN_Cons_CompanyUpdates: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_CompanyUpdates.sql')).toString(),
+    usp_EIN_Cons_CompanyWrapper_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_CompanyWrapper_V1.sql')).toString(),
+    usp_EIN_Cons_CompensationDataSet_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_CompensationDataSet_V1.sql')).toString(),
+    usp_EIN_Cons_Documents_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_Documents_V1.sql')).toString(),
+    usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1.sql')).toString(),
+    usp_EIN_Cons_HRNext_Sec_DataSet_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_HRNext_Sec_DataSet_V1.sql')).toString(),
+    usp_EIN_Cons_PreCheck_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_PreCheck_V1.sql')).toString(),
+    createLinkedServerConnection: fs.readFileSync(path.join(basePath, 'companies/createLinkedServerConnection.sql')).toString(),
+    createCompanyMigration: fs.readFileSync(path.join(basePath, 'companies/createCompanyMigration.sql')).toString(),
+    dropLinkedServerConnection: fs.readFileSync(path.join(basePath, 'companies/dropLinkedServerConnection.sql')).toString(),
+
+
 
     // Employees
     getEmployeeByCompanyIdAndId: fs.readFileSync(path.join(basePath, 'employees/getEmployeeByCompanyIdAndId.sql')).toString(),

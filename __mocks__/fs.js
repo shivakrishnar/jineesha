@@ -55,6 +55,9 @@ function rmdir(path, cb) {
 function readFileSync() {
     return 'test';
 }
+function readdirSync() {
+    return ['test1.pdf', 'test2.pdf', 'usp_EIN_Cons_Dynamic_V1.sql'];
+}
 
 fs.__setMockFiles = __setMockFiles;
 fs.__forceError = __forceError;
@@ -63,5 +66,6 @@ fs.writeFile = writeFile;
 fs.unlink = unlink;
 fs.rmdir = rmdir;
 fs.readFileSync = readFileSync;
+fs.readdirSync = readdirSync;
 
 module.exports = fs;

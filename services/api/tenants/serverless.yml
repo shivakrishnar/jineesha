@@ -23,6 +23,7 @@ provider:
     domain: ${file(${self:custom.configFile}):domain}
     hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
     hrDatabaseCreatorStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}
+    hrCompanyMigratorStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrCompanyMigrator-${self:provider.stage}
     teamNotificationTopicArn: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:mojojojo-status-notification
     scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
@@ -87,6 +88,7 @@ provider:
       Action: states:StartExecution
       Resource:
         - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}"
+        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrCompanyMigrator-${self:provider.stage}"
 
     - Effect: Allow
       Action:
@@ -225,6 +227,15 @@ functions:
           method: patch
           cors:
             origin: '*'
+
+  migrateCompany:
+    handler: src/handler.runCompanyMigration      
+    events:
+      - http:
+          path: /migrations
+          method: post
+          cors:
+            origin: '*' 
 
   getCompanyById:
     handler: src/handler.getCompanyById
@@ -442,6 +453,15 @@ functions:
             cors:
               origin: '*'
 
+  createCompanyMigration:
+    handler: src/handler.createCompanyMigration
+    vpc:
+      securityGroupIds:
+        - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}
+      subnetIds:
+        - ${file(${self:custom.configFile}):privateSubnetId1}
+        - ${file(${self:custom.configFile}):privateSubnetId2}
+
 stepFunctions:
   stateMachines:
      HrDatabaseCreator:
@@ -500,6 +520,29 @@ stepFunctions:
             Type: Task
             Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-errorHandler
             End: true
+
+     HrCompanyMigrator:
+      name: HrCompanyMigrator-${self:provider.stage}
+
+      definition:
+        Comment: "Create company Migration"
+        StartAt: DataMigration
+        States:
+          DataMigration:
+            Type: Task
+            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-createCompanyMigration
+            ResultPath: $.DataMigration
+            End: true
+            Catch:
+              - ErrorEquals:
+                  - States.ALL
+                Next: ErrorHandler
+                ResultPath: $.error
+
+          ErrorHandler:
+            Type: Task
+            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-errorHandler
+            End: true  
 
 resources:
   Resources:

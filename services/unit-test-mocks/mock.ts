@@ -9,6 +9,7 @@ import * as integrationsService from '../remote-services/integrations.service';
 import * as ssoService from '../remote-services/sso.service';
 import * as utilService from '../util.service';
 import * as payrollService from '../remote-services/payroll.service';
+import * as databaseService from '../internal-api/database/database.service';
 
 export const setup = () => {
     (configService as any).getSecretsAwsEndpoint = jest.fn(() => {
@@ -200,5 +201,9 @@ export const setup = () => {
                 },
             ],
         };
+    });
+
+    (databaseService as any).findConnectionString = jest.fn(() => {
+        return Promise.resolve('');
     });
 };
