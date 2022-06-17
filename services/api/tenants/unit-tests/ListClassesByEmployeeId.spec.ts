@@ -18,7 +18,7 @@ const errorMessage = {
 describe('listClassesByEmployeeId Service', () => {
     beforeEach(() => {
         setup();
-    })
+    });
 
     test('returns Classes', () => {
         (utilService as any).validateEmployeeWithCompany = jest.fn(() => {
@@ -39,8 +39,8 @@ describe('listClassesByEmployeeId Service', () => {
                 mockData.path,
             )
             .then((classes) => {
-                console.log(mockData.upcomingClassesResponse[0])
-                console.log(classes.results[0])
+                console.log(mockData.upcomingClassesResponse[0]);
+                console.log(classes.results[0]);
                 expect(classes).toBeInstanceOf(PaginatedResult);
                 expect(classes.results.length).toBe(mockData.upcomingClassesResponse.length);
                 expect(classes.results[0]).toEqual(mockData.upcomingClassesResponse[0]);
@@ -76,7 +76,7 @@ describe('listClassesByEmployeeId Service', () => {
     });
 
     test('should return error', () => {
-        (utilService as any).validateEmployeeWithCompany = jest.fn(() => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             throw errorService.getErrorResponse(0);
         });
 

@@ -18,7 +18,7 @@ const errorMessage = {
 describe('listBenefitsByEmployeeId Service', () => {
     beforeEach(() => {
         setup();
-    })
+    });
 
     test('returns Benefits', () => {
         (utilService as any).validateEmployeeWithCompany = jest.fn(() => {
@@ -31,7 +31,7 @@ describe('listBenefitsByEmployeeId Service', () => {
             } else if (payload.queryName === 'listCoveredDependentsByEmployeeId') {
                 return Promise.resolve(mockData.coveredDependentsResult);
             } else if (payload.queryName === 'listCoveredBeneficiariesByEmployeeId') {
-                return Promise.resolve(mockData.coveredBeneficiariesResult)
+                return Promise.resolve(mockData.coveredBeneficiariesResult);
             }
         });
 
@@ -79,7 +79,7 @@ describe('listBenefitsByEmployeeId Service', () => {
     });
 
     test('should return error', () => {
-        (utilService as any).validateEmployeeWithCompany = jest.fn(() => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             throw errorService.getErrorResponse(0);
         });
 

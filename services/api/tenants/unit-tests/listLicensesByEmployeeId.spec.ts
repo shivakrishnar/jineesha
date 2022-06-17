@@ -73,7 +73,7 @@ describe('listLicensesByEmployeeId Service', () => {
     });
 
     test('should return error', () => {
-        (utilService as any).validateEmployeeWithCompany = jest.fn(() => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
             throw errorService.getErrorResponse(0);
         });
 
