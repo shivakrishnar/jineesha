@@ -462,6 +462,24 @@ functions:
         - ${file(${self:custom.configFile}):privateSubnetId1}
         - ${file(${self:custom.configFile}):privateSubnetId2}
 
+  migrateSsoAccounts:
+    handler: src/handler.migrateSsoAccounts
+    vpc:
+      securityGroupIds:
+        - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}
+      subnetIds:
+        - ${file(${self:custom.configFile}):privateSubnetId1}
+        - ${file(${self:custom.configFile}):privateSubnetId2}
+
+  migrateHelloSignIntegration:
+    handler: src/handler.migrateHelloSignIntegration
+    vpc:
+      securityGroupIds:
+        - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}
+      subnetIds:
+        - ${file(${self:custom.configFile}):privateSubnetId1}
+        - ${file(${self:custom.configFile}):privateSubnetId2}        
+
 stepFunctions:
   stateMachines:
      HrDatabaseCreator:
@@ -532,12 +550,24 @@ stepFunctions:
             Type: Task
             Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-createCompanyMigration
             ResultPath: $.DataMigration
-            End: true
+            Next: SsoAccountMigration
             Catch:
               - ErrorEquals:
                   - States.ALL
                 Next: ErrorHandler
                 ResultPath: $.error
+
+          SsoAccountMigration:
+            Type: Task
+            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-migrateSsoAccounts
+            ResultPath: $.SsoAccountMigration
+            Next: HelloSignIntegrationMigration
+
+          HelloSignIntegrationMigration:
+            Type: Task
+            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-migrateHelloSignIntegration
+            ResultPath: $.HelloSignIntegrationMigration
+            End: true
 
           ErrorHandler:
             Type: Task

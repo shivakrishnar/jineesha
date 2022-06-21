@@ -425,7 +425,7 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyId: string,  in
 
         // get all hr accounts under a company from recipient database
         const usersQuery = new ParameterizedQuery('GetUserSsoIdByEvoCompanyCode', Queries.getUserSsoIdByEvoCompanyCode);
-        usersQuery.setParameter('@companyCode', instruction.op === PatchOperation.Remove ? donorCompanyInfo.PRIntegrationCompanyCode : recipientCompanyInfo.PRIntegrationCompanyCode);
+        usersQuery.setParameter('@companyCode', instruction.op === PatchOperation.Remove ? donorCompanyInfo.companyCode : recipientCompanyInfo.companyCode);
         const usersPayload = {
             tenantId: instruction.op === PatchOperation.Remove ? donorTenantId : recipientTenantId,
             queryName: usersQuery.name,
