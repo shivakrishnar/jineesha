@@ -353,6 +353,7 @@ export const getEmployeeById = utilService.gatewayEventHandlerV2(async ({ securi
         Role.serviceBureauAdmin,
         Role.superAdmin,
         Role.hrAdmin,
+        Role.hrManager,
     ]);
 
     const results = await employeeService.getById(tenantId, companyId, employeeId, email, securityContext.roleMemberships);
