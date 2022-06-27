@@ -470,6 +470,9 @@ describe('utilService.checkAuthorization', () => {
             (utilService as any).validateUserIsInCompany = jest.fn(() => {
                 return Promise.resolve(true);
             });
+            (utilService as any).validateDirectReportOfManagerUser = jest.fn(() => {
+                return Promise.resolve(false);
+            });
 
             utilService.checkAuthorization(securityContext, event, authorizedRoles).catch(() => {
                 done.fail(new Error('Test should not throw an exception.'));
@@ -517,6 +520,10 @@ describe('utilService.checkAuthorization', () => {
                 },
                 roleMemberships: [Role.hrEmployee],
             };
+
+            (utilService as any).validateDirectReportOfManagerUser = jest.fn(() => {
+                return Promise.resolve(false);
+            });
 
             (utilService as any).validateUserWithEmployee = jest.fn(() => {
                 return Promise.resolve(true);
