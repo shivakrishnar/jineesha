@@ -14,6 +14,7 @@ import { Headers } from '../../models/headers';
 import { IAccount } from '@asuresoftware/asure.auth';
 import { Context, ProxyCallback } from 'aws-lambda';
 import { Role } from '../../models/Role';
+import { PatchInstruction, PatchOperation } from './patchInstruction';
 
 const twoDaysInSeconds = 172800;
 const logoCacheHeaderValue = `public, max-age=${twoDaysInSeconds}`;
@@ -905,6 +906,60 @@ export async function createCompanyMigration(event: any, context: Context, callb
     } catch (error) {
         console.error(`unable to create company migration: ${JSON.stringify(error)}`);
         return callback(error);
+    }
+}
+
+export async function migrateSsoAccounts(event: any, context: Context, callback: ProxyCallback): Promise<void> {
+    console.info('tenants.handler.migrateSsoAccounts');
+
+    console.info(`received event: ${JSON.stringify(event)}`);
+
+    try {
+        const { donorCompanyId, donorTenantId, recipientCompanyId, recipientTenantId } = event;
+        const patchInstructions: PatchInstruction[] = [
+            {
+                op: PatchOperation.Copy,
+                path: '/sso/account',
+                value: {
+                    tenantId: recipientTenantId,
+                    companyId: recipientCompanyId,
+                }
+            },
+        ];
+
+        const response = await companyService.companyUpdate(donorTenantId, donorCompanyId, patchInstructions);
+        return callback(undefined, { statusCode: 200, body: JSON.stringify(response) });
+    } catch (error) {
+        console.error(`unable to migrate sso account data: ${JSON.stringify(error)}`);
+        // HACK: do not return error in callback to allow continuation of migration in the face of errors
+        return callback(undefined, { statusCode: 500, body: JSON.stringify(error) });
+    }
+}
+
+export async function migrateHelloSignIntegration(event: any, context: Context, callback: ProxyCallback): Promise<void> {
+    console.info('tenants.handler.migrateHelloSignIntegration');
+
+    console.info(`received event: ${JSON.stringify(event)}`);
+
+    try {
+        const { donorCompanyId, donorTenantId, recipientCompanyId, recipientTenantId } = event;
+        const patchInstructions: PatchInstruction[] = [
+            {
+                op: PatchOperation.Test,
+                path: '/platform/integration',
+                value: {
+                    tenantId: recipientTenantId,
+                    companyId: recipientCompanyId,
+                }
+            }
+        ];
+
+        await companyService.companyUpdate(donorTenantId, donorCompanyId, patchInstructions);
+        return callback(undefined, { statusCode: 200, body: JSON.stringify('hellosign integration migration successful') });
+    } catch (error) {
+        console.error(`unable to migrate hellosign integration data: ${JSON.stringify(error)}`);
+        // HACK: do not return error in callback to allow continuation of migration in the face of errors
+        return callback(undefined, { statusCode: 500, body: JSON.stringify(error) });
     }
 }
 
