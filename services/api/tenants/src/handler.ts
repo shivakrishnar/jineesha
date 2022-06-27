@@ -250,6 +250,7 @@ export const getCompanyById = utilService.gatewayEventHandlerV2(async ({ securit
         Role.serviceBureauAdmin,
         Role.superAdmin,
         Role.hrAdmin,
+        Role.hrManager,
     ]);
 
     return await companyService.getById(tenantId, companyId, email);

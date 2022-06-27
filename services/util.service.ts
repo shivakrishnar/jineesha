@@ -994,6 +994,53 @@ export async function validateUserWithEmployee(tenantId: string, email: string, 
 }
 
 /**
+ * Validates that an employee is a direct report of a manager user.
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {string} email: The email address associated with the user.
+ * @param {string} employeeId: The unique identifier for an employee.
+ */
+ export async function validateDirectReportOfManagerUser(tenantId: string, email: string, employeeId: string): Promise<boolean> {
+    console.info('utilService.validateManagerUserWithDirectReport');
+
+    try {
+        // employeeId value must be integral
+        if (Number.isNaN(Number(employeeId))) {
+            const errorMessage = `${employeeId} is not a valid employeeId`;
+            throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        }
+
+        const query: ParameterizedQuery = new ParameterizedQuery('getDirectReportOfManagerByEmailAddressAndEmployeeId', Queries.getDirectReportOfManagerByEmailAddressAndEmployeeId);
+        // note: the email in the token equates to the username in the AHR database
+        query.setParameter('@emailAddress', email);
+        query.setParameter('@employeeId', employeeId);
+
+        const directReportOfManagerPayload: DatabaseEvent = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        };
+
+        const result: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            directReportOfManagerPayload,
+            InvocationType.RequestResponse,
+        );
+
+        const employeeIsDirectReport = result.recordset.length > 0;
+
+        return Promise.resolve(employeeIsDirectReport);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
  * Validates whether that the invoking user has the access right to use the endpoint either by having an admin role or being the employee himself.
  * @param {SecurityContext} securityContext: represents data pulled from the token when it is verified.
  * @param {APIGatewayProxyEvent} event: The API request event.
@@ -1013,25 +1060,33 @@ export async function checkAuthorization(
 
     try {
         let isAuthorized: boolean;
+        let isDirectReport: boolean;
         let roleMembershipsWithoutHrPersonaUser: string[];
 
+        // Checks to see if the user has the hrManager(hr.persona.manager) role
+        const userIsManager = roleMemberships.includes(Role.hrManager);
+        // Checks to see if the roles you're authorizing includes hrManager(hr.persona.manager)
+        const checkingIfUserIsManager = authorizedRoles.includes(Role.hrManager);
         // Checks if the user has the hrEmployee(hr.persona.user) role
         const userIsEmployee = roleMemberships.includes(Role.hrEmployee);
         // Checks to see the roles you're authorizing includes hrEmployee(hr.persona.user)
         const checkingIfUserIsEmployee = authorizedRoles.includes(Role.hrEmployee);
 
+        if (userIsManager && checkingIfUserIsManager) {
+            if(companyId && employeeId) isDirectReport = await utilService.validateDirectReportOfManagerUser(tenantId, email, employeeId);
+            if (companyId && !employeeId) isDirectReport = await utilService.validateUserIsInCompany(tenantId, email, companyId);
+        }
         // If the function is checking for the role hrEmployee(hr.persona.user), it validates the user with their own employee or company
         if (userIsEmployee && checkingIfUserIsEmployee) {
             if (companyId && employeeId) isAuthorized = await utilService.validateUserWithEmployee(tenantId, email, employeeId);
             if (companyId && !employeeId) isAuthorized = await utilService.validateUserIsInCompany(tenantId, email, companyId);
-
             // Otherwise check if the user has any of the remaining roles not including hrEmployee(hr.persona.user)
         } else {
             roleMembershipsWithoutHrPersonaUser = roleMemberships.filter((role) => role !== Role.hrEmployee);
             isAuthorized = await roleMembershipsWithoutHrPersonaUser.some((role) => authorizedRoles.includes(role));
         }
 
-        if (!isAuthorized) {
+        if (!isAuthorized && !isDirectReport) {
             throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the access right to use this endpoint');
         }
     } catch (error) {
