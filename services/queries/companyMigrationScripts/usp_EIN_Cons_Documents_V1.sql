@@ -422,14 +422,31 @@ GO
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%O%'
 		begin
 			-- EmployeeLicenseDocument
-			select @cmdShowDataDonor = 'select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeLicense D1 on D1.EmployeeID = T1.ID
-			left join '+@cDonorTablePath+'EmployeeLicenseDocument D2 on D2.EmployeeLicenseID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+			select @cmdShowDataDonor = '
+				select recip_el.ID as EmployeeLicenseID, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeLicenseDocument donor_eld
+				join '+@cDonorTablePath+'EmployeeLicense donor_el on donor_el.ID = donor_eld.EmployeeLicenseID
+				join '+@cDonorTablePath+'LicenseType donor_lt on donor_lt.ID = donor_el.LicenseTypeID
+				join '+@cDonorTablePath+'Employee donor_ee on donor_ee.ID = donor_el.EmployeeID
+				join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_eld.DocumentID
+				join '+@cRecipientTablePath+'Document recip_d
+					on recip_d.FSRowGuid = donor_d.FSRowGuid
+					and isnull(recip_d.Title,0) = isnull(donor_d.Title,0)
+					and recip_d.DocumentCategory = donor_d.DocumentCategory
+					and recip_d.UploadDate = donor_d.UploadDate
+				join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+				join '+@cRecipientTablePath+'LicenseType recip_lt
+					on isnull(recip_lt.Code, '''') = isnull(donor_lt.Code, '''')
+					and isnull(recip_lt.Description, '''') = isnull(donor_lt.Description, '''')
+				join '+@cRecipientTablePath+'EmployeeLicense recip_el
+					on recip_el.LicenseTypeID = recip_lt.ID
+					and isnull(recip_el.LicenseNumber, '''') = isnull(donor_el.LicenseNumber, '''')
+					and recip_el.EmployeeID = recip_ee.ID
+					and isnull(recip_el.Notes, '''') = isnull(donor_el.Notes, '''')
+					and recip_el.EmailAcknowledged = donor_el.EmailAcknowledged
+					and isnull(recip_el.IssuedBy, '''') = isnull(donor_el.IssuedBy, '''')
+					and coalesce(convert(nvarchar(255), donor_el.IssuedDate), 'NA') = coalesce(convert(nvarchar(255), recip_el.IssuedDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_el.ExpirationDate), 'NA') = coalesce(convert(nvarchar(255), recip_el.ExpirationDate), 'NA')
+				where donor_ee.CompanyID = '+@cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
 			if @cShowStatement = 1
@@ -468,14 +485,27 @@ GO
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%Q%'
 		begin
 			-- EmployeeReviewDocument
-			select @cmdShowDataDonor = 'select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeReview D1 on D1.EmployeeID = T1.ID
-			left join '+@cDonorTablePath+'EmployeeReviewDocument D2 on D2.EmployeeReviewID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+			select @cmdShowDataDonor = 'select recip_er.ID as EmployeeReviewID, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeReviewDocument donor_erd
+			join '+@cDonorTablePath+'EmployeeReview donor_er on donor_er.ID = donor_erd.EmployeeReviewID
+			join '+@cDonorTablePath+'ReviewType donor_rt on donor_rt.ID = donor_er.ReviewTypeID
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.ID = donor_er.EmployeeID
+			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_erd.DocumentID
+			join '+@cRecipientTablePath+'Document recip_d
+				on recip_d.FSRowGuid = donor_d.FSRowGuid
+				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
+				and recip_d.DocumentCategory = donor_d.DocumentCategory
+				and recip_d.UploadDate = donor_d.UploadDate
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+			join '+@cRecipientTablePath+'ReviewType recip_rt
+					on isnull(recip_rt.Code, '''') = isnull(donor_rt.Code, '''')
+					and isnull(recip_rt.Description, '''') = isnull(donor_rt.Description, '''')
+				join '+@cRecipientTablePath+'EmployeeReview recip_er
+					on recip_er.ReviewTypeID = recip_rt.ID
+					and recip_er.EmployeeID = recip_ee.ID
+					and recip_er.EmailAcknowledged = donor_er.EmailAcknowledged
+					and coalesce(convert(nvarchar(255), donor_er.ScheduledDate), 'NA') = coalesce(convert(nvarchar(255), recip_er.ScheduledDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_er.CompletedDate), 'NA') = coalesce(convert(nvarchar(255), recip_er.CompletedDate), 'NA')
+			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID	
 
 			exec (@cmdShowDataDonor)
 			if @cShowStatement = 1
@@ -879,14 +909,30 @@ GO
 		begin
 			-- EmployeeLicenseDocument
 			select @cmdInsert = 'insert into '+@cRecipientTablePath+'EmployeeLicenseDocument (EmployeeLicenseID, DocumentID)
-			select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeLicense D1 on D1.EmployeeID = T1.ID
-			left join '+@cDonorTablePath+'EmployeeLicenseDocument D2 on D2.EmployeeLicenseID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+				select recip_el.ID as EmployeeLicenseID, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeLicenseDocument donor_eld
+				join '+@cDonorTablePath+'EmployeeLicense donor_el on donor_el.ID = donor_eld.EmployeeLicenseID
+				join '+@cDonorTablePath+'LicenseType donor_lt on donor_lt.ID = donor_el.LicenseTypeID
+				join '+@cDonorTablePath+'Employee donor_ee on donor_ee.ID = donor_el.EmployeeID
+				join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_eld.DocumentID
+				join '+@cRecipientTablePath+'Document recip_d
+					on recip_d.FSRowGuid = donor_d.FSRowGuid
+					and isnull(recip_d.Title,0) = isnull(donor_d.Title,0)
+					and recip_d.DocumentCategory = donor_d.DocumentCategory
+					and recip_d.UploadDate = donor_d.UploadDate
+				join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+				join '+@cRecipientTablePath+'LicenseType recip_lt
+					on isnull(recip_lt.Code, '''') = isnull(donor_lt.Code, '''')
+					and isnull(recip_lt.Description, '''') = isnull(donor_lt.Description, '''')
+				join '+@cRecipientTablePath+'EmployeeLicense recip_el
+					on recip_el.LicenseTypeID = recip_lt.ID
+					and isnull(recip_el.LicenseNumber, '''') = isnull(donor_el.LicenseNumber, '''')
+					and recip_el.EmployeeID = recip_ee.ID
+					and isnull(recip_el.Notes, '''') = isnull(donor_el.Notes, '''')
+					and recip_el.EmailAcknowledged = donor_el.EmailAcknowledged
+					and isnull(recip_el.IssuedBy, '''') = isnull(donor_el.IssuedBy, '''')
+					and coalesce(convert(nvarchar(255), donor_el.IssuedDate), 'NA') = coalesce(convert(nvarchar(255), recip_el.IssuedDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_el.ExpirationDate), 'NA') = coalesce(convert(nvarchar(255), recip_el.ExpirationDate), 'NA')
+				where donor_ee.CompanyID = '+@cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
 			if @cShowStatement = 1
@@ -927,14 +973,27 @@ GO
 		begin
 			-- EmployeeReviewDocument
 			select @cmdInsert = 'insert into '+@cRecipientTablePath+'EmployeeReviewDocument (EmployeeReviewID, DocumentID)
-			select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeReview D1 on D1.EmployeeID = T1.ID
-			left join '+@cDonorTablePath+'EmployeeReviewDocument D2 on D2.EmployeeReviewID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+		  select recip_er.ID as EmployeeReviewID, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeReviewDocument donor_erd
+			join '+@cDonorTablePath+'EmployeeReview donor_er on donor_er.ID = donor_erd.EmployeeReviewID
+			join '+@cDonorTablePath+'ReviewType donor_rt on donor_rt.ID = donor_er.ReviewTypeID
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.ID = donor_er.EmployeeID
+			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_erd.DocumentID
+			join '+@cRecipientTablePath+'Document recip_d
+				on recip_d.FSRowGuid = donor_d.FSRowGuid
+				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
+				and recip_d.DocumentCategory = donor_d.DocumentCategory
+				and recip_d.UploadDate = donor_d.UploadDate
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+			join '+@cRecipientTablePath+'ReviewType recip_rt
+					on isnull(recip_rt.Code, '''') = isnull(donor_rt.Code, '''')
+					and isnull(recip_rt.Description, '''') = isnull(donor_rt.Description, '''')
+				join '+@cRecipientTablePath+'EmployeeReview recip_er
+					on recip_er.ReviewTypeID = recip_rt.ID
+					and recip_er.EmployeeID = recip_ee.ID
+					and recip_er.EmailAcknowledged = donor_er.EmailAcknowledged
+					and coalesce(convert(nvarchar(255), donor_er.ScheduledDate), 'NA') = coalesce(convert(nvarchar(255), recip_er.ScheduledDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_er.CompletedDate), 'NA') = coalesce(convert(nvarchar(255), recip_er.CompletedDate), 'NA')
+			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID	
 
 			exec (@cmdInsert)
 			if @cShowStatement = 1
