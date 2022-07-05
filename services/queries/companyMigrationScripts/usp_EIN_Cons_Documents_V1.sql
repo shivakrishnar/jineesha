@@ -565,14 +565,27 @@ GO
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%R%'
 		begin
 			-- EmployeeSkillDocument
-			select @cmdShowDataDonor = 'select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeSkill D1 on D1.EmployeeID = T1.ID
-			left join '+@cDonorTablePath+'EmployeeSkillDocument D2 on D2.EmployeeSkillID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+			select @cmdShowDataDonor = 'select recip_es.ID as EmployeeSkillID, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeSkillDocument donor_esd
+			join '+@cDonorTablePath+'EmployeeSkill donor_es on donor_es.ID = donor_esd.EmployeeSkillID
+			join '+@cDonorTablePath+'SkillType donor_st on donor_st.ID = donor_es.SkillTypeID
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.ID = donor_es.EmployeeID
+			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_esd.DocumentID
+			join '+@cRecipientTablePath+'Document recip_d
+				on recip_d.FSRowGuid = donor_d.FSRowGuid
+				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
+				and recip_d.DocumentCategory = donor_d.DocumentCategory
+				and recip_d.UploadDate = donor_d.UploadDate
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+			join '+@cRecipientTablePath+'SkillType recip_st
+					on isnull(recip_st.Code, '''') = isnull(donor_st.Code, '''')
+					and isnull(recip_st.Description, '''') = isnull(donor_st.Description, '''')
+				join '+@cRecipientTablePath+'EmployeeSkill recip_es
+					on recip_es.SkillTypeID = recip_st.ID
+					and recip_es.EmployeeID = recip_ee.ID
+					and isnull(recip_es.ProficiencyPercentage, 0) = isnull(donor_es.ProficiencyPercentage, 0)
+					and isnull(recip_es.ExperienceInYears, 0) = isnull(donor_es.ExperienceInYears, 0)
+					and isnull(recip_es.Notes, '''') = isnull(donor_es.Notes, '''')
+			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
 			if @cShowStatement = 1
@@ -1098,14 +1111,27 @@ GO
 		begin
 			-- EmployeeSkillDocument
 			select @cmdInsert = 'insert into '+@cRecipientTablePath+'EmployeeSkillDocument (EmployeeSkillID, DocumentID)
-			select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeSkill D1 on D1.EmployeeID = T1.ID
-			left join '+@cDonorTablePath+'EmployeeSkillDocument D2 on D2.EmployeeSkillID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+			select recip_es.ID as EmployeeSkillID, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeSkillDocument donor_esd
+			join '+@cDonorTablePath+'EmployeeSkill donor_es on donor_es.ID = donor_esd.EmployeeSkillID
+			join '+@cDonorTablePath+'SkillType donor_st on donor_st.ID = donor_es.SkillTypeID
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.ID = donor_es.EmployeeID
+			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_esd.DocumentID
+			join '+@cRecipientTablePath+'Document recip_d
+				on recip_d.FSRowGuid = donor_d.FSRowGuid
+				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
+				and recip_d.DocumentCategory = donor_d.DocumentCategory
+				and recip_d.UploadDate = donor_d.UploadDate
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+			join '+@cRecipientTablePath+'SkillType recip_st
+					on isnull(recip_st.Code, '''') = isnull(donor_st.Code, '''')
+					and isnull(recip_st.Description, '''') = isnull(donor_st.Description, '''')
+				join '+@cRecipientTablePath+'EmployeeSkill recip_es
+					on recip_es.SkillTypeID = recip_st.ID
+					and recip_es.EmployeeID = recip_ee.ID
+					and isnull(recip_es.ProficiencyPercentage, 0) = isnull(donor_es.ProficiencyPercentage, 0)
+					and isnull(recip_es.ExperienceInYears, 0) = isnull(donor_es.ExperienceInYears, 0)
+					and isnull(recip_es.Notes, '''') = isnull(donor_es.Notes, '''')
+			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
 			if @cShowStatement = 1
