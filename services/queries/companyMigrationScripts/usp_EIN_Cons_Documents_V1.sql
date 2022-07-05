@@ -147,8 +147,8 @@ GO
 			select @cmdShowDataDonor = 'select R3.ID as NewTableID, R2.ID as NewDocumentID
 			from '+@cDonorTablePath+'Announcement T1
 			left join '+@cDonorTablePath+'AnnouncementDocument D1 on D1.AnnouncementID = T1.ID
-			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.AnnouncementID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.DocumentID
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			join '+@cRecipientTablePath+'Announcement R3 on R3.PostDate = T1.PostDate and R3.PostTitle = T1.PostTitle
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -169,7 +169,7 @@ GO
 			select @cmdShowDataDonor = 'select R2.ID as PlanID, R1.ID as DocumentID from '+@cDonorTablePath+'BenefitPlanDocument T1
 				join '+@cDonorTablePath+'BenefitPlan D1 on D1.ID = T1.PlanID
 				join '+@cDonorTablePath+'Document D2 on D2.ID = T1.DocumentID
-				join '+@cRecipientTablePath+'Document R1 on R1.FSDocument = D2.FSDocument and R1.Title = D2.Title and R1.DocumentCategory = D2.DocumentCategory and R1.UploadDate = D2.UploadDate
+				join '+@cRecipientTablePath+'Document R1 on R1.FSRowGuid = D2.FSRowGuid and R1.Title = D2.Title and R1.DocumentCategory = D2.DocumentCategory and R1.UploadDate = D2.UploadDate
 				join '+@cRecipientTablePath+'BenefitPlan R2 on R2.Code = D1.Code and R2.Description = D1.Description and R2.PolicyNumber = D1.PolicyNumber and isnull(R2.StartDate, '''') = isnull(D1.StartDate, '''') and isnull(R2.EndDate, '''') = isnull(D1.EndDate, '''')
 				where D1.CompanyID = '+ @cDonorCompany_ID+' and R2.CompanyID = '+@cRecipientCompany_ID
 
@@ -191,7 +191,7 @@ GO
 			from '+@cDonorTablePath+'Employee T1
 			left join '+@cDonorTablePath+'EmployeeI9Document D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -213,7 +213,7 @@ GO
 			from '+@cDonorTablePath+'Employee T1
 			left join '+@cDonorTablePath+'EmployeeBCDocument D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -235,7 +235,7 @@ GO
 			from '+@cDonorTablePath+'Employee T1
 			left join '+@cDonorTablePath+'EmployeeEsignCompanyDocument D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -257,7 +257,7 @@ GO
 			from '+@cDonorTablePath+'Employee T1
 			left join '+@cDonorTablePath+'EmployeePhotoDocument D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -279,7 +279,7 @@ GO
 			from '+@cDonorTablePath+'Employee T1
 			left join '+@cDonorTablePath+'EmployeeW4Document D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID*/
 
@@ -288,7 +288,7 @@ GO
 			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
 			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = T1.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			left outer join '+@cDonorTablePath+'HRnextUser D3 on D3.ID = T1.ApprovedRejectedByHRNextUserID
 			left outer join '+trim(@cRecipientTablePath)+'HRnextUser R3 on R3.Username = D3.Username
 			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
@@ -312,7 +312,7 @@ GO
 			left join '+@cDonorTablePath+'EmployeeAbsence D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeAbsenceDocument D2 on D2.EmployeeAbsenceID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -335,7 +335,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeAchievement D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeAchievementDocument D2 on D2.EmployeeAchievementID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -358,7 +358,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeBenefit D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeBenefitDocument D2 on D2.EmployeeBenefitID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -381,7 +381,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeCertificate D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeCertificateDocument D2 on D2.EmployeeCertificateID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -404,7 +404,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeEnrolledClass D1 on D1.EmployeeID = T1.ID
 			join '+@cDonorTablePath+'EmployeeEnrolledClassDocument D2 on D2.EmployeeEnrolledClassID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -450,7 +450,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeOnboard D1 on D1.CompanyID = T1.CompanyID and D1.EmployeeCode = T1.EmployeeCode
 			left join '+@cDonorTablePath+'EmployeeOnboardDocument D2 on D2.EmployeeOnboardID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -473,7 +473,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeReview D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeReviewDocument D2 on D2.EmployeeReviewID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -496,7 +496,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeSkill D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeSkillDocument D2 on D2.EmployeeSkillID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -517,7 +517,7 @@ GO
 			select @cmdShowDataDonor = 'select '+@cRecipientCompany_ID+' as CompanyID, R2.ID as DocumentID
 			from '+@cDonorTablePath+'CompanyLogoDocument T1
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = T1.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and R2.FSRowGuid = D2.FSRowGuid and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and R2.FSRowGuid = D2.FSRowGuid and R2.Title = D2.Title and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			where T1.CompanyID = '+ @cDonorCompany_ID
 
 			exec (@cmdShowDataDonor)
@@ -600,8 +600,8 @@ GO
 			select R3.ID as NewTableID, R2.ID as NewDocumentID
 			from '+@cDonorTablePath+'Announcement T1
 			left join '+@cDonorTablePath+'AnnouncementDocument D1 on D1.AnnouncementID = T1.ID
-			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.AnnouncementID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.DocumentID
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			join '+@cRecipientTablePath+'Announcement R3 on R3.PostDate = T1.PostDate and isnull(R3.PostTitle,0) = isnull(T1.PostTitle,0)
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -623,7 +623,7 @@ GO
 			select R2.ID as PlanID, R1.ID as DocumentID from '+@cDonorTablePath+'BenefitPlanDocument T1
 			join '+@cDonorTablePath+'BenefitPlan D1 on D1.ID = T1.PlanID
 			join '+@cDonorTablePath+'Document D2 on D2.ID = T1.DocumentID
-			join '+@cRecipientTablePath+'Document R1 on R1.FSDocument = D2.FSDocument and R1.Title = D2.Title and R1.DocumentCategory = D2.DocumentCategory and R1.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R1 on R1.FSRowGuid = D2.FSRowGuid and R1.Title = D2.Title and R1.DocumentCategory = D2.DocumentCategory and R1.UploadDate = D2.UploadDate
 			join '+@cRecipientTablePath+'BenefitPlan R2 on R2.Code = D1.Code and R2.Description = D1.Description and R2.PolicyNumber = D1.PolicyNumber and isnull(R2.StartDate, '''') = isnull(D1.StartDate, '''') and isnull(R2.EndDate, '''') = isnull(D1.EndDate, '''')
 			where D1.CompanyID = '+ @cDonorCompany_ID+' and R2.CompanyID = '+@cRecipientCompany_ID
 
@@ -646,7 +646,7 @@ GO
 			from '+@cDonorTablePath+'Employee T1
 			join '+@cDonorTablePath+'EmployeeI9Document D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -669,7 +669,7 @@ GO
 			from '+@cDonorTablePath+'Employee T1
 			join '+@cDonorTablePath+'EmployeeBCDocument D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -692,7 +692,7 @@ GO
 			from '+@cDonorTablePath+'Employee T1
 			join '+@cDonorTablePath+'EmployeeEsignCompanyDocument D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -715,7 +715,7 @@ GO
 			from '+@cDonorTablePath+'Employee T1
 			join '+@cDonorTablePath+'EmployeePhotoDocument D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = D1.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -739,7 +739,7 @@ GO
 			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
 			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = T1.DocumentID
-			join '+trim(@cRecipientTablePath)+'Document R2 on R2.FSDocument = D2.FSDocument and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+trim(@cRecipientTablePath)+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			left outer join '+@cDonorTablePath+'HRnextUser D3 on D3.ID = T1.ApprovedRejectedByHRNextUserID
 			left outer join '+trim(@cRecipientTablePath)+'HRnextUser R3 on R3.Username = D3.Username
 			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
@@ -764,7 +764,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeAbsence D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeAbsenceDocument D2 on D2.EmployeeAbsenceID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -788,7 +788,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeAchievement D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeAchievementDocument D2 on D2.EmployeeAchievementID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -812,7 +812,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeBenefit D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeBenefitDocument D2 on D2.EmployeeBenefitID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -836,7 +836,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeCertificate D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeCertificateDocument D2 on D2.EmployeeCertificateID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -860,7 +860,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeEnrolledClass D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeEnrolledClassDocument D2 on D2.EmployeeEnrolledClassID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -908,7 +908,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeOnboard D1 on D1.CompanyID = T1.CompanyID and D1.EmployeeCode = T1.EmployeeCode
 			left join '+@cDonorTablePath+'EmployeeOnboardDocument D2 on D2.EmployeeOnboardID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -932,7 +932,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeReview D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeReviewDocument D2 on D2.EmployeeReviewID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -956,7 +956,7 @@ GO
 			join '+@cDonorTablePath+'EmployeeSkill D1 on D1.EmployeeID = T1.ID
 			left join '+@cDonorTablePath+'EmployeeSkillDocument D2 on D2.EmployeeSkillID = T1.ID
 			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D3.FSDocument and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
 			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
 			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
 
@@ -978,7 +978,7 @@ GO
 			select '+@cRecipientCompany_ID+' as CompanyID, R2.ID as DocumentID
 			from '+@cDonorTablePath+'CompanyLogoDocument T1
 			left join '+@cDonorTablePath+'Document D2 on D2.ID = T1.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSDocument = D2.FSDocument and R2.FSRowGuid = D2.FSRowGuid and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
+			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D2.FSRowGuid and R2.FSRowGuid = D2.FSRowGuid and isnull(R2.Title,0) = isnull(D2.Title,0) and R2.DocumentCategory = D2.DocumentCategory and R2.UploadDate = D2.UploadDate
 			where T1.CompanyID = '+ @cDonorCompany_ID
 
 			exec (@cmdInsert)
