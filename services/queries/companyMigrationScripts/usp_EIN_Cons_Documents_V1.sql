@@ -389,14 +389,30 @@ GO
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%M%'
 		begin
 			-- EmployeeCertificateDocument 
-			select @cmdShowDataDonor = 'select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeCertificate D1 on D1.EmployeeID = T1.ID
-			left join '+@cDonorTablePath+'EmployeeCertificateDocument D2 on D2.EmployeeCertificateID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+			select @cmdShowDataDonor = 'select recip_ec.ID as EmployeeCertificateID, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeCertificateDocument donor_ecd
+			join '+@cDonorTablePath+'EmployeeCertificate donor_ec on donor_ec.ID = donor_ecd.EmployeeCertificateID
+			join '+@cDonorTablePath+'CertificateType donor_ct on donor_ct.ID = donor_ec.CertificateTypeID
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.ID = donor_ec.EmployeeID
+			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_ecd.DocumentID
+			join '+@cRecipientTablePath+'Document recip_d
+				on recip_d.FSRowGuid= donor_d.FSRowGuid
+				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
+				and recip_d.DocumentCategory = donor_d.DocumentCategory
+				and recip_d.UploadDate = donor_d.UploadDate
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+			join '+@cRecipientTablePath+'CertificateType recip_ct
+					on isnull(recip_ct.Code, '''') = isnull(donor_ct.Code, '''')
+					and isnull(recip_ct.Description, '''') = isnull(donor_ct.Description, '''')
+				join '+@cRecipientTablePath+'EmployeeCertificate recip_ec
+					on recip_ec.CertificateTypeID = recip_ct.ID
+					and recip_ec.EmployeeID = recip_ee.ID
+					and isnull(recip_ec.CertificateNumber, '''') = isnull(donor_ec.CertificateNumber, '''')
+					and isnull(recip_ec.IssuedBy, '''') = isnull(donor_ec.IssuedBy, '''')
+					and coalesce(convert(nvarchar(255), donor_ec.IssuedDate), 'NA') = coalesce(convert(nvarchar(255), recip_ec.IssuedDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_ec.ExpirationDate), 'NA') = coalesce(convert(nvarchar(255), recip_ec.ExpirationDate), 'NA')
+					and isnull(donor_ec.Notes, '''') = isnull(recip_ec.Notes, '''')
+					and isnull(recip_ec.EmailAcknowledged, 0) = isnull(donor_ec.emailAcknowledged, 0)
+			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID	
 
 			exec (@cmdShowDataDonor)
 			if @cShowStatement = 1
@@ -902,14 +918,30 @@ GO
 		begin
 			-- EmployeeCertificateDocument
 			select @cmdInsert = 'insert into '+@cRecipientTablePath+'EmployeeCertificateDocument (EmployeeCertificateID, DocumentID)
-			select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeCertificate D1 on D1.EmployeeID = T1.ID
-			left join '+@cDonorTablePath+'EmployeeCertificateDocument D2 on D2.EmployeeCertificateID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+			select recip_ec.ID as EmployeeCertificateID, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeCertificateDocument donor_ecd
+			join '+@cDonorTablePath+'EmployeeCertificate donor_ec on donor_ec.ID = donor_ecd.EmployeeCertificateID
+			join '+@cDonorTablePath+'CertificateType donor_ct on donor_ct.ID = donor_ec.CertificateTypeID
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.ID = donor_ec.EmployeeID
+			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_ecd.DocumentID
+			join '+@cRecipientTablePath+'Document recip_d
+				on recip_d.FSRowGuid= donor_d.FSRowGuid
+				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
+				and recip_d.DocumentCategory = donor_d.DocumentCategory
+				and recip_d.UploadDate = donor_d.UploadDate
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+			join '+@cRecipientTablePath+'CertificateType recip_ct
+					on isnull(recip_ct.Code, '''') = isnull(donor_ct.Code, '''')
+					and isnull(recip_ct.Description, '''') = isnull(donor_ct.Description, '''')
+				join '+@cRecipientTablePath+'EmployeeCertificate recip_ec
+					on recip_ec.CertificateTypeID = recip_ct.ID
+					and recip_ec.EmployeeID = recip_ee.ID
+					and isnull(recip_ec.CertificateNumber, '''') = isnull(donor_ec.CertificateNumber, '''')
+					and isnull(recip_ec.IssuedBy, '''') = isnull(donor_ec.IssuedBy, '''')
+					and coalesce(convert(nvarchar(255), donor_ec.IssuedDate), 'NA') = coalesce(convert(nvarchar(255), recip_ec.IssuedDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_ec.ExpirationDate), 'NA') = coalesce(convert(nvarchar(255), recip_ec.ExpirationDate), 'NA')
+					and isnull(donor_ec.Notes, '''') = isnull(recip_ec.Notes, '''')
+					and isnull(recip_ec.EmailAcknowledged, 0) = isnull(donor_ec.emailAcknowledged, 0)
+			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID	
 
 			exec (@cmdInsert)
 			if @cShowStatement = 1
