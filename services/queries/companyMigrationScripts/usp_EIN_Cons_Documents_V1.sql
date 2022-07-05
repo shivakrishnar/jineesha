@@ -506,14 +506,21 @@ GO
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%P%'
 		begin
 			-- EmployeeOnboardDocument
-			select @cmdShowDataDonor = 'select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeOnboard D1 on D1.CompanyID = T1.CompanyID and D1.EmployeeCode = T1.EmployeeCode
-			left join '+@cDonorTablePath+'EmployeeOnboardDocument D2 on D2.EmployeeOnboardID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+			select @cmdShowDataDonor = '
+			select recip_eo.ID as EmployeeOnboardId, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeOnboardDocument donor_eod 
+			join '+@cDonorTablePath+'EmployeeOnboard donor_eo on donor_eo.ID = donor_eod.EmployeeOnboardID
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.EmployeeCode = donor_eo.EmployeeCode
+			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_eod.DocumentID
+			join '+@cRecipientTablePath+'Document recip_d
+				on recip_d.FSRowGuid = donor_d.FSRowGuid
+				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
+				and recip_d.DocumentCategory = donor_d.DocumentCategory
+				and recip_d.UploadDate = donor_d.UploadDate
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode                                                                                   
+			join '+@cRecipientTablePath+'EmployeeOnboard recip_eo
+					on recip_eo.EmployeeCode = recip_ee.EmployeeCode
+					and recip_eo.OB_Key = donor_eo.OB_Key
+			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
 			if @cShowStatement = 1
@@ -1050,14 +1057,20 @@ GO
 		begin
 			-- EmployeeOnboardDocument
 			select @cmdInsert = 'insert into '+@cRecipientTablePath+'EmployeeOnboardDocument (EmployeeOnboardID, DocumentID)
-			select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeOnboard D1 on D1.CompanyID = T1.CompanyID and D1.EmployeeCode = T1.EmployeeCode
-			left join '+@cDonorTablePath+'EmployeeOnboardDocument D2 on D2.EmployeeOnboardID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+			select recip_eo.ID as EmployeeOnboardId, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeOnboardDocument donor_eod 
+			join '+@cDonorTablePath+'EmployeeOnboard donor_eo on donor_eo.ID = donor_eod.EmployeeOnboardID
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.EmployeeCode = donor_eo.EmployeeCode
+			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_eod.DocumentID
+			join '+@cRecipientTablePath+'Document recip_d
+				on recip_d.FSRowGuid = donor_d.FSRowGuid
+				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
+				and recip_d.DocumentCategory = donor_d.DocumentCategory
+				and recip_d.UploadDate = donor_d.UploadDate
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode                                                                                   
+			join '+@cRecipientTablePath+'EmployeeOnboard recip_eo
+					on recip_eo.EmployeeCode = recip_ee.EmployeeCode
+					and recip_eo.OB_Key = donor_eo.OB_Key
+			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
 			if @cShowStatement = 1
