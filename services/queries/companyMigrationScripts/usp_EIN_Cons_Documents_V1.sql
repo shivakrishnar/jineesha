@@ -380,14 +380,51 @@ GO
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%L%'
 		begin
 			-- EmployeeBenefitDocument
-			select @cmdShowDataDonor = 'select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeBenefit D1 on D1.EmployeeID = T1.ID
-			left join '+@cDonorTablePath+'EmployeeBenefitDocument D2 on D2.EmployeeBenefitID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+			select @cmdShowDataDonor = 'select recip_eb.ID as EmployeeBenefitID, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeBenefitDocument donor_ebd
+			join '+@cDonorTablePath+'EmployeeBenefit donor_eb on donor_eb.ID = donor_ebd.EmployeeBenefitID
+			join '+@cDonorTablePath+'BenefitPlan donor_bp on donor_bp.ID = donor_eb.PlanID
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.ID = donor_eb.EmployeeID
+			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_ebd.DocumentID
+			join '+@cRecipientTablePath+'Document recip_d
+				on recip_d.FSRowGuid = donor_d.FSRowGuid
+				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
+				and recip_d.DocumentCategory = donor_d.DocumentCategory
+				and recip_d.UploadDate = donor_d.UploadDate
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+			join '+@cRecipientTablePath+'BenefitPlan recip_bp
+					on isnull(recip_bp.Code, '''') = isnull(donor_bp.Code, '''')
+					and isnull(recip_bp.Description, '''') = isnull(donor_bp.Description, '''')
+					and recip_bp.StartDate = donor_bp.StartDate
+					and recip_bp.EndDate = donor_bp.EndDate
+					and isnull(recip_bp.PolicyNumber, '''') = isnull(donor_bp.PolicyNumber, '''')
+					and isnull(recip_bp.ProducerCode, 0) = isnull(donor_bp.ProducerCode, 0)
+					and coalesce(convert(nvarchar(255), recip_bp.RenewalDate), 'NA') = coalesce(convert(nvarchar(255), donor_bp.RenewalDate), 'NA')
+					and isnull(recip_bp.EmployeeDeductionCode, '''') = isnull(donor_bp.EmployeeDeductionCode, '''')
+					and isnull(recip_bp.Notes, '''') = isnull(donor_bp.Notes, '''')
+					and isnull(recip_bp.Priority, 0) = isnull(donor_bp.Priority, 0)
+					and isnull(recip_bp.Active, 0) = isnull(donor_bp.Active, 0)
+					and isnull(recip_bp.CodeToIndicateDollarAmount, '''') = isnull(donor_bp.CodeToIndicateDollarAmount, '''')
+					and isnull(recip_bp.CodeToIndicatePercentageAmount, '''') = isnull(donor_bp.CodeToIndicatePercentageAmount, '''')
+					and isnull(recip_bp.WebsiteURL, '''') = isnull(donor_bp.WebsiteURL, '''')
+					and isnull(recip_bp.DeductionFrequencyCode, 0) = isnull(donor_bp.DeductionFrequencyCode, 0)
+				join '+@cRecipientTablePath+'EmployeeBenefit recip_eb
+					on recip_eb.PlanID = recip_bp.ID
+					and recip_eb.EmployeeID = recip_ee.ID
+					and isnull(recip_eb.Premium, -1) = isnull(donor_eb.Premium, -1)
+					and isnull(recip_eb.EmployerAmount, -1) = isnull(donor_eb.EmployerAmount, -1)
+					and isnull(recip_eb.EmployerPercentage, -1) = isnull(donor_eb.EmployerPercentage, -1)
+					and isnull(recip_eb.EmployeeAmount, -1) = isnull(donor_eb.EmployeeAmount, -1)
+					and isnull(recip_eb.EmployeePercentage, -1) = isnull(donor_eb.EmployeePercentage, -1)
+					and isnull(recip_eb.MemberNumber, '''') = isnull(donor_eb.MemberNumber, '''')
+					and isnull(recip_eb.DeductionFrequencyCode, '''') = isnull(donor_eb.DeductionFrequencyCode, '''')
+					and isnull(recip_eb.PR_Integration_PK, '''') = isnull(donor_eb.PR_Integration_PK, '''')
+					and isnull(recip_eb.EmployeeSavingsAccountContributionPerPay, -1) = isnull(donor_eb.EmployeeSavingsAccountContributionPerPay, -1)
+					and isnull(recip_eb.EmployerCatchUpAmount, -1) = isnull(donor_eb.EmployerCatchUpAmount, -1)
+					and isnull(recip_eb.ADDIncluded, 0) = isnull(donor_eb.AddIncluded, 0)
+					and isnull(recip_eb.CoverageAmount, -1) = isnull(donor_eb.CoverageAmount, -1)
+					coalesce(convert(nvarchar(255), recip_eb.StartDate), 'NA') = coalesce(convert(nvarchar(255), donor_eb.StartDate), 'NA')
+					coalesce(convert(nvarchar(255), recip_eb.EndDate), 'NA') = coalesce(convert(nvarchar(255), donor_eb.EndDate), 'NA')
+			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID	
 
 			exec (@cmdShowDataDonor)
 			if @cShowStatement = 1
@@ -942,15 +979,52 @@ GO
 		begin
 			-- EmployeeBenefitDocument
 			select @cmdInsert = 'insert into '+@cRecipientTablePath+'EmployeeBenefitDocument (EmployeeBenefitID, DocumentID)
-			select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeBenefit D1 on D1.EmployeeID = T1.ID
-			left join '+@cDonorTablePath+'EmployeeBenefitDocument D2 on D2.EmployeeBenefitID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
-
+			select recip_eb.ID as EmployeeBenefitID, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeBenefitDocument donor_ebd
+			join '+@cDonorTablePath+'EmployeeBenefit donor_eb on donor_eb.ID = donor_ebd.EmployeeBenefitID
+			join '+@cDonorTablePath+'BenefitPlan donor_bp on donor_bp.ID = donor_eb.PlanID
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.ID = donor_eb.EmployeeID
+			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_ebd.DocumentID
+			join '+@cRecipientTablePath+'Document recip_d
+				on recip_d.FSRowGuid = donor_d.FSRowGuid
+				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
+				and recip_d.DocumentCategory = donor_d.DocumentCategory
+				and recip_d.UploadDate = donor_d.UploadDate
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+			join '+@cRecipientTablePath+'BenefitPlan recip_bp
+					on isnull(recip_bp.Code, '''') = isnull(donor_bp.Code, '''')
+					and isnull(recip_bp.Description, '''') = isnull(donor_bp.Description, '''')
+					and recip_bp.StartDate = donor_bp.StartDate
+					and recip_bp.EndDate = donor_bp.EndDate
+					and isnull(recip_bp.PolicyNumber, '''') = isnull(donor_bp.PolicyNumber, '''')
+					and isnull(recip_bp.ProducerCode, 0) = isnull(donor_bp.ProducerCode, 0)
+					and coalesce(convert(nvarchar(255), recip_bp.RenewalDate), 'NA') = coalesce(convert(nvarchar(255), donor_bp.RenewalDate), 'NA')
+					and isnull(recip_bp.EmployeeDeductionCode, '''') = isnull(donor_bp.EmployeeDeductionCode, '''')
+					and isnull(recip_bp.Notes, '''') = isnull(donor_bp.Notes, '''')
+					and isnull(recip_bp.Priority, 0) = isnull(donor_bp.Priority, 0)
+					and isnull(recip_bp.Active, 0) = isnull(donor_bp.Active, 0)
+					and isnull(recip_bp.CodeToIndicateDollarAmount, '''') = isnull(donor_bp.CodeToIndicateDollarAmount, '''')
+					and isnull(recip_bp.CodeToIndicatePercentageAmount, '''') = isnull(donor_bp.CodeToIndicatePercentageAmount, '''')
+					and isnull(recip_bp.WebsiteURL, '''') = isnull(donor_bp.WebsiteURL, '''')
+					and isnull(recip_bp.DeductionFrequencyCode, 0) = isnull(donor_bp.DeductionFrequencyCode, 0)
+				join '+@cRecipientTablePath+'EmployeeBenefit recip_eb
+					on recip_eb.PlanID = recip_bp.ID
+					and recip_eb.EmployeeID = recip_ee.ID
+					and isnull(recip_eb.Premium, -1) = isnull(donor_eb.Premium, -1)
+					and isnull(recip_eb.EmployerAmount, -1) = isnull(donor_eb.EmployerAmount, -1)
+					and isnull(recip_eb.EmployerPercentage, -1) = isnull(donor_eb.EmployerPercentage, -1)
+					and isnull(recip_eb.EmployeeAmount, -1) = isnull(donor_eb.EmployeeAmount, -1)
+					and isnull(recip_eb.EmployeePercentage, -1) = isnull(donor_eb.EmployeePercentage, -1)
+					and isnull(recip_eb.MemberNumber, '''') = isnull(donor_eb.MemberNumber, '''')
+					and isnull(recip_eb.DeductionFrequencyCode, '''') = isnull(donor_eb.DeductionFrequencyCode, '''')
+					and isnull(recip_eb.PR_Integration_PK, '''') = isnull(donor_eb.PR_Integration_PK, '''')
+					and isnull(recip_eb.EmployeeSavingsAccountContributionPerPay, -1) = isnull(donor_eb.EmployeeSavingsAccountContributionPerPay, -1)
+					and isnull(recip_eb.EmployerCatchUpAmount, -1) = isnull(donor_eb.EmployerCatchUpAmount, -1)
+					and isnull(recip_eb.ADDIncluded, 0) = isnull(donor_eb.AddIncluded, 0)
+					and isnull(recip_eb.CoverageAmount, -1) = isnull(donor_eb.CoverageAmount, -1)
+					coalesce(convert(nvarchar(255), recip_eb.StartDate), 'NA') = coalesce(convert(nvarchar(255), donor_eb.StartDate), 'NA')
+					coalesce(convert(nvarchar(255), recip_eb.EndDate), 'NA') = coalesce(convert(nvarchar(255), donor_eb.EndDate), 'NA')
+			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
+			
 			exec (@cmdInsert)
 			if @cShowStatement = 1
 			begin
