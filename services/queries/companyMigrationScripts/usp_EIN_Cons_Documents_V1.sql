@@ -307,14 +307,28 @@ GO
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
 		begin
 			-- EmployeeAbsenceDocument
-			select @cmdShowDataDonor = 'select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			left join '+@cDonorTablePath+'EmployeeAbsence D1 on D1.EmployeeID = T1.ID
-			left join '+@cDonorTablePath+'EmployeeAbsenceDocument D2 on D2.EmployeeAbsenceID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and R2.Title = D3.Title and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+			select @cmdShowDataDonor = 'select recip_ea.ID as EmployeeAbsenceID, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeAbsenceDocument donor_ead
+			join '+@cDonorTablePath+'EmployeeAbsence donor_ea on donor_ea.ID = donor_ead.EmployeeAbsenceID
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.ID = donor_ea.EmployeeID
+			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_ead.DocumentID
+			join '+@cRecipientTablePath+'Document recip_d
+				on recip_d.FSRowGuid = donor_d.FSRowGuid
+				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
+				and recip_d.DocumentCategory = donor_d.DocumentCategory
+				and recip_d.UploadDate = donor_d.UploadDate
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+			join '+@cRecipientTablePath+'EmployeeAbsence recip_ea
+					on coalesce(convert(nvarchar(255), recip_ea.StartDate), 'NA') = coalesce(convert(nvarchar(255), donor_ea.StartDate), 'NA')
+					and isnull(recip_ea.HoursTaken, -1) = isnull(donor_ea.HoursTaken, -1)
+					and coalesce(convert(nvarchar(255), recip_ea.SubmitDate), 'NA') = coalesce(convert(nvarchar(255), donor_ea.SubmitDate), 'NA')
+					and recip_ea.EmployeeID = recip_ee.ID
+					and coalesce(convert(nvarchar(255), recip_ea.ReturnDate), 'NA') = coalesce(convert(nvarchar(255), donor_ea.ReturnDate), 'NA')
+					and isnull(recip_ea.Notes, '''') = isnull(donor_ea.Notes, '''')
+					and isnull(recip_ea.PrivateNotes, '''') = isnull(donor_ea.PrivateNotes, '''')
+					and isnull(recip_ea.HoursPerDayTaken, -1) = isnull(donor_ea.HoursPerDayTaken, -1)
+					and isnull(recip_ea.IsWeekendsIncluded, 0) = isnull(donor_ea.IsWeekendsIncluded, 0)
+					and isnull(recip_ea.PR_Integration_PK, 0) = isnull(donor_ea.PR_Integration_PK, 0)
+			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
 			if @cShowStatement = 1
@@ -853,14 +867,28 @@ GO
 		begin
 			-- EmployeeAbsenceDocument
 			select @cmdInsert = 'insert into '+@cRecipientTablePath+'EmployeeAbsenceDocument (EmployeeAbsenceID, DocumentID)
-			select R3.ID as NewTableID, R2.ID as NewDocumentID
-			from '+@cDonorTablePath+'Employee T1
-			join '+@cDonorTablePath+'EmployeeAbsence D1 on D1.EmployeeID = T1.ID
-			left join '+@cDonorTablePath+'EmployeeAbsenceDocument D2 on D2.EmployeeAbsenceID = T1.ID
-			left join '+@cDonorTablePath+'Document D3 on D3.ID = D2.DocumentID
-			join '+@cRecipientTablePath+'Document R2 on R2.FSRowGuid = D3.FSRowGuid and isnull(R2.Title,0) = isnull(D3.Title,0) and R2.DocumentCategory = D3.DocumentCategory and R2.UploadDate = D3.UploadDate
-			join '+@cRecipientTablePath+'Employee R3 on R3.EmployeeCode = T1.EmployeeCode
-			where T1.CompanyID = '+ @cDonorCompany_ID+' and R3.CompanyID = '+@cRecipientCompany_ID
+			select recip_ea.ID as EmployeeAbsenceID, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeAbsenceDocument donor_ead
+			join '+@cDonorTablePath+'EmployeeAbsence donor_ea on donor_ea.ID = donor_ead.EmployeeAbsenceID
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.ID = donor_ea.EmployeeID
+			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_ead.DocumentID
+			join '+@cRecipientTablePath+'Document recip_d
+				on recip_d.FSRowGuid = donor_d.FSRowGuid
+				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
+				and recip_d.DocumentCategory = donor_d.DocumentCategory
+				and recip_d.UploadDate = donor_d.UploadDate
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+			join '+@cRecipientTablePath+'EmployeeAbsence recip_ea
+					on coalesce(convert(nvarchar(255), recip_ea.StartDate), 'NA') = coalesce(convert(nvarchar(255), donor_ea.StartDate), 'NA')
+					and isnull(recip_ea.HoursTaken, -1) = isnull(donor_ea.HoursTaken, -1)
+					and coalesce(convert(nvarchar(255), recip_ea.SubmitDate), 'NA') = coalesce(convert(nvarchar(255), donor_ea.SubmitDate), 'NA')
+					and recip_ea.EmployeeID = recip_ee.ID
+					and coalesce(convert(nvarchar(255), recip_ea.ReturnDate), 'NA') = coalesce(convert(nvarchar(255), donor_ea.ReturnDate), 'NA')
+					and isnull(recip_ea.Notes, '''') = isnull(donor_ea.Notes, '''')
+					and isnull(recip_ea.PrivateNotes, '''') = isnull(donor_ea.PrivateNotes, '''')
+					and isnull(recip_ea.HoursPerDayTaken, -1) = isnull(donor_ea.HoursPerDayTaken, -1)
+					and isnull(recip_ea.IsWeekendsIncluded, 0) = isnull(donor_ea.IsWeekendsIncluded, 0)
+					and isnull(recip_ea.PR_Integration_PK, 0) = isnull(donor_ea.PR_Integration_PK, 0)
+			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
 			if @cShowStatement = 1
