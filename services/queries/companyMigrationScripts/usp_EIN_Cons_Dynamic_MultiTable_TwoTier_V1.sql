@@ -1330,7 +1330,7 @@ go
 			--Update Employee with CurrentEmployeePositionOrganization Step
 			select @cmdInsert = 'update '+trim(@cRecipientTablePath)+'Employee
 			set CurrentEmployeePositionOrganizationID = R2.MaxID
-			from (select EmployeeID, max(ID) as MaxID, max(EffectiveDate) as MaxEffectiveDate from '+trim(@cRecipientTablePath)+'EmployeePositionOrganization where EmployeeID in (select R1.ID from '+trim(@cRecipientTablePath)+'Employee R1 where R1.CompanyID = 600373  )
+			from (select EmployeeID, max(ID) as MaxID, max(EffectiveDate) as MaxEffectiveDate from '+trim(@cRecipientTablePath)+'EmployeePositionOrganization where EmployeeID in (select R1.ID from '+trim(@cRecipientTablePath)+'Employee R1 where R1.CompanyID = '+@cRecipientCompany_ID+'  )
 			group by EmployeeID) as R2
 			where Employee.ID = R2.EmployeeID and Employee.CompanyID = '+@cRecipientCompany_ID
 
