@@ -292,6 +292,25 @@ go
 			end
 		end
 
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
+		begin
+			select @cmdShowDataRecipient = '
+			select donor_hu.ID, donor_hu.Username, donor_huc.CompanyID, donor_hu.IsActive
+			from '+trim(@cDonorTablePath)+'HRnextUser donor_hu
+			join '+trim(@cDonorTablePath)+'HRnextUserCompany donor_huc on donor_huc.HRnextUserID = donor_hu.ID
+			where donor_huc.CompanyID = '+@cDonorCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Inactivate Users in Donor - K' as Showdata
+			end
+		end
+
 		select @cFailCodes = 'ShowData'
 	
 	end
@@ -665,6 +684,26 @@ go
 			if @cVerbose_Ind = 1
 			begin
 				select 'Company TimeClock Credentials Update - F' as Showdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
+		begin
+			select @cmdInsert = '
+			update donor_hu
+			set donor_hu.IsActive = 0
+			from '+trim(@cDonorTablePath)+'HRnextUser donor_hu
+			join '+trim(@cDonorTablePath)+'HRnextUserCompany donor_huc on donor_huc.HRnextUserID = donor_hu.ID
+			where donor_huc.CompanyID = '+@cDonorCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Inactivate Users in Donor - K' as Insertdata
 			end
 		end
 
