@@ -64,7 +64,7 @@ export const execute = async (event: DatabaseEvent, context: Context, callback: 
                 body: JSON.stringify(result),
             });
         }
-        await executeBatch(pool.transaction(), query);
+        await executeBatch(pool, query);
         return callback(undefined, {
             statusCode: 200,
             body: null,

@@ -1148,19 +1148,19 @@ export async function createCompanyMigration(
         //3-running premigration scripts
         const preMigrationPayload = {
             tenantId: donorTenantId,
-            queryType: QueryType.StoredProcedure,
+            queryType: QueryType.Batched,
         } as DatabaseEvent;
 
         //getting the list of premigration scripts into in array
         const scripts = fs.readdirSync(path.join(basePath, 'companyMigrationScripts'));
 
         //rearranging the scripts array to execute 'usp_EIN_Cons_Dynamic_V1.sql' first
-        let tmp = scripts[scripts.indexOf('usp_EIN_Cons_Dynamic_V1.sql')];
+        const tmp = scripts[scripts.indexOf('usp_EIN_Cons_Dynamic_V1.sql')];
         scripts[scripts.indexOf('usp_EIN_Cons_Dynamic_V1.sql')] = scripts[0];
         scripts[0] = tmp;
         
         for(let i = 0; i < scripts.length; i++) {
-            let preMigrationQuery = new ParameterizedQuery(scripts[i].split('.')[0], Queries[scripts[i]]);
+            const preMigrationQuery = new ParameterizedQuery(scripts[i].split('.')[0], Queries[scripts[i].split('.')[0]]);
             preMigrationPayload.queryName = preMigrationQuery.name;
             preMigrationPayload.query = preMigrationQuery.value;
 

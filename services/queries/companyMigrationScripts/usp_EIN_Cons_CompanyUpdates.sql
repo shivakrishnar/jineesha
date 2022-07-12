@@ -28,7 +28,7 @@
 		drop procedure dbo.usp_EIN_Cons_CompanyUpdates
 		print 'Dropped Proc dbo.usp_EIN_Cons_CompanyUpdates '
 	end
-go
+GO
 
 	create procedure usp_EIN_Cons_CompanyUpdates
 	
@@ -542,19 +542,19 @@ go
 
 ExitPgm:
 return 0
-go
+GO
 
 /*	Now check to make sure it has been created (dbo.usp_EIN_Cons_CompanyUpdates ) */ 
 	if object_id('dbo.usp_EIN_Cons_CompanyUpdates') is not null
 		print 'Proc dbo.usp_EIN_Cons_CompanyUpdates has been CREATED Successfully. '
 	else
 		print 'Create Proc dbo.usp_EIN_Cons_CompanyUpdates FAILED'
-go
+GO
 
 /*	now Grant Permissions on dbo.usp_EIN_Cons_CompanyUpdates to public */
 	grant execute on dbo.usp_EIN_Cons_CompanyUpdates to public
 	print 'Execute rights have been GRANTED to group public on usp_EIN_Cons_CompanyUpdates'
-go
+GO
   
 /*-----------------------------------------------------------------
 	eof -  usp_EIN_Cons_CompanyUpdates.sql 
