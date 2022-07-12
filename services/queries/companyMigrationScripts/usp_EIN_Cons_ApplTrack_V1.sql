@@ -110,7 +110,7 @@ GO
 			left outer join '+trim(@cRecipientTablePath)+'PositionType R1 on D1.Code = R1.Code and R1.CompanyID = recip_org.CompanyID
 
 			left outer join '+@cDonorTablePath+'WorkerCompType D2 on D2.CompanyID = T1.CompanyID and D2.ID = T1.WorkerCompTypeID
-			left outer join '+trim(@cRecipientTablePath)+'WorkerCompType R2 on R2.CompanyID = recip_org.CompanyID and R2.Code = D2.Code
+			left outer join '+trim(@cRecipientTablePath)+'WorkerCompType R2 on R2.CompanyID = recip_org.CompanyID and R2.Code = D2.Code and R2.Description = D2.Description
 
 			left join '+@cDonorTablePath+'ATApplicationVersion D3 on D3.CompanyID = T1.CompanyID and D3.ID = T1.ATApplicationVersionID
 			left join '+trim(@cRecipientTablePath)+'ATApplicationVersion R3 on R3.CompanyID = recip_org.CompanyID and R3.Title = D3.Title
@@ -378,7 +378,7 @@ GO
 			left outer join '+trim(@cRecipientTablePath)+'PositionType R1 on D1.Code = R1.Code and R1.CompanyID = recip_org.CompanyID
 
 			left outer join '+@cDonorTablePath+'WorkerCompType D2 on D2.CompanyID = T1.CompanyID and D2.ID = T1.WorkerCompTypeID
-			left outer join '+trim(@cRecipientTablePath)+'WorkerCompType R2 on R2.CompanyID = recip_org.CompanyID and R2.Code = D2.Code
+			left outer join '+trim(@cRecipientTablePath)+'WorkerCompType R2 on R2.CompanyID = recip_org.CompanyID and R2.Code = D2.Code and R2.Description = D2.Description
 
 			left join '+@cDonorTablePath+'ATApplicationVersion D3 on D3.CompanyID = T1.CompanyID and D3.ID = T1.ATApplicationVersionID
 			left join '+trim(@cRecipientTablePath)+'ATApplicationVersion R3 on R3.CompanyID = recip_org.CompanyID and R3.Title = D3.Title

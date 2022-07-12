@@ -528,7 +528,7 @@ GO
 			left outer join '+trim(@cRecipientTablePath)+'PositionType R2 on R2.CompanyID = R1.CompanyID and D2.Code = R2.Code
 
 			left outer join '+trim(@cDonorTablePath)+'WorkerCompType D3 on D3.CompanyID = D1.CompanyID and D3.ID = T1.WorkerCompTypeID
-			left outer join '+trim(@cRecipientTablePath)+'WorkerCompType R3 on R3.CompanyID = R1.CompanyID and R3.Code = D3.Code
+			left outer join '+trim(@cRecipientTablePath)+'WorkerCompType R3 on R3.CompanyID = R1.CompanyID and R3.Code = D3.Code and R3.Description = D3.Description
 
 			join '+trim(@cDonorTablePath)+'OrganizationStructure SD4 on SD4.CompanyID = D1.CompanyID
 			join '+trim(@cRecipientTablePath)+'OrganizationStructure SR4 on SR4.CompanyID = R1.CompanyID
@@ -1211,7 +1211,7 @@ GO
 			left outer join '+trim(@cRecipientTablePath)+'PositionType R2 on R2.CompanyID = R1.CompanyID and D2.Code = R2.Code
 
 			left outer join '+trim(@cDonorTablePath)+'WorkerCompType D3 on D3.CompanyID = D1.CompanyID and D3.ID = T1.WorkerCompTypeID
-			left outer join '+trim(@cRecipientTablePath)+'WorkerCompType R3 on R3.CompanyID = R1.CompanyID and R3.Code = D3.Code
+			left outer join '+trim(@cRecipientTablePath)+'WorkerCompType R3 on R3.CompanyID = R1.CompanyID and R3.Code = D3.Code and R3.Description = D3.Description
 
 			join '+trim(@cDonorTablePath)+'OrganizationStructure SD4 on SD4.CompanyID = D1.CompanyID
 			join '+trim(@cRecipientTablePath)+'OrganizationStructure SR4 on SR4.CompanyID = R1.CompanyID
