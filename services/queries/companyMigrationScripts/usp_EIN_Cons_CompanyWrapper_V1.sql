@@ -28,7 +28,7 @@
 		drop procedure dbo.usp_EIN_Cons_CompanyWrapper_V1
 		print 'Dropped Proc dbo.usp_EIN_Cons_CompanyWrapper_V1'
 	end
-go
+GO
 
 	create procedure usp_EIN_Cons_CompanyWrapper_V1
 
@@ -105,19 +105,19 @@ go
 
 ExitPgm:
 return 0
-go
+GO
 
 /*	Now check to make sure it has been created (dbo.usp_EIN_Cons_CompanyWrapper_V1 ) */ 
 	if object_id('dbo.usp_EIN_Cons_CompanyWrapper_V1') is not null
 		print 'Proc dbo.usp_EIN_Cons_CompanyWrapper_V1 has been CREATED Successfully. '
 	else
 		print 'Create Proc dbo.usp_EIN_Cons_CompanyWrapper_V1 FAILED'
-go
+GO
 
 /*	now Grant Permissions on dbo.usp_EIN_Cons_CompanyWrapper_V1 to public */
 	grant execute on dbo.usp_EIN_Cons_CompanyWrapper_V1 to public
 	print 'Execute rights have been GRANTED to group public on usp_EIN_Cons_CompanyWrapper_V1'
-go
+GO
   
 /*-----------------------------------------------------------------
 	eof -  usp_EIN_Cons_CompanyWrapper_V1.sql 
