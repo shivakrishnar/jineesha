@@ -235,7 +235,7 @@ async function updateHelloSignConfigurations(donorTenantId: string, donorCompany
     console.info('companyService.updateHelloSignConfigurations');
 
     const { tenantId: recipientTenantId, companyId: recipientCompanyId } = patch.value || {};
-    
+
     if (!recipientTenantId || !recipientCompanyId) {
         throw errorService
             .getErrorResponse(30)
@@ -1089,47 +1089,26 @@ export async function listCompanyOpenEnrollments(
  * @param {string} donorCompanyId: The unique identifier for the donor company
  * @param {string} recipientTenantId: The unique identifier for the recipient tenant
  * @param {string} recipientCompanyId: The unique identifier for the recipient company
+ * @param {string} migrationId: The unique identifier for the migration
  */
 export async function createCompanyMigration(
     donorTenantId,
     donorCompanyId,
     recipientTenantId,
-    recipientCompanyId
+    recipientCompanyId,
+    migrationId
 ): Promise<any> {
     console.info('company.service.createCompanyMigration');
-
     const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
-    const migrationId = uniqueifier();
-
     try {
-        //1-updating the DB migration table with 'Pending' status 
-        let params = {
-            TableName: 'HrCompanyMigrations',
-            Item: {
-                ID: migrationId,
-                Status: 'Pending',
-                Details: {
-                    source: {
-                        tenantId: donorTenantId,
-                        companyId: donorCompanyId
-                    },
-                    destination: {
-                        tenantId: recipientTenantId,
-                        companyId: recipientCompanyId
-                    }
-                },
-                Timestamp: new Date().toISOString()
-            }
-        };
+        //step 1 has been moved to runCompanyMigration function below
 
-        await dynamoDbClient.put(params).promise();
-
-        //2-linked server connection creation 
+        //2-linked server connection creation
         const { rdsEndpoint } = await databaseService.findConnectionString(recipientTenantId);
         const { username, password }  = JSON.parse(
             await utilService.getSecret(configService.getRdsCredentials()),
         );
-        
+
         const connectionQuery = new ParameterizedQuery('createLinkedServerConnection', Queries.createLinkedServerConnection);
 
         connectionQuery.setParameter('@password', password);
@@ -1158,7 +1137,7 @@ export async function createCompanyMigration(
         const tmp = scripts[scripts.indexOf('usp_EIN_Cons_Dynamic_V1.sql')];
         scripts[scripts.indexOf('usp_EIN_Cons_Dynamic_V1.sql')] = scripts[0];
         scripts[0] = tmp;
-        
+
         for(let i = 0; i < scripts.length; i++) {
             const preMigrationQuery = new ParameterizedQuery(scripts[i].split('.')[0], Queries[scripts[i].split('.')[0]]);
             preMigrationPayload.queryName = preMigrationQuery.name;
@@ -1167,14 +1146,14 @@ export async function createCompanyMigration(
             await utilService.invokeInternalService('queryExecutor', preMigrationPayload, utilService.InvocationType.RequestResponse, true);
         }
 
-        //4-migration creation 
+        //4-migration creation
         const migrationQuery = new ParameterizedQuery('createCompanyMigration', Queries.createCompanyMigration);
 
         migrationQuery.setParameter('@donorTenantId', donorTenantId);
         migrationQuery.setParameter('@donorCompanyId', donorCompanyId);
         migrationQuery.setParameter('@recipTenantId', recipientTenantId);
         migrationQuery.setParameter('@recipCompanyId', recipientCompanyId);
-        
+
         const migrationPayload = {
             tenantId: donorTenantId,
             queryName: migrationQuery.name,
@@ -1196,23 +1175,22 @@ export async function createCompanyMigration(
         await dynamoDbClient.update(updateParams).promise();
     }
     catch (error) {
-        //updating migration table to 'Failed' if migration failed
         const updateParams = {
             TableName: 'HrCompanyMigrations',
             Key: { ID: migrationId },
             UpdateExpression: 'set #a = :x, #b.#c = :y',
             ExpressionAttributeNames: {
-             '#a': 'Status',
-             '#b': 'Details',
-             '#c': 'errorMessage'
+                '#a': 'Status',
+                '#b': 'Details',
+                '#c': 'errorMessage',
             },
             ExpressionAttributeValues: {
-             ':x': 'Failed',
-             ':y': JSON.stringify(error)
-            }
-        }
+                ':x': 'Failed',
+                ':y': JSON.stringify(error),
+            },
+        };
         await dynamoDbClient.update(updateParams).promise();
-
+        
         if (error instanceof ErrorMessage) {
             throw error;
         }
@@ -1234,20 +1212,70 @@ export async function createCompanyMigration(
     }
 }
 
-//executes the step function to create the company migration 
+//executes the step function to create the company migration
 export async function runCompanyMigration(donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId) {
     console.info('company.service.runCompanyMigration');
+    const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+    const migrationId = uniqueifier();
+    const pendingParams = {
+        TableName: 'HrCompanyMigrations',
+        Item: {
+            ID: migrationId,
+            Status: 'Pending',
+            Details: {
+                source: {
+                    tenantId: donorTenantId,
+                    companyId: donorCompanyId,
+                },
+                destination: {
+                    tenantId: recipientTenantId,
+                    companyId: recipientCompanyId,
+                },
+            },
+            Timestamp: new Date().toISOString(),
+        },
+    };
 
-    const stepFunctions = new AWS.StepFunctions();
+    try {
+        //1-updating the DB migration table with 'Pending' status
+        await dynamoDbClient.put(pendingParams).promise();
 
-    const params = {
-        stateMachineArn: configService.getHrCompanyMigratorStateMachineArn(),
-        input: JSON.stringify({
-            donorTenantId,
-            donorCompanyId,
-            recipientTenantId,
-            recipientCompanyId
-        })
+        // running 'createCompanyMigration'
+        const stepFunctions = new AWS.StepFunctions();
+        const params = {
+            stateMachineArn: configService.getHrCompanyMigratorStateMachineArn(),
+            input: JSON.stringify({
+                donorTenantId,
+                donorCompanyId,
+                recipientTenantId,
+                recipientCompanyId,
+                migrationId,
+            }),
+        };
+        await stepFunctions.startExecution(params).promise();
+
+    } catch (error) {
+        //updating migration table to 'Failed' if migration failed
+        const updateParams = {
+            TableName: 'HrCompanyMigrations',
+            Key: { ID: migrationId },
+            UpdateExpression: 'set #a = :x, #b.#c = :y',
+            ExpressionAttributeNames: {
+                '#a': 'Status',
+                '#b': 'Details',
+                '#c': 'errorMessage',
+            },
+            ExpressionAttributeValues: {
+                ':x': 'Failed',
+                ':y': JSON.stringify(error),
+            },
+        };
+        await dynamoDbClient.update(updateParams).promise();
+
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
     }
-    await stepFunctions.startExecution(params).promise();
 }
