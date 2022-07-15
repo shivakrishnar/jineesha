@@ -318,11 +318,11 @@ GO
 				and recip_d.UploadDate = donor_d.UploadDate
 			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
 			join '+@cRecipientTablePath+'EmployeeAbsence recip_ea
-					on coalesce(convert(nvarchar(255), recip_ea.StartDate), 'NA') = coalesce(convert(nvarchar(255), donor_ea.StartDate), 'NA')
+					on coalesce(convert(nvarchar(255), recip_ea.StartDate), '''') = coalesce(convert(nvarchar(255), donor_ea.StartDate), '''')
 					and isnull(recip_ea.HoursTaken, -1) = isnull(donor_ea.HoursTaken, -1)
-					and coalesce(convert(nvarchar(255), recip_ea.SubmitDate), 'NA') = coalesce(convert(nvarchar(255), donor_ea.SubmitDate), 'NA')
+					and coalesce(convert(nvarchar(255), recip_ea.SubmitDate), '''') = coalesce(convert(nvarchar(255), donor_ea.SubmitDate), '''')
 					and recip_ea.EmployeeID = recip_ee.ID
-					and coalesce(convert(nvarchar(255), recip_ea.ReturnDate), 'NA') = coalesce(convert(nvarchar(255), donor_ea.ReturnDate), 'NA')
+					and coalesce(convert(nvarchar(255), recip_ea.ReturnDate), '''') = coalesce(convert(nvarchar(255), donor_ea.ReturnDate), '''')
 					and isnull(recip_ea.Notes, '''') = isnull(donor_ea.Notes, '''')
 					and isnull(recip_ea.PrivateNotes, '''') = isnull(donor_ea.PrivateNotes, '''')
 					and isnull(recip_ea.HoursPerDayTaken, -1) = isnull(donor_ea.HoursPerDayTaken, -1)
@@ -362,8 +362,8 @@ GO
 					on recip_ea.AchievementTypeID = recip_at.ID
 					and recip_ea.EmployeeID = recip_ee.ID
 					and isnull(recip_ea.Notes, '''') = isnull(donor_ea.Notes, '''')
-					and coalesce(convert(nvarchar(255), donor_ea.AwardedDate), 'NA') = coalesce(convert(nvarchar(255), recip_ea.AwardedDate), 'NA')
-					and coalesce(convert(nvarchar(255), donor_ea.ExpirationDate), 'NA') = coalesce(convert(nvarchar(255), recip_ea.ExpirationDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_ea.AwardedDate), '''') = coalesce(convert(nvarchar(255), recip_ea.AwardedDate), '''')
+					and coalesce(convert(nvarchar(255), donor_ea.ExpirationDate), '''') = coalesce(convert(nvarchar(255), recip_ea.ExpirationDate), '''')
 			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID	
 
 			exec (@cmdShowDataDonor)
@@ -398,7 +398,7 @@ GO
 					and recip_bp.EndDate = donor_bp.EndDate
 					and isnull(recip_bp.PolicyNumber, '''') = isnull(donor_bp.PolicyNumber, '''')
 					and isnull(recip_bp.ProducerCode, 0) = isnull(donor_bp.ProducerCode, 0)
-					and coalesce(convert(nvarchar(255), recip_bp.RenewalDate), 'NA') = coalesce(convert(nvarchar(255), donor_bp.RenewalDate), 'NA')
+					and coalesce(convert(nvarchar(255), recip_bp.RenewalDate), '''') = coalesce(convert(nvarchar(255), donor_bp.RenewalDate), '''')
 					and isnull(recip_bp.EmployeeDeductionCode, '''') = isnull(donor_bp.EmployeeDeductionCode, '''')
 					and isnull(recip_bp.Notes, '''') = isnull(donor_bp.Notes, '''')
 					and isnull(recip_bp.Priority, 0) = isnull(donor_bp.Priority, 0)
@@ -412,9 +412,9 @@ GO
 					and recip_eb.EmployeeID = recip_ee.ID
 					and isnull(recip_eb.Premium, -1) = isnull(donor_eb.Premium, -1)
 					and isnull(recip_eb.EmployerAmount, -1) = isnull(donor_eb.EmployerAmount, -1)
-					and isnull(recip_eb.EmployerPercentage, -1) = isnull(donor_eb.EmployerPercentage, -1)
+					and isnull(recip_eb.EmployerPercent, -1) = isnull(donor_eb.EmployerPercent, -1)
 					and isnull(recip_eb.EmployeeAmount, -1) = isnull(donor_eb.EmployeeAmount, -1)
-					and isnull(recip_eb.EmployeePercentage, -1) = isnull(donor_eb.EmployeePercentage, -1)
+					and isnull(recip_eb.EmployeePercent, -1) = isnull(donor_eb.EmployeePercent, -1)
 					and isnull(recip_eb.MemberNumber, '''') = isnull(donor_eb.MemberNumber, '''')
 					and isnull(recip_eb.DeductionFrequencyCode, '''') = isnull(donor_eb.DeductionFrequencyCode, '''')
 					and isnull(recip_eb.PR_Integration_PK, '''') = isnull(donor_eb.PR_Integration_PK, '''')
@@ -422,8 +422,8 @@ GO
 					and isnull(recip_eb.EmployerCatchUpAmount, -1) = isnull(donor_eb.EmployerCatchUpAmount, -1)
 					and isnull(recip_eb.ADDIncluded, 0) = isnull(donor_eb.AddIncluded, 0)
 					and isnull(recip_eb.CoverageAmount, -1) = isnull(donor_eb.CoverageAmount, -1)
-					coalesce(convert(nvarchar(255), recip_eb.StartDate), 'NA') = coalesce(convert(nvarchar(255), donor_eb.StartDate), 'NA')
-					coalesce(convert(nvarchar(255), recip_eb.EndDate), 'NA') = coalesce(convert(nvarchar(255), donor_eb.EndDate), 'NA')
+					and coalesce(convert(nvarchar(255), recip_eb.StartDate), '''') = coalesce(convert(nvarchar(255), donor_eb.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_eb.EndDate), '''') = coalesce(convert(nvarchar(255), donor_eb.EndDate), '''')
 			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID	
 
 			exec (@cmdShowDataDonor)
@@ -459,8 +459,8 @@ GO
 					and recip_ec.EmployeeID = recip_ee.ID
 					and isnull(recip_ec.CertificateNumber, '''') = isnull(donor_ec.CertificateNumber, '''')
 					and isnull(recip_ec.IssuedBy, '''') = isnull(donor_ec.IssuedBy, '''')
-					and coalesce(convert(nvarchar(255), donor_ec.IssuedDate), 'NA') = coalesce(convert(nvarchar(255), recip_ec.IssuedDate), 'NA')
-					and coalesce(convert(nvarchar(255), donor_ec.ExpirationDate), 'NA') = coalesce(convert(nvarchar(255), recip_ec.ExpirationDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_ec.IssuedDate), '''') = coalesce(convert(nvarchar(255), recip_ec.IssuedDate), '''')
+					and coalesce(convert(nvarchar(255), donor_ec.ExpirationDate), '''') = coalesce(convert(nvarchar(255), recip_ec.ExpirationDate), '''')
 					and isnull(donor_ec.Notes, '''') = isnull(recip_ec.Notes, '''')
 					and isnull(recip_ec.EmailAcknowledged, 0) = isnull(donor_ec.emailAcknowledged, 0)
 			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID	
@@ -499,8 +499,8 @@ GO
 					and isnull(recip_eec.GradeOrResult, '''') = isnull(donor_eec.GradeOrResult, '''')
 					and isnull(recip_eec.Notes, '''') = isnull(donor_eec.Notes, '''')
 					and isnull(recip_eec.EmailAcknowledged, 0) = isnull(donor_eec.EmailAcknowledged, 0)
-					and coalesce(convert(nvarchar(255), recip_eec.CompletionDate), 'NA') = coalesce(convert(nvarchar(255), donor_eec.CompletionDate), 'NA')
-					and coalesce(convert(nvarchar(255), recip_eec.ExpirationDate), 'NA') = coalesce(convert(nvarchar(255), donor_eec.ExpirationDate), 'NA')
+					and coalesce(convert(nvarchar(255), recip_eec.CompletionDate), '''') = coalesce(convert(nvarchar(255), donor_eec.CompletionDate), '''')
+					and coalesce(convert(nvarchar(255), recip_eec.ExpirationDate), '''') = coalesce(convert(nvarchar(255), donor_eec.ExpirationDate), '''')
 			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
@@ -539,8 +539,8 @@ GO
 					and isnull(recip_el.Notes, '''') = isnull(donor_el.Notes, '''')
 					and recip_el.EmailAcknowledged = donor_el.EmailAcknowledged
 					and isnull(recip_el.IssuedBy, '''') = isnull(donor_el.IssuedBy, '''')
-					and coalesce(convert(nvarchar(255), donor_el.IssuedDate), 'NA') = coalesce(convert(nvarchar(255), recip_el.IssuedDate), 'NA')
-					and coalesce(convert(nvarchar(255), donor_el.ExpirationDate), 'NA') = coalesce(convert(nvarchar(255), recip_el.ExpirationDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_el.IssuedDate), '''') = coalesce(convert(nvarchar(255), recip_el.IssuedDate), '''')
+					and coalesce(convert(nvarchar(255), donor_el.ExpirationDate), '''') = coalesce(convert(nvarchar(255), recip_el.ExpirationDate), '''')
 				where donor_ee.CompanyID = '+@cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
@@ -605,8 +605,8 @@ GO
 					on recip_er.ReviewTypeID = recip_rt.ID
 					and recip_er.EmployeeID = recip_ee.ID
 					and recip_er.EmailAcknowledged = donor_er.EmailAcknowledged
-					and coalesce(convert(nvarchar(255), donor_er.ScheduledDate), 'NA') = coalesce(convert(nvarchar(255), recip_er.ScheduledDate), 'NA')
-					and coalesce(convert(nvarchar(255), donor_er.CompletedDate), 'NA') = coalesce(convert(nvarchar(255), recip_er.CompletedDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_er.ScheduledDate), '''') = coalesce(convert(nvarchar(255), recip_er.ScheduledDate), '''')
+					and coalesce(convert(nvarchar(255), donor_er.CompletedDate), '''') = coalesce(convert(nvarchar(255), recip_er.CompletedDate), '''')
 			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID	
 
 			exec (@cmdShowDataDonor)
@@ -915,11 +915,11 @@ GO
 				and recip_d.UploadDate = donor_d.UploadDate
 			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
 			join '+@cRecipientTablePath+'EmployeeAbsence recip_ea
-					on coalesce(convert(nvarchar(255), recip_ea.StartDate), 'NA') = coalesce(convert(nvarchar(255), donor_ea.StartDate), 'NA')
+					on coalesce(convert(nvarchar(255), recip_ea.StartDate), '''') = coalesce(convert(nvarchar(255), donor_ea.StartDate), '''')
 					and isnull(recip_ea.HoursTaken, -1) = isnull(donor_ea.HoursTaken, -1)
-					and coalesce(convert(nvarchar(255), recip_ea.SubmitDate), 'NA') = coalesce(convert(nvarchar(255), donor_ea.SubmitDate), 'NA')
+					and coalesce(convert(nvarchar(255), recip_ea.SubmitDate), '''') = coalesce(convert(nvarchar(255), donor_ea.SubmitDate), '''')
 					and recip_ea.EmployeeID = recip_ee.ID
-					and coalesce(convert(nvarchar(255), recip_ea.ReturnDate), 'NA') = coalesce(convert(nvarchar(255), donor_ea.ReturnDate), 'NA')
+					and coalesce(convert(nvarchar(255), recip_ea.ReturnDate), '''') = coalesce(convert(nvarchar(255), donor_ea.ReturnDate), '''')
 					and isnull(recip_ea.Notes, '''') = isnull(donor_ea.Notes, '''')
 					and isnull(recip_ea.PrivateNotes, '''') = isnull(donor_ea.PrivateNotes, '''')
 					and isnull(recip_ea.HoursPerDayTaken, -1) = isnull(donor_ea.HoursPerDayTaken, -1)
@@ -960,8 +960,8 @@ GO
 					on recip_ea.AchievementTypeID = recip_at.ID
 					and recip_ea.EmployeeID = recip_ee.ID
 					and isnull(recip_ea.Notes, '''') = isnull(donor_ea.Notes, '''')
-					and coalesce(convert(nvarchar(255), donor_ea.AwardedDate), 'NA') = coalesce(convert(nvarchar(255), recip_ea.AwardedDate), 'NA')
-					and coalesce(convert(nvarchar(255), donor_ea.ExpirationDate), 'NA') = coalesce(convert(nvarchar(255), recip_ea.ExpirationDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_ea.AwardedDate), '''') = coalesce(convert(nvarchar(255), recip_ea.AwardedDate), '''')
+					and coalesce(convert(nvarchar(255), donor_ea.ExpirationDate), '''') = coalesce(convert(nvarchar(255), recip_ea.ExpirationDate), '''')
 			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
@@ -997,7 +997,7 @@ GO
 					and recip_bp.EndDate = donor_bp.EndDate
 					and isnull(recip_bp.PolicyNumber, '''') = isnull(donor_bp.PolicyNumber, '''')
 					and isnull(recip_bp.ProducerCode, 0) = isnull(donor_bp.ProducerCode, 0)
-					and coalesce(convert(nvarchar(255), recip_bp.RenewalDate), 'NA') = coalesce(convert(nvarchar(255), donor_bp.RenewalDate), 'NA')
+					and coalesce(convert(nvarchar(255), recip_bp.RenewalDate), '''') = coalesce(convert(nvarchar(255), donor_bp.RenewalDate), '''')
 					and isnull(recip_bp.EmployeeDeductionCode, '''') = isnull(donor_bp.EmployeeDeductionCode, '''')
 					and isnull(recip_bp.Notes, '''') = isnull(donor_bp.Notes, '''')
 					and isnull(recip_bp.Priority, 0) = isnull(donor_bp.Priority, 0)
@@ -1011,9 +1011,9 @@ GO
 					and recip_eb.EmployeeID = recip_ee.ID
 					and isnull(recip_eb.Premium, -1) = isnull(donor_eb.Premium, -1)
 					and isnull(recip_eb.EmployerAmount, -1) = isnull(donor_eb.EmployerAmount, -1)
-					and isnull(recip_eb.EmployerPercentage, -1) = isnull(donor_eb.EmployerPercentage, -1)
+					and isnull(recip_eb.EmployerPercent, -1) = isnull(donor_eb.EmployerPercent, -1)
 					and isnull(recip_eb.EmployeeAmount, -1) = isnull(donor_eb.EmployeeAmount, -1)
-					and isnull(recip_eb.EmployeePercentage, -1) = isnull(donor_eb.EmployeePercentage, -1)
+					and isnull(recip_eb.EmployeePercent, -1) = isnull(donor_eb.EmployeePercent, -1)
 					and isnull(recip_eb.MemberNumber, '''') = isnull(donor_eb.MemberNumber, '''')
 					and isnull(recip_eb.DeductionFrequencyCode, '''') = isnull(donor_eb.DeductionFrequencyCode, '''')
 					and isnull(recip_eb.PR_Integration_PK, '''') = isnull(donor_eb.PR_Integration_PK, '''')
@@ -1021,8 +1021,8 @@ GO
 					and isnull(recip_eb.EmployerCatchUpAmount, -1) = isnull(donor_eb.EmployerCatchUpAmount, -1)
 					and isnull(recip_eb.ADDIncluded, 0) = isnull(donor_eb.AddIncluded, 0)
 					and isnull(recip_eb.CoverageAmount, -1) = isnull(donor_eb.CoverageAmount, -1)
-					coalesce(convert(nvarchar(255), recip_eb.StartDate), 'NA') = coalesce(convert(nvarchar(255), donor_eb.StartDate), 'NA')
-					coalesce(convert(nvarchar(255), recip_eb.EndDate), 'NA') = coalesce(convert(nvarchar(255), donor_eb.EndDate), 'NA')
+					and coalesce(convert(nvarchar(255), recip_eb.StartDate), '''') = coalesce(convert(nvarchar(255), donor_eb.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_eb.EndDate), '''') = coalesce(convert(nvarchar(255), donor_eb.EndDate), '''')
 			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 			
 			exec (@cmdInsert)
@@ -1059,8 +1059,8 @@ GO
 					and recip_ec.EmployeeID = recip_ee.ID
 					and isnull(recip_ec.CertificateNumber, '''') = isnull(donor_ec.CertificateNumber, '''')
 					and isnull(recip_ec.IssuedBy, '''') = isnull(donor_ec.IssuedBy, '''')
-					and coalesce(convert(nvarchar(255), donor_ec.IssuedDate), 'NA') = coalesce(convert(nvarchar(255), recip_ec.IssuedDate), 'NA')
-					and coalesce(convert(nvarchar(255), donor_ec.ExpirationDate), 'NA') = coalesce(convert(nvarchar(255), recip_ec.ExpirationDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_ec.IssuedDate), '''') = coalesce(convert(nvarchar(255), recip_ec.IssuedDate), '''')
+					and coalesce(convert(nvarchar(255), donor_ec.ExpirationDate), '''') = coalesce(convert(nvarchar(255), recip_ec.ExpirationDate), '''')
 					and isnull(donor_ec.Notes, '''') = isnull(recip_ec.Notes, '''')
 					and isnull(recip_ec.EmailAcknowledged, 0) = isnull(donor_ec.emailAcknowledged, 0)
 			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID	
@@ -1100,8 +1100,8 @@ GO
 					and isnull(recip_eec.GradeOrResult, '''') = isnull(donor_eec.GradeOrResult, '''')
 					and isnull(recip_eec.Notes, '''') = isnull(donor_eec.Notes, '''')
 					and isnull(recip_eec.EmailAcknowledged, 0) = isnull(donor_eec.EmailAcknowledged, 0)
-					and coalesce(convert(nvarchar(255), recip_eec.CompletionDate), 'NA') = coalesce(convert(nvarchar(255), donor_eec.CompletionDate), 'NA')
-					and coalesce(convert(nvarchar(255), recip_eec.ExpirationDate), 'NA') = coalesce(convert(nvarchar(255), donor_eec.ExpirationDate), 'NA')
+					and coalesce(convert(nvarchar(255), recip_eec.CompletionDate), '''') = coalesce(convert(nvarchar(255), donor_eec.CompletionDate), '''')
+					and coalesce(convert(nvarchar(255), recip_eec.ExpirationDate), '''') = coalesce(convert(nvarchar(255), donor_eec.ExpirationDate), '''')
 			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID		
 
 			exec (@cmdInsert)
@@ -1140,8 +1140,8 @@ GO
 					and isnull(recip_el.Notes, '''') = isnull(donor_el.Notes, '''')
 					and recip_el.EmailAcknowledged = donor_el.EmailAcknowledged
 					and isnull(recip_el.IssuedBy, '''') = isnull(donor_el.IssuedBy, '''')
-					and coalesce(convert(nvarchar(255), donor_el.IssuedDate), 'NA') = coalesce(convert(nvarchar(255), recip_el.IssuedDate), 'NA')
-					and coalesce(convert(nvarchar(255), donor_el.ExpirationDate), 'NA') = coalesce(convert(nvarchar(255), recip_el.ExpirationDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_el.IssuedDate), '''') = coalesce(convert(nvarchar(255), recip_el.IssuedDate), '''')
+					and coalesce(convert(nvarchar(255), donor_el.ExpirationDate), '''') = coalesce(convert(nvarchar(255), recip_el.ExpirationDate), '''')
 				where donor_ee.CompanyID = '+@cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
@@ -1207,8 +1207,8 @@ GO
 					on recip_er.ReviewTypeID = recip_rt.ID
 					and recip_er.EmployeeID = recip_ee.ID
 					and recip_er.EmailAcknowledged = donor_er.EmailAcknowledged
-					and coalesce(convert(nvarchar(255), donor_er.ScheduledDate), 'NA') = coalesce(convert(nvarchar(255), recip_er.ScheduledDate), 'NA')
-					and coalesce(convert(nvarchar(255), donor_er.CompletedDate), 'NA') = coalesce(convert(nvarchar(255), recip_er.CompletedDate), 'NA')
+					and coalesce(convert(nvarchar(255), donor_er.ScheduledDate), '''') = coalesce(convert(nvarchar(255), recip_er.ScheduledDate), '''')
+					and coalesce(convert(nvarchar(255), donor_er.CompletedDate), '''') = coalesce(convert(nvarchar(255), recip_er.CompletedDate), '''')
 			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID	
 
 			exec (@cmdInsert)
