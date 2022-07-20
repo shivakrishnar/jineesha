@@ -645,28 +645,26 @@ GO
 			end
 		end
 
-		-- if @cTableToRun = 'ZZZ' or @cTableToRun like '%U%'
-		-- begin
-		-- 	----------------Direct Deposit
-		-- 	select @cmdShowDataDonor = 'select R1.ID, T1.Priority, T1.RoutingNumber, T1.Account, T1.Checking, T1.AmountCode, T1.Amount, T1.ExcludeSpecial, T1.PreNoteDate, T1.NameOnAccount, T1.StartDate, T1.EndDate, T1.IsPrenote_EVO,
-		-- 	T1.EvoFK_DeductionFrequency, T1.EvoFK_DeductionCode, T1.PR_Integration_PK, T1.EvoFK_EmployeeEarningsDeduction, T1.ApprovalStatus, T1.IsSavings, T1.IsMoneyMarket
-		-- 	from '+@cDonorTablePath+'EmployeeDirectDeposit T1 
-		-- 	join '+trim(@cDonorTablePath)+'Employee D1 on D1.ID = T1.EmployeeID
-		-- 	join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
-		-- 	where D1.CompanyID = '+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID+'
-		-- 	and (T1.ApprovalStatus = 0 or T1.ApprovalStatus is null)
-		-- 	and T1.PR_Integration_PK is null'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%U%'
+		begin
+			----------------Direct Deposit
+			select @cmdShowDataDonor = 'select R1.ID, T1.Priority, T1.RoutingNumber, T1.Account, T1.Checking, T1.AmountCode, T1.Amount, T1.ExcludeSpecial, T1.PreNoteDate, T1.NameOnAccount, T1.StartDate, T1.EndDate, T1.IsPrenote_EVO,
+			T1.EvoFK_DeductionFrequency, T1.EvoFK_DeductionCode, T1.PR_Integration_PK, T1.EvoFK_EmployeeEarningsDeduction, T1.ApprovalStatus, T1.IsSavings, T1.IsMoneyMarket
+			from '+@cDonorTablePath+'EmployeeDirectDeposit T1 
+			join '+trim(@cDonorTablePath)+'Employee D1 on D1.ID = T1.EmployeeID
+			join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
+			where D1.CompanyID = '+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
-		-- 	exec (@cmdShowDataDonor)
-		-- 	if @cShowStatement = 1
-		-- 	begin
-		-- 		print @cmdShowDataDonor
-		-- 	end
-		-- 	if @cVerbose_Ind = 1
-		-- 	begin
-		-- 		select 'Direct Deposit - U' as ShowData
-		-- 	end
-		-- end
+			exec (@cmdShowDataDonor)
+			if @cShowStatement = 1
+			begin
+				print @cmdShowDataDonor
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Direct Deposit - U' as ShowData
+			end
+		end
 
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%V%'
 		begin
@@ -1345,30 +1343,42 @@ GO
 			end
 		end
 
-		-- if @cTableToRun = 'ZZZ' or @cTableToRun like '%U%'
-		-- begin
-		-- 	----------------Direct Deposit
-		-- 	select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeDirectDeposit (EmployeeID, Priority, RoutingNumber, Account, Checking, AmountCode, Amount, ExcludeSpecial, PreNoteDate, NameOnAccount, StartDate, EndDate,
-		-- 	IsPrenote_EVO, EvoFK_DeductionFrequency, EvoFK_DeductionCode, PR_Integration_PK, EvoFK_EmployeeEarningsDeduction, ApprovalStatus, IsSavings, IsMoneyMarket)
-		-- 	select R1.ID, T1.Priority, T1.RoutingNumber, T1.Account, T1.Checking, T1.AmountCode, T1.Amount, T1.ExcludeSpecial, T1.PreNoteDate, T1.NameOnAccount, T1.StartDate, T1.EndDate, T1.IsPrenote_EVO,
-		-- 	T1.EvoFK_DeductionFrequency, T1.EvoFK_DeductionCode, T1.PR_Integration_PK, T1.EvoFK_EmployeeEarningsDeduction, T1.ApprovalStatus, T1.IsSavings, T1.IsMoneyMarket
-		-- 	from '+@cDonorTablePath+'EmployeeDirectDeposit T1 
-		-- 	join '+trim(@cDonorTablePath)+'Employee D1 on D1.ID = T1.EmployeeID
-		-- 	join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
-		-- 	where D1.CompanyID = '+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID+'
-		-- 	and (T1.ApprovalStatus = 0 or T1.ApprovalStatus is null)
-		-- 	and T1.PR_Integration_PK is null'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%U%'
+		begin
+			--First we want to delete any existing EmployeeDirectDeposit records inserted during the cutover
+			--Delete Step
+			select @cmdInsert = 'delete from '+trim(@cRecipientTablePath)+'EmployeeDirectDeposit where EmployeeID in (select R1.ID from '+trim(@cRecipientTablePath)+'Employee R1 
+			where R1.CompanyID = '+@cRecipientCompany_ID+')'
 
-		-- 	exec (@cmdInsert)
-		-- 	if @cShowStatement = 1
-		-- 	begin
-		-- 		print @cmdInsert
-		-- 	end
-		-- 	if @cVerbose_Ind = 1
-		-- 	begin
-		-- 		select 'Direct Deposit - U' as InsertData
-		-- 	end
-		-- end
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Direct Deposit Delete - U' as Insertdata
+			end
+			----------------Direct Deposit
+			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeDirectDeposit (EmployeeID, Priority, RoutingNumber, Account, Checking, AmountCode, Amount, ExcludeSpecial, PreNoteDate, NameOnAccount, StartDate, EndDate,
+			IsPrenote_EVO, EvoFK_DeductionFrequency, EvoFK_DeductionCode, PR_Integration_PK, EvoFK_EmployeeEarningsDeduction, ApprovalStatus, IsSavings, IsMoneyMarket)
+			select R1.ID, T1.Priority, T1.RoutingNumber, T1.Account, T1.Checking, T1.AmountCode, T1.Amount, T1.ExcludeSpecial, T1.PreNoteDate, T1.NameOnAccount, T1.StartDate, T1.EndDate, T1.IsPrenote_EVO,
+			T1.EvoFK_DeductionFrequency, T1.EvoFK_DeductionCode, T1.PR_Integration_PK, T1.EvoFK_EmployeeEarningsDeduction, T1.ApprovalStatus, T1.IsSavings, T1.IsMoneyMarket
+			from '+@cDonorTablePath+'EmployeeDirectDeposit T1 
+		 	join '+trim(@cDonorTablePath)+'Employee D1 on D1.ID = T1.EmployeeID
+			join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
+			where D1.CompanyID = '+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				print @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Direct Deposit - U' as InsertData
+			end
+		end
 
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%V%'
 		begin
