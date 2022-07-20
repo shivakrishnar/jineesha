@@ -176,6 +176,7 @@ export const Queries = {
     usp_EIN_Cons_CompensationDataSet_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_CompensationDataSet_V1.sql')).toString(),
     usp_EIN_Cons_Documents_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_Documents_V1.sql')).toString(),
     usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1.sql')).toString(),
+    usp_EIN_Cons_EmployeeOnboard_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_EmployeeOnboard_V1.sql')).toString(),
     usp_EIN_Cons_HRNext_Sec_DataSet_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_HRNext_Sec_DataSet_V1.sql')).toString(),
     usp_EIN_Cons_PreCheck_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_PreCheck_V1.sql')).toString(),
     createLinkedServerConnection: fs.readFileSync(path.join(basePath, 'companies/createLinkedServerConnection.sql')).toString(),
