@@ -21,7 +21,7 @@ SELECT
 	bpt.Code AS PlanTypeCode,
 	bpt.Description AS PlanTypeDescription,
 	bc.Name AS CarrierName,
-	bc.WebsiteURL AS CarrierUrl,
+	bp.WebsiteURL AS CarrierUrl,
 	eb.Premium,
 	eb.DeductionFrequencyCode AS DeductionFrequency,
     ft.Code AS PayFrequency,
