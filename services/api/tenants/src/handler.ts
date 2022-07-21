@@ -898,9 +898,9 @@ export async function createCompanyMigration(event: any, context: Context, callb
     console.info(`received event: ${JSON.stringify(event)}`);
 
     try {
-        const { donorCompanyId, donorTenantId, recipientCompanyId, recipientTenantId } = event;
+        const { donorCompanyId, donorTenantId, recipientCompanyId, recipientTenantId, migrationId } = event;
         
-        await companyService.createCompanyMigration(donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId);
+        await companyService.createCompanyMigration(donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId, migrationId);
         return callback(undefined, { statusCode: 200, body: JSON.stringify('companyMigrationSuccessful') });
         
     } catch (error) {
