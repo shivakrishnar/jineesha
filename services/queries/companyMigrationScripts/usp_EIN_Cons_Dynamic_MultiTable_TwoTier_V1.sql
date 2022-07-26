@@ -247,7 +247,7 @@ GO
 			left outer join '+trim(@cRecipientTablePath)+'Employee R4 on R4.EmployeeCode = D4.EmployeeCode and R4.CompanyID = R1.CompanyID
 
 			join '+@cDonorTablePath+'ReviewType D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.ReviewTypeID
-			join '+trim(@cRecipientTablePath)+'Reviewtype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
+			join '+trim(@cRecipientTablePath)+'Reviewtype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description and R2.Code = D2.Code
 			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
@@ -269,7 +269,7 @@ GO
 			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
 			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 			join '+@cDonorTablePath+'Skilltype D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.SkillTypeID
-			join '+trim(@cRecipientTablePath)+'Skilltype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
+			join '+trim(@cRecipientTablePath)+'Skilltype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description and R2.Code = D2.Code
 			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
@@ -291,7 +291,7 @@ GO
 			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
 			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 			join '+@cDonorTablePath+'Licensetype D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.LicenseTypeID
-			join '+trim(@cRecipientTablePath)+'Licensetype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
+			join '+trim(@cRecipientTablePath)+'Licensetype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description and R2.Code = D2.Code
 			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
@@ -313,7 +313,7 @@ GO
 			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
 			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 			join '+@cDonorTablePath+'AchievementType D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.AchievementTypeID
-			join '+trim(@cRecipientTablePath)+'Achievementtype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
+			join '+trim(@cRecipientTablePath)+'AchievementType R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description and R2.Code = D2.Code
 			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
@@ -335,7 +335,7 @@ GO
 			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
 			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 			join '+@cDonorTablePath+'CertificateType D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.CertificateTypeID
-			join '+trim(@cRecipientTablePath)+'Certificatetype R2 on R2.CompanyID = R1.CompanyID and R2.Code = D2.Code
+			join '+trim(@cRecipientTablePath)+'Certificatetype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description and R2.Code = D2.Code
 			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
@@ -881,7 +881,7 @@ GO
 			left outer join '+trim(@cRecipientTablePath)+'Employee R4 on R4.EmployeeCode = D4.EmployeeCode and R4.CompanyID = R1.CompanyID
 
 			join '+@cDonorTablePath+'ReviewType D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.ReviewTypeID
-			join '+trim(@cRecipientTablePath)+'Reviewtype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
+			join '+trim(@cRecipientTablePath)+'Reviewtype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description and R2.Code = D2.Code
 			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
@@ -904,7 +904,7 @@ GO
 			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
 			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 			join '+@cDonorTablePath+'Skilltype D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.SkillTypeID
-			join '+trim(@cRecipientTablePath)+'Skilltype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
+			join '+trim(@cRecipientTablePath)+'Skilltype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description and R2.Code = D2.Code
 			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
@@ -926,8 +926,8 @@ GO
 			from '+@cDonorTablePath+'EmployeeLicense T1 
 			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
 			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
-			join '+@cDonorTablePath+'Licensetype D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.LicenseTypeID
-			join '+trim(@cRecipientTablePath)+'Licensetype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
+			join '+@cDonorTablePath+'LicenseType D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.LicenseTypeID
+			join '+trim(@cRecipientTablePath)+'LicenseType R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description and R2.Code = D2.Code
 			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
@@ -950,7 +950,7 @@ GO
 			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
 			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 			join '+@cDonorTablePath+'AchievementType D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.AchievementTypeID
-			join '+trim(@cRecipientTablePath)+'Achievementtype R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
+			join '+trim(@cRecipientTablePath)+'AchievementType R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description and R2.Code = D2.Code
 			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
@@ -973,7 +973,7 @@ GO
 			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
 			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 			join '+@cDonorTablePath+'CertificateType D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.CertificateTypeID
-			join '+trim(@cRecipientTablePath)+'Certificatetype R2 on R2.CompanyID = R1.CompanyID and R2.Code = D2.Code
+			join '+trim(@cRecipientTablePath)+'CertificateType R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description and R2.Code = D2.Code
 			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
