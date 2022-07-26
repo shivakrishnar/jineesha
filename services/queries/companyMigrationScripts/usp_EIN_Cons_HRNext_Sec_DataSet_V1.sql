@@ -183,27 +183,7 @@ GO
 			end
 		end
 
-		-- if @cTableToRun = 'ZZZ' or @cTableToRun like '%D%'
-		-- begin
-		-- 	--SecRole Ready
-		-- 	select @cmdShowDataRecipient = 'select D1.Name, D1.Description, D1.TenantId, D1.RoleLevelID, '+@cRecipientCompany_ID+', D1.ReadOnlyRoleLevelID, D1.SecEmployeeRecordFilterID, D1.BaseRoleID, D1.IsBaseRole
-		-- 	from '+trim(@cDonorTablePath)+'SecRole D1
-		-- 	left outer join '+trim(@cDonorTablePath)+'SecRole D2 on D2.ID = D1.BaseRoleID
-		-- 	left outer join '+trim(@cRecipientTablePath)+'SecRole R1 on R1.Name = D2.Name
-		-- 	where D1.companyid = '+@cDonorCompany_ID
-
-		-- 	exec (@cmdShowDataRecipient)
-		-- 	if @cShowStatement = 1
-		-- 	begin
-		-- 		select @cmdShowDataRecipient
-		-- 	end
-		-- 	if @cVerbose_Ind = 1
-		-- 	begin
-		-- 		select 'SecRole - D' as Showdata
-		-- 	end
-		-- end
-
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%D%'
 		begin
 			select @cmdShowDataRecipient = 'select distinct D1.*
 			from '+trim(@cDonorTablePath)+'HRnextAudit D1
@@ -220,11 +200,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'HRNextAudit - G' as Showdata
+				select 'HRNextAudit - D' as Showdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%E%'
 		begin
 			select @cmdShowDataRecipient = 'select R1.*, D2.*, D1.*
 			from '+trim(@cDonorTablePath)+'HRnextAuditDetail D1
@@ -241,20 +221,20 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'HRNextAuditDetail - H' as Showdata
+				select 'HRNextAuditDetail - E' as Showdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%F%'
 		begin
-			select @ColumnName = 'trim(str(R2.ID))'
-			select @cmdShowDataRecipient = 'select '''+@cRecipientCompany_ID+'@''+'+@ColumnName+'+''&'',T1.Name, T1.Description, 
-			T1.ResourceID, T1.ResourceGroupID, T1.ResourceSubGroupID, T1.IsVisible, T1.IsRead, T1.IsCreate, T1.IsUpdate, T1.IsDelete, T1.IsRequired, T1.CddID, T1.TableColumn, T1.Category
-			from '+trim(@cDonorTablePath)+'SecPermission T1
-			left join '+trim(@cDonorTablePath)+'SecPermissionRole D1 on D1.PermissionID = T1.ID
-			left join '+trim(@cDonorTablePath)+'SecRole D2 on D2.ID = D1.RoleID
-			join '+trim(@cRecipientTablePath)+'SecRole R2 on R2.Name = D2.Name and R2.Description = D2.Description 
-			where D2.CompanyID = '+@cDonorCompany_ID+' and R2.CompanyID = '+@cRecipientCompany_ID
+			-- SecEmployeeRecordFilter
+			select @cmdShowDataRecipient = '
+				select
+					donor_srf.Name,
+					donor_srf.Description,
+					'+@cRecipientCompany_ID+' as CompanyID
+				from '+trim(@cDonorTablePath)+'SecEmployeeRecordFilter donor_srf
+				where donor_srf.CompanyID = '+@cDonorCompany_ID
 
 			exec (@cmdShowDataRecipient)
 			if @cShowStatement = 1
@@ -264,17 +244,146 @@ GO
 
 			if @cVerbose_Ind = 1
 			begin
-				select 'SecPermission/SecPermissionRole - I' as Showdata
+				select 'SecEmployeeRecordFilter/SecEmployeeRecordFilterValue - F' as Showdata
+			end
+		end
+
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
+		begin
+			select @cmdShowDataRecipient = '
+				select
+					donor_sr.Name,
+					donor_sr.Description,
+					donor_sr.TenantId, -- can this be nulled out? is it ever used?
+					recip_srl.ID as RoleLevelID,
+					'+@cRecipientCompany_ID+' as CompanyID,
+					recip_srl_readonly.ID as ReadOnlyRoleLevelID, 
+					recip_srf.ID as SecEmployeeRecordFilterID,
+					recip_sr_base.ID as BaseRoleID,
+					donor_sr.IsBaseRole
+				from '+trim(@cDonorTablePath)+'SecRole donor_sr
+
+				left join '+trim(@cDonorTablePath)+'SecRoleLevel donor_srl on donor_srl.ID = donor_sr.RoleLevelID
+				left join '+trim(@cRecipientTablePath)+'SecRoleLevel recip_srl on
+					isnull(recip_srl.Description, '''') = isnull(donor_srl.Description, '''')
+					and isnull(recip_srl.Level, 0) = isnull(donor_srl.Level, 0)
+					and isnull(recip_srl.Name, '''') = isnull(donor_srl.Name, '''')
+
+				left join '+trim(@cDonorTablePath)+'SecRoleLevel donor_srl_readonly on donor_srl_readonly.ID = donor_sr.ReadOnlyRoleLevelID
+				left join '+trim(@cRecipientTablePath)+'SecRoleLevel recip_srl_readonly on
+					isnull(recip_srl_readonly.Description, '''') = isnull(donor_srl_readonly.Description, '''')
+					and isnull(recip_srl_readonly.Level, 0) = isnull(donor_srl_readonly.Level, 0)
+					and isnull(recip_srl_readonly.Name, '''') = isnull(donor_srl_readonly.Name, '''')
+
+				left join '+trim(@cDonorTablePath)+'SecEmployeeRecordFilter donor_srf on donor_srf.ID = donor_sr.SecEmployeeRecordFilterID
+				left join '+trim(@cRecipientTablePath)+'SecEmployeeRecordFilter recip_srf on
+					isnull(recip_srf.Name, '''') = isnull(donor_srf.Name, '''')
+					and isnull(recip_srf.Description, '''') = isnull(donor_srf.Description, '''')
+					and recip_srf.CompanyID = '+@cRecipientCompany_ID+'
+
+				left join '+trim(@cDonorTablePath)+'SecRole donor_sr_base on donor_sr_base.ID = donor_sr.BaseRoleID
+				left join '+trim(@cRecipientTablePath)+'SecRole recip_sr_base on
+					isnull(recip_sr_base.Name, '''') = isnull(donor_sr_base.Name, '''')
+					and isnull(recip_sr_base.Description, '''') = isnull(donor_sr_base.Description, '''')
+					and isnull(recip_sr_base.IsBaseRole, 0) = isnull(donor_sr_base.IsBaseRole, 0)
+
+				where donor_sr.CompanyID = '+@cDonorCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+
+			if @cVerbose_Ind = 1
+			begin
+				select 'SecRole - G' as Showdata
+			end
+
+			select @cmdShowDataRecipient = '
+				select
+					donor_sp.Name,
+					donor_sp.Description,
+					recip_src.ID as ResourceID,
+					recip_srg.ID as ResourceGroupID,
+					recip_srsg.ID as ResourceSubGroupID,
+					donor_sp.IsVisible,
+					donor_sp.IsRead,
+					donor_sp.IsCreate,
+					donor_sp.IsUpdate,
+					donor_sp.IsDelete,
+					donor_sp.IsRequired,
+					recip_sc.ID as CddID,
+					donor_sp.TableColumn,
+					donor_sp.Category
+				from '+trim(@cDonorTablePath)+'SecPermission donor_sp
+
+				join '+trim(@cDonorTablePath)+'SecPermissionRole donor_spr on donor_spr.PermissionID = donor_sp.ID
+				join '+trim(@cDonorTablePath)+'SecRole donor_sr on donor_sr.ID = donor_spr.RoleID
+
+				left join '+trim(@cDonorTablePath)+'SecResource donor_src on donor_src.ID = donor_sp.ResourceID
+				left join '+trim(@cDonorTablePath)+'SecResourceGroup donor_src_srg on donor_src_srg.ID = donor_src.ResourceGroupID
+				left join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_src_srg on
+					isnull(recip_src_srg.Name, '''') = isnull(donor_src_srg.Name, '''')
+					and isnull(recip_src_srg.Description, '''') = isnull(donor_src_srg.Description, '''')
+					and isnull(recip_src_srg.AlternateName, '''') = isnull(donor_src_srg.AlternateName, '''')
+					and isnull(recip_src_srg.MainTableName, '''') = isnull(donor_src_srg.MainTableName, '''')
+				left join '+trim(@cRecipientTablePath)+'SecResource recip_src on
+					isnull(recip_src.Name, '''') = isnull(donor_src.Name, '''')
+					and isnull(recip_src.Description, '''') = isnull(donor_src.Description, '''')
+					and recip_src.ResourceGroupID = recip_src_srg.ID
+
+				left join '+trim(@cDonorTablePath)+'SecResourceGroup donor_srg on donor_srg.ID = donor_sp.ResourceGroupID
+				left join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_srg on
+					isnull(recip_srg.Name, '''') = isnull(donor_srg.Name, '''')
+					and isnull(recip_srg.Description, '''') = isnull(donor_srg.Description, '''')
+					and isnull(recip_srg.AlternateName, '''') = isnull(donor_srg.AlternateName, '''')
+					and isnull(recip_srg.MainTableName, '''') = isnull(donor_srg.MainTableName, '''')
+
+				left join '+trim(@cDonorTablePath)+'SecResourceSubGroup donor_srsg on donor_srsg.ID = donor_sp.ResourceSubGroupID
+				left join '+trim(@cDonorTablePath)+'SecResourceGroup donor_srsg_srg on donor_srsg_srg.ID = donor_srsg.ResourceGroupID
+				left join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_srsg_srg on
+					isnull(recip_srsg_srg.Name, '''') = isnull(donor_srsg_srg.Name, '''')
+					and isnull(recip_srsg_srg.Description, '''') = isnull(donor_srsg_srg.Description, '''')
+					and isnull(recip_srsg_srg.MainTableName, '''') = isnull(donor_srsg_srg.MainTableName, '''')
+					and isnull(recip_srsg_srg.AlternateName, '''') = isnull(donor_srsg_srg.AlternateName, '''')
+				left join '+trim(@cRecipientTablePath)+'SecResourceSubGroup recip_srsg on
+					isnull(recip_srsg.Name, '''') = isnull(donor_srsg.Name, '''')
+					and isnull(recip_srsg.Description, '''') = isnull(donor_srsg.Description, '''')
+					and isnull(recip_srsg.MainTableName, '''') = isnull(donor_srsg.MainTableName, '''')
+					and recip_srsg.ResourceGroupID = recip_srsg_srg.ID
+
+				left join '+trim(@cDonorTablePath)+'SecCDD donor_sc on donor_sc.ID = donor_sp.CddID
+				left join '+trim(@cRecipientTablePath)+'SecCDD recip_sc on
+					isnull(recip_sc.TableName, '''') = isnull(donor_sc.TableName, '''')
+					and isnull(recip_sc.ColumnName, '''') = isnull(donor_sc.ColumnName, '''')
+					and isnull(recip_sc.DataType, '''') = isnull(donor_sc.DataType, '''')
+					and isnull(recip_sc.Length, -1) = isnull(donor_sc.Length, -1)
+					and isnull(recip_sc.TableColumn, '''') = isnull(donor_sc.TableColumn, '''')
+
+				where donor_sr.CompanyID = '+@cDonorCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+
+			if @cVerbose_Ind = 1
+			begin
+				select 'SecPermission - G' as Showdata
+			end
+
+			if @cVerbose_Ind = 1
+			begin
+				select 'SecRole/SecPermission/SecPermissionRole/SecPermissionUser/SecRoleUser - G' as Showdata
 			end
 		end
 
 		----------------------------------------------------
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
 		begin
-			--select @cmdShowDataRecipient = 'select D1.*
-			--from '+trim(@cDonorTablePath)+'Company D1 where D1.ID = '+@cDonorCompany_ID+'
-			--union select R1.* from'+trim(@cRecipientTablePath)+'Company R1 where R1.ID = '+@cRecipientCompany_ID
-
 			select @cmdShowDataRecipient = 'select R1.ID, D1.SC_AdminUsername, SC_AdminPassword, SC_SSOUsername, SC_SSOPassword, SC_SSOClockCard2, SC_SSOClockCard3
 			from '+trim(@cDonorTablePath)+'UserCompanyTimeclockCredential D1
 			join '+trim(@cDonorTablePath)+'HRnextUser D2 on D1.HRnextUserID = D2.ID
@@ -288,11 +397,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'Company TimeClock Credentials Update - J' as Showdata
+				select 'Company TimeClock Credentials Update - H' as Showdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
 		begin
 			select @cmdShowDataRecipient = '
 			select donor_hu.ID, donor_hu.Username, donor_huc.CompanyID, donor_hu.IsActive
@@ -307,7 +416,7 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'Inactivate Users in Donor - K' as Showdata
+				select 'Inactivate Users in Donor - I' as Showdata
 			end
 		end
 
@@ -432,10 +541,6 @@ GO
 			join '+trim(@cDonorTablePath)+'HRnextUserCompany D2 on D2.HRnextUserID = D1.ID
 			where D2.CompanyID = '+@cDonorCompany_ID
 			
-			--select D1.ID, D1.IntegrationShugoUsername
-			--from '+trim(@cRecipientTablePath)+'HRnextUser D1
-			--where D1.IntegrationShugoUsername = '+@cRecipientCompany_ID
-
 			exec (@cmdInsert)
 			if @cShowStatement = 1
 			begin
@@ -458,10 +563,6 @@ GO
 			join '+trim(@cRecipientTablePath)+'Employee R2 on R2.EmployeeCode = D3.EmployeeCode
 			where D3.CompanyID = '+@cDonorCompany_ID+' and R2.CompanyID = '+@cRecipientCompany_ID
 
-			--select D1.ID, D1.IntegrationHRAnswerLinkUsername
-			--from '+trim(@cRecipientTablePath)+'HRnextUser D1
-			--where D1.IntegrationShugoUsername = '+@cRecipientCompany_ID
-
 			exec (@cmdInsert)
 			if @cShowStatement = 1
 			begin
@@ -473,46 +574,14 @@ GO
 			end
 		end
 
-		/*if @cTableToRun = 'ZZZ' or @cTableToRun like '%D%'
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%D%'
 		begin
-		--SecRole Ready
-			select @cmdInsert = 'delete from '+trim(@cRecipientTablePath)+'SecPermissionRole where RoleID in (select ID from '+trim(@cRecipientTablePath)+'SecRole where CompanyID = '+@cRecipientCompany_ID+')'
-			exec (@cmdInsert)
-			if @cShowStatement = 1
-			begin
-				select @cmdInsert
-			end
-			--select @cmdInsert = 'delete from '+trim(@cRecipientTablePath)+'SecPermission where CompanyID = '+@cRecipientCompany_ID
-			--exec (@cmdInsert)
-			--if @cShowStatement = 1
-			--begin
-			--	select @cmdInsert
-			--end
-			select @cmdInsert = 'delete from '+trim(@cRecipientTablePath)+'SecRole where CompanyID = '+@cRecipientCompany_ID
-			exec (@cmdInsert)
-			if @cShowStatement = 1
-			begin
-				select @cmdInsert
-			end
-			if @cVerbose_Ind = 1
-			begin
-				select 'SecPermissionRole/SecPermission/SecRole Delete - D' as Insertdata
-			end
-
-			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'SecRole (Name, Description, TenantId, RoleLevelID, CompanyID, ReadOnlyRoleLevelID, SecEmployeeRecordFilterID, BaseRoleID, IsBaseRole)
-			select D1.Name, D1.Description, NULL as TenantID, R2.ID as RoleLevelID, '+@cRecipientCompany_ID+' as CompanyID, R3.ID as ReadOnlyRoleLevelID, R4.ID as SecEmployeeRecordFilterID, NULL as BaseRoleID, D1.IsBaseRole
-			from '+trim(@cDonorTablePath)+'SecRole D1
-
-			left outer join '+trim(@cDonorTablePath)+'SecRoleLevel D2 on D2.ID = D1.RoleLevelID
-			left outer join '+trim(@cRecipientTablePath)+'SecRoleLevel R2 on R2.Name = D2.Name and R2.Description = D2.Description
-
-			left outer join '+trim(@cDonorTablePath)+'SecRoleLevel D3 on D3.ID = D1.ReadOnlyRoleLevelID
-			left outer join '+trim(@cRecipientTablePath)+'SecRoleLevel R3 on R3.Name = D3.Name and R3.Description = D3.Description
-
-			left outer join '+trim(@cDonorTablePath)+'SecEmployeeRecordFilter D4 on D4.ID = D1.SecEmployeeRecordFilterID
-			left outer join '+trim(@cRecipientTablePath)+'SecEmployeeRecordFilter R4 on R4.Name = D4.Name and R4.Description = D4.Description
-
-			where D1.companyid = '+@cDonorCompany_ID
+			select @cmdInsert = 'insert into'+trim(@cRecipientTablePath)+'HRnextAudit (D1.TransactionName, D1.UserName, D1.AuditDate)
+			select distinct D1.TransactionName, D1.UserName, D1.AuditDate
+			from '+trim(@cDonorTablePath)+'HRnextAudit D1
+			join '+trim(@cDonorTablePath)+'HRnextAuditDetail D4 on D4.HRnextAuditID = D1.ID
+			where D4.CompanyID = '+@cDonorCompany_ID
 
 			exec (@cmdInsert)
 			if @cShowStatement = 1
@@ -521,18 +590,512 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'SecRole Insert - D' as Insertdata
+				select 'HRnextAudit - D' as Insertdata
 			end
-		end*/
+		end
 
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%E%'
 		begin
-			--SecRoleUser
-			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'SecRoleUser (RoleID, UserID)
+			select @cmdInsert = 'insert into'+trim(@cRecipientTablePath)+'HRnextAuditDetail (HRnextAuditID, CompanyID, AffectedEmployee, ActionType, FieldChanged, OldValue, NewValue, AreaOfChange, KeyDetails)
+			select R1.ID, '+@cRecipientCompany_ID+' as CompanyID, D1.AffectedEmployee, D1.ActionType, D1.FieldChanged, D1.OldValue, D1.NewValue, D1.AreaOfChange, D1.KeyDetails
+			from '+trim(@cDonorTablePath)+'HRnextAuditDetail D1
+			join '+trim(@cDonorTablePath)+'HRnextAudit D2 on D2.ID = D1.HRNextAuditID
+			join '+trim(@cRecipientTablePath)+'HRnextAudit R1 on R1.TransactionName = D2.TransactionName and R1.UserName = D2.UserName and R1.AuditDate = D2.AuditDate
+			where D1.CompanyID = '+@cDonorCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'HRnextAuditDetail - E' as Insertdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%F%'
+		begin
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'SecEmployeeRecordFilter
+				(
+					Name,
+					Description,
+					CompanyID
+				)
+				select
+					donor_srf.Name,
+					donor_srf.Description,
+					'+@cRecipientCompany_ID+' as CompanyID
+				from '+trim(@cDonorTablePath)+'SecEmployeeRecordFilter donor_srf
+				where donor_srf.CompanyID = '+@cDonorCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'SecEmployeeRecordFilter - F' as Insertdata
+			end
+
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'SecEmployeeRecordFilterValue
+				(
+					SecEmployeeRecordFilterID,
+					OrganizationTypeID,
+					PositionTypeID,
+					IsExclude
+				)
+				select
+					recip_srf.ID as SecEmployeeRecordFilterID,
+					recip_ot.ID as OrganizationTypeID,
+					recip_pt.ID as PositionTypeID,
+					donor_srfv.IsExclude
+				from '+trim(@cDonorTablePath)+'SecEmployeeRecordFilterValue donor_srfv
+
+				join '+trim(@cDonorTablePath)+'SecEmployeeRecordFilter donor_srf on donor_srf.ID = donor_srfv.SecEmployeeRecordFilterID
+				join '+trim(@cRecipientTablePath)+'SecEmployeeRecordFilter recip_srf on
+					recip_srf.Name = donor_srf.Name
+					and isnull(recip_srf.Description, '''') = isnull(donor_srf.Description, '''')
+					and recip_srf.CompanyID = '+@cRecipientCompany_ID+'
+
+				left join '+trim(@cDonorTablePath)+'OrganizationType donor_ot on donor_ot.ID = donor_srfv.OrganizationTypeID
+				left join '+trim(@cDonorTablePath)+'OrganizationStructure donor_os on donor_os.ID = donor_ot.OrganizationStructureID
+				left join '+trim(@cRecipientTablePath)+'OrganizationStructure recip_os on
+					recip_os.CompanyID = recip_srf.CompanyID
+					and recip_os.Org1Label = donor_os.Org1Label
+					and recip_os.Org2Label = donor_os.Org2Label
+					and recip_os.Org3Label = donor_os.Org3Label
+					and recip_os.Org4Label = donor_os.Org4Label
+				left join '+trim(@cRecipientTablePath)+'OrganizationType recip_ot on
+					recip_ot.Code = donor_ot.Code
+					and isnull(recip_ot.Description, '''') = isnull(donor_ot.Description, '''')
+					and recip_ot.OrgLevel = donor_ot.OrgLevel
+					and recip_ot.OrganizationStructureID = recip_os.ID
+
+				left join '+trim(@cDonorTablePath)+'PositionType donor_pt on donor_pt.ID = donor_srfv.PositionTypeID
+				left join '+trim(@cRecipientTablePath)+'PositionType recip_pt on
+					isnull(recip_pt.Code, '''') = isnull(donor_pt.Code, '''')
+					and isnull(recip_pt.Title, '''') = isnull(donor_pt.Title, '''')
+					and isnull(recip_pt.Description, '''') = isnull(donor_pt.Description, '''')
+					and isnull(recip_pt.Priority, -1) = isnull(donor_pt.Priority, -1)
+					and coalesce(convert(nvarchar(255), recip_pt.ApprovedDate), ''NA'') = coalesce(convert(nvarchar(255), donor_pt.ApprovedDate), ''NA'')
+					and coalesce(convert(nvarchar(255), recip_pt.EffectiveDate), ''NA'') = coalesce(convert(nvarchar(255), donor_pt.EffectiveDate), ''NA'')
+					and coalesce(convert(nvarchar(255), recip_pt.ClosedDate), ''NA'') = coalesce(convert(nvarchar(255), donor_pt.ClosedDate), ''NA'')
+					and recip_pt.CompanyID = recip_srf.CompanyID
+
+				where donor_srf.CompanyID = '+@cDonorCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'SecEmployeeRecordFilterValue - F' as Insertdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
+		begin
+			-- step 1: update Description column on recipient SecPermission table with text so that they can be deleted
+			select @cmdInsert = '
+				update recip_sp
+				set recip_sp.Description = ''DELETE_ME_'' + convert(nvarchar(max), '+@cRecipientCompany_ID+')
+				from '+trim(@cRecipientTablePath)+'SecPermission recip_sp
+				join '+trim(@cRecipientTablePath)+'SecPermissionRole recip_spr on recip_spr.PermissionID = recip_sp.ID
+				join '+trim(@cRecipientTablePath)+'SecRole recip_sr on recip_sr.ID = recip_spr.RoleID
+				where recip_sr.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Update SecPermission rows in recipient to be deleted - G' as Insertdata
+			end
+
+			-- step 2: delete SecPermissionRole records from recipient db first to resolve reference constraint error
+			select @cmdInsert = '
+				delete recip_spr from '+trim(@cRecipientTablePath)+'SecPermissionRole recip_spr
+				join '+trim(@cRecipientTablePath)+'SecRole recip_sr on recip_sr.ID = recip_spr.RoleID
+				where recip_sr.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Delete existing SecPermissionRole from recipient - G' as Insertdata
+			end
+
+			-- step 3: delete SecPermission records from recipient db using text stored in Description
+			select @cmdInsert = '
+				delete recip_sp from '+trim(@cRecipientTablePath)+'SecPermission recip_sp
+				where recip_sp.Description = ''DELETE_ME_'' + convert(nvarchar(max), '+@cRecipientCompany_ID+')'
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Delete existing SecPermission from recipient - G' as Insertdata
+			end
+
+			-- step 4: delete SecRole records from recip db
+			select @cmdInsert = '
+				delete recip_sr from '+trim(@cRecipientTablePath)+'SecRole recip_sr
+				where recip_sr.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Delete existing SecRole from recipient - G' as Insertdata
+			end
+
+			-- step 5: move SecRole records from donor to recip
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'SecRole
+				(Name, Description, TenantId, RoleLevelID, CompanyID, ReadOnlyRoleLevelID, SecEmployeeRecordFilterID, BaseRoleID, IsBaseRole)
+				select
+					donor_sr.Name,
+					donor_sr.Description,
+					donor_sr.TenantId, -- can this be nulled out? is it ever used?
+					recip_srl.ID as RoleLevelID,
+					'+@cRecipientCompany_ID+' as CompanyID,
+					recip_srl_readonly.ID as ReadOnlyRoleLevelID, 
+					recip_srf.ID as SecEmployeeRecordFilterID,
+					recip_sr_base.ID as BaseRoleID,
+					donor_sr.IsBaseRole
+				from '+trim(@cDonorTablePath)+'SecRole donor_sr
+
+				left join '+trim(@cDonorTablePath)+'SecRoleLevel donor_srl on donor_srl.ID = donor_sr.RoleLevelID
+				left join '+trim(@cRecipientTablePath)+'SecRoleLevel recip_srl on
+					isnull(recip_srl.Description, '''') = isnull(donor_srl.Description, '''')
+					and isnull(recip_srl.Level, 0) = isnull(donor_srl.Level, 0)
+					and isnull(recip_srl.Name, '''') = isnull(donor_srl.Name, '''')
+
+				left join '+trim(@cDonorTablePath)+'SecRoleLevel donor_srl_readonly on donor_srl_readonly.ID = donor_sr.ReadOnlyRoleLevelID
+				left join '+trim(@cRecipientTablePath)+'SecRoleLevel recip_srl_readonly on
+					isnull(recip_srl_readonly.Description, '''') = isnull(donor_srl_readonly.Description, '''')
+					and isnull(recip_srl_readonly.Level, 0) = isnull(donor_srl_readonly.Level, 0)
+					and isnull(recip_srl_readonly.Name, '''') = isnull(donor_srl_readonly.Name, '''')
+
+				left join '+trim(@cDonorTablePath)+'SecEmployeeRecordFilter donor_srf on donor_srf.ID = donor_sr.SecEmployeeRecordFilterID
+				left join '+trim(@cRecipientTablePath)+'SecEmployeeRecordFilter recip_srf on
+					isnull(recip_srf.Name, '''') = isnull(donor_srf.Name, '''')
+					and isnull(recip_srf.Description, '''') = isnull(donor_srf.Description, '''')
+					and recip_srf.CompanyID = '+@cRecipientCompany_ID+'
+
+				left join '+trim(@cDonorTablePath)+'SecRole donor_sr_base on donor_sr_base.ID = donor_sr.BaseRoleID
+				left join '+trim(@cRecipientTablePath)+'SecRole recip_sr_base on
+					isnull(recip_sr_base.Name, '''') = isnull(donor_sr_base.Name, '''')
+					and isnull(recip_sr_base.Description, '''') = isnull(donor_sr_base.Description, '''')
+					and isnull(recip_sr_base.IsBaseRole, 0) = isnull(donor_sr_base.IsBaseRole, 0)
+
+				where donor_sr.CompanyID = '+@cDonorCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Move SecRole - G' as Insertdata
+			end
+
+			-- step 6: move SecPermission associated with company roles from donor to recip
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'SecPermission
+				(
+					Name,
+					Description,
+					ResourceID,
+					ResourceGroupID,
+					ResourceSubGroupID,
+					IsVisible,
+					IsRead,
+					IsCreate,
+					IsUpdate,
+					IsDelete,
+					IsRequired,
+					CddID,
+					TableColumn,
+					Category
+				)
+				select
+					donor_sp.Name,
+					donor_sp.Description,
+					recip_src.ID as ResourceID,
+					recip_srg.ID as ResourceGroupID,
+					recip_srsg.ID as ResourceSubGroupID,
+					donor_sp.IsVisible,
+					donor_sp.IsRead,
+					donor_sp.IsCreate,
+					donor_sp.IsUpdate,
+					donor_sp.IsDelete,
+					donor_sp.IsRequired,
+					recip_sc.ID as CddID,
+					donor_sp.TableColumn,
+					donor_sp.Category
+				from '+trim(@cDonorTablePath)+'SecPermission donor_sp
+
+				join '+trim(@cDonorTablePath)+'SecPermissionRole donor_spr on donor_spr.PermissionID = donor_sp.ID
+				join '+trim(@cDonorTablePath)+'SecRole donor_sr on donor_sr.ID = donor_spr.RoleID
+
+				left join '+trim(@cDonorTablePath)+'SecResource donor_src on donor_src.ID = donor_sp.ResourceID
+				left join '+trim(@cDonorTablePath)+'SecResourceGroup donor_src_srg on donor_src_srg.ID = donor_src.ResourceGroupID
+				left join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_src_srg on
+					isnull(recip_src_srg.Name, '''') = isnull(donor_src_srg.Name, '''')
+					and isnull(recip_src_srg.Description, '''') = isnull(donor_src_srg.Description, '''')
+					and isnull(recip_src_srg.AlternateName, '''') = isnull(donor_src_srg.AlternateName, '''')
+					and isnull(recip_src_srg.MainTableName, '''') = isnull(donor_src_srg.MainTableName, '''')
+				left join '+trim(@cRecipientTablePath)+'SecResource recip_src on
+					isnull(recip_src.Name, '''') = isnull(donor_src.Name, '''')
+					and isnull(recip_src.Description, '''') = isnull(donor_src.Description, '''')
+					and recip_src.ResourceGroupID = recip_src_srg.ID
+
+				left join '+trim(@cDonorTablePath)+'SecResourceGroup donor_srg on donor_srg.ID = donor_sp.ResourceGroupID
+				left join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_srg on
+					isnull(recip_srg.Name, '''') = isnull(donor_srg.Name, '''')
+					and isnull(recip_srg.Description, '''') = isnull(donor_srg.Description, '''')
+					and isnull(recip_srg.AlternateName, '''') = isnull(donor_srg.AlternateName, '''')
+					and isnull(recip_srg.MainTableName, '''') = isnull(donor_srg.MainTableName, '''')
+
+				left join '+trim(@cDonorTablePath)+'SecResourceSubGroup donor_srsg on donor_srsg.ID = donor_sp.ResourceSubGroupID
+				left join '+trim(@cDonorTablePath)+'SecResourceGroup donor_srsg_srg on donor_srsg_srg.ID = donor_srsg.ResourceGroupID
+				left join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_srsg_srg on
+					isnull(recip_srsg_srg.Name, '''') = isnull(donor_srsg_srg.Name, '''')
+					and isnull(recip_srsg_srg.Description, '''') = isnull(donor_srsg_srg.Description, '''')
+					and isnull(recip_srsg_srg.MainTableName, '''') = isnull(donor_srsg_srg.MainTableName, '''')
+					and isnull(recip_srsg_srg.AlternateName, '''') = isnull(donor_srsg_srg.AlternateName, '''')
+				left join '+trim(@cRecipientTablePath)+'SecResourceSubGroup recip_srsg on
+					isnull(recip_srsg.Name, '''') = isnull(donor_srsg.Name, '''')
+					and isnull(recip_srsg.Description, '''') = isnull(donor_srsg.Description, '''')
+					and isnull(recip_srsg.MainTableName, '''') = isnull(donor_srsg.MainTableName, '''')
+					and recip_srsg.ResourceGroupID = recip_srsg_srg.ID
+
+				left join '+trim(@cDonorTablePath)+'SecCDD donor_sc on donor_sc.ID = donor_sp.CddID
+				left join '+trim(@cRecipientTablePath)+'SecCDD recip_sc on
+					isnull(recip_sc.TableName, '''') = isnull(donor_sc.TableName, '''')
+					and isnull(recip_sc.ColumnName, '''') = isnull(donor_sc.ColumnName, '''')
+					and isnull(recip_sc.DataType, '''') = isnull(donor_sc.DataType, '''')
+					and isnull(recip_sc.Length, -1) = isnull(donor_sc.Length, -1)
+					and isnull(recip_sc.TableColumn, '''') = isnull(donor_sc.TableColumn, '''')
+
+				where donor_sr.CompanyID = '+@cDonorCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Move SecPermission under company roles - G' as Insertdata
+			end
+
+			-- step 6.5: move SecPermission records associated with company users from donor to recip
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'SecPermission
+				(
+					Name,
+					Description,
+					ResourceID,
+					ResourceGroupID,
+					ResourceSubGroupID,
+					IsVisible,
+					IsRead,
+					IsCreate,
+					IsUpdate,
+					IsDelete,
+					IsRequired,
+					CddID,
+					TableColumn,
+					Category
+				)
+				select
+					donor_sp.Name,
+					donor_sp.Description,
+					recip_src.ID as ResourceID,
+					recip_srg.ID as ResourceGroupID,
+					recip_srsg.ID as ResourceSubGroupID,
+					donor_sp.IsVisible,
+					donor_sp.IsRead,
+					donor_sp.IsCreate,
+					donor_sp.IsUpdate,
+					donor_sp.IsDelete,
+					donor_sp.IsRequired,
+					recip_sc.ID as CddID,
+					donor_sp.TableColumn,
+					donor_sp.Category
+				from '+trim(@cDonorTablePath)+'SecPermission donor_sp
+
+				join '+trim(@cDonorTablePath)+'SecPermissionUser donor_spu on donor_spu.PermissionID = donor_sp.ID
+				join '+trim(@cDonorTablePath)+'HRnextUser donor_u on donor_u.ID = donor_spu.UserID
+				join '+trim(@cDonorTablePath)+'HRnextUserCompany donor_uc on donor_uc.HRnextUserID = donor_u.ID
+
+				left join '+trim(@cDonorTablePath)+'SecResource donor_src on donor_src.ID = donor_sp.ResourceID
+				left join '+trim(@cDonorTablePath)+'SecResourceGroup donor_src_srg on donor_src_srg.ID = donor_src.ResourceGroupID
+				left join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_src_srg on
+					isnull(recip_src_srg.Name, '''') = isnull(donor_src_srg.Name, '''')
+					and isnull(recip_src_srg.Description, '''') = isnull(donor_src_srg.Description, '''')
+					and isnull(recip_src_srg.AlternateName, '''') = isnull(donor_src_srg.AlternateName, '''')
+					and isnull(recip_src_srg.MainTableName, '''') = isnull(donor_src_srg.MainTableName, '''')
+				left join '+trim(@cRecipientTablePath)+'SecResource recip_src on
+					isnull(recip_src.Name, '''') = isnull(donor_src.Name, '''')
+					and isnull(recip_src.Description, '''') = isnull(donor_src.Description, '''')
+					and recip_src.ResourceGroupID = recip_src_srg.ID
+
+				left join '+trim(@cDonorTablePath)+'SecResourceGroup donor_srg on donor_srg.ID = donor_sp.ResourceGroupID
+				left join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_srg on
+					isnull(recip_srg.Name, '''') = isnull(donor_srg.Name, '''')
+					and isnull(recip_srg.Description, '''') = isnull(donor_srg.Description, '''')
+					and isnull(recip_srg.AlternateName, '''') = isnull(donor_srg.AlternateName, '''')
+					and isnull(recip_srg.MainTableName, '''') = isnull(donor_srg.MainTableName, '''')
+
+				left join '+trim(@cDonorTablePath)+'SecResourceSubGroup donor_srsg on donor_srsg.ID = donor_sp.ResourceSubGroupID
+				left join '+trim(@cDonorTablePath)+'SecResourceGroup donor_srsg_srg on donor_srsg_srg.ID = donor_srsg.ResourceGroupID
+				left join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_srsg_srg on
+					isnull(recip_srsg_srg.Name, '''') = isnull(donor_srsg_srg.Name, '''')
+					and isnull(recip_srsg_srg.Description, '''') = isnull(donor_srsg_srg.Description, '''')
+					and isnull(recip_srsg_srg.MainTableName, '''') = isnull(donor_srsg_srg.MainTableName, '''')
+					and isnull(recip_srsg_srg.AlternateName, '''') = isnull(donor_srsg_srg.AlternateName, '''')
+				left join '+trim(@cRecipientTablePath)+'SecResourceSubGroup recip_srsg on
+					isnull(recip_srsg.Name, '''') = isnull(donor_srsg.Name, '''')
+					and isnull(recip_srsg.Description, '''') = isnull(donor_srsg.Description, '''')
+					and isnull(recip_srsg.MainTableName, '''') = isnull(donor_srsg.MainTableName, '''')
+					and recip_srsg.ResourceGroupID = recip_srsg_srg.ID
+
+				left join '+trim(@cDonorTablePath)+'SecCDD donor_sc on donor_sc.ID = donor_sp.CddID
+				left join '+trim(@cRecipientTablePath)+'SecCDD recip_sc on
+					isnull(recip_sc.TableName, '''') = isnull(donor_sc.TableName, '''')
+					and isnull(recip_sc.ColumnName, '''') = isnull(donor_sc.ColumnName, '''')
+					and isnull(recip_sc.DataType, '''') = isnull(donor_sc.DataType, '''')
+					and isnull(recip_sc.Length, -1) = isnull(donor_sc.Length, -1)
+					and isnull(recip_sc.TableColumn, '''') = isnull(donor_sc.TableColumn, '''')
+
+				where donor_uc.CompanyID = '+@cDonorCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Move SecPermission under company users - G' as Insertdata
+			end
+
+			-- step 7: move SecPermissionRole records from donor to recip
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'SecPermissionRole
+				(
+					PermissionID,
+					RoleID
+				)
+				select
+					recip_sp.ID as PermissionID,
+					recip_sr.ID as RoleID
+				from '+trim(@cDonorTablePath)+'SecPermissionRole donor_spr
+
+				join '+trim(@cDonorTablePath)+'SecRole donor_sr on donor_sr.ID = donor_spr.RoleID
+				join '+trim(@cDonorTablePath)+'SecPermission donor_sp on donor_sp.ID = donor_spr.PermissionID
+
+				join '+trim(@cRecipientTablePath)+'SecRole recip_sr on
+					isnull(recip_sr.Name, '''') = isnull(donor_sr.Name, '''')
+					and isnull(recip_sr.Description, '''') = isnull(donor_sr.Description, '''')
+					and isnull(recip_sr.TenantId, 0) = isnull(donor_sr.TenantId, 0)
+				join '+trim(@cRecipientTablePath)+'SecPermission recip_sp on
+					isnull(recip_sp.Name, '''') = isnull(donor_sp.Name, '''')
+					and isnull(recip_sp.Description, '''') = isnull(donor_sp.Description, '''')
+					and isnull(recip_sp.IsVisible, 0) = isnull(donor_sp.IsVisible, 0)
+					and isnull(recip_sp.IsRead, 0) = isnull(donor_sp.IsRead, 0)
+					and isnull(recip_sp.IsCreate, 0) = isnull(donor_sp.IsCreate, 0)
+					and isnull(recip_sp.IsUpdate, 0) = isnull(donor_sp.IsUpdate, 0)
+					and isnull(recip_sp.IsDelete, 0) = isnull(donor_sp.IsDelete, 0)
+					and isnull(recip_sp.IsRequired, 0) = isnull(donor_sp.IsRequired, 0)
+					and isnull(recip_sp.TableColumn, '''') = isnull(donor_sp.TableColumn, '''')
+					and isnull(recip_sp.Category, '''') = isnull(donor_sp.Category, '''')
+
+				where donor_sr.CompanyID = '+@cDonorCompany_ID+' and recip_sr.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Move SecPermissionRole - G' as Insertdata
+			end
+
+			-- step 8: move SecPermissionUser records from donor to recip
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'SecPermissionUser
+				(
+					PermissionID,
+					UserID
+				)
+				select
+					recip_sp.ID as PermissionID,
+					recip_hu.ID as UserID
+				from '+trim(@cDonorTablePath)+'SecPermissionUser donor_spu
+
+				join '+trim(@cDonorTablePath)+'HRnextUser donor_hu on donor_hu.ID = donor_spu.UserID
+				join '+trim(@cDonorTablePath)+'HRnextUserCompany donor_huc on donor_huc.HRnextUserID = donor_hu.ID
+				join '+trim(@cDonorTablePath)+'SecPermission donor_sp on donor_sp.ID = donor_spu.PermissionID
+
+				join '+trim(@cRecipientTablePath)+'HRnextUser recip_hu on recip_hu.Username = donor_hu.Username
+				join '+trim(@cRecipientTablePath)+'SecPermission recip_sp on
+					isnull(recip_sp.Name, '''') = isnull(donor_sp.Name, '''')
+					and isnull(recip_sp.Description, '''') = isnull(donor_sp.Description, '''')
+					and isnull(recip_sp.IsVisible, 0) = isnull(donor_sp.IsVisible, 0)
+					and isnull(recip_sp.IsRead, 0) = isnull(donor_sp.IsRead, 0)
+					and isnull(recip_sp.IsCreate, 0) = isnull(donor_sp.IsCreate, 0)
+					and isnull(recip_sp.IsUpdate, 0) = isnull(donor_sp.IsUpdate, 0)
+					and isnull(recip_sp.IsDelete, 0) = isnull(donor_sp.IsDelete, 0)
+					and isnull(recip_sp.IsRequired, 0) = isnull(donor_sp.IsRequired, 0)
+					and isnull(recip_sp.TableColumn, '''') = isnull(donor_sp.TableColumn, '''')
+					and isnull(recip_sp.Category, '''') = isnull(donor_sp.Category, '''')
+
+				where donor_huc.CompanyID = '+@cDonorCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Move SecPermissionUser - G' as Insertdata
+			end
+
+			-- step 9: move SecRoleUser records from donor to recip
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'SecRoleUser (RoleID, UserID)
 				select recip_sr.ID as RoleID, recip_u.ID as UserID
 				from '+trim(@cDonorTablePath)+'SecRoleUser donor_sru
+
 				join '+trim(@cDonorTablePath)+'SecRole donor_sr on donor_sr.ID = donor_sru.RoleID
-				join '+trim(@cRecipientTablePath)+'SecRole recip_sr on recip_sr.Description = donor_sr.Description -- Role Name can change if recip CompanyCode is different so use Description instead 
+				join '+trim(@cRecipientTablePath)+'SecRole recip_sr on
+					isnull(recip_sr.Name, '''') = isnull(donor_sr.Name, '''')
+					and isnull(recip_sr.Description, '''') = isnull(donor_sr.Description, '''')
+					and isnull(recip_sr.TenantId, 0) = isnull(donor_sr.TenantId, 0)
 
 				join '+trim(@cDonorTablePath)+'HRnextUser donor_u on donor_u.ID = donor_sru.UserID
 				join '+trim(@cRecipientTablePath)+'HRnextUser recip_u on recip_u.Username = donor_u.Username
@@ -546,38 +1109,16 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'SecRoleUser - E' as Insertdata
+				select 'Move SecRoleUser - G' as Insertdata
 			end
-		end
-
-		-- if @cTableToRun = 'ZZZ' or @cTableToRun like '%F%'
-		-- begin
-		-- 	select @cmdInsert = 'update '+trim(@cRecipientTablePath)+'HRnextUser
-		-- 	set IntegrationPayEntryUsername = null, IntegrationPayEntryPassword = null, IntegrationShugoUsername = null, 
-		-- 	IntegrationNCSUsername = null, IntegrationHRAnswerLinkUsername = null, IntegrationThinkHRUsername = null
-		-- 	where IntegrationShugoUsername = '+@cRecipientCompany_ID
-
-		-- 	exec (@cmdInsert)
-		-- 	if @cShowStatement = 1
-		-- 	begin
-		-- 		select @cmdInsert
-		-- 	end
-		-- 	if @cVerbose_Ind = 1
-		-- 	begin
-		-- 		select 'HRnextUser/Cleanup - F' as Insertdata
-		-- 	end
-		-- end
-
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
-		begin
-			select @cmdInsert = 'insert into'+trim(@cRecipientTablePath)+'HRnextAudit (D1.TransactionName, D1.UserName, D1.AuditDate)
-			select distinct D1.TransactionName, D1.UserName, D1.AuditDate
-			from '+trim(@cDonorTablePath)+'HRnextAudit D1
-			join '+trim(@cDonorTablePath)+'HRnextAuditDetail D4 on D4.HRnextAuditID = D1.ID
-			where D4.CompanyID = '+@cDonorCompany_ID
-
-			--	join '+trim(@cDonorTablePath)+'HRnextUser D2 on D2.Username = D1.Username
-			--join '+trim(@cDonorTablePath)+'HRnextUserCompany D3 on D3.HRNextUserID = D2.ID
+		
+			-- step 10: update SecRole names with recipient company code
+			select @cmdInsert = '
+				update recip_sr set recip_sr.Name = replace(recip_sr.Name, donor_c.PRIntegrationCompanyCode, recip_c.PRIntegrationCompanyCode)
+				from '+trim(@cRecipientTablePath)+'SecRole recip_sr
+				join '+trim(@cRecipientTablePath)+'Company recip_c on recip_c.ID = recip_sr.CompanyID
+				join '+trim(@cDonorTablePath)+'Company donor_c on donor_c.ID = '+@cDonorCompany_ID+'
+				where recip_sr.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
 			if @cShowStatement = 1
@@ -586,89 +1127,17 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'HRnextAudit - G' as Insertdata
-			end
-		end
-
-				if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
-		begin
-			select @cmdInsert = 'insert into'+trim(@cRecipientTablePath)+'HRnextAuditDetail (HRnextAuditID, CompanyID, AffectedEmployee, ActionType, FieldChanged, OldValue, NewValue, AreaOfChange, KeyDetails)
-			select R1.ID, '+@cRecipientCompany_ID+' as CompanyID, D1.AffectedEmployee, D1.ActionType, D1.FieldChanged, D1.OldValue, D1.NewValue, D1.AreaOfChange, D1.KeyDetails
-			from '+trim(@cDonorTablePath)+'HRnextAuditDetail D1
-			join '+trim(@cDonorTablePath)+'HRnextAudit D2 on D2.ID = D1.HRNextAuditID
-			join '+trim(@cRecipientTablePath)+'HRnextAudit R1 on R1.TransactionName = D2.TransactionName and R1.UserName = D2.UserName and R1.AuditDate = D2.AuditDate
-			where D1.CompanyID = '+@cDonorCompany_ID
-
-			--join '+trim(@cDonorTablePath)+'HRnextUser D3 on D3.Username = D2.Username
-			--join '+trim(@cDonorTablePath)+'HRnextUserCompany D4 on D4.HRNextUserID = D3.ID
-
-			exec (@cmdInsert)
-			if @cShowStatement = 1
-			begin
-				select @cmdInsert
-			end
-			if @cVerbose_Ind = 1
-			begin
-				select 'HRnextAuditDetail - H' as Insertdata
-			end
-		end
-
-		/*if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
-		begin
-			select @ColumnName = 'trim(str(R2.ID))'
-			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'SecPermission (Name, Description, ResourceID, ResourceGroupID, ResourceSubGroupID, IsVisible, IsRead, IsCreate, IsUpdate, IsDelete, IsRequired, CddID, TableColumn, Category)
-			select '''+trim(@cRecipientCompany_ID)+'@''+'+@ColumnName+'+''&''+T1.Name, T1.Description, 
-			T1.ResourceID, T1.ResourceGroupID, T1.ResourceSubGroupID, T1.IsVisible, T1.IsRead, T1.IsCreate, T1.IsUpdate, T1.IsDelete, T1.IsRequired, T1.CddID, T1.TableColumn, T1.Category
-			from '+trim(@cDonorTablePath)+'SecPermission T1
-			left join '+trim(@cDonorTablePath)+'SecPermissionRole D1 on D1.PermissionID = T1.ID
-			left join '+trim(@cDonorTablePath)+'SecRole D2 on D2.ID = D1.RoleID
-			join '+trim(@cRecipientTablePath)+'SecRole R2 on R2.Name = D2.Name and R2.Description = D2.Description 
-			where D2.CompanyID = '+@cDonorCompany_ID+' and R2.CompanyID = '+@cRecipientCompany_ID
-
-			exec (@cmdInsert)
-			if @cShowStatement = 1
-			begin
-				select @cmdInsert
-			end
-
-			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'SecPermissionRole (PermissionID, RoleID)
-			select R2.ID, R1.ID
-			from '+trim(@cDonorTablePath)+'dbo.SecPermissionRole D1
-			join '+trim(@cDonorTablePath)+'dbo.SecRole D2 on D1.RoleID = D2.ID
-			join '+trim(@cRecipientTablePath)+'SecRole R1 on R1.Name = D2.Name
-			join '+trim(@cDonorTablePath)+'dbo.SecPermission D3 on D1.PermissionID = D3.ID
-			join '+trim(@cRecipientTablePath)+'SecPermission R2 on R2.Category = D3.Category
-			where D2.CompanyID = '+@cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
-
-			--select ID as PermissionID, SUBSTRING(Name, CHARINDEX(''@'', Name)+1, CHARINDEX(''&'',Name) - CHARINDEX(''@'', Name) + Len(''&'')-2) as RoleID
-			--from '+trim(@cRecipientTablePath)+'SecPermission where name like ''%'+trim(@cRecipientCompany_ID)+'%'''
-
-			exec (@cmdInsert)
-			if @cShowStatement = 1
-			begin
-				select @cmdInsert
-			end
-
-			select @cmdInsert = 'update '+trim(@cRecipientTablePath)+'SecPermission set Name = 	right(Name, len(name)-charindex(''&'',Name)) where name like ''%'+trim(@cRecipientCompany_ID)+'%'''
-
-			exec (@cmdInsert)
-			if @cShowStatement = 1
-			begin
-				select @cmdInsert
+				select 'Update SecRole names with recip company code - G' as Insertdata
 			end
 
 			if @cVerbose_Ind = 1
 			begin
-				select 'SecPermission/SecPermissionRole - I' as InsertDatadata
+				select 'SecRole/SecPermission/SecPermissionRole/SecPermissionUser/SecRoleUser - G' as Insertdata
 			end
-		end*/
+		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
 		begin
-			--select @cmdShowDataRecipient = 'select D1.*
-			--from '+trim(@cDonorTablePath)+'Company D1 where D1.ID = '+@cDonorCompany_ID+'
-			--union select R1.* from'+trim(@cRecipientTablePath)+'Company R1 where R1.ID = '+@cRecipientCompany_ID
-
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'UserCompanyTimeclockCredential (HRnextUserID, CompanyID, SC_AdminUsername, SC_AdminPassword, SC_SSOUsername, SC_SSOPassword, SC_SSOClockCard2, SC_SSOClockCard3)
 			select R1.ID, '+@cRecipientCompany_ID+' as CompanyID, D1.SC_AdminUsername, SC_AdminPassword, SC_SSOUsername, SC_SSOPassword, SC_SSOClockCard2, SC_SSOClockCard3
 			from '+trim(@cDonorTablePath)+'UserCompanyTimeclockCredential D1
@@ -683,11 +1152,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'Company TimeClock Credentials Update - F' as Showdata
+				select 'Company TimeClock Credentials Update - H' as Insertdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
 		begin
 			select @cmdInsert = '
 			update donor_hu
@@ -703,7 +1172,7 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'Inactivate Users in Donor - K' as Insertdata
+				select 'Inactivate Users in Donor - I' as Insertdata
 			end
 		end
 
