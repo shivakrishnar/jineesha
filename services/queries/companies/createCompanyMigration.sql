@@ -23,3 +23,5 @@ execute usp_EIN_Cons_CompanyUpdates @_donorPath, @_hrServicesConnection, 1, 0, @
 execute usp_EIN_Cons_Documents_V1 @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'ZZZ'
 
 exec usp_EIN_Cons_ApplTrack_V1 @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'ZZZ'
+
+execute usp_EIN_Cons_EmployeeOnboard_V1 @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'ZZZ'
