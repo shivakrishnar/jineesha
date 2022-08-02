@@ -245,7 +245,6 @@ async function updateHelloSignConfigurations(donorTenantId: string, donorCompany
     const rollbackActions = [];
 
     try {
-
         const [donorCompanyInfo, recipientCompanyInfo, adminToken]: any[] = await Promise.all([
             getCompanyInfoByCompanyId(donorTenantId, donorCompanyId),
             getCompanyInfoByCompanyId(recipientTenantId, recipientCompanyId),
@@ -397,7 +396,11 @@ async function updateHelloSignConfigurations(donorTenantId: string, donorCompany
     };
 }
 
-async function handleSsoPatch(donorTenantId: string, donorCompanyId: string,  instruction: PatchInstruction): Promise<{ response?: any; rollbackAction: () => void }> {
+async function handleSsoPatch(
+    donorTenantId: string,
+    donorCompanyId: string,
+    instruction: PatchInstruction,
+): Promise<{ response?: any; rollbackAction: () => void }> {
     console.info('companyService.handleSsoPatch');
 
     const { tenantId: recipientTenantId, companyId: recipientCompanyId } = instruction.value || {};
@@ -417,15 +420,17 @@ async function handleSsoPatch(donorTenantId: string, donorCompanyId: string,  in
     const skippedUsers = [];
 
     try {
-
         const [donorCompanyInfo, recipientCompanyInfo]: any[] = await Promise.all([
             getCompanyInfoByCompanyId(donorTenantId, donorCompanyId),
-            getCompanyInfoByCompanyId(recipientTenantId, recipientCompanyId)
+            getCompanyInfoByCompanyId(recipientTenantId, recipientCompanyId),
         ]);
 
         // get all hr accounts under a company from recipient database
         const usersQuery = new ParameterizedQuery('GetUserSsoIdByEvoCompanyCode', Queries.getUserSsoIdByEvoCompanyCode);
-        usersQuery.setParameter('@companyCode', instruction.op === PatchOperation.Remove ? donorCompanyInfo.companyCode : recipientCompanyInfo.companyCode);
+        usersQuery.setParameter(
+            '@companyCode',
+            instruction.op === PatchOperation.Remove ? donorCompanyInfo.companyCode : recipientCompanyInfo.companyCode,
+        );
         const usersPayload = {
             tenantId: instruction.op === PatchOperation.Remove ? donorTenantId : recipientTenantId,
             queryName: usersQuery.name,
@@ -617,9 +622,7 @@ async function handleEsignatureDocs(donorTenantId: string, donorCompanyId: strin
     const failedActions = [];
 
     try {
-        const [recipientCompanyInfo]: any[] = await Promise.all([
-            getCompanyInfoByCompanyId(recipientTenantId, recipientCompanyId)
-        ]);
+        const [recipientCompanyInfo]: any[] = await Promise.all([getCompanyInfoByCompanyId(recipientTenantId, recipientCompanyId)]);
 
         if (instruction.op === PatchOperation.Move) {
             const query = new ParameterizedQuery('listFileMetadataByCompanyId', Queries.listFileMetadataByCompanyId);
@@ -773,7 +776,7 @@ async function handleEsignatureDocs(donorTenantId: string, donorCompanyId: strin
  * The patch instructions will be executed in the order provided.
  * The array as a whole is atomic, if an instruction fails, all previous instructions will be rolled back.
  */
- export async function companyUpdate(tenantId: string, companyId: string, patch: PatchInstruction[]): Promise<any> {
+export async function companyUpdate(tenantId: string, companyId: string, patch: PatchInstruction[]): Promise<any> {
     console.info('companyService.companyUpdate');
 
     const rollbackActions = [];
@@ -1096,7 +1099,7 @@ export async function createCompanyMigration(
     donorCompanyId,
     recipientTenantId,
     recipientCompanyId,
-    migrationId
+    migrationId,
 ): Promise<any> {
     console.info('company.service.createCompanyMigration');
     console.info(`migrationId: ${migrationId}`);
@@ -1108,9 +1111,7 @@ export async function createCompanyMigration(
 
         //2-linked server connection creation
         const { rdsEndpoint } = await databaseService.findConnectionString(recipientTenantId);
-        const { username, password }  = JSON.parse(
-            await utilService.getSecret(configService.getRdsCredentials()),
-        );
+        const { username, password } = JSON.parse(await utilService.getSecret(configService.getRdsCredentials()));
 
         const connectionQuery = new ParameterizedQuery('createLinkedServerConnection', Queries.createLinkedServerConnection);
 
@@ -1141,7 +1142,7 @@ export async function createCompanyMigration(
         scripts[scripts.indexOf('usp_EIN_Cons_Dynamic_V1.sql')] = scripts[0];
         scripts[0] = tmp;
 
-        for(let i = 0; i < scripts.length; i++) {
+        for (let i = 0; i < scripts.length; i++) {
             const preMigrationQuery = new ParameterizedQuery(scripts[i].split('.')[0], Queries[scripts[i].split('.')[0]]);
             preMigrationPayload.queryName = preMigrationQuery.name;
             preMigrationPayload.query = preMigrationQuery.value;
@@ -1177,14 +1178,13 @@ export async function createCompanyMigration(
             TableName: 'HrCompanyMigrations',
             Key: { ID: migrationId },
             UpdateExpression: 'set #a = :x',
-            ExpressionAttributeNames: {'#a' : 'Status'},
+            ExpressionAttributeNames: { '#a': 'Status' },
             ExpressionAttributeValues: {
-            ':x' : 'Success',
-            }
-        }
+                ':x': 'Success',
+            },
+        };
         await dynamoDbClient.update(updateParams).promise();
-    }
-    catch (error) {
+    } catch (error) {
         const updateParams = {
             TableName: 'HrCompanyMigrations',
             Key: { ID: migrationId },
@@ -1200,14 +1200,13 @@ export async function createCompanyMigration(
             },
         };
         await dynamoDbClient.update(updateParams).promise();
-        
+
         if (error instanceof ErrorMessage) {
             throw error;
         }
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
-    }
-    finally {
+    } finally {
         //6-dropping linked server connection
         const dropConnectionQuery = new ParameterizedQuery('dropLinkedServerConnection', Queries.dropLinkedServerConnection);
 
@@ -1227,29 +1226,66 @@ export async function runCompanyMigration(donorTenantId, donorCompanyId, recipie
     console.info('company.service.runCompanyMigration');
     const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
     const migrationId = uniqueifier();
-
     console.info(`migrationId: ${migrationId}`);
 
-    const pendingParams = {
-        TableName: 'HrCompanyMigrations',
-        Item: {
-            ID: migrationId,
-            Status: 'Pending',
-            Details: {
-                source: {
-                    tenantId: donorTenantId,
-                    companyId: donorCompanyId,
-                },
-                destination: {
-                    tenantId: recipientTenantId,
-                    companyId: recipientCompanyId,
-                },
-            },
-            Timestamp: new Date().toISOString(),
-        },
-    };
-
     try {
+        let donorCompanyNameQuery = new ParameterizedQuery('companyInfo', Queries.companyInfo);
+        donorCompanyNameQuery.setParameter('@companyId', donorCompanyId);
+
+        let recipientCompanyNameQuery = new ParameterizedQuery('companyInfo', Queries.companyInfo);
+        recipientCompanyNameQuery.setParameter('@companyId', recipientCompanyId);
+
+        let payload = {
+            tenantId: donorTenantId,
+            queryName: donorCompanyNameQuery.name,
+            query: donorCompanyNameQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        let donorCompanyName: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payload,
+            utilService.InvocationType.RequestResponse,
+        );
+
+        if (donorCompanyName.recordset.length === 0) {
+            throw errorService.notFound().setDeveloperMessage('Company with ID ${donorCompanyId} not found.');
+        }
+
+        payload.tenantId = recipientTenantId;
+        (payload.queryName = recipientCompanyNameQuery.name), (payload.query = recipientCompanyNameQuery.value);
+
+        let recipientCompanyName: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payload,
+            utilService.InvocationType.RequestResponse,
+        );
+
+        if (recipientCompanyName.recordset.length === 0) {
+            throw errorService.notFound().setDeveloperMessage('Company with ID ${recipientCompanyId} not found.');
+        }
+
+        const pendingParams = {
+            TableName: 'HrCompanyMigrations',
+            Item: {
+                ID: migrationId,
+                Status: 'Pending',
+                Details: {
+                    source: {
+                        tenantId: donorTenantId,
+                        companyId: donorCompanyId,
+                        companyName: donorCompanyName.recordset[0].CompanyName,
+                    },
+                    destination: {
+                        tenantId: recipientTenantId,
+                        companyId: recipientCompanyId,
+                        companyName: recipientCompanyName.recordset[0].CompanyName,
+                    },
+                },
+                Timestamp: new Date().toISOString(),
+            },
+        };
+
         //1-updating the DB migration table with 'Pending' status
         await dynamoDbClient.put(pendingParams).promise();
 
@@ -1266,7 +1302,6 @@ export async function runCompanyMigration(donorTenantId, donorCompanyId, recipie
             }),
         };
         await stepFunctions.startExecution(params).promise();
-
     } catch (error) {
         //updating migration table to 'Failed' if migration failed
         const updateParams = {

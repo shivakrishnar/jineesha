@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-
 // Note: The queries are bundled into the deployed service package and since multiple services reference
 //       them, the path to the files differ depending upon the invocation context - that is, whether within
 //       the AWS Lambda container or a regular Node process. This provides a sanity check for the
@@ -164,7 +163,9 @@ export const Queries = {
     listCompanyAnnouncements: fs.readFileSync(path.join(basePath, 'companies/listCompanyAnnouncements.sql')).toString(),
     listExpiringCompanyAnnouncements: fs.readFileSync(path.join(basePath, 'companies/listExpiringCompanyAnnouncements.sql')).toString(),
     listIndefiniteCompanyAnnouncements: fs.readFileSync(path.join(basePath, 'companies/listIndefiniteCompanyAnnouncements.sql')).toString(),
-    listExpiringAndIndefiniteCompanyAnnouncements: fs.readFileSync(path.join(basePath, 'companies/listExpiringAndIndefiniteCompanyAnnouncements.sql')).toString(),
+    listExpiringAndIndefiniteCompanyAnnouncements: fs
+        .readFileSync(path.join(basePath, 'companies/listExpiringAndIndefiniteCompanyAnnouncements.sql'))
+        .toString(),
     listCompanyOpenEnrollments: fs.readFileSync(path.join(basePath, 'companies/listCompanyOpenEnrollments.sql')).toString(),
     listCompanyCurrentOpenEnrollments: fs.readFileSync(path.join(basePath, 'companies/listCompanyCurrentOpenEnrollments.sql')).toString(),
     //company migrations scripts
@@ -172,18 +173,26 @@ export const Queries = {
     usp_EIN_Cons_ApplTrack_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_ApplTrack_V1.sql')).toString(),
     usp_EIN_Cons_Benefits_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_Benefits_V1.sql')).toString(),
     usp_EIN_Cons_CompanyUpdates: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_CompanyUpdates.sql')).toString(),
-    usp_EIN_Cons_CompanyWrapper_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_CompanyWrapper_V1.sql')).toString(),
-    usp_EIN_Cons_CompensationDataSet_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_CompensationDataSet_V1.sql')).toString(),
+    usp_EIN_Cons_CompanyWrapper_V1: fs
+        .readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_CompanyWrapper_V1.sql'))
+        .toString(),
+    usp_EIN_Cons_CompensationDataSet_V1: fs
+        .readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_CompensationDataSet_V1.sql'))
+        .toString(),
     usp_EIN_Cons_Documents_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_Documents_V1.sql')).toString(),
-    usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1.sql')).toString(),
-    usp_EIN_Cons_EmployeeOnboard_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_EmployeeOnboard_V1.sql')).toString(),
-    usp_EIN_Cons_HRNext_Sec_DataSet_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_HRNext_Sec_DataSet_V1.sql')).toString(),
+    usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1: fs
+        .readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1.sql'))
+        .toString(),
+    usp_EIN_Cons_EmployeeOnboard_V1: fs
+        .readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_EmployeeOnboard_V1.sql'))
+        .toString(),
+    usp_EIN_Cons_HRNext_Sec_DataSet_V1: fs
+        .readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_HRNext_Sec_DataSet_V1.sql'))
+        .toString(),
     usp_EIN_Cons_PreCheck_V1: fs.readFileSync(path.join(basePath, 'companyMigrationScripts/usp_EIN_Cons_PreCheck_V1.sql')).toString(),
     createLinkedServerConnection: fs.readFileSync(path.join(basePath, 'companies/createLinkedServerConnection.sql')).toString(),
     createCompanyMigration: fs.readFileSync(path.join(basePath, 'companies/createCompanyMigration.sql')).toString(),
     dropLinkedServerConnection: fs.readFileSync(path.join(basePath, 'companies/dropLinkedServerConnection.sql')).toString(),
-
-
 
     // Employees
     getEmployeeByCompanyIdAndId: fs.readFileSync(path.join(basePath, 'employees/getEmployeeByCompanyIdAndId.sql')).toString(),
@@ -205,7 +214,9 @@ export const Queries = {
     listExpiringLicensesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listExpiringLicensesByEmployeeId.sql')).toString(),
     updateEmployeeLicenseById: fs.readFileSync(path.join(basePath, 'employees/updateEmployeeLicenseById.sql')).toString(),
     listCertificatesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listCertificatesByEmployeeId.sql')).toString(),
-    listExpiringCertificatesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listExpiringCertificatesByEmployeeId.sql')).toString(),
+    listExpiringCertificatesByEmployeeId: fs
+        .readFileSync(path.join(basePath, 'employees/listExpiringCertificatesByEmployeeId.sql'))
+        .toString(),
     updateEmployeeCertificateById: fs.readFileSync(path.join(basePath, 'employees/updateEmployeeCertificateById.sql')).toString(),
     listReviewsByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listReviewsByEmployeeId.sql')).toString(),
     listUpcomingReviewsByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listUpcomingReviewsByEmployeeId.sql')).toString(),
@@ -216,10 +227,13 @@ export const Queries = {
     listBenefitsByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listBenefitsByEmployeeId.sql')).toString(),
     updateEmployeeClassById: fs.readFileSync(path.join(basePath, 'employees/updateEmployeeClassById.sql')).toString(),
     listCoveredDependentsByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listCoveredDependentsByEmployeeId.sql')).toString(),
-    listCoveredBeneficiariesByEmployeeId: fs.readFileSync(path.join(basePath, 'employees/listCoveredBeneficiariesByEmployeeId.sql')).toString(),
+    listCoveredBeneficiariesByEmployeeId: fs
+        .readFileSync(path.join(basePath, 'employees/listCoveredBeneficiariesByEmployeeId.sql'))
+        .toString(),
     getAgeBandPremiumByAgeAndPlanId: fs.readFileSync(path.join(basePath, 'employees/getAgeBandPremiumByAgeAndPlanId.sql')).toString(),
-    getDirectReportOfManagerByEmailAddressAndEmployeeId: fs.readFileSync(path.join(basePath, 'employees/getDirectReportOfManagerByEmailAddressAndEmployeeId.sql')).toString(),
-
+    getDirectReportOfManagerByEmailAddressAndEmployeeId: fs
+        .readFileSync(path.join(basePath, 'employees/getDirectReportOfManagerByEmailAddressAndEmployeeId.sql'))
+        .toString(),
 
     // Group Term Life
     createGtlRecord: fs.readFileSync(path.join(basePath, 'gtl/createGtlRecord.sql')).toString(),
