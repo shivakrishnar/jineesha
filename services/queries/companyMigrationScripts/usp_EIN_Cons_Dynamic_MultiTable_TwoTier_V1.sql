@@ -134,35 +134,6 @@ GO
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%C%'
-		begin
-			----------- OpenEnrollmentEmployeeElection
-			select @cmdShowDataDonor = 'select T1.PlanTypeID, R1.ID, R2.ID, R3.ID, LastModified, R4.ID, ReasonDeclined, ReasonDeclinedDetails, IsUpdated, EmployeeFSAContributionPerPay, IsLimitedFSA, T1.IncludeADD, ElectedLifeAmount
-			from '+@cDonorTablePath+'OpenEnrollmentEmployeeElection T1
-			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
-			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
-
-			left outer join '+@cDonorTablePath+'BenefitPlan D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.PlanID
-			left outer join '+trim(@cRecipientTablePath)+'BenefitPlan R2 on R2.CompanyID = R1.CompanyID and R2.Code = D2.Code and R2.Description = D2.Description and isnull(R2.StartDate, '''') = isnull(D2.StartDate, '''') and isnull(R2.EndDate, '''') = isnull(D2.EndDate, '''')
-
-			left outer join '+@cDonorTablePath+'BenefitCoverageType D3 on D3.ID = T1.CoverageTypeID
-			left outer join '+trim(@cRecipientTablePath)+'BenefitCoverageType R3 on R3.Code = D3.Code and R3.Description = D3.Description
-
-			left outer join '+@cDonorTablePath+'OpenEnrollment D4 on D4.CompanyID = D1.CompanyID and D4.ID = T1.OpenEnrollmentID
-			left outer join '+trim(@cRecipientTablePath)+'OpenEnrollment R4 on R4.CompanyID = R1.CompanyID and R4.Name = D4.Name
-
-			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
-
-			exec (@cmdShowDataDonor)
-			if @cShowStatement = 1
-			begin
-				print @cmdShowDataDonor
-			end
-			if @cVerbose_Ind = 1
-			begin
-				select 'OpenEnrollmentEmployeeElection - C' as ShowData
-			end
-		end
 		----------- EmployeeCompensation
 		/*select @cmdShowDataDonor = 'select R1.ID, T1.PayTypeID, T1.CompensationChangeReasonID, T1.EffectiveDate, T1.Rate, T1.Comment , T1.FrequencyTypeID, T1.AutoPayTypeID, T1.DefaultHours, T1.PR_Integration_PK, T1.EvoFK_JobNumber, T1.PositionTypeID, T1.PayGradeTypeID
 		from '+@cDonorTablePath+'EmployeeCompensation T1 
@@ -172,7 +143,7 @@ GO
 
 		exec (@cmdShowDataDonor)*/
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%D%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%C%'
 		begin
 			----------- EmployeeEducationLevel
 			select @cmdShowDataDonor = 'select R1.ID, T1.EducationLevelTypeID, T1.GPA, T1.Institution, T1.CompletedDate, T1.Major, T1.Minor, T1.Notes
@@ -188,11 +159,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeEducationLevel - D' as ShowData
+				select 'EmployeeEducationLevel - C' as ShowData
 			end
 		end
 
-		-- if @cTableToRun = 'ZZZ' or @cTableToRun like '%E%'
+		-- if @cTableToRun = 'ZZZ' or @cTableToRun like '%D%'
 		-- begin
 		-- 	----------- EmployeeLaborAllocation
 		-- 	select @cmdShowDataDonor = 'select R1.ID, JobTypeID, Org1TypeID, Org2TypeID, Org3TypeID, Org4TypeID, Org5TypeID, StartDate, EndDate, Percentage
@@ -208,12 +179,12 @@ GO
 		-- 	end
 		-- 	if @cVerbose_Ind = 1
 		-- 	begin
-		-- 		select 'EmployeeLaborAllocation - E' as ShowData
+		-- 		select 'EmployeeLaborAllocation - D' as ShowData
 		-- 	end
 		-- end
 
 		/*Moved to Cons_Document -- Includes DocumentID there
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%F%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%E%'
 		begin
 			-----------EmployeeW4 and W4Document
 			select @cmdShowDataDonor = 'select R1.ID, T1.ApprovalStatus, T1.W4_BOX1_FirstName, T1.W4_BOX1_LastName, T1.W4_BOX1_MiddleInitial, T1.W4_BOX1_Address1, T1.W4_BOX1_City, T1.W4_BOX1_CountryStateTypeID, T1.W4_BOX1_Zip, T1.W4_BOX2_SSN, T1.W4_BOX3_IsSingle, T1.W4_BOX3_IsMarried, T1.W4_BOX3_IsMarriedButWHAtHigherSingleRate, T1.W4_BOX4_IsNameDifferentFromSSCard, T1.W4_BOX5_TotalAllowances, T1.W4_BOX6_AdditionalAmountWH, T1.W4_BOX7_IsExempt, T1.W4_BOX7_ExemptText, T1.W4_EsignName, T1.W4_EsignFormDate, T1.W4_EsignStamptedDateTime, T1.ApprovedDate, T1.ApprovedRejectedByHRNextUserID, T1.DocumentID, T1.W4_FirstName, T1.W4_LastName, T1.W4_MiddleInitial, T1.W4_Address1, T1.W4_City, T1.W4_CountryStateTypeID, T1.W4_Zip, T1.W4_SSN, T1.W4_MaritalStatus, T1.W4_HigherRate, T1.W4_DependentsUnderSeventeen, T1.W4_OtherDependents, T1.W4_OtherIncome, T1.W4_AdditionalDeductions, T1.W4_ExtraWithholding, T1.W4_Exempt, T1.W4_OtherTaxCredits
@@ -229,11 +200,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeW4 - F' as ShowData
+				select 'EmployeeW4 - E' as ShowData
 			end
 		end*/
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%F%'
 		begin
 			----------------------Employee Review
 			select @cmdShowDataDonor = 'select R1.ID, R2.ID, ReviewStatusTypeID, ScheduledDate, R3.ID, CompletedDate, R4.ID, Completed2Date, Scheduled2Date, Notes, PrivateNotes, T1.ReviewTemplate, Rating, Rating2, EmailAcknowledged
@@ -257,11 +228,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeReview - G' as ShowData
+				select 'EmployeeReview - F' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
 		begin
 			-------------------Employee Skill
 			select @cmdShowDataDonor = 'select R1.ID, R2.ID, ProficiencyPercentage, ExperienceInYears, Notes
@@ -279,11 +250,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeSkill - H' as ShowData
+				select 'EmployeeSkill - G' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
 		begin
 			----------------EmployeeLicense
 			select @cmdShowDataDonor = 'select R1.ID, R2.ID, LicenseNumber, IssuedBy, IssuedDate, ExpirationDate, Notes, EmailAcknowledged
@@ -301,11 +272,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeLicense - I' as ShowData
+				select 'EmployeeLicense - H' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
 		begin
 			----------------EmployeeAchievment
 			select @cmdShowDataDonor = 'select R1.ID, R2.ID, AwardedDate, ExpirationDate, Notes
@@ -323,11 +294,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeAchievement - J' as ShowData
+				select 'EmployeeAchievement - I' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
 		begin
 			----------------Employee Certificate
 			select @cmdShowDataDonor = 'select R1.ID, R2.ID, CertificateNumber, IssuedBy, IssuedDate, ExpirationDate, Notes, EmailAcknowledged
@@ -345,11 +316,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeCertificate - K' as ShowData
+				select 'EmployeeCertificate - J' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%L%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
 		begin
 			----------------Employee Enrolled Class
 			select @cmdShowDataDonor = 'select R2.ID, R1.ID, T1.GradeOrResult, T1.Notes, T1.EmailAcknowledged, T1.CompletionDate, T1.ExpirationDate
@@ -367,39 +338,12 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeEnrolledClass - L' as ShowData
+				select 'EmployeeEnrolledClass - K' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%M%'
-		begin
-			----------------EmployeeBenefit
-			select @cmdShowDataDonor = 'select R1.ID, R3.ID, R4.ID, T1.Premium, T1.EmployerAmount, T1.EmployerPercent, T1.EmployeeAmount, T1.EmployeePercent, T1.MemberNumber, T1.StartDate, T1.EndDate, T1.Notes, T1.DeductionFrequencyCode, T1.PR_Integration_PK, R2.ID, T1.EmployeeSavingsAccountContributionPerPay, T1.EmployerCatchUpAmount, T1.ADDIncluded, T1.CoverageAmount
-			from '+@cDonorTablePath+'EmployeeBenefit T1 
-			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
-			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
-			left outer join '+@cDonorTablePath+'LifeEventReason D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.LifeEventReasonID
-			left outer join '+trim(@cRecipientTablePath)+'LifeEventReason R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
 
-			left outer join '+@cDonorTablePath+'BenefitPlan D3 on D3.CompanyID = D1.CompanyID and D3.ID = T1.PlanID
-			left outer join '+trim(@cRecipientTablePath)+'BenefitPlan R3 on R3.CompanyID = R1.CompanyID and R3.Code = D3.Code and R3.Description = D3.Description and isnull(R3.StartDate, '''') = isnull(D3.StartDate, '''') and isnull(R3.EndDate, '''') = isnull(D3.EndDate, '''')
-
-			left outer join '+@cDonorTablePath+'BenefitCoverageType D4 on D4.ID = T1.CoverageTypeID
-			left outer join '+trim(@cRecipientTablePath)+'BenefitCoverageType R4 on R4.Code = D4.Code and R4.Description = D4.Description
-			where D1.CompanyID = '+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
-
-			exec (@cmdShowDataDonor)
-			if @cShowStatement = 1
-			begin
-				print @cmdShowDataDonor
-			end
-			if @cVerbose_Ind = 1
-			begin
-				select 'EmployeeBenefit - M' as ShowData
-			end
-		end
-
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%N%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%L%'
 		begin
 			----------------OnBoardingTaskStep
 			select @cmdShowDataDonor = 'select distinct R1.ID, OnboardingTaskStepTypeID, IsOn, CompanyDoc_CompanyDocKeys
@@ -415,11 +359,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OnBoardingTaskStep - N' as ShowData
+				select 'OnBoardingTaskStep - L' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%O%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%M%'
 		begin
 			----------------OnBoardingTaskListCustomQuestion
 			select @cmdShowDataDonor = 'select R1.ID, R2.ID
@@ -437,11 +381,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OnBoardingTaskStep - O' as ShowData
+				select 'OnBoardingTaskStep - M' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%P%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%N%'
 		begin
 			----------------OBQuestionBankMultipleChoiceAnswers
 			select @cmdShowDataDonor = 'select R1.ID, T1.Answer
@@ -457,11 +401,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OBQuestionBankMultipleChoiceAnswers - P' as ShowData
+				select 'OBQuestionBankMultipleChoiceAnswers - N' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%R%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%O%'
 		begin
 			----------------EsignatureMetaData
 			select @cmdShowDataDonor = 'select T1.*
@@ -475,11 +419,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EsignatureMetaData - R' as ShowData
+				select 'EsignatureMetaData - O' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%Q%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%P%'
 		begin
 			----------------FileMetaData
 			select @cmdShowDataDonor = 'select T1.*
@@ -493,11 +437,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'FileMetaData - Q' as ShowData
+				select 'FileMetaData - P' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%T%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%R%'
 		begin
 			--This section now runs two parts.  1st is to delete any existing EmployeePositionOrganization records inserted by the Payroll move, second is to Insert data from Donor to Recipient
 			select @cmdShowDataDonor = 'select count(EmployeeID) as RowsToBeDeleted from '+trim(@cRecipientTablePath)+'EmployeePositionOrganization where EmployeeID in (select R1.ID from '+trim(@cRecipientTablePath)+'Employee R1 where R1.CompanyID = '+@cRecipientCompany_ID+')'
@@ -509,7 +453,7 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeePositionOrganization Delete - T' as Insertdata
+				select 'EmployeePositionOrganization Delete - R' as Insertdata
 			end
 
 			----------------------EmployeePositionOrganization
@@ -641,11 +585,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeePositionOrganization - T' as ShowData
+				select 'EmployeePositionOrganization - R' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%U%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%S%'
 		begin
 			----------------Direct Deposit
 			select @cmdShowDataDonor = 'select R1.ID, T1.Priority, T1.RoutingNumber, T1.Account, T1.Checking, T1.AmountCode, T1.Amount, T1.ExcludeSpecial, T1.PreNoteDate, T1.NameOnAccount, T1.StartDate, T1.EndDate, T1.IsPrenote_EVO,
@@ -662,11 +606,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'Direct Deposit - U' as ShowData
+				select 'Direct Deposit - S' as ShowData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%V%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%T%'
 		begin
 			----------------Misc EE Updates
 			select @cmdShowDataDonor = 'select R1.ID, R1.FirstName, R1.LastName, R1.UD_Memo1, R1.UD_Memo2, R1.UD_Memo3, D1.ID, D1.FirstName, D1.LastName, D1.UD_Memo1, D1.UD_Memo2, D1.UD_Memo3,
@@ -698,7 +642,7 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'Misc EE Updates - V' as ShowData
+				select 'Misc EE Updates - T' as ShowData
 			end
 		end
 
@@ -760,36 +704,6 @@ GO
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%C%'
-		begin
-			----------- OpenEnrollmentEmployeeElection
-			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'OpenEnrollmentEmployeeElection (PlanTypeID, EmployeeID, PlanID, CoverageTypeID, LastModified, OpenEnrollmentID, ReasonDeclined, ReasonDeclinedDetails, IsUpdated, EmployeeFSAContributionPerPay, IsLimitedFSA, IncludeADD, ElectedLifeAmount)
-			select T1.PlanTypeID, R1.ID, R2.ID, R3.ID, LastModified, R4.ID, ReasonDeclined, ReasonDeclinedDetails, IsUpdated, EmployeeFSAContributionPerPay, IsLimitedFSA, T1.IncludeADD, ElectedLifeAmount
-			from '+@cDonorTablePath+'OpenEnrollmentEmployeeElection T1
-			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
-			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
-
-			left outer join '+@cDonorTablePath+'BenefitPlan D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.PlanID
-			left outer join '+trim(@cRecipientTablePath)+'BenefitPlan R2 on R2.CompanyID = R1.CompanyID and R2.Code = D2.Code and R2.Description = D2.Description and isnull(R2.StartDate, '''') = isnull(D2.StartDate, '''') and isnull(R2.EndDate, '''') = isnull(D2.EndDate, '''')
-
-			left outer join '+@cDonorTablePath+'BenefitCoverageType D3 on D3.ID = T1.CoverageTypeID
-			left outer join '+trim(@cRecipientTablePath)+'BenefitCoverageType R3 on R3.Code = D3.Code and R3.Description = D3.Description
-
-			left outer join '+@cDonorTablePath+'OpenEnrollment D4 on D4.CompanyID = D1.CompanyID and D4.ID = T1.OpenEnrollmentID
-			left outer join '+trim(@cRecipientTablePath)+'OpenEnrollment R4 on R4.CompanyID = R1.CompanyID and R4.Name = D4.Name
-
-			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
-
-			exec (@cmdInsert)
-			if @cShowStatement = 1
-			begin
-				print @cmdInsert
-			end
-			if @cVerbose_Ind = 1
-			begin
-				select 'OpenEnrollmentEmployeeElection - C' as InsertData
-			end
-		end
 		----------- EmployeeCompensation
 		/*select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeCompensation (EmployeeID, PayTypeID, CompensationChangeReasonID, EffectiveDate, Rate, Comment, FrequencyTypeID, AutoPayTypeID, DefaultHours, PR_Integration_PK, EvoFK_JobNumber, PositionTypeID, PayGradeTypeID)
 		select R1.ID, T1.PayTypeID, T1.CompensationChangeReasonID, T1.EffectiveDate, T1.Rate, T1.Comment , T1.FrequencyTypeID, T1.AutoPayTypeID, T1.DefaultHours, T1.PR_Integration_PK, T1.EvoFK_JobNumber, T1.PositionTypeID, T1.PayGradeTypeID
@@ -800,7 +714,7 @@ GO
 
 		exec (@cmdInsert)*/
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%D%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%C%'
 		begin
 			----------- EmployeeEducationLevel
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeEducationLevel (EmployeeID, EducationLevelTypeID, GPA, Institution, CompletedDate, Major, Minor, Notes)
@@ -817,11 +731,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeEducationLevel - D' as InsertData
+				select 'EmployeeEducationLevel - C' as InsertData
 			end
 		end
 
-		-- if @cTableToRun = 'ZZZ' or @cTableToRun like '%E%'
+		-- if @cTableToRun = 'ZZZ' or @cTableToRun like '%D%'
 		-- begin
 		-- 	----------- EmployeeLaborAllocation
 		-- 	select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeLaborAllocation (EmployeeID, JobTypeID, Org1TypeID, Org2TypeID, Org3TypeID, Org4TypeID, Org5TypeID, StartDate, EndDate, Percentage)
@@ -838,12 +752,12 @@ GO
 		-- 	end
 		-- 	if @cVerbose_Ind = 1
 		-- 	begin
-		-- 		select 'EmployeeLaborAllocation - E' as InsertData
+		-- 		select 'EmployeeLaborAllocation - D' as InsertData
 		-- 	end
 		-- end
 
 		/*Moved to Cons_Document -- Includes DocumentID there
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%F%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%E%'
 		begin
 			-----------EmployeeW4 and W4Document
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeW4 (EmployeeID, ApprovalStatus, W4_BOX1_FirstName, W4_BOX1_LastName, W4_BOX1_MiddleInitial, W4_BOX1_Address1, W4_BOX1_City, W4_BOX1_CountryStateTypeID, W4_BOX1_Zip, W4_BOX2_SSN, W4_BOX3_IsSingle, W4_BOX3_IsMarried, W4_BOX3_IsMarriedButWHAtHigherSingleRate, W4_BOX4_IsNameDifferentFromSSCard, W4_BOX5_TotalAllowances, W4_BOX6_AdditionalAmountWH, W4_BOX7_IsExempt, W4_BOX7_ExemptText, W4_EsignName, W4_EsignFormDate, W4_EsignStamptedDateTime, ApprovedDate, ApprovedRejectedByHRNextUserID, DocumentID, W4_FirstName, W4_LastName, W4_MiddleInitial, W4_Address1, W4_City, W4_CountryStateTypeID, W4_Zip, W4_SSN, W4_MaritalStatus, W4_HigherRate, W4_DependentsUnderSeventeen, W4_OtherDependents, W4_OtherIncome, W4_AdditionalDeductions, W4_ExtraWithholding, W4_Exempt, W4_OtherTaxCredits)
@@ -860,11 +774,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeW4 - F' as InsertData
+				select 'EmployeeW4 - E' as InsertData
 			end
 		end*/
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%F%'
 		begin
 			----------------------Employee Review
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeReview (EmployeeID, ReviewTypeID, ReviewStatusTypeID, ScheduledDate, ReviewByEmployeeID, CompletedDate, Review2ByEmployeeID, Completed2Date, Scheduled2Date, Notes, PrivateNotes, ReviewTemplate, Rating, Rating2, EmailAcknowledged)
@@ -889,11 +803,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeReview - G' as InsertData
+				select 'EmployeeReview - F' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
 		begin
 			-------------------Employee Skill
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeSkill (EmployeeID, SkillTypeID, ProficiencyPercentage, ExperienceInYears, Notes)
@@ -912,11 +826,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeSkill - H' as InsertData
+				select 'EmployeeSkill - G' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
 		begin
 			----------------EmployeeLicense
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeLicense (EmployeeID, LicenseTypeID, LicenseNumber, IssuedBy, IssuedDate, ExpirationDate, Notes, EmailAcknowledged)
@@ -935,11 +849,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeLicense - I' as InsertData
+				select 'EmployeeLicense - H' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
 		begin
 			----------------EmployeeAchievment
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeAchievement (EmployeeID, AchievementTypeID, AwardedDate, ExpirationDate, Notes)
@@ -958,11 +872,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeAchievement - J' as InsertData
+				select 'EmployeeAchievement - I' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
 		begin
 			----------------Employee Certificate
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeCertificate (EmployeeID, CertificateTypeID, CertificateNumber, IssuedBy, IssuedDate, ExpirationDate, Notes, EmailAcknowledged)
@@ -981,11 +895,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeCertificate - K' as InsertData
+				select 'EmployeeCertificate - J' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%L%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
 		begin
 			----------------Employee Enrolled Class
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeEnrolledClass (ClassID, EmployeeID, GradeOrResult, Notes, EmailAcknowledged, CompletionDate, ExpirationDate)
@@ -1004,39 +918,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeEnrolledClass - L' as InsertData
+				select 'EmployeeEnrolledClass - K' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%M%'
-		begin
-			----------------EmployeeBenefit
-			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeBenefit (EmployeeID, PlanID, CoverageTypeID, Premium, EmployerAmount, EmployerPercent, EmployeeAmount, EmployeePercent, MemberNumber, StartDate, EndDate, Notes, DeductionFrequencyCode, PR_Integration_PK, LifeEventReasonID, EmployeeSavingsAccountContributionPerPay, EmployerCatchUpAmount, ADDIncluded, CoverageAmount)
-			select R1.ID, R3.ID, R4.ID, T1.Premium, T1.EmployerAmount, T1.EmployerPercent, T1.EmployeeAmount, T1.EmployeePercent, T1.MemberNumber, T1.StartDate, T1.EndDate, T1.Notes, T1.DeductionFrequencyCode, T1.PR_Integration_PK, R2.ID, T1.EmployeeSavingsAccountContributionPerPay, T1.EmployerCatchUpAmount, T1.ADDIncluded, T1.CoverageAmount
-			from '+@cDonorTablePath+'EmployeeBenefit T1 
-			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
-			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
-			left outer join '+@cDonorTablePath+'LifeEventReason D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.LifeEventReasonID
-			left outer join '+trim(@cRecipientTablePath)+'LifeEventReason R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
-			left outer join '+@cDonorTablePath+'BenefitPlan D3 on D3.CompanyID = D1.CompanyID and D3.ID = T1.PlanID
-			left outer join '+trim(@cRecipientTablePath)+'BenefitPlan R3 on R3.CompanyID = R1.CompanyID and R3.Code = D3.Code and R3.Description = D3.Description and isnull(R3.StartDate, '''') = isnull(D3.StartDate, '''') and isnull(R3.EndDate, '''') = isnull(D3.EndDate, '''')
-
-			left outer join '+@cDonorTablePath+'BenefitCoverageType D4 on D4.ID = T1.CoverageTypeID
-			left outer join '+trim(@cRecipientTablePath)+'BenefitCoverageType R4 on R4.Code = D4.Code and R4.Description = D4.Description
-			where D1.CompanyID = '+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
-
-			exec (@cmdInsert)
-			if @cShowStatement = 1
-			begin
-				print @cmdInsert
-			end
-			if @cVerbose_Ind = 1
-			begin
-				select 'EmployeeBenefit - M' as InsertData
-			end
-		end
-
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%N%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%L%'
 		begin
 			----------------OnBoardingTaskStep
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'OnBoardingTaskStep (OnboardingTaskListID, OnboardingTaskStepTypeID, IsOn, CompanyDoc_CompanyDocKeys)
@@ -1053,11 +939,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OnBoardingTaskStep - N' as InsertData
+				select 'OnBoardingTaskStep - L' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%O%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%M%'
 		begin
 			----------------OnBoardingTaskListCustomQuestion
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'OnboardingTaskListCustomQuestion (OnboardingTaskListID, OBQuestionBankID)
@@ -1076,11 +962,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OnBoardingTaskStep - O' as InsertData
+				select 'OnBoardingTaskStep - M' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%P%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%N%'
 		begin
 			----------------OBQuestionBankMultipleChoiceAnswers
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'OBQuestionBankMultipleChoiceAnswers (OBQuestionBankID, Answer)
@@ -1097,11 +983,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OBQuestionBankMultipleChoiceAnswers - P' as InsertData
+				select 'OBQuestionBankMultipleChoiceAnswers - N' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%R%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%O%'
 		begin
 			----------------EsignatureMetaData
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EsignatureMetaData (ID, CompanyID, EmployeeCode, Type, UploadDate, UploadedBy, Title, Filename, Category, SignatureStatusID, IsOnboardingDocument, FileMetadataID)
@@ -1116,11 +1002,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EsignatureMetaData - R' as InsertData
+				select 'EsignatureMetaData - O' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%Q%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%P%'
 		begin
 			----------------FileMetaData
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'FileMetaData (CompanyID, EmployeeCode, Title, Category, UploadDate, Pointer, UploadedBy, IsPublishedToEmployee, EsignatureMetadataID)
@@ -1135,11 +1021,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'FileMetaData - Q' as InsertData
+				select 'FileMetaData - P' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%S%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%Q%'
 		begin
 			----------------Esign to FileMetaData Update
 			select @cmdInsert = 'update '+trim(@cRecipientTablePath)+'EsignatureMetadata
@@ -1157,11 +1043,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'Esign to FileMetaData Update - S' as InsertData
+				select 'Esign to FileMetaData Update - Q' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%T%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%R%'
 		begin
 
 			--This section now runs in 4 parts.  1st is to remove reference to EmployeePositionOrganization table in Employee. 
@@ -1176,7 +1062,7 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeePositionOrganization Update Employee column CurrentEmployeePositionOrganization - T' as Insertdata
+				select 'EmployeePositionOrganization Update Employee column CurrentEmployeePositionOrganization - R' as Insertdata
 			end
 
 			--Delete Step
@@ -1190,7 +1076,7 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeePositionOrganization Delete - T' as Insertdata
+				select 'EmployeePositionOrganization Delete - R' as Insertdata
 			end
 
 			----------------------EmployeePositionOrganization
@@ -1322,7 +1208,7 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeePositionOrganization - T' as ShowData
+				select 'EmployeePositionOrganization - R' as ShowData
 			end
 
 			--Update Employee with CurrentEmployeePositionOrganization Step
@@ -1339,11 +1225,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeePositionOrganization Update Employee with CurrentEmployeePositionOrganization - T' as Insertdata
+				select 'EmployeePositionOrganization Update Employee with CurrentEmployeePositionOrganization - R' as Insertdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%U%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%S%'
 		begin
 			--First we want to delete any existing EmployeeDirectDeposit records inserted during the cutover
 			--Delete Step
@@ -1357,7 +1243,7 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'Direct Deposit Delete - U' as Insertdata
+				select 'Direct Deposit Delete - S' as Insertdata
 			end
 			----------------Direct Deposit
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeDirectDeposit (EmployeeID, Priority, RoutingNumber, Account, Checking, AmountCode, Amount, ExcludeSpecial, PreNoteDate, NameOnAccount, StartDate, EndDate,
@@ -1376,11 +1262,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'Direct Deposit - U' as InsertData
+				select 'Direct Deposit - S' as InsertData
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%V%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%T%'
 		begin
 			----------------Misc EE updates
 			select @cmdInsert = 'update R1 set R1.UD_Memo1 = D1.UD_Memo1, R1.UD_Memo2 = D1.UD_Memo2, R1.UD_Memo3 = D1.UD_Memo3,
@@ -1412,7 +1298,7 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'Misc EE Updates - V' as ShowData
+				select 'Misc EE Updates - T' as ShowData
 			end
 		end
 

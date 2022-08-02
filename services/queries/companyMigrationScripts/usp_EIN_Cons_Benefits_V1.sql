@@ -285,7 +285,6 @@ GO
 
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%E%'
 		begin
-			--SecRole Ready
 			select @cmdShowDataRecipient = 'select R1.ID as PlanID, R2.ID as ClassID
 			from '+trim(@cDonorTablePath)+'BenefitPlanClass T1
 
@@ -331,6 +330,64 @@ GO
 
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
 		begin
+			----------- OpenEnrollmentEmployeeElection
+			select @cmdShowDataDonor = 'select T1.PlanTypeID, R1.ID, R2.ID, R3.ID, LastModified, R4.ID, ReasonDeclined, ReasonDeclinedDetails, IsUpdated, EmployeeFSAContributionPerPay, IsLimitedFSA, T1.IncludeADD, ElectedLifeAmount
+			from '+@cDonorTablePath+'OpenEnrollmentEmployeeElection T1
+			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
+			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
+
+			left outer join '+@cDonorTablePath+'BenefitPlan D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.PlanID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitPlan R2 on R2.CompanyID = R1.CompanyID and R2.Code = D2.Code and R2.Description = D2.Description and isnull(R2.StartDate, '''') = isnull(D2.StartDate, '''') and isnull(R2.EndDate, '''') = isnull(D2.EndDate, '''')
+
+			left outer join '+@cDonorTablePath+'BenefitCoverageType D3 on D3.ID = T1.CoverageTypeID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitCoverageType R3 on R3.Code = D3.Code and R3.Description = D3.Description
+
+			left outer join '+@cDonorTablePath+'OpenEnrollment D4 on D4.CompanyID = D1.CompanyID and D4.ID = T1.OpenEnrollmentID
+			left outer join '+trim(@cRecipientTablePath)+'OpenEnrollment R4 on R4.CompanyID = R1.CompanyID and R4.Name = D4.Name
+
+			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataDonor)
+			if @cShowStatement = 1
+			begin
+				print @cmdShowDataDonor
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'OpenEnrollmentEmployeeElection - G' as ShowData
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
+		begin
+			----------------EmployeeBenefit
+			select @cmdShowDataDonor = 'select R1.ID, R3.ID, R4.ID, T1.Premium, T1.EmployerAmount, T1.EmployerPercent, T1.EmployeeAmount, T1.EmployeePercent, T1.MemberNumber, T1.StartDate, T1.EndDate, T1.Notes, T1.DeductionFrequencyCode, T1.PR_Integration_PK, R2.ID, T1.EmployeeSavingsAccountContributionPerPay, T1.EmployerCatchUpAmount, T1.ADDIncluded, T1.CoverageAmount
+			from '+@cDonorTablePath+'EmployeeBenefit T1 
+			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
+			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
+			left outer join '+@cDonorTablePath+'LifeEventReason D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.LifeEventReasonID
+			left outer join '+trim(@cRecipientTablePath)+'LifeEventReason R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
+
+			left outer join '+@cDonorTablePath+'BenefitPlan D3 on D3.CompanyID = D1.CompanyID and D3.ID = T1.PlanID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitPlan R3 on R3.CompanyID = R1.CompanyID and R3.Code = D3.Code and R3.Description = D3.Description and isnull(R3.StartDate, '''') = isnull(D3.StartDate, '''') and isnull(R3.EndDate, '''') = isnull(D3.EndDate, '''')
+
+			left outer join '+@cDonorTablePath+'BenefitCoverageType D4 on D4.ID = T1.CoverageTypeID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitCoverageType R4 on R4.Code = D4.Code and R4.Description = D4.Description
+			where D1.CompanyID = '+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataDonor)
+			if @cShowStatement = 1
+			begin
+				print @cmdShowDataDonor
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeBenefit - H' as ShowData
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
+		begin
 			select @cmdShowDataRecipient = '
 				select
 					recip_ee.ID as EmployeeID,
@@ -372,11 +429,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeBeneficiary - G' as Showdata
+				select 'EmployeeBeneficiary - I' as Showdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
 		begin
 			select @cmdShowDataRecipient = '
 				select
@@ -433,11 +490,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeDependent - H' as Showdata
+				select 'EmployeeDependent - J' as Showdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
 		begin
 			select @cmdShowDataRecipient = '
 				select
@@ -465,11 +522,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OpenEnrollmentBenefitPlan - I' as Showdata
+				select 'OpenEnrollmentBenefitPlan - K' as Showdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%L%'
 		begin
 			select @cmdShowDataRecipient = '
 				select
@@ -516,11 +573,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OpenEnrollmentElectionCoveredBeneficiary - J' as Showdata
+				select 'OpenEnrollmentElectionCoveredBeneficiary - L' as Showdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%M%'
 		begin
 			select @cmdShowDataRecipient = '
 				select
@@ -563,11 +620,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OpenEnrollmentElectionCoveredDependent - K' as Showdata
+				select 'OpenEnrollmentElectionCoveredDependent - M' as Showdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%L%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%N%'
 		begin
 			select @cmdShowDataRecipient = '
 				select
@@ -598,11 +655,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OpenEnrollmentEmployee - L' as Showdata
+				select 'OpenEnrollmentEmployee - N' as Showdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%M%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%O%'
 		begin
 			select @cmdShowDataRecipient = '
 				select
@@ -659,11 +716,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'CoveredDependent - M' as Showdata
+				select 'CoveredDependent - O' as Showdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%N%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%P%'
 		begin
 			select @cmdShowDataRecipient = '
 				select
@@ -724,7 +781,7 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'CoveredBeneficiary - N' as Showdata
+				select 'CoveredBeneficiary - P' as Showdata
 			end
 		end
 
@@ -1103,6 +1160,65 @@ GO
 
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
 		begin
+			----------- OpenEnrollmentEmployeeElection
+			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'OpenEnrollmentEmployeeElection (PlanTypeID, EmployeeID, PlanID, CoverageTypeID, LastModified, OpenEnrollmentID, ReasonDeclined, ReasonDeclinedDetails, IsUpdated, EmployeeFSAContributionPerPay, IsLimitedFSA, IncludeADD, ElectedLifeAmount)
+			select T1.PlanTypeID, R1.ID, R2.ID, R3.ID, LastModified, R4.ID, ReasonDeclined, ReasonDeclinedDetails, IsUpdated, EmployeeFSAContributionPerPay, IsLimitedFSA, T1.IncludeADD, ElectedLifeAmount
+			from '+@cDonorTablePath+'OpenEnrollmentEmployeeElection T1
+			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
+			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
+
+			left outer join '+@cDonorTablePath+'BenefitPlan D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.PlanID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitPlan R2 on R2.CompanyID = R1.CompanyID and R2.Code = D2.Code and R2.Description = D2.Description and isnull(R2.StartDate, '''') = isnull(D2.StartDate, '''') and isnull(R2.EndDate, '''') = isnull(D2.EndDate, '''')
+
+			left outer join '+@cDonorTablePath+'BenefitCoverageType D3 on D3.ID = T1.CoverageTypeID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitCoverageType R3 on R3.Code = D3.Code and R3.Description = D3.Description
+
+			left outer join '+@cDonorTablePath+'OpenEnrollment D4 on D4.CompanyID = D1.CompanyID and D4.ID = T1.OpenEnrollmentID
+			left outer join '+trim(@cRecipientTablePath)+'OpenEnrollment R4 on R4.CompanyID = R1.CompanyID and R4.Name = D4.Name
+
+			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				print @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'OpenEnrollmentEmployeeElection - G' as InsertData
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
+		begin
+			----------------EmployeeBenefit
+			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeBenefit (EmployeeID, PlanID, CoverageTypeID, Premium, EmployerAmount, EmployerPercent, EmployeeAmount, EmployeePercent, MemberNumber, StartDate, EndDate, Notes, DeductionFrequencyCode, PR_Integration_PK, LifeEventReasonID, EmployeeSavingsAccountContributionPerPay, EmployerCatchUpAmount, ADDIncluded, CoverageAmount)
+			select R1.ID, R3.ID, R4.ID, T1.Premium, T1.EmployerAmount, T1.EmployerPercent, T1.EmployeeAmount, T1.EmployeePercent, T1.MemberNumber, T1.StartDate, T1.EndDate, T1.Notes, T1.DeductionFrequencyCode, T1.PR_Integration_PK, R2.ID, T1.EmployeeSavingsAccountContributionPerPay, T1.EmployerCatchUpAmount, T1.ADDIncluded, T1.CoverageAmount
+			from '+@cDonorTablePath+'EmployeeBenefit T1 
+			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
+			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
+			left outer join '+@cDonorTablePath+'LifeEventReason D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.LifeEventReasonID
+			left outer join '+trim(@cRecipientTablePath)+'LifeEventReason R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
+			left outer join '+@cDonorTablePath+'BenefitPlan D3 on D3.CompanyID = D1.CompanyID and D3.ID = T1.PlanID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitPlan R3 on R3.CompanyID = R1.CompanyID and R3.Code = D3.Code and R3.Description = D3.Description and isnull(R3.StartDate, '''') = isnull(D3.StartDate, '''') and isnull(R3.EndDate, '''') = isnull(D3.EndDate, '''')
+
+			left outer join '+@cDonorTablePath+'BenefitCoverageType D4 on D4.ID = T1.CoverageTypeID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitCoverageType R4 on R4.Code = D4.Code and R4.Description = D4.Description
+			where D1.CompanyID = '+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				print @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeBenefit - H' as InsertData
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
+		begin
 			select @cmdInsert = '
 				insert into '+trim(@cRecipientTablePath)+'EmployeeBeneficiary (
 					EmployeeID,
@@ -1165,11 +1281,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeBeneficiary - G' as Insertdata
+				select 'EmployeeBeneficiary - I' as Insertdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
 		begin
 			select @cmdInsert = '
 				insert into '+trim(@cRecipientTablePath)+'EmployeeDependent (
@@ -1254,11 +1370,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'EmployeeDependent - H' as Insertdata
+				select 'EmployeeDependent - J' as Insertdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
 		begin
 			select @cmdInsert = '
 				insert into '+trim(@cRecipientTablePath)+'OpenEnrollmentBenefitPlan (
@@ -1290,11 +1406,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OpenEnrollmentBenefitPlan - I' as Insertdata
+				select 'OpenEnrollmentBenefitPlan - K' as Insertdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%L%'
 		begin
 			select @cmdInsert = '
 				insert into '+trim(@cRecipientTablePath)+'OpenEnrollmentElectionCoveredBeneficiary (
@@ -1349,11 +1465,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OpenEnrollmentElectionCoveredBeneficiary - J' as Insertdata
+				select 'OpenEnrollmentElectionCoveredBeneficiary - L' as Insertdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%M%'
 		begin
 			select @cmdInsert = '
 				insert into '+trim(@cRecipientTablePath)+'OpenEnrollmentElectionCoveredDependent (
@@ -1400,11 +1516,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OpenEnrollmentElectionCoveredDependent - K' as Insertdata
+				select 'OpenEnrollmentElectionCoveredDependent - M' as Insertdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%L%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%N%'
 		begin
 			select @cmdInsert = '
 				insert into '+trim(@cRecipientTablePath)+'OpenEnrollmentEmployee (
@@ -1442,11 +1558,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'OpenEnrollmentEmployee - L' as Insertdata
+				select 'OpenEnrollmentEmployee - N' as Insertdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%M%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%O%'
 		begin
 			select @cmdInsert = '
 				insert into '+trim(@cRecipientTablePath)+'CoveredDependent (
@@ -1507,11 +1623,11 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'CoveredDependent - M' as Insertdata
+				select 'CoveredDependent - O' as Insertdata
 			end
 		end
 
-		if @cTableToRun = 'ZZZ' or @cTableToRun like '%N%'
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%P%'
 		begin
 			select @cmdInsert = '
 				insert into '+trim(@cRecipientTablePath)+'CoveredBeneficiary (
@@ -1580,7 +1696,7 @@ GO
 			end
 			if @cVerbose_Ind = 1
 			begin
-				select 'CoveredBeneficiary - N' as Insertdata
+				select 'CoveredBeneficiary - P' as Insertdata
 			end
 		end
 
