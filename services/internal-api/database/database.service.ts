@@ -200,11 +200,8 @@ export async function findConnectionString(tenantId: string): Promise<Connection
         errorMessage.setDeveloperMessage(`tenantId: ${tenantId} not found`);
         throw errorMessage;
     } catch (error) {
-        if (error instanceof ErrorMessage) {
-            throw error;
-        }
         console.error(`Error determining RDS connection parameters: ${JSON.stringify(error)}`);
-        throw getErrorResponse(0);
+        throw error;
     }
 }
 

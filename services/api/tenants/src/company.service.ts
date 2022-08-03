@@ -1099,7 +1099,10 @@ export async function createCompanyMigration(
     migrationId
 ): Promise<any> {
     console.info('company.service.createCompanyMigration');
+    console.info(`migrationId: ${migrationId}`);
+
     const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+
     try {
         //step 1 has been moved to runCompanyMigration function below
 
@@ -1217,6 +1220,9 @@ export async function runCompanyMigration(donorTenantId, donorCompanyId, recipie
     console.info('company.service.runCompanyMigration');
     const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
     const migrationId = uniqueifier();
+
+    console.info(`migrationId: ${migrationId}`);
+
     const pendingParams = {
         TableName: 'HrCompanyMigrations',
         Item: {
