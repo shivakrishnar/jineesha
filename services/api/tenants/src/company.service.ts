@@ -1163,7 +1163,7 @@ export async function createCompanyMigration(
             query: migrationQuery.value,
             queryType: QueryType.StoredProcedure,
         } as DatabaseEvent;
-        await utilService.invokeInternalService('queryExecutor', migrationPayload, utilService.InvocationType.RequestResponse, true);
+        await utilService.invokeInternalService('queryExecutorAsync', migrationPayload, utilService.InvocationType.RequestResponse, true);
 
         //5-updating migration table to 'Success' if migration done successfully
         const updateParams = {
