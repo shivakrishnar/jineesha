@@ -285,7 +285,6 @@ GO
 
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%E%'
 		begin
-			--SecRole Ready
 			select @cmdShowDataRecipient = 'select R1.ID as PlanID, R2.ID as ClassID
 			from '+trim(@cDonorTablePath)+'BenefitPlanClass T1
 
@@ -310,7 +309,6 @@ GO
 
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%F%'
 		begin
-			--SecRole Ready
 			select @cmdShowDataRecipient = 'select R1.ID, T1.*
 			from '+trim(@cDonorTablePath)+'BenefitPlanTieredCoverageAmount T1
 
@@ -327,6 +325,463 @@ GO
 			if @cVerbose_Ind = 1
 			begin
 				select 'BenefitPlanTieredCoverageAmount - F' as Showdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
+		begin
+			----------- OpenEnrollmentEmployeeElection
+			select @cmdShowDataDonor = 'select T1.PlanTypeID, R1.ID, R2.ID, R3.ID, LastModified, R4.ID, ReasonDeclined, ReasonDeclinedDetails, IsUpdated, EmployeeFSAContributionPerPay, IsLimitedFSA, T1.IncludeADD, ElectedLifeAmount
+			from '+@cDonorTablePath+'OpenEnrollmentEmployeeElection T1
+			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
+			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
+
+			left outer join '+@cDonorTablePath+'BenefitPlan D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.PlanID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitPlan R2 on R2.CompanyID = R1.CompanyID and R2.Code = D2.Code and R2.Description = D2.Description and isnull(R2.StartDate, '''') = isnull(D2.StartDate, '''') and isnull(R2.EndDate, '''') = isnull(D2.EndDate, '''')
+
+			left outer join '+@cDonorTablePath+'BenefitCoverageType D3 on D3.ID = T1.CoverageTypeID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitCoverageType R3 on R3.Code = D3.Code and R3.Description = D3.Description
+
+			left outer join '+@cDonorTablePath+'OpenEnrollment D4 on D4.CompanyID = D1.CompanyID and D4.ID = T1.OpenEnrollmentID
+			left outer join '+trim(@cRecipientTablePath)+'OpenEnrollment R4 on R4.CompanyID = R1.CompanyID and R4.Name = D4.Name
+
+			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataDonor)
+			if @cShowStatement = 1
+			begin
+				print @cmdShowDataDonor
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'OpenEnrollmentEmployeeElection - G' as ShowData
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
+		begin
+			----------------EmployeeBenefit
+			select @cmdShowDataDonor = 'select R1.ID, R3.ID, R4.ID, T1.Premium, T1.EmployerAmount, T1.EmployerPercent, T1.EmployeeAmount, T1.EmployeePercent, T1.MemberNumber, T1.StartDate, T1.EndDate, T1.Notes, T1.DeductionFrequencyCode, T1.PR_Integration_PK, R2.ID, T1.EmployeeSavingsAccountContributionPerPay, T1.EmployerCatchUpAmount, T1.ADDIncluded, T1.CoverageAmount
+			from '+@cDonorTablePath+'EmployeeBenefit T1 
+			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
+			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
+			left outer join '+@cDonorTablePath+'LifeEventReason D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.LifeEventReasonID
+			left outer join '+trim(@cRecipientTablePath)+'LifeEventReason R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
+
+			left outer join '+@cDonorTablePath+'BenefitPlan D3 on D3.CompanyID = D1.CompanyID and D3.ID = T1.PlanID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitPlan R3 on R3.CompanyID = R1.CompanyID and R3.Code = D3.Code and R3.Description = D3.Description and isnull(R3.StartDate, '''') = isnull(D3.StartDate, '''') and isnull(R3.EndDate, '''') = isnull(D3.EndDate, '''')
+
+			left outer join '+@cDonorTablePath+'BenefitCoverageType D4 on D4.ID = T1.CoverageTypeID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitCoverageType R4 on R4.Code = D4.Code and R4.Description = D4.Description
+			where D1.CompanyID = '+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataDonor)
+			if @cShowStatement = 1
+			begin
+				print @cmdShowDataDonor
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeBenefit - H' as ShowData
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
+		begin
+			select @cmdShowDataRecipient = '
+				select
+					recip_ee.ID as EmployeeID,
+					recip_brt.ID as BeneficiaryRelationshipTypeID,
+					recip_gt.ID as GenderTypeID,
+					donor_eb.FirstName,
+					donor_eb.MiddleName,
+					donor_eb.LastName,
+					donor_eb.SSN,
+					donor_eb.BirthDate,
+					donor_eb.Address1,
+					donor_eb.Address2,
+					donor_eb.City,
+					donor_eb.Zip,
+					donor_eb.CountryStateTypeID,
+					donor_eb.EmailAddress,
+					donor_eb.PhoneHome,
+					donor_eb.PhoneCell,
+					donor_eb.PhoneWork,
+					donor_eb.Notes,
+					donor_eb.IsSmoker
+				from '+trim(@cDonorTablePath)+'EmployeeBeneficiary donor_eb
+
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_eb.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+
+				join '+trim(@cDonorTablePath)+'BeneficiaryRelationshipType donor_brt on donor_brt.ID = donor_eb.BeneficiaryRelationshipTypeID
+				join '+trim(@cRecipientTablePath)+'BeneficiaryRelationshipType recip_brt on recip_brt.RelationshipType = donor_brt.RelationshipType
+
+				left join '+trim(@cDonorTablePath)+'GenderType donor_gt on donor_gt.ID = donor_eb.GenderTypeID
+				left join '+trim(@cRecipientTablePath)+'GenderType recip_gt on recip_gt.Code = donor_gt.Code and recip_gt.Description = donor_gt.Description
+
+				where donor_ee.CompanyID = '+@cDonorCompany_ID +' and recip_ee.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeBeneficiary - I' as Showdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
+		begin
+			select @cmdShowDataRecipient = '
+				select
+					recip_ee.ID as EmployeeID,
+					donor_ed.FirstName,
+					donor_ed.MiddleName,
+					donor_ed.LastName,
+					donor_ed.SSN,
+					donor_ed.BirthDate,
+					donor_ed.Address1,
+					donor_ed.Address2,
+					donor_ed.City,
+					donor_ed.Zip,
+					recip_cst.ID as CountryStateTypeID,
+					donor_ed.EmailAddress,
+					donor_ed.PhoneHome,
+					donor_ed.PhoneCell,
+					donor_ed.PhoneWork,
+					donor_ed.IsInsured,
+					donor_ed.IsStudent,
+					donor_ed.Notes,
+					recip_drt.ID as DependentRelationshipTypeID,
+					recip_gt.ID as GenderTypeID,
+					donor_ed.PR_Integration_PK,
+					donor_ed.Evo_personId,
+					donor_ed.Evo_isExistingPatient,
+					donor_ed.Evo_primaryCarePhysician,
+					donor_ed.IsDisabled,
+					donor_ed.IsSmoker
+				from '+trim(@cDonorTablePath)+'EmployeeDependent donor_ed
+
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_ed.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+
+				left join '+trim(@cDonorTablePath)+'CountryStateType donor_cst on donor_cst.ID = donor_ed.CountryStateTypeID
+				left join '+trim(@cRecipientTablePath)+'CountryStateType recip_cst on
+					recip_cst.CountryCode = donor_cst.CountryCode
+					and recip_cst.CountryName = donor_cst.CountryName
+					and recip_cst.StateCode = donor_cst.StateCode
+					and recip_cst.StateName = donor_cst.StateName
+
+				left join '+trim(@cDonorTablePath)+'DependentRelationshipType donor_drt on donor_drt.ID = donor_ed.DependentRelationshipTypeID
+				left join '+trim(@cRecipientTablePath)+'DependentRelationshipType recip_drt on recip_drt.RelationshipType = donor_drt.RelationshipType
+
+				left join '+trim(@cDonorTablePath)+'GenderType donor_gt on donor_gt.ID = donor_ee.GenderTypeID
+				left join '+trim(@cRecipientTablePath)+'GenderType recip_gt on recip_gt.Code = donor_gt.Code and recip_gt.Description = donor_gt.Description
+
+				where donor_ee.CompanyID = '+@cDonorCompany_ID +' and recip_ee.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeDependent - J' as Showdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
+		begin
+			select @cmdShowDataRecipient = '
+				select
+					recip_oe.ID as OpenEnrollmentID,
+					recip_bp.ID as BenefitPlanID
+				from '+trim(@cDonorTablePath)+'OpenEnrollmentBenefitPlan donor_oebp
+
+				join '+trim(@cDonorTablePath)+'OpenEnrollment donor_oe on donor_oe.ID = donor_oebp.OpenEnrollmentID
+				join '+trim(@cRecipientTablePath)+'OpenEnrollment recip_oe on
+					isnull(recip_oe.Name, '''') = isnull(donor_oe.Name, '''')
+					and coalesce(convert(nvarchar(255), recip_oe.StartDate), '''') = coalesce(convert(nvarchar(255), donor_oe.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_oe.EndDate), '''') = coalesce(convert(nvarchar(255), donor_oe.EndDate), '''')
+
+				join '+trim(@cDonorTablePath)+'BenefitPlan donor_bp on donor_bp.ID = donor_oebp.BenefitPlanID
+				join '+trim(@cRecipientTablePath)+'BenefitPlan recip_bp on
+					isnull(recip_bp.Code, '''') = isnull(donor_bp.Code, '''')
+					and isnull(recip_bp.Description, '''') = isnull(donor_bp.Description, '''')
+
+				where donor_oe.CompanyID = '+@cDonorCompany_ID +' and recip_oe.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'OpenEnrollmentBenefitPlan - K' as Showdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%L%'
+		begin
+			select @cmdShowDataRecipient = '
+				select
+					recip_oeee.ID as ElectionID,
+					recip_eb.ID as BeneficiaryID,
+					donor_oeecb.PercentOfBenefit,
+					donor_oeecb.IsPrimary,
+					donor_oeecb.PercentOfBenefit_Contingent,
+					donor_oeecb.IsContingent
+				from '+trim(@cDonorTablePath)+'OpenEnrollmentElectionCoveredBeneficiary donor_oeecb
+
+				join '+trim(@cDonorTablePath)+'OpenEnrollmentEmployeeElection donor_oeee on donor_oeee.ID = donor_oeecb.ElectionID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_oeee.EmployeeID
+				join '+trim(@cDonorTablePath)+'BenefitPlanType donor_bpt on donor_bpt.ID = donor_oeee.PlanTypeID
+				join '+trim(@cDonorTablePath)+'OpenEnrollment donor_oe on donor_oe.ID = donor_oeee.OpenEnrollmentID
+				join '+trim(@cRecipientTablePath)+'OpenEnrollment recip_oe on
+					isnull(recip_oe.Name, '''') = isnull(donor_oe.Name, '''')
+					and coalesce(convert(nvarchar(255), recip_oe.StartDate), '''') = coalesce(convert(nvarchar(255), donor_oe.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_oe.EndDate), '''') = coalesce(convert(nvarchar(255), donor_oe.EndDate), '''')
+				join '+trim(@cRecipientTablePath)+'BenefitPlanType recip_bpt on
+					recip_bpt.Code = donor_bpt.Code
+					and recip_bpt.Description = donor_bpt.Description
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'OpenEnrollmentEmployeeElection recip_oeee on
+					recip_oeee.OpenEnrollmentID = recip_oe.ID
+					and recip_oeee.PlanTypeID = recip_bpt.ID
+					and recip_oeee.EmployeeID = recip_ee.ID
+
+				join '+trim(@cDonorTablePath)+'EmployeeBeneficiary donor_eb on donor_eb.ID = donor_oeecb.BeneficiaryID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee2 on donor_ee2.ID = donor_eb.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee2 on recip_ee2.EmployeeCode = donor_ee2.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'EmployeeBeneficiary recip_eb on
+					recip_eb.EmployeeID = recip_ee2.ID
+					and isnull(recip_eb.FirstName, '''') = isnull(donor_eb.FirstName, '''')
+					and isnull(recip_eb.LastName, '''') = isnull(donor_eb.LastName, '''')
+
+				where donor_ee.CompanyID = '+@cDonorCompany_ID +' and donor_ee2.CompanyID = '+@cDonorCompany_ID +'
+				and recip_ee.CompanyID = '+@cRecipientCompany_ID+' and recip_ee2.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'OpenEnrollmentElectionCoveredBeneficiary - L' as Showdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%M%'
+		begin
+			select @cmdShowDataRecipient = '
+				select
+					recip_oeee.ID as ElectionID,
+					recip_ed.ID as DependentID
+				from '+trim(@cDonorTablePath)+'OpenEnrollmentElectionCoveredDependent donor_oeecd
+
+				join '+trim(@cDonorTablePath)+'OpenEnrollmentEmployeeElection donor_oeee on donor_oeee.ID = donor_oeecd.ElectionID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_oeee.EmployeeID
+				join '+trim(@cDonorTablePath)+'BenefitPlanType donor_bpt on donor_bpt.ID = donor_oeee.PlanTypeID
+				join '+trim(@cDonorTablePath)+'OpenEnrollment donor_oe on donor_oe.ID = donor_oeee.OpenEnrollmentID
+				join '+trim(@cRecipientTablePath)+'OpenEnrollment recip_oe on
+					isnull(recip_oe.Name, '''') = isnull(donor_oe.Name, '''')
+					and coalesce(convert(nvarchar(255), recip_oe.StartDate), '''') = coalesce(convert(nvarchar(255), donor_oe.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_oe.EndDate), '''') = coalesce(convert(nvarchar(255), donor_oe.EndDate), '''')
+				join '+trim(@cRecipientTablePath)+'BenefitPlanType recip_bpt on
+					recip_bpt.Code = donor_bpt.Code
+					and recip_bpt.Description = donor_bpt.Description
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'OpenEnrollmentEmployeeElection recip_oeee on
+					recip_oeee.OpenEnrollmentID = recip_oe.ID
+					and recip_oeee.PlanTypeID = recip_bpt.ID
+					and recip_oeee.EmployeeID = recip_ee.ID
+
+				join '+trim(@cDonorTablePath)+'EmployeeDependent donor_ed on donor_ed.ID = donor_oeecd.DependentID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee2 on donor_ee2.ID = donor_ed.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee2 on recip_ee2.EmployeeCode = donor_ee2.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'EmployeeDependent recip_ed on
+					recip_ed.EmployeeID = recip_ee2.ID
+					and isnull(recip_ed.FirstName, '''') = isnull(donor_ed.FirstName, '''')
+					and isnull(recip_ed.LastName, '''') = isnull(donor_ed.LastName, '''')
+
+				where donor_ee.CompanyID = '+@cDonorCompany_ID +' and donor_ee2.CompanyID = '+@cDonorCompany_ID +'
+				and recip_ee.CompanyID = '+@cRecipientCompany_ID+' and recip_ee2.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'OpenEnrollmentElectionCoveredDependent - M' as Showdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%N%'
+		begin
+			select @cmdShowDataRecipient = '
+				select
+					recip_oe.ID as OpenEnrollmentID,
+					recip_ee.ID as EmployeeID,
+					donor_oee.IsAuthorized,
+					donor_oee.ESignName,
+					donor_oee.ESignDate
+				from '+trim(@cDonorTablePath)+'OpenEnrollmentEmployee donor_oee
+
+				join '+trim(@cDonorTablePath)+'OpenEnrollment donor_oe on donor_oe.ID = donor_oee.OpenEnrollmentID
+				join '+trim(@cRecipientTablePath)+'OpenEnrollment recip_oe on
+					isnull(recip_oe.Name, '''') = isnull(donor_oe.Name, '''')
+					and coalesce(convert(nvarchar(255), recip_oe.StartDate), '''') = coalesce(convert(nvarchar(255), donor_oe.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_oe.EndDate), '''') = coalesce(convert(nvarchar(255), donor_oe.EndDate), '''')
+
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_oee.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on
+					recip_ee.EmployeeCode = donor_ee.EmployeeCode
+					and recip_ee.CompanyID = recip_oe.CompanyID
+
+				where donor_oe.CompanyID = '+@cDonorCompany_ID +' and recip_oe.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'OpenEnrollmentEmployee - N' as Showdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%O%'
+		begin
+			select @cmdShowDataRecipient = '
+				select
+					recip_eb.ID as EmployeeBenefitID
+					,recip_ed.ID as EmployeeDependentID
+				from '+trim(@cDonorTablePath)+'CoveredDependent donor_cd
+
+				join '+trim(@cDonorTablePath)+'EmployeeBenefit donor_eb on donor_eb.ID = donor_cd.EmployeeBenefitID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_eb.EmployeeID
+				join '+trim(@cDonorTablePath)+'BenefitPlan donor_bp on donor_bp.ID = donor_eb.PlanID
+				left join '+trim(@cDonorTablePath)+'BenefitPlanType donor_bpt on donor_bpt.ID = donor_bp.PlanTypeID
+				join '+trim(@cDonorTablePath)+'BenefitCoverageType donor_ct on donor_ct.ID = donor_eb.CoverageTypeID
+
+				join '+trim(@cRecipientTablePath)+'BenefitCoverageType recip_ct on recip_ct.Code = donor_ct.Code and recip_ct.Description = donor_ct.Description
+				left join '+trim(@cRecipientTablePath)+'BenefitPlanType recip_bpt on recip_bpt.Code = donor_bpt.Code and recip_bpt.Description = donor_bpt.Description
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'BenefitPlan recip_bp on
+					recip_bp.CompanyID = recip_ee.CompanyID
+					and isnull(recip_bp.Code, '''') = isnull(donor_bp.Code, '''')
+					and isnull(recip_bp.Description, '''') = isnull(donor_bp.Description, '''')
+					and isnull(recip_bp.PlanTypeID,  -1) = isnull(recip_bpt.ID, -1)
+					and coalesce(convert(nvarchar(255), recip_bp.StartDate), '''') = coalesce(convert(nvarchar(255), donor_bp.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_bp.EndDate), '''') = coalesce(convert(nvarchar(255), donor_bp.EndDate), '''')
+					and isnull(recip_bp.EmployerDeductionCode, '''') = isnull(donor_bp.EmployerDeductionCode, '''')
+					and isnull(recip_bp.EmployeeDeductionCode, '''') = isnull(donor_bp.EmployeeDeductionCode, '''')
+				join '+trim(@cRecipientTablePath)+'EmployeeBenefit recip_eb on
+					recip_eb.EmployeeID = recip_ee.ID
+					and recip_eb.PlanID = recip_bp.ID
+					and recip_eb.CoverageTypeID = recip_ct.ID
+					and isnull(recip_eb.Premium, 0) = isnull(donor_eb.Premium, 0)
+					and isnull(recip_eb.EmployerAmount, 0) = isnull(donor_eb.EmployerAmount, 0)
+					and isnull(recip_eb.EmployerPercent, 0) = isnull(donor_eb.EmployerPercent, 0)
+					and isnull(recip_eb.EmployeeAmount, 0) = isnull(donor_eb.EmployeeAmount, 0)
+					and isnull(recip_eb.EmployeePercent, 0) = isnull(donor_eb.EmployeePercent, 0)
+					and coalesce(convert(nvarchar(255), recip_eb.StartDate), '''') = coalesce(convert(nvarchar(255), donor_eb.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_eb.EndDate), '''') = coalesce(convert(nvarchar(255), donor_eb.EndDate), '''')
+
+				join '+trim(@cDonorTablePath)+'EmployeeDependent donor_ed on donor_ed.ID = donor_cd.EmployeeDependentID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee2 on donor_ee2.ID = donor_ed.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee2 on recip_ee2.EmployeeCode = donor_ee2.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'EmployeeDependent recip_ed on
+					recip_ed.EmployeeID = recip_ee2.ID
+					and isnull(recip_ed.FirstName, '''') = isnull(donor_ed.FirstName, '''')
+					and isnull(recip_ed.LastName, '''') = isnull(donor_ed.LastName, '''')
+					and isnull(recip_ed.SSN, '''') = isnull(donor_ed.SSN, '''')
+
+				where donor_ee.CompanyID = '+@cDonorCompany_ID +' and donor_ee2.CompanyID = '+@cDonorCompany_ID +'
+				and recip_ee.CompanyID = '+@cRecipientCompany_ID+' and recip_ee2.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'CoveredDependent - O' as Showdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%P%'
+		begin
+			select @cmdShowDataRecipient = '
+				select
+					recip_eb.ID as EmployeeBenefitID
+					,recip_eby.ID as EmployeeBeneficiaryID
+					,donor_cb.PercentOfBenefit
+					,donor_cb.IsPrimary
+					,donor_cb.PercentOfBenefit_Contingent
+					,donor_cb.IsContingent
+				from '+trim(@cDonorTablePath)+'CoveredBeneficiary donor_cb
+
+				join '+trim(@cDonorTablePath)+'EmployeeBenefit donor_eb on donor_eb.ID = donor_cb.EmployeeBenefitID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_eb.EmployeeID
+				join '+trim(@cDonorTablePath)+'BenefitPlan donor_bp on donor_bp.ID = donor_eb.PlanID
+				left join '+trim(@cDonorTablePath)+'BenefitPlanType donor_bpt on donor_bpt.ID = donor_bp.PlanTypeID
+				join '+trim(@cDonorTablePath)+'BenefitCoverageType donor_ct on donor_ct.ID = donor_eb.CoverageTypeID
+
+				join '+trim(@cRecipientTablePath)+'BenefitCoverageType recip_ct on recip_ct.Code = donor_ct.Code and recip_ct.Description = donor_ct.Description
+				left join '+trim(@cRecipientTablePath)+'BenefitPlanType recip_bpt on recip_bpt.Code = donor_bpt.Code and recip_bpt.Description = donor_bpt.Description
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'BenefitPlan recip_bp on
+					recip_bp.CompanyID = recip_ee.CompanyID
+					and isnull(recip_bp.Code, '''') = isnull(donor_bp.Code, '''')
+					and isnull(recip_bp.Description, '''') = isnull(donor_bp.Description, '''')
+					and isnull(recip_bp.PlanTypeID,  -1) = isnull(recip_bpt.ID, -1)
+					and coalesce(convert(nvarchar(255), recip_bp.StartDate), '''') = coalesce(convert(nvarchar(255), donor_bp.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_bp.EndDate), '''') = coalesce(convert(nvarchar(255), donor_bp.EndDate), '''')
+					and isnull(recip_bp.EmployerDeductionCode, '''') = isnull(donor_bp.EmployerDeductionCode, '''')
+					and isnull(recip_bp.EmployeeDeductionCode, '''') = isnull(donor_bp.EmployeeDeductionCode, '''')
+				join '+trim(@cRecipientTablePath)+'EmployeeBenefit recip_eb on
+					recip_eb.EmployeeID = recip_ee.ID
+					and recip_eb.PlanID = recip_bp.ID
+					and recip_eb.CoverageTypeID = recip_ct.ID
+					and isnull(recip_eb.Premium, 0) = isnull(donor_eb.Premium, 0)
+					and isnull(recip_eb.EmployerAmount, 0) = isnull(donor_eb.EmployerAmount, 0)
+					and isnull(recip_eb.EmployerPercent, 0) = isnull(donor_eb.EmployerPercent, 0)
+					and isnull(recip_eb.EmployeeAmount, 0) = isnull(donor_eb.EmployeeAmount, 0)
+					and isnull(recip_eb.EmployeePercent, 0) = isnull(donor_eb.EmployeePercent, 0)
+					and coalesce(convert(nvarchar(255), recip_eb.StartDate), '''') = coalesce(convert(nvarchar(255), donor_eb.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_eb.EndDate), '''') = coalesce(convert(nvarchar(255), donor_eb.EndDate), '''')
+
+				join '+trim(@cDonorTablePath)+'EmployeeBeneficiary donor_eby on donor_eby.ID = donor_cb.EmployeeBeneficiaryID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee2 on donor_ee2.ID = donor_eby.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee2 on recip_ee2.EmployeeCode = donor_ee2.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'EmployeeBeneficiary recip_eby on
+					recip_eby.EmployeeID = recip_ee2.ID
+					and isnull(recip_eby.FirstName, '''') = isnull(donor_eby.FirstName, '''')
+					and isnull(recip_eby.LastName, '''') = isnull(donor_eby.LastName, '''')
+					and isnull(recip_eby.SSN, '''') = isnull(donor_eby.SSN, '''')
+
+				where donor_ee.CompanyID = '+@cDonorCompany_ID +' and donor_ee2.CompanyID = '+@cDonorCompany_ID +'
+				and recip_ee.CompanyID = '+@cRecipientCompany_ID+' and recip_ee2.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'CoveredBeneficiary - P' as Showdata
 			end
 		end
 
@@ -700,6 +1155,548 @@ GO
 			if @cVerbose_Ind = 1
 			begin
 				select 'BenefitPlanTieredCoverageAmount - F' as Insertdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
+		begin
+			----------- OpenEnrollmentEmployeeElection
+			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'OpenEnrollmentEmployeeElection (PlanTypeID, EmployeeID, PlanID, CoverageTypeID, LastModified, OpenEnrollmentID, ReasonDeclined, ReasonDeclinedDetails, IsUpdated, EmployeeFSAContributionPerPay, IsLimitedFSA, IncludeADD, ElectedLifeAmount)
+			select T1.PlanTypeID, R1.ID, R2.ID, R3.ID, LastModified, R4.ID, ReasonDeclined, ReasonDeclinedDetails, IsUpdated, EmployeeFSAContributionPerPay, IsLimitedFSA, T1.IncludeADD, ElectedLifeAmount
+			from '+@cDonorTablePath+'OpenEnrollmentEmployeeElection T1
+			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
+			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
+
+			left outer join '+@cDonorTablePath+'BenefitPlan D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.PlanID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitPlan R2 on R2.CompanyID = R1.CompanyID and R2.Code = D2.Code and R2.Description = D2.Description and isnull(R2.StartDate, '''') = isnull(D2.StartDate, '''') and isnull(R2.EndDate, '''') = isnull(D2.EndDate, '''')
+
+			left outer join '+@cDonorTablePath+'BenefitCoverageType D3 on D3.ID = T1.CoverageTypeID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitCoverageType R3 on R3.Code = D3.Code and R3.Description = D3.Description
+
+			left outer join '+@cDonorTablePath+'OpenEnrollment D4 on D4.CompanyID = D1.CompanyID and D4.ID = T1.OpenEnrollmentID
+			left outer join '+trim(@cRecipientTablePath)+'OpenEnrollment R4 on R4.CompanyID = R1.CompanyID and R4.Name = D4.Name
+
+			where D1.CompanyID ='+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				print @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'OpenEnrollmentEmployeeElection - G' as InsertData
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%H%'
+		begin
+			----------------EmployeeBenefit
+			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeBenefit (EmployeeID, PlanID, CoverageTypeID, Premium, EmployerAmount, EmployerPercent, EmployeeAmount, EmployeePercent, MemberNumber, StartDate, EndDate, Notes, DeductionFrequencyCode, PR_Integration_PK, LifeEventReasonID, EmployeeSavingsAccountContributionPerPay, EmployerCatchUpAmount, ADDIncluded, CoverageAmount)
+			select R1.ID, R3.ID, R4.ID, T1.Premium, T1.EmployerAmount, T1.EmployerPercent, T1.EmployeeAmount, T1.EmployeePercent, T1.MemberNumber, T1.StartDate, T1.EndDate, T1.Notes, T1.DeductionFrequencyCode, T1.PR_Integration_PK, R2.ID, T1.EmployeeSavingsAccountContributionPerPay, T1.EmployerCatchUpAmount, T1.ADDIncluded, T1.CoverageAmount
+			from '+@cDonorTablePath+'EmployeeBenefit T1 
+			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
+			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
+			left outer join '+@cDonorTablePath+'LifeEventReason D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.LifeEventReasonID
+			left outer join '+trim(@cRecipientTablePath)+'LifeEventReason R2 on R2.CompanyID = R1.CompanyID and R2.Description = D2.Description
+			left outer join '+@cDonorTablePath+'BenefitPlan D3 on D3.CompanyID = D1.CompanyID and D3.ID = T1.PlanID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitPlan R3 on R3.CompanyID = R1.CompanyID and R3.Code = D3.Code and R3.Description = D3.Description and isnull(R3.StartDate, '''') = isnull(D3.StartDate, '''') and isnull(R3.EndDate, '''') = isnull(D3.EndDate, '''')
+
+			left outer join '+@cDonorTablePath+'BenefitCoverageType D4 on D4.ID = T1.CoverageTypeID
+			left outer join '+trim(@cRecipientTablePath)+'BenefitCoverageType R4 on R4.Code = D4.Code and R4.Description = D4.Description
+			where D1.CompanyID = '+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				print @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeBenefit - H' as InsertData
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%I%'
+		begin
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'EmployeeBeneficiary (
+					EmployeeID,
+					BeneficiaryRelationshipTypeID,
+					GenderTypeID,
+					FirstName,
+					MiddleName,
+					LastName,
+					SSN,
+					BirthDate,
+					Address1,
+					Address2,
+					City,
+					Zip,
+					CountryStateTypeID,
+					EmailAddress,
+					PhoneHome,
+					PhoneCell,
+					PhoneWork,
+					Notes,
+					IsSmoker
+				)
+				select
+					recip_ee.ID as EmployeeID,
+					recip_brt.ID as BeneficiaryRelationshipTypeID,
+					recip_gt.ID as GenderTypeID,
+					donor_eb.FirstName,
+					donor_eb.MiddleName,
+					donor_eb.LastName,
+					donor_eb.SSN,
+					donor_eb.BirthDate,
+					donor_eb.Address1,
+					donor_eb.Address2,
+					donor_eb.City,
+					donor_eb.Zip,
+					donor_eb.CountryStateTypeID,
+					donor_eb.EmailAddress,
+					donor_eb.PhoneHome,
+					donor_eb.PhoneCell,
+					donor_eb.PhoneWork,
+					donor_eb.Notes,
+					donor_eb.IsSmoker
+				from '+trim(@cDonorTablePath)+'EmployeeBeneficiary donor_eb
+
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_eb.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+
+				join '+trim(@cDonorTablePath)+'BeneficiaryRelationshipType donor_brt on donor_brt.ID = donor_eb.BeneficiaryRelationshipTypeID
+				join '+trim(@cRecipientTablePath)+'BeneficiaryRelationshipType recip_brt on recip_brt.RelationshipType = donor_brt.RelationshipType
+
+				left join '+trim(@cDonorTablePath)+'GenderType donor_gt on donor_gt.ID = donor_eb.GenderTypeID
+				left join '+trim(@cRecipientTablePath)+'GenderType recip_gt on recip_gt.Code = donor_gt.Code and recip_gt.Description = donor_gt.Description
+
+				where donor_ee.CompanyID = '+@cDonorCompany_ID +' and recip_ee.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeBeneficiary - I' as Insertdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%J%'
+		begin
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'EmployeeDependent (
+					EmployeeID,
+					FirstName,
+					MiddleName,
+					LastName,
+					SSN,
+					BirthDate,
+					Address1,
+					Address2,
+					City,
+					Zip,
+					CountryStateTypeID,
+					EmailAddress,
+					PhoneHome,
+					PhoneCell,
+					PhoneWork,
+					IsInsured,
+					IsStudent,
+					Notes,
+					DependentRelationshipTypeID,
+					GenderTypeID,
+					PR_Integration_PK,
+					Evo_personId,
+					Evo_isExistingPatient,
+					Evo_primaryCarePhysician,
+					IsDisabled,
+					IsSmoker
+				)
+				select
+					recip_ee.ID as EmployeeID,
+					donor_ed.FirstName,
+					donor_ed.MiddleName,
+					donor_ed.LastName,
+					donor_ed.SSN,
+					donor_ed.BirthDate,
+					donor_ed.Address1,
+					donor_ed.Address2,
+					donor_ed.City,
+					donor_ed.Zip,
+					recip_cst.ID as CountryStateTypeID,
+					donor_ed.EmailAddress,
+					donor_ed.PhoneHome,
+					donor_ed.PhoneCell,
+					donor_ed.PhoneWork,
+					donor_ed.IsInsured,
+					donor_ed.IsStudent,
+					donor_ed.Notes,
+					recip_drt.ID as DependentRelationshipTypeID,
+					recip_gt.ID as GenderTypeID,
+					donor_ed.PR_Integration_PK,
+					donor_ed.Evo_personId,
+					donor_ed.Evo_isExistingPatient,
+					donor_ed.Evo_primaryCarePhysician,
+					donor_ed.IsDisabled,
+					donor_ed.IsSmoker
+				from '+trim(@cDonorTablePath)+'EmployeeDependent donor_ed
+
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_ed.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+
+				left join '+trim(@cDonorTablePath)+'CountryStateType donor_cst on donor_cst.ID = donor_ed.CountryStateTypeID
+				left join '+trim(@cRecipientTablePath)+'CountryStateType recip_cst on
+					recip_cst.CountryCode = donor_cst.CountryCode
+					and recip_cst.CountryName = donor_cst.CountryName
+					and recip_cst.StateCode = donor_cst.StateCode
+					and recip_cst.StateName = donor_cst.StateName
+
+				left join '+trim(@cDonorTablePath)+'DependentRelationshipType donor_drt on donor_drt.ID = donor_ed.DependentRelationshipTypeID
+				left join '+trim(@cRecipientTablePath)+'DependentRelationshipType recip_drt on recip_drt.RelationshipType = donor_drt.RelationshipType
+
+				left join '+trim(@cDonorTablePath)+'GenderType donor_gt on donor_gt.ID = donor_ee.GenderTypeID
+				left join '+trim(@cRecipientTablePath)+'GenderType recip_gt on recip_gt.Code = donor_gt.Code and recip_gt.Description = donor_gt.Description
+
+				where donor_ee.CompanyID = '+@cDonorCompany_ID +' and recip_ee.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeDependent - J' as Insertdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%K%'
+		begin
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'OpenEnrollmentBenefitPlan (
+					OpenEnrollmentID,
+					BenefitPlanID
+				)
+				select
+					recip_oe.ID as OpenEnrollmentID,
+					recip_bp.ID as BenefitPlanID
+				from '+trim(@cDonorTablePath)+'OpenEnrollmentBenefitPlan donor_oebp
+
+				join '+trim(@cDonorTablePath)+'OpenEnrollment donor_oe on donor_oe.ID = donor_oebp.OpenEnrollmentID
+				join '+trim(@cRecipientTablePath)+'OpenEnrollment recip_oe on
+					isnull(recip_oe.Name, '''') = isnull(donor_oe.Name, '''')
+					and coalesce(convert(nvarchar(255), recip_oe.StartDate), '''') = coalesce(convert(nvarchar(255), donor_oe.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_oe.EndDate), '''') = coalesce(convert(nvarchar(255), donor_oe.EndDate), '''')
+
+				join '+trim(@cDonorTablePath)+'BenefitPlan donor_bp on donor_bp.ID = donor_oebp.BenefitPlanID
+				join '+trim(@cRecipientTablePath)+'BenefitPlan recip_bp on
+					isnull(recip_bp.Code, '''') = isnull(donor_bp.Code, '''')
+					and isnull(recip_bp.Description, '''') = isnull(donor_bp.Description, '''')
+
+				where donor_oe.CompanyID = '+@cDonorCompany_ID +' and recip_oe.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'OpenEnrollmentBenefitPlan - K' as Insertdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%L%'
+		begin
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'OpenEnrollmentElectionCoveredBeneficiary (
+					ElectionID,
+					BeneficiaryID,
+					PercentOfBenefit,
+					IsPrimary,
+					PercentOfBenefit_Contingent,
+					IsContingent
+				)
+				select
+					recip_oeee.ID as ElectionID,
+					recip_eb.ID as BeneficiaryID,
+					donor_oeecb.PercentOfBenefit,
+					donor_oeecb.IsPrimary,
+					donor_oeecb.PercentOfBenefit_Contingent,
+					donor_oeecb.IsContingent
+				from '+trim(@cDonorTablePath)+'OpenEnrollmentElectionCoveredBeneficiary donor_oeecb
+
+				join '+trim(@cDonorTablePath)+'OpenEnrollmentEmployeeElection donor_oeee on donor_oeee.ID = donor_oeecb.ElectionID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_oeee.EmployeeID
+				join '+trim(@cDonorTablePath)+'BenefitPlanType donor_bpt on donor_bpt.ID = donor_oeee.PlanTypeID
+				join '+trim(@cDonorTablePath)+'OpenEnrollment donor_oe on donor_oe.ID = donor_oeee.OpenEnrollmentID
+				join '+trim(@cRecipientTablePath)+'OpenEnrollment recip_oe on
+					isnull(recip_oe.Name, '''') = isnull(donor_oe.Name, '''')
+					and coalesce(convert(nvarchar(255), recip_oe.StartDate), '''') = coalesce(convert(nvarchar(255), donor_oe.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_oe.EndDate), '''') = coalesce(convert(nvarchar(255), donor_oe.EndDate), '''')
+				join '+trim(@cRecipientTablePath)+'BenefitPlanType recip_bpt on
+					recip_bpt.Code = donor_bpt.Code
+					and recip_bpt.Description = donor_bpt.Description
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'OpenEnrollmentEmployeeElection recip_oeee on
+					recip_oeee.OpenEnrollmentID = recip_oe.ID
+					and recip_oeee.PlanTypeID = recip_bpt.ID
+					and recip_oeee.EmployeeID = recip_ee.ID
+
+				join '+trim(@cDonorTablePath)+'EmployeeBeneficiary donor_eb on donor_eb.ID = donor_oeecb.BeneficiaryID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee2 on donor_ee2.ID = donor_eb.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee2 on recip_ee2.EmployeeCode = donor_ee2.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'EmployeeBeneficiary recip_eb on
+					recip_eb.EmployeeID = recip_ee2.ID
+					and isnull(recip_eb.FirstName, '''') = isnull(donor_eb.FirstName, '''')
+					and isnull(recip_eb.LastName, '''') = isnull(donor_eb.LastName, '''')
+
+				where donor_ee.CompanyID = '+@cDonorCompany_ID +' and donor_ee2.CompanyID = '+@cDonorCompany_ID +'
+				and recip_ee.CompanyID = '+@cRecipientCompany_ID+' and recip_ee2.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'OpenEnrollmentElectionCoveredBeneficiary - L' as Insertdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%M%'
+		begin
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'OpenEnrollmentElectionCoveredDependent (
+					ElectionID,
+					DependentID
+				)
+				select
+					recip_oeee.ID as ElectionID,
+					recip_ed.ID as DependentID
+				from '+trim(@cDonorTablePath)+'OpenEnrollmentElectionCoveredDependent donor_oeecd
+
+				join '+trim(@cDonorTablePath)+'OpenEnrollmentEmployeeElection donor_oeee on donor_oeee.ID = donor_oeecd.ElectionID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_oeee.EmployeeID
+				join '+trim(@cDonorTablePath)+'BenefitPlanType donor_bpt on donor_bpt.ID = donor_oeee.PlanTypeID
+				join '+trim(@cDonorTablePath)+'OpenEnrollment donor_oe on donor_oe.ID = donor_oeee.OpenEnrollmentID
+				join '+trim(@cRecipientTablePath)+'OpenEnrollment recip_oe on
+					isnull(recip_oe.Name, '''') = isnull(donor_oe.Name, '''')
+					and coalesce(convert(nvarchar(255), recip_oe.StartDate), '''') = coalesce(convert(nvarchar(255), donor_oe.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_oe.EndDate), '''') = coalesce(convert(nvarchar(255), donor_oe.EndDate), '''')
+				join '+trim(@cRecipientTablePath)+'BenefitPlanType recip_bpt on
+					recip_bpt.Code = donor_bpt.Code
+					and recip_bpt.Description = donor_bpt.Description
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'OpenEnrollmentEmployeeElection recip_oeee on
+					recip_oeee.OpenEnrollmentID = recip_oe.ID
+					and recip_oeee.PlanTypeID = recip_bpt.ID
+					and recip_oeee.EmployeeID = recip_ee.ID
+
+				join '+trim(@cDonorTablePath)+'EmployeeDependent donor_ed on donor_ed.ID = donor_oeecd.DependentID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee2 on donor_ee2.ID = donor_ed.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee2 on recip_ee2.EmployeeCode = donor_ee2.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'EmployeeDependent recip_ed on
+					recip_ed.EmployeeID = recip_ee2.ID
+					and isnull(recip_ed.FirstName, '''') = isnull(donor_ed.FirstName, '''')
+					and isnull(recip_ed.LastName, '''') = isnull(donor_ed.LastName, '''')
+
+				where donor_ee.CompanyID = '+@cDonorCompany_ID +' and donor_ee2.CompanyID = '+@cDonorCompany_ID +'
+				and recip_ee.CompanyID = '+@cRecipientCompany_ID+' and recip_ee2.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'OpenEnrollmentElectionCoveredDependent - M' as Insertdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%N%'
+		begin
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'OpenEnrollmentEmployee (
+					OpenEnrollmentID,
+					EmployeeID,
+					IsAuthorized,
+					ESignName,
+					ESignDate
+				)
+				select
+					recip_oe.ID as OpenEnrollmentID,
+					recip_ee.ID as EmployeeID,
+					donor_oee.IsAuthorized,
+					donor_oee.ESignName,
+					donor_oee.ESignDate
+				from '+trim(@cDonorTablePath)+'OpenEnrollmentEmployee donor_oee
+
+				join '+trim(@cDonorTablePath)+'OpenEnrollment donor_oe on donor_oe.ID = donor_oee.OpenEnrollmentID
+				join '+trim(@cRecipientTablePath)+'OpenEnrollment recip_oe on
+					isnull(recip_oe.Name, '''') = isnull(donor_oe.Name, '''')
+					and coalesce(convert(nvarchar(255), recip_oe.StartDate), '''') = coalesce(convert(nvarchar(255), donor_oe.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_oe.EndDate), '''') = coalesce(convert(nvarchar(255), donor_oe.EndDate), '''')
+
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_oee.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on
+					recip_ee.EmployeeCode = donor_ee.EmployeeCode
+					and recip_ee.CompanyID = recip_oe.CompanyID
+
+				where donor_oe.CompanyID = '+@cDonorCompany_ID +' and recip_oe.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'OpenEnrollmentEmployee - N' as Insertdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%O%'
+		begin
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'CoveredDependent (
+					EmployeeBenefitID,
+					EmployeeDependentID
+				)
+				select
+					recip_eb.ID as EmployeeBenefitID
+					,recip_ed.ID as EmployeeDependentID
+				from '+trim(@cDonorTablePath)+'CoveredDependent donor_cd
+
+				join '+trim(@cDonorTablePath)+'EmployeeBenefit donor_eb on donor_eb.ID = donor_cd.EmployeeBenefitID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_eb.EmployeeID
+				join '+trim(@cDonorTablePath)+'BenefitPlan donor_bp on donor_bp.ID = donor_eb.PlanID
+				left join '+trim(@cDonorTablePath)+'BenefitPlanType donor_bpt on donor_bpt.ID = donor_bp.PlanTypeID
+				join '+trim(@cDonorTablePath)+'BenefitCoverageType donor_ct on donor_ct.ID = donor_eb.CoverageTypeID
+
+				join '+trim(@cRecipientTablePath)+'BenefitCoverageType recip_ct on recip_ct.Code = donor_ct.Code and recip_ct.Description = donor_ct.Description
+				left join '+trim(@cRecipientTablePath)+'BenefitPlanType recip_bpt on recip_bpt.Code = donor_bpt.Code and recip_bpt.Description = donor_bpt.Description
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'BenefitPlan recip_bp on
+					recip_bp.CompanyID = recip_ee.CompanyID
+					and isnull(recip_bp.Code, '''') = isnull(donor_bp.Code, '''')
+					and isnull(recip_bp.Description, '''') = isnull(donor_bp.Description, '''')
+					and isnull(recip_bp.PlanTypeID,  -1) = isnull(recip_bpt.ID, -1)
+					and coalesce(convert(nvarchar(255), recip_bp.StartDate), '''') = coalesce(convert(nvarchar(255), donor_bp.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_bp.EndDate), '''') = coalesce(convert(nvarchar(255), donor_bp.EndDate), '''')
+					and isnull(recip_bp.EmployerDeductionCode, '''') = isnull(donor_bp.EmployerDeductionCode, '''')
+					and isnull(recip_bp.EmployeeDeductionCode, '''') = isnull(donor_bp.EmployeeDeductionCode, '''')
+				join '+trim(@cRecipientTablePath)+'EmployeeBenefit recip_eb on
+					recip_eb.EmployeeID = recip_ee.ID
+					and recip_eb.PlanID = recip_bp.ID
+					and recip_eb.CoverageTypeID = recip_ct.ID
+					and isnull(recip_eb.Premium, 0) = isnull(donor_eb.Premium, 0)
+					and isnull(recip_eb.EmployerAmount, 0) = isnull(donor_eb.EmployerAmount, 0)
+					and isnull(recip_eb.EmployerPercent, 0) = isnull(donor_eb.EmployerPercent, 0)
+					and isnull(recip_eb.EmployeeAmount, 0) = isnull(donor_eb.EmployeeAmount, 0)
+					and isnull(recip_eb.EmployeePercent, 0) = isnull(donor_eb.EmployeePercent, 0)
+					and coalesce(convert(nvarchar(255), recip_eb.StartDate), '''') = coalesce(convert(nvarchar(255), donor_eb.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_eb.EndDate), '''') = coalesce(convert(nvarchar(255), donor_eb.EndDate), '''')
+
+				join '+trim(@cDonorTablePath)+'EmployeeDependent donor_ed on donor_ed.ID = donor_cd.EmployeeDependentID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee2 on donor_ee2.ID = donor_ed.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee2 on recip_ee2.EmployeeCode = donor_ee2.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'EmployeeDependent recip_ed on
+					recip_ed.EmployeeID = recip_ee2.ID
+					and isnull(recip_ed.FirstName, '''') = isnull(donor_ed.FirstName, '''')
+					and isnull(recip_ed.LastName, '''') = isnull(donor_ed.LastName, '''')
+					and isnull(recip_ed.SSN, '''') = isnull(donor_ed.SSN, '''')
+
+				where donor_ee.CompanyID = '+@cDonorCompany_ID +' and donor_ee2.CompanyID = '+@cDonorCompany_ID +'
+				and recip_ee.CompanyID = '+@cRecipientCompany_ID+' and recip_ee2.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'CoveredDependent - O' as Insertdata
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%P%'
+		begin
+			select @cmdInsert = '
+				insert into '+trim(@cRecipientTablePath)+'CoveredBeneficiary (
+					EmployeeBenefitID
+					,EmployeeBeneficiaryID
+					,PercentOfBenefit
+					,IsPrimary
+					,PercentOfBenefit_Contingent
+					,IsContingent
+				)
+				select
+					recip_eb.ID as EmployeeBenefitID
+					,recip_eby.ID as EmployeeBeneficiaryID
+					,donor_cb.PercentOfBenefit
+					,donor_cb.IsPrimary
+					,donor_cb.PercentOfBenefit_Contingent
+					,donor_cb.IsContingent
+				from '+trim(@cDonorTablePath)+'CoveredBeneficiary donor_cb
+
+				join '+trim(@cDonorTablePath)+'EmployeeBenefit donor_eb on donor_eb.ID = donor_cb.EmployeeBenefitID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee on donor_ee.ID = donor_eb.EmployeeID
+				join '+trim(@cDonorTablePath)+'BenefitPlan donor_bp on donor_bp.ID = donor_eb.PlanID
+				left join '+trim(@cDonorTablePath)+'BenefitPlanType donor_bpt on donor_bpt.ID = donor_bp.PlanTypeID
+				join '+trim(@cDonorTablePath)+'BenefitCoverageType donor_ct on donor_ct.ID = donor_eb.CoverageTypeID
+
+				join '+trim(@cRecipientTablePath)+'BenefitCoverageType recip_ct on recip_ct.Code = donor_ct.Code and recip_ct.Description = donor_ct.Description
+				left join '+trim(@cRecipientTablePath)+'BenefitPlanType recip_bpt on recip_bpt.Code = donor_bpt.Code and recip_bpt.Description = donor_bpt.Description
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'BenefitPlan recip_bp on
+					recip_bp.CompanyID = recip_ee.CompanyID
+					and isnull(recip_bp.Code, '''') = isnull(donor_bp.Code, '''')
+					and isnull(recip_bp.Description, '''') = isnull(donor_bp.Description, '''')
+					and isnull(recip_bp.PlanTypeID,  -1) = isnull(recip_bpt.ID, -1)
+					and coalesce(convert(nvarchar(255), recip_bp.StartDate), '''') = coalesce(convert(nvarchar(255), donor_bp.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_bp.EndDate), '''') = coalesce(convert(nvarchar(255), donor_bp.EndDate), '''')
+					and isnull(recip_bp.EmployerDeductionCode, '''') = isnull(donor_bp.EmployerDeductionCode, '''')
+					and isnull(recip_bp.EmployeeDeductionCode, '''') = isnull(donor_bp.EmployeeDeductionCode, '''')
+				join '+trim(@cRecipientTablePath)+'EmployeeBenefit recip_eb on
+					recip_eb.EmployeeID = recip_ee.ID
+					and recip_eb.PlanID = recip_bp.ID
+					and recip_eb.CoverageTypeID = recip_ct.ID
+					and isnull(recip_eb.Premium, 0) = isnull(donor_eb.Premium, 0)
+					and isnull(recip_eb.EmployerAmount, 0) = isnull(donor_eb.EmployerAmount, 0)
+					and isnull(recip_eb.EmployerPercent, 0) = isnull(donor_eb.EmployerPercent, 0)
+					and isnull(recip_eb.EmployeeAmount, 0) = isnull(donor_eb.EmployeeAmount, 0)
+					and isnull(recip_eb.EmployeePercent, 0) = isnull(donor_eb.EmployeePercent, 0)
+					and coalesce(convert(nvarchar(255), recip_eb.StartDate), '''') = coalesce(convert(nvarchar(255), donor_eb.StartDate), '''')
+					and coalesce(convert(nvarchar(255), recip_eb.EndDate), '''') = coalesce(convert(nvarchar(255), donor_eb.EndDate), '''')
+
+				join '+trim(@cDonorTablePath)+'EmployeeBeneficiary donor_eby on donor_eby.ID = donor_cb.EmployeeBeneficiaryID
+				join '+trim(@cDonorTablePath)+'Employee donor_ee2 on donor_ee2.ID = donor_eby.EmployeeID
+				join '+trim(@cRecipientTablePath)+'Employee recip_ee2 on recip_ee2.EmployeeCode = donor_ee2.EmployeeCode
+				join '+trim(@cRecipientTablePath)+'EmployeeBeneficiary recip_eby on
+					recip_eby.EmployeeID = recip_ee2.ID
+					and isnull(recip_eby.FirstName, '''') = isnull(donor_eby.FirstName, '''')
+					and isnull(recip_eby.LastName, '''') = isnull(donor_eby.LastName, '''')
+					and isnull(recip_eby.SSN, '''') = isnull(donor_eby.SSN, '''')
+
+				where donor_ee.CompanyID = '+@cDonorCompany_ID +' and donor_ee2.CompanyID = '+@cDonorCompany_ID +'
+				and recip_ee.CompanyID = '+@cRecipientCompany_ID+' and recip_ee2.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'CoveredBeneficiary - P' as Insertdata
 			end
 		end
 

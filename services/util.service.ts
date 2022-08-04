@@ -531,7 +531,8 @@ export enum InvocationType {
  * @returns {Promise<unknown>}: A Promise of the invocation result
  */
 export async function invokeInternalService(serviceName: string, payload: any, invocationType: InvocationType, throwServiceError?: boolean): Promise<unknown> {
-    console.info('utilService.invokeInternalService');
+    console.info(`utilService.invokeInternalService - ${serviceName}`);
+    if (payload?.queryName) console.info(`queryName: ${payload.queryName}`);
 
     AWS.config.update({
         region: configService.getAwsRegion(),
@@ -546,6 +547,9 @@ export async function invokeInternalService(serviceName: string, payload: any, i
 
     if (invocationType === InvocationType.RequestResponse) {
         const response = await lambda.invoke(params).promise();
+
+        console.info(`lambda requestId: ${response.$response.requestId}`);
+
         const responsePayload = JSON.parse(response.Payload.toString());
 
         if (responsePayload.body) {
