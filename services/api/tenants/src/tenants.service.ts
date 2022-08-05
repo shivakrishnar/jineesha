@@ -490,14 +490,17 @@ export async function listCompanyMigrations(): Promise<any> {
         };
 
         const results = await dynamoDbClient.scan(params).promise();
-        return results.Items.map((migration) => ({
-            id: migration.ID,
-            status: migration.Status,
-            source: migration.Details.source,
-            destination: migration.Details.destination,
-            timestamp: migration.Timestamp
-        }));
-    } catch(error) {
+        return results.Items.map((migration) => {
+            return {
+                id: migration.ID,
+                status: migration.Status,
+                errorDetails: migration.Details.errorMessage,
+                source: migration.Details.source,
+                destination: migration.Details.destination,
+                timestamp: migration.Timestamp,
+            };
+        });
+    } catch (error) {
         console.error(error);
         throw errorService.getErrorResponse(0);
     }
