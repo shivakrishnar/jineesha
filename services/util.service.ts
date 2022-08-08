@@ -34,6 +34,7 @@ import { ParameterizedQuery } from './queries/parameterizedQuery';
 import { Queries } from './queries/queries';
 import { Query } from './queries/query';
 import { Role } from './api/models/Role';
+import { ConfigurationOptions } from 'aws-sdk/lib/config';
 
 export type ApiInvocationEvent = APIGatewayEvent | ScheduledEvent;
 
@@ -528,15 +529,30 @@ export enum InvocationType {
  * @param {string} serviceName: The name of the lambda to invoke
  * @param {any} payload: The request event to the passed to the lambda
  * @param {invocationType} invocationType: How to invoke lambda - synchronously(RequestResponse) | asynchronously(Event)
+ * @param {boolean} throwServiceError: if true, throws the error returned from the invoked service
+ * @param {number} timeout: specifies the socket timeout in milliseconds for the AWS SDK
+ * @param {number} maxRetries: specifies the number of retry attempts should a timeout occur
  * @returns {Promise<unknown>}: A Promise of the invocation result
  */
-export async function invokeInternalService(serviceName: string, payload: any, invocationType: InvocationType, throwServiceError?: boolean): Promise<unknown> {
+export async function invokeInternalService(
+    serviceName: string,
+    payload: any,
+    invocationType: InvocationType,
+    throwServiceError?: boolean,
+    timeout?: number,
+    maxRetries?: number,
+): Promise<unknown> {
     console.info(`utilService.invokeInternalService - ${serviceName}`);
     if (payload?.queryName) console.info(`queryName: ${payload.queryName}`);
 
-    AWS.config.update({
+    const awsConfig: ConfigurationOptions = {
         region: configService.getAwsRegion(),
-    });
+    };
+
+    if (maxRetries || maxRetries === 0) awsConfig.maxRetries = maxRetries;
+    if (timeout) awsConfig.httpOptions = { timeout };
+
+    AWS.config.update(awsConfig);
 
     const lambda = new AWS.Lambda();
     const params = {

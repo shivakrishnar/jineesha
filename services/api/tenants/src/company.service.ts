@@ -1163,7 +1163,14 @@ export async function createCompanyMigration(
             query: migrationQuery.value,
             queryType: QueryType.StoredProcedure,
         } as DatabaseEvent;
-        await utilService.invokeInternalService('queryExecutorAsync', migrationPayload, utilService.InvocationType.RequestResponse, true);
+        await utilService.invokeInternalService(
+            'queryExecutorAsync',
+            migrationPayload,
+            utilService.InvocationType.RequestResponse,
+            true,
+            900000, // set sdk timeout to 15 minutes to accommodate for long queries
+            0, // set retries 0 as the migration is not an idempotent process
+        );
 
         //5-updating migration table to 'Success' if migration done successfully
         const updateParams = {
