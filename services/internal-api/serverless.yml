@@ -112,6 +112,17 @@ functions:
         - ${file(${self:custom.configFile}):privateSubnetId1}
         - ${file(${self:custom.configFile}):privateSubnetId2}
 
+  queryExecutorAsync:
+    handler: database/handler.execute
+    memorySize: 2048
+    timeout: 900
+    vpc:
+      securityGroupIds:
+        - ${file(${self:custom.configFile}):lambdaExecutionSecurityGroup}
+      subnetIds:
+        - ${file(${self:custom.configFile}):privateSubnetId1}
+        - ${file(${self:custom.configFile}):privateSubnetId2}
+
   uploadSignedDocument:
     handler: esignatures/handler.uploadSignedDocument
 
