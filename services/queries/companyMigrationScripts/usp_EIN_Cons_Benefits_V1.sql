@@ -82,7 +82,7 @@ GO
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%A%'
 		begin
 			select @cmdShowDataRecipient = '
-				select
+				select distinct
 					'+@cRecipientCompany_ID+' as CompanyID,
 					donor_bp.Code,
 					donor_bp.Description,
@@ -91,10 +91,11 @@ GO
 					donor_bp.ProducerCode,
 					-- TODO: (MJ-9231) we cannot guarantee uniqueness for these fields so they may result in duplicate records being inserted
 					-- NULL them for now
-					null as GeneralAgentID,
-					null as CarrierID,
+					--Remediated by TCS 07/28/22
+					recip_bga.ID as GeneralAgentID,			--null as GeneralAgentID,
+					recip_bc.ID as CarrierID,				--null as CarrierID,
 					recip_bpt.ID as PlanTypeID,
-					null as CoverageStartTypeID,
+					recip_bcst.ID as CoverageStartTypeID,	--null as CoverageStartTypeID,
 					donor_bp.StartDate,
 					donor_bp.EndDate,
 					donor_bp.RenewalDate,
@@ -155,7 +156,7 @@ GO
 					donor_bp.AnnualHSALimitFamily,
 					donor_bp.AnnualHSAEmployerCatchUpContribution,
 					donor_bp.AnnualHSACatchUpLimit,
-					null as RelatedPlanID, -- see TODO above
+					null as RelatedPlanID, -- see TODO above  --TCS this has to be left NULL and updated on a 2nd pass as it is reference back to the BenefitPlan table.
 					donor_bp.BankAccountProvided,
 					donor_bp.Instructions,
 					donor_bp.Details,
@@ -171,25 +172,33 @@ GO
 					donor_bp.IsCovarageAmountRelated,
 					donor_bp.ProrateContributions,
 					donor_bp.LimitedFSAOption
-				from '+trim(@cDonorTablePath)+'BenefitPlan donor_bp
+				from '+trim(@cDonorTablePath)+'BenefitPlan donor_bp'
+				select @cmdShowDataRecipient = @cmdShowDataRecipient + '
+				left join '+trim(@cDonorTablePath)+'BenefitGeneralAgent donor_bga on donor_bga.ID = donor_bp.GeneralAgentID
 
-				-- left join dbo.BenefitGeneralAgent donor_bga on donor_bga.ID = donor_bp.GeneralAgentID
-				-- left join dbo.BenefitGeneralAgentContact donor_bgac on donor_bgac.BenefitGeneralAgentID = donor_bga.ID
-				-- left join dbo.BenefitGeneralAgentContact recip_bgac on
-				--     isnull(recip_bgac.ContactType, 0) = isnull(donor_bgac.ContactType, 0) and
-				--     isnull(recip_bgac.FirstName, 0) = isnull(donor_bgac.FirstName, 0) and
-				--     isnull(recip_bgac.LastName, 0) = isnull(donor_bgac.LastName, 0) and
-				--     isnull(recip_bgac.EmailAddress, 0) = isnull(donor_bgac.EmailAddress, 0) and
-				--     isnull(recip_bgac.PhoneWork, 0) = isnull(donor_bgac.PhoneWork, 0) and
-				--     isnull(recip_bgac.PhoneCell, 0) = isnull(donor_bgac.PhoneCell, 0) and
-				--     isnull(recip_bgac.PhoneHome, 0) = isnull(donor_bgac.PhoneHome, 0)
-				-- left join dbo.BenefitGeneralAgent recip_bga on
-				--     recip_bga.CompanyID = donor_bga.CompanyID and
-				--     recip_bga.CompanyName = donor_bga.CompanyName and
-				--     recip_bga.ID = recip_bgac.BenefitGeneralAgentID
+				left join '+trim(@cRecipientTablePath)+'BenefitGeneralAgent recip_bga on
+				     recip_bga.CompanyID = '+@cRecipientCompany_ID+' and
+				     isnull(recip_bga.CompanyName,'''') = isnull(donor_bga.CompanyName,'''') and
+					 isnull(recip_bga.WorkPhone,'''') = isnull(donor_bga.WorkPhone,'''') and
+					 isnull(recip_bga.CellPhone,'''') = isnull(donor_bga.CellPhone,'''') and
+					 isnull(recip_bga.EMailAddress,'''') = isnull(donor_bga.EMailAddress,'''') and
+					 isnull(recip_bga.Priority,'''') = isnull(donor_bga.Priority,'''') and
+					 isnull(recip_bga.Active,'''') = isnull(donor_bga.Active,'''')
+				     --recip_bga.ID = recip_bgac.BenefitGeneralAgentID
+
+				left join '+trim(@cDonorTablePath)+'BenefitCarrier donor_bc on donor_bc.CompanyID = donor_bp.CompanyID and donor_bc.ID = donor_bp.CarrierID
+				left join '+trim(@cRecipientTablePath)+'BenefitCarrier recip_bc on recip_bc.CompanyID = '+@cRecipientCompany_ID+' and isnull(recip_bc.Name,'''') = isnull(donor_bc.Name,'''') and
+				     isnull(recip_bc.WebsiteURL,'''') = isnull(donor_bc.WebsiteURL,'''') and
+				     isnull(recip_bc.WebsiteUserID,'''') = isnull(donor_bc.WebsiteUserID,'''') and
+					 isnull(recip_bc.WebsitePassword,'''') = isnull(donor_bc.WebsitePassword,'''') and
+					 isnull(recip_bc.Priority,'''') = isnull(donor_bc.Priority,'''') and
+					 isnull(recip_bc.Active,'''') = isnull(donor_bc.Active,'''') and
+					 isnull(recip_bc.EIN,'''') = isnull(donor_bc.EIN,'''')
+				left join '+trim(@cDonorTablePath)+'BenefitCoverageStartType donor_bcst on donor_bcst.CompanyID = donor_bp.CompanyID and donor_bcst.ID = donor_bp.CoverageStartTypeID
+				left join '+trim(@cRecipientTablePath)+'BenefitCoverageStartType recip_bcst on recip_bcst.CompanyID = '+@cRecipientCompany_ID+' and recip_bcst.Code = donor_bcst.Code
 
 				join '+trim(@cDonorTablePath)+'BenefitPlanType donor_bpt on donor_bpt.ID = donor_bp.PlanTypeID
-				join '+trim(@cRecipientTablePath)+'BenefitPlanType recip_bpt on recip_bpt.Code = donor_bpt.Code and recip_bpt.Description = donor_bpt.Description
+				join '+trim(@cRecipientTablePath)+'BenefitPlanType recip_bpt on isnull(recip_bpt.Code,'''') = isnull(donor_bpt.Code,'''') and isnull(recip_bpt.Description,'''') = isnull(donor_bpt.Description,'''')
 
 				where donor_bp.CompanyID = '+@cDonorCompany_ID
 
@@ -891,8 +900,9 @@ GO
 				IsCovarageAmountRelated,
 				ProrateContributions,
 				LimitedFSAOption
-			)
-			select
+			)'
+			select @cmdInsert = @cmdInsert + '
+			select distinct
 				'+@cRecipientCompany_ID+' as CompanyID,
 				donor_bp.Code,
 				donor_bp.Description,
@@ -901,10 +911,11 @@ GO
 				donor_bp.ProducerCode,
 				-- TODO: (MJ-9231) we cannot guarantee uniqueness for these fields so they may result in duplicate records being inserted
 				-- NULL them for now
-				null as GeneralAgentID,
-				null as CarrierID,
+				--remediated by TCS 07/28/22
+				recip_bga.ID as GeneralAgentID,			--null as GeneralAgentID,
+				recip_bc.ID as CarrierID,				--null as CarrierID,
 				recip_bpt.ID as PlanTypeID,
-				null as CoverageStartTypeID,
+				recip_bcst.ID as CoverageStartTypeID,	--null as CoverageStartTypeID,
 				donor_bp.StartDate,
 				donor_bp.EndDate,
 				donor_bp.RenewalDate,
@@ -965,7 +976,7 @@ GO
 				donor_bp.AnnualHSALimitFamily,
 				donor_bp.AnnualHSAEmployerCatchUpContribution,
 				donor_bp.AnnualHSACatchUpLimit,
-				null as RelatedPlanID, -- see TODO above
+				null as RelatedPlanID, -- see TODO above  --TCS this has to be left NULL and updated on a 2nd pass as it is reference back to the BenefitPlan table.
 				donor_bp.BankAccountProvided,
 				donor_bp.Instructions,
 				donor_bp.Details,
@@ -981,25 +992,33 @@ GO
 				donor_bp.IsCovarageAmountRelated,
 				donor_bp.ProrateContributions,
 				donor_bp.LimitedFSAOption
-			from '+trim(@cDonorTablePath)+'BenefitPlan donor_bp
+			from '+trim(@cDonorTablePath)+'BenefitPlan donor_bp'
+			select @cmdInsert = @cmdInsert + '
+				left join '+trim(@cDonorTablePath)+'BenefitGeneralAgent donor_bga on donor_bga.ID = donor_bp.GeneralAgentID
 
-			-- left join dbo.BenefitGeneralAgent donor_bga on donor_bga.ID = donor_bp.GeneralAgentID
-			-- left join dbo.BenefitGeneralAgentContact donor_bgac on donor_bgac.BenefitGeneralAgentID = donor_bga.ID
-			-- left join dbo.BenefitGeneralAgentContact recip_bgac on
-			--     isnull(recip_bgac.ContactType, 0) = isnull(donor_bgac.ContactType, 0) and
-			--     isnull(recip_bgac.FirstName, 0) = isnull(donor_bgac.FirstName, 0) and
-			--     isnull(recip_bgac.LastName, 0) = isnull(donor_bgac.LastName, 0) and
-			--     isnull(recip_bgac.EmailAddress, 0) = isnull(donor_bgac.EmailAddress, 0) and
-			--     isnull(recip_bgac.PhoneWork, 0) = isnull(donor_bgac.PhoneWork, 0) and
-			--     isnull(recip_bgac.PhoneCell, 0) = isnull(donor_bgac.PhoneCell, 0) and
-			--     isnull(recip_bgac.PhoneHome, 0) = isnull(donor_bgac.PhoneHome, 0)
-			-- left join dbo.BenefitGeneralAgent recip_bga on
-			--     recip_bga.CompanyID = donor_bga.CompanyID and
-			--     recip_bga.CompanyName = donor_bga.CompanyName and
-			--     recip_bga.ID = recip_bgac.BenefitGeneralAgentID
+				left join '+trim(@cRecipientTablePath)+'BenefitGeneralAgent recip_bga on
+				     recip_bga.CompanyID = '+@cRecipientCompany_ID+' and
+				     isnull(recip_bga.CompanyName,'''') = isnull(donor_bga.CompanyName,'''') and
+					 isnull(recip_bga.WorkPhone,'''') = isnull(donor_bga.WorkPhone,'''') and
+					 isnull(recip_bga.CellPhone,'''') = isnull(donor_bga.CellPhone,'''') and
+					 isnull(recip_bga.EMailAddress,'''') = isnull(donor_bga.EMailAddress,'''') and
+					 isnull(recip_bga.Priority,'''') = isnull(donor_bga.Priority,'''') and
+					 isnull(recip_bga.Active,'''') = isnull(donor_bga.Active,'''')
+				     --recip_bga.ID = recip_bgac.BenefitGeneralAgentID
+
+				left join '+trim(@cDonorTablePath)+'BenefitCarrier donor_bc on donor_bc.CompanyID = donor_bp.CompanyID and donor_bc.ID = donor_bp.CarrierID
+				left join '+trim(@cRecipientTablePath)+'BenefitCarrier recip_bc on recip_bc.CompanyID = '+@cRecipientCompany_ID+' and isnull(recip_bc.Name,'''') = isnull(donor_bc.Name,'''') and
+				     isnull(recip_bc.WebsiteURL,'''') = isnull(donor_bc.WebsiteURL,'''') and
+				     isnull(recip_bc.WebsiteUserID,'''') = isnull(donor_bc.WebsiteUserID,'''') and
+					 isnull(recip_bc.WebsitePassword,'''') = isnull(donor_bc.WebsitePassword,'''') and
+					 isnull(recip_bc.Priority,'''') = isnull(donor_bc.Priority,'''') and
+					 isnull(recip_bc.Active,'''') = isnull(donor_bc.Active,'''') and
+					 isnull(recip_bc.EIN,'''') = isnull(donor_bc.EIN,'''')
+				left join '+trim(@cDonorTablePath)+'BenefitCoverageStartType donor_bcst on donor_bcst.CompanyID = donor_bp.CompanyID and donor_bcst.ID = donor_bp.CoverageStartTypeID
+				left join '+trim(@cRecipientTablePath)+'BenefitCoverageStartType recip_bcst on recip_bcst.CompanyID = '+@cRecipientCompany_ID+' and recip_bcst.Code = donor_bcst.Code
 
 			join '+trim(@cDonorTablePath)+'BenefitPlanType donor_bpt on donor_bpt.ID = donor_bp.PlanTypeID
-			join '+trim(@cRecipientTablePath)+'BenefitPlanType recip_bpt on recip_bpt.Code = donor_bpt.Code and recip_bpt.Description = donor_bpt.Description
+			join '+trim(@cRecipientTablePath)+'BenefitPlanType recip_bpt on isnull(recip_bpt.Code,'''') = isnull(donor_bpt.Code,'''') and isnull(recip_bpt.Description,'''') = isnull(donor_bpt.Description,'''')
 
 			where donor_bp.CompanyID = '+@cDonorCompany_ID
 
@@ -1012,6 +1031,33 @@ GO
 			begin
 				select 'BenefitPlan - A' as Insertdata
 			end
+
+			select @cmdInsert = '
+			UPDATE recip_bp1 set recip_bp1.RelatedPlanID = recip_bp2.ID --where ID = recip_bp1.ID
+				from '+trim(@cDonorTablePath)+'BenefitPlan donor_bp1
+				join '+trim(@cDonorTablePath)+'BenefitPlan donor_bp2 on donor_bp2.CompanyID = donor_bp1.CompanyID and donor_bp2.ID = donor_bp1.RelatedPlanID
+				join '+trim(@cRecipientTablePath)+'BenefitPlan recip_bp1 on recip_bp1.CompanyID = '+@cRecipientCompany_ID+' and 
+					isnull(recip_bp1.Code,'''') = isnull(donor_bp1.Code,'''') and 
+					isnull(recip_bp1.Description,'''') = isnull(donor_bp1.Description,'''') and
+					isnull(recip_bp1.StartDate,'''') = isnull(donor_bp1.StartDate,'''') and
+					isnull(recip_bp1.EndDate,'''') = isnull(donor_bp1.EndDate,'''') 
+				join '+trim(@cRecipientTablePath)+'BenefitPlan recip_bp2 on recip_bp2.CompanyID = '+@cRecipientCompany_ID+' and 
+					isnull(recip_bp2.Code,'''') = isnull(donor_bp2.Code,'''') and 
+					isnull(recip_bp2.Description,'''') = isnull(donor_bp2.Description,'''') and
+					isnull(recip_bp2.StartDate,'''') = isnull(donor_bp2.StartDate,'''') and
+					isnull(recip_bp2.EndDate,'''') = isnull(donor_bp2.EndDate,'''') 
+				where donor_bp1.companyid = '+@cDonorCompany_ID+' and donor_bp1.RelatedPlanID is not null'
+			
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'BenefitPlanUpdateRelatedPlanID - A' as Insertdata
+			end
+
 		end
 
 		--select ID from [adhr-1].[dbo].Employee where CompanyID = @cDonorCompany_ID
