@@ -1229,40 +1229,40 @@ export async function runCompanyMigration(donorTenantId, donorCompanyId, recipie
     console.info(`migrationId: ${migrationId}`);
 
     try {
-        let donorCompanyNameQuery = new ParameterizedQuery('companyInfo', Queries.companyInfo);
+        const donorCompanyNameQuery = new ParameterizedQuery('companyInfo', Queries.companyInfo);
         donorCompanyNameQuery.setParameter('@companyId', donorCompanyId);
 
-        let recipientCompanyNameQuery = new ParameterizedQuery('companyInfo', Queries.companyInfo);
+        const recipientCompanyNameQuery = new ParameterizedQuery('companyInfo', Queries.companyInfo);
         recipientCompanyNameQuery.setParameter('@companyId', recipientCompanyId);
 
-        let payload = {
+        const payload = {
             tenantId: donorTenantId,
             queryName: donorCompanyNameQuery.name,
             query: donorCompanyNameQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        let donorCompanyName: any = await utilService.invokeInternalService(
+        const donorCompanyName: any = await utilService.invokeInternalService(
             'queryExecutor',
             payload,
             utilService.InvocationType.RequestResponse,
         );
 
         if (donorCompanyName.recordset.length === 0) {
-            throw errorService.notFound().setDeveloperMessage('Company with ID ${donorCompanyId} not found.');
+            throw errorService.notFound().setDeveloperMessage(`Company with ID ${donorCompanyId} not found.`);
         }
 
         payload.tenantId = recipientTenantId;
         (payload.queryName = recipientCompanyNameQuery.name), (payload.query = recipientCompanyNameQuery.value);
 
-        let recipientCompanyName: any = await utilService.invokeInternalService(
+        const recipientCompanyName: any = await utilService.invokeInternalService(
             'queryExecutor',
             payload,
             utilService.InvocationType.RequestResponse,
         );
 
         if (recipientCompanyName.recordset.length === 0) {
-            throw errorService.notFound().setDeveloperMessage('Company with ID ${recipientCompanyId} not found.');
+            throw errorService.notFound().setDeveloperMessage(`Company with ID ${recipientCompanyId} not found.`);
         }
 
         const pendingParams = {
