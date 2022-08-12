@@ -690,10 +690,10 @@ GO
                     and isnull(recip_ost.Active, 0) = isnull(donor_ost.Active, 0)
 
                where donor_eo.CompanyID ='+ @cDonorCompany_ID
-            exec (@cmdShowDataRecipient)
+            exec (@cmdShowDataDonor)
             if @cShowStatement = 1
                 begin
-                    select @cmdShowDataRecipient
+                    select @cmdShowDataDonor
                 end
             if @cVerbose_Ind = 1
                 begin
