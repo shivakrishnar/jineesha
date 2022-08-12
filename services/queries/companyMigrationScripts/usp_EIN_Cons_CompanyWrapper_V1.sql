@@ -71,6 +71,9 @@ GO
 	execute usp_EIN_Cons_Dynamic_V1 @cDonorDatabasePath, @cRecipientDatabasePath, @cVerbose_Ind, @cShowStatement, @cRecipientCompany_ID, @cDonorCompany_ID, @cValidateType_Cd, 'PayGradeType'
 	--execute usp_EIN_Cons_Dynamic_V1 @cDonorDatabasePath, @cRecipientDatabasePath, @cVerbose_Ind, @cShowStatement, @cRecipientCompany_ID, @cDonorCompany_ID, @cValidateType_Cd, 'WorkerCompType'  --This has existing recs in test
 
+	execute usp_EIN_Cons_Dynamic_V1 @cDonorDatabasePath, @cRecipientDatabasePath, @cVerbose_Ind, @cShowStatement, @cRecipientCompany_ID, @cDonorCompany_ID, @cValidateType_Cd, 'PayGroupType'
+	execute usp_EIN_Cons_Dynamic_V1 @cDonorDatabasePath, @cRecipientDatabasePath, @cVerbose_Ind, @cShowStatement, @cRecipientCompany_ID, @cDonorCompany_ID, @cValidateType_Cd, 'PositionOrganizationChangeReason'
+
 	execute usp_EIN_Cons_Dynamic_V1 @cDonorDatabasePath, @cRecipientDatabasePath, @cVerbose_Ind, @cShowStatement, @cRecipientCompany_ID, @cDonorCompany_ID, @cValidateType_Cd, 'OBQuestionBank'  --This has existing recs in test
 	execute usp_EIN_Cons_Dynamic_V1 @cDonorDatabasePath, @cRecipientDatabasePath, @cVerbose_Ind, @cShowStatement, @cRecipientCompany_ID, @cDonorCompany_ID, @cValidateType_Cd, 'OnboardingTaskList'
 
