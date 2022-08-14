@@ -325,14 +325,14 @@ GO
 				join '+trim(@cDonorTablePath)+'SecPermissionRole donor_spr on donor_spr.PermissionID = donor_sp.ID
 				join '+trim(@cDonorTablePath)+'SecRole donor_sr on donor_sr.ID = donor_spr.RoleID
 
-				left join '+trim(@cDonorTablePath)+'SecResource donor_src on donor_src.ID = donor_sp.ResourceID
+				join '+trim(@cDonorTablePath)+'SecResource donor_src on donor_src.ID = donor_sp.ResourceID
 				left join '+trim(@cDonorTablePath)+'SecResourceGroup donor_src_srg on donor_src_srg.ID = donor_src.ResourceGroupID
 				left join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_src_srg on
 					isnull(recip_src_srg.Name, '''') = isnull(donor_src_srg.Name, '''')
 					and isnull(recip_src_srg.Description, '''') = isnull(donor_src_srg.Description, '''')
 					and isnull(recip_src_srg.AlternateName, '''') = isnull(donor_src_srg.AlternateName, '''')
 					and isnull(recip_src_srg.MainTableName, '''') = isnull(donor_src_srg.MainTableName, '''')
-				left join '+trim(@cRecipientTablePath)+'SecResource recip_src on
+				join '+trim(@cRecipientTablePath)+'SecResource recip_src on
 					isnull(recip_src.Name, '''') = isnull(donor_src.Name, '''')
 					and isnull(recip_src.Description, '''') = isnull(donor_src.Description, '''')
 					and recip_src.ResourceGroupID = recip_src_srg.ID
@@ -863,14 +863,14 @@ GO
 				join '+trim(@cDonorTablePath)+'SecPermissionRole donor_spr on donor_spr.PermissionID = donor_sp.ID
 				join '+trim(@cDonorTablePath)+'SecRole donor_sr on donor_sr.ID = donor_spr.RoleID
 
-				left join '+trim(@cDonorTablePath)+'SecResource donor_src on donor_src.ID = donor_sp.ResourceID
+				join '+trim(@cDonorTablePath)+'SecResource donor_src on donor_src.ID = donor_sp.ResourceID
 				left join '+trim(@cDonorTablePath)+'SecResourceGroup donor_src_srg on donor_src_srg.ID = donor_src.ResourceGroupID
 				left join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_src_srg on
 					isnull(recip_src_srg.Name, '''') = isnull(donor_src_srg.Name, '''')
 					and isnull(recip_src_srg.Description, '''') = isnull(donor_src_srg.Description, '''')
 					and isnull(recip_src_srg.AlternateName, '''') = isnull(donor_src_srg.AlternateName, '''')
 					and isnull(recip_src_srg.MainTableName, '''') = isnull(donor_src_srg.MainTableName, '''')
-				left join '+trim(@cRecipientTablePath)+'SecResource recip_src on
+				join '+trim(@cRecipientTablePath)+'SecResource recip_src on
 					isnull(recip_src.Name, '''') = isnull(donor_src.Name, '''')
 					and isnull(recip_src.Description, '''') = isnull(donor_src.Description, '''')
 					and recip_src.ResourceGroupID = recip_src_srg.ID
@@ -955,14 +955,14 @@ GO
 				join '+trim(@cDonorTablePath)+'HRnextUser donor_u on donor_u.ID = donor_spu.UserID
 				join '+trim(@cDonorTablePath)+'HRnextUserCompany donor_uc on donor_uc.HRnextUserID = donor_u.ID
 
-				left join '+trim(@cDonorTablePath)+'SecResource donor_src on donor_src.ID = donor_sp.ResourceID
+				join '+trim(@cDonorTablePath)+'SecResource donor_src on donor_src.ID = donor_sp.ResourceID
 				left join '+trim(@cDonorTablePath)+'SecResourceGroup donor_src_srg on donor_src_srg.ID = donor_src.ResourceGroupID
 				left join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_src_srg on
 					isnull(recip_src_srg.Name, '''') = isnull(donor_src_srg.Name, '''')
 					and isnull(recip_src_srg.Description, '''') = isnull(donor_src_srg.Description, '''')
 					and isnull(recip_src_srg.AlternateName, '''') = isnull(donor_src_srg.AlternateName, '''')
 					and isnull(recip_src_srg.MainTableName, '''') = isnull(donor_src_srg.MainTableName, '''')
-				left join '+trim(@cRecipientTablePath)+'SecResource recip_src on
+				join '+trim(@cRecipientTablePath)+'SecResource recip_src on
 					isnull(recip_src.Name, '''') = isnull(donor_src.Name, '''')
 					and isnull(recip_src.Description, '''') = isnull(donor_src.Description, '''')
 					and recip_src.ResourceGroupID = recip_src_srg.ID
