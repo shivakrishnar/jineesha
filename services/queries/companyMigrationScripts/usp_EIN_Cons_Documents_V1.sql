@@ -560,18 +560,18 @@ GO
 			select @cmdShowDataDonor = '
 			select recip_eo.ID as EmployeeOnboardId, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeOnboardDocument donor_eod 
 			join '+@cDonorTablePath+'EmployeeOnboard donor_eo on donor_eo.ID = donor_eod.EmployeeOnboardID
-			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.EmployeeCode = donor_eo.EmployeeCode
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.EmployeeCode = donor_eo.EmployeeCode and donor_ee.CompanyID = donor_eo.CompanyID
 			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_eod.DocumentID
 			join '+@cRecipientTablePath+'Document recip_d
 				on recip_d.FSRowGuid = donor_d.FSRowGuid
 				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
 				and recip_d.DocumentCategory = donor_d.DocumentCategory
 				and recip_d.UploadDate = donor_d.UploadDate
-			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode                                                                                   
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode and recip_ee.CompanyID = '+@cRecipientCompany_ID+'
 			join '+@cRecipientTablePath+'EmployeeOnboard recip_eo
 					on recip_eo.EmployeeCode = recip_ee.EmployeeCode
 					and recip_eo.OB_Key = donor_eo.OB_Key
-			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
+			where donor_eo.CompanyID = '+ @cDonorCompany_ID+' and recip_eo.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
 			if @cShowStatement = 1
@@ -1161,18 +1161,18 @@ GO
 			select @cmdInsert = 'insert into '+@cRecipientTablePath+'EmployeeOnboardDocument (EmployeeOnboardID, DocumentID)
 			select recip_eo.ID as EmployeeOnboardId, recip_d.ID as DocumentID from '+@cDonorTablePath+'EmployeeOnboardDocument donor_eod 
 			join '+@cDonorTablePath+'EmployeeOnboard donor_eo on donor_eo.ID = donor_eod.EmployeeOnboardID
-			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.EmployeeCode = donor_eo.EmployeeCode
+			join '+@cDonorTablePath+'Employee donor_ee on donor_ee.EmployeeCode = donor_eo.EmployeeCode and donor_ee.CompanyID = donor_eo.CompanyID
 			join '+@cDonorTablePath+'Document donor_d on donor_d.ID = donor_eod.DocumentID
 			join '+@cRecipientTablePath+'Document recip_d
 				on recip_d.FSRowGuid = donor_d.FSRowGuid
 				and isnull(recip_d.Title, 0) = isnull(donor_d.Title,0)
 				and recip_d.DocumentCategory = donor_d.DocumentCategory
 				and recip_d.UploadDate = donor_d.UploadDate
-			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode                                                                                   
+			join '+@cRecipientTablePath+'Employee recip_ee on recip_ee.EmployeeCode = donor_ee.EmployeeCode and recip_ee.CompanyID = '+@cRecipientCompany_ID+'
 			join '+@cRecipientTablePath+'EmployeeOnboard recip_eo
 					on recip_eo.EmployeeCode = recip_ee.EmployeeCode
 					and recip_eo.OB_Key = donor_eo.OB_Key
-			where donor_ee.CompanyID = '+ @cDonorCompany_ID+' and recip_ee.CompanyID = '+@cRecipientCompany_ID
+			where donor_eo.CompanyID = '+ @cDonorCompany_ID+' and recip_eo.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
 			if @cShowStatement = 1
