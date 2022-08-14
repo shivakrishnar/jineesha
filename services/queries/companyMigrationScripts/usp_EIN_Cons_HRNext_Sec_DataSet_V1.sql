@@ -1026,6 +1026,16 @@ GO
 					isnull(recip_sr.Name, '''') = isnull(donor_sr.Name, '''')
 					and isnull(recip_sr.Description, '''') = isnull(donor_sr.Description, '''')
 					and isnull(recip_sr.TenantId, 0) = isnull(donor_sr.TenantId, 0)
+				
+				join '+trim(@cDonorTablePath)+'SecResource donor_src on donor_src.ID = donor_sp.ResourceID
+				join '+trim(@cDonorTablePath)+'SecResourceGroup donor_srcg on donor_srcg.ID = donor_src.ResourceGroupID
+				join '+trim(@cRecipientTablePath)+'SecResourceGroup recip_srcg on
+					recip_srcg.Name = donor_srcg.Name
+					and recip_srcg.Description = donor_srcg.Description
+				join '+trim(@cRecipientTablePath)+'SecResource recip_src on
+					recip_src.Name = donor_src.Name
+					and recip_src.Description = donor_src.Description
+					and recip_src.ResourceGroupID = recip_srcg.ID
 				join '+trim(@cRecipientTablePath)+'SecPermission recip_sp on
 					isnull(recip_sp.Name, '''') = isnull(donor_sp.Name, '''')
 					and isnull(recip_sp.Description, '''') = isnull(donor_sp.Description, '''')
@@ -1037,6 +1047,7 @@ GO
 					and isnull(recip_sp.IsRequired, 0) = isnull(donor_sp.IsRequired, 0)
 					and isnull(recip_sp.TableColumn, '''') = isnull(donor_sp.TableColumn, '''')
 					and isnull(recip_sp.Category, '''') = isnull(donor_sp.Category, '''')
+					and recip_sp.ResourceID = recip_src.ID
 
 				where donor_sr.CompanyID = '+@cDonorCompany_ID+' and recip_sr.CompanyID = '+@cRecipientCompany_ID
 
