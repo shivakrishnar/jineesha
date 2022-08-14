@@ -18,11 +18,10 @@ execute usp_EIN_Cons_HRNext_Sec_DataSet_V1 @_donorPath, @_hrServicesConnection, 
 
 execute usp_EIN_Cons_CompanyUpdates @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'C'
 
-execute usp_EIN_Cons_Documents_V1 @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'ZZZ'
-
 exec usp_EIN_Cons_ApplTrack_V1 @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'ZZZ'
 
 execute usp_EIN_Cons_EmployeeOnboard_V1 @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'ZZZ'
 
+execute usp_EIN_Cons_Documents_V1 @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'ZZZ'
 
 execute usp_EIN_Cons_CompanyUpdates @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'A'
