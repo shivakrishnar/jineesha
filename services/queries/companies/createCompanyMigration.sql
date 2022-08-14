@@ -6,8 +6,6 @@ declare @_recipCompanyId nvarchar(max) = '@recipCompanyId';
 
 execute usp_EIN_Cons_CompanyWrapper_V1 @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert'
 
-execute usp_EIN_Cons_CompanyUpdates @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'A'
-
 execute usp_EIN_Cons_CompanyUpdates @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'B'
 
 execute usp_EIN_Cons_CompensationDataSet_V1 @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'ZZZ'
@@ -25,3 +23,6 @@ execute usp_EIN_Cons_Documents_V1 @_donorPath, @_hrServicesConnection, 1, 0, @_r
 exec usp_EIN_Cons_ApplTrack_V1 @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'ZZZ'
 
 execute usp_EIN_Cons_EmployeeOnboard_V1 @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'ZZZ'
+
+
+execute usp_EIN_Cons_CompanyUpdates @_donorPath, @_hrServicesConnection, 1, 0, @_recipCompanyId, @_donorCompanyId, 'Insert', 'A'
