@@ -469,7 +469,15 @@ GO
 			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 
 			left outer join '+trim(@cDonorTablePath)+'PositionType D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.PositionTypeID
-			left outer join '+trim(@cRecipientTablePath)+'PositionType R2 on R2.CompanyID = R1.CompanyID and D2.Code = R2.Code
+			left outer join '+trim(@cRecipientTablePath)+'PositionType R2
+				on R2.CompanyID = R1.CompanyID
+				and ISNULL(D1.Description, '''') = ISNULL(R1.Description, '''')
+				and ISNULL(D2.Title, '''') = ISNULL(R2.Title, '''')
+				and isnull(convert(nvarchar(255), D2.ApprovedDate), '''') = isnull(convert(nvarchar(255), R2.ApprovedDate), '''')
+				and isnull(convert(nvarchar(255), D2.EffectiveDate), '''') = isnull(convert(nvarchar(255), R2.EffectiveDate), '''')
+				and isnull(convert(nvarchar(255), D2.ClosedDate), '''') = isnull(convert(nvarchar(255), R2.ClosedDate), '''')
+				and ISNULL(D2.Requirements, '''') = ISNULL(R2.Requirements, '''')
+				and ISNULL(D2.Code, '''') = ISNULL(R2.Code, '''')
 
 			left outer join '+trim(@cDonorTablePath)+'WorkerCompType D3 on D3.CompanyID = D1.CompanyID and D3.ID = T1.WorkerCompTypeID
 			left outer join '+trim(@cRecipientTablePath)+'WorkerCompType R3 on R3.CompanyID = R1.CompanyID and R3.Code = D3.Code and R3.Description = D3.Description
@@ -619,7 +627,15 @@ GO
 			join '+trim(@cDonorTablePath)+'Employee D1 on D1.EmployeeCode = R1.EmployeeCode
 
 			left join '+trim(@cDonorTablePath)+'PositionType D2 on D1.CurrentPositionTypeID = D2.ID
-			left join '+trim(@cRecipientTablePath)+'PositionType R2 on R2.CompanyID = R1.CompanyID and ISNULL(D2.Code, '''') = ISNULL(R2.Code, '''') and ISNULL(D2.Description, '''') = ISNULL(R2.Description, '''') and ISNULL(D2.Title, '''') = ISNULL(R2.Title, '''')
+			left join '+trim(@cRecipientTablePath)+'PositionType R2
+				on R2.CompanyID = R1.CompanyID
+				and ISNULL(D2.Description, '''') = ISNULL(R2.Description, '''')
+				and ISNULL(D2.Title, '''') = ISNULL(R2.Title, '''')
+				and isnull(convert(nvarchar(255), D2.ApprovedDate), '''') = isnull(convert(nvarchar(255), R2.ApprovedDate), '''')
+				and isnull(convert(nvarchar(255), D2.EffectiveDate), '''') = isnull(convert(nvarchar(255), R2.EffectiveDate), '''')
+				and isnull(convert(nvarchar(255), D2.ClosedDate), '''') = isnull(convert(nvarchar(255), R2.ClosedDate), '''')
+				and ISNULL(D2.Requirements, '''') = ISNULL(R2.Requirements, '''')
+				and ISNULL(D2.Code, '''') = ISNULL(R2.Code, '''')
 
 			-- supervisor 1
 			left join '+trim(@cDonorTablePath)+'Employee D3 on D3.ID = D1.CurrentSupervisor1ID
@@ -1092,7 +1108,15 @@ GO
 			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 
 			left outer join '+trim(@cDonorTablePath)+'PositionType D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.PositionTypeID
-			left outer join '+trim(@cRecipientTablePath)+'PositionType R2 on R2.CompanyID = R1.CompanyID and D2.Code = R2.Code
+			left outer join '+trim(@cRecipientTablePath)+'PositionType R2
+				on R2.CompanyID = R1.CompanyID
+				and ISNULL(D2.Description, '''') = ISNULL(R2.Description, '''')
+				and ISNULL(D2.Title, '''') = ISNULL(R2.Title, '''')
+				and isnull(convert(nvarchar(255), D2.ApprovedDate), '''') = isnull(convert(nvarchar(255), R2.ApprovedDate), '''')
+				and isnull(convert(nvarchar(255), D2.EffectiveDate), '''') = isnull(convert(nvarchar(255), R2.EffectiveDate), '''')
+				and isnull(convert(nvarchar(255), D2.ClosedDate), '''') = isnull(convert(nvarchar(255), R2.ClosedDate), '''')
+				and ISNULL(D2.Requirements, '''') = ISNULL(R2.Requirements, '''')
+				and ISNULL(D2.Code, '''') = ISNULL(R2.Code, '''')
 
 			left outer join '+trim(@cDonorTablePath)+'WorkerCompType D3 on D3.CompanyID = D1.CompanyID and D3.ID = T1.WorkerCompTypeID
 			left outer join '+trim(@cRecipientTablePath)+'WorkerCompType R3 on R3.CompanyID = R1.CompanyID and R3.Code = D3.Code and R3.Description = D3.Description
@@ -1275,7 +1299,15 @@ GO
 			join '+trim(@cDonorTablePath)+'Employee D1 on D1.EmployeeCode = R1.EmployeeCode
 
 			left join '+trim(@cDonorTablePath)+'PositionType D2 on D1.CurrentPositionTypeID = D2.ID
-			left join '+trim(@cRecipientTablePath)+'PositionType R2 on R2.CompanyID = R1.CompanyID and ISNULL(D2.Code, '''') = ISNULL(R2.Code, '''') and ISNULL(D2.Description, '''') = ISNULL(R2.Description, '''') and ISNULL(D2.Title, '''') = ISNULL(R2.Title, '''')
+			left join '+trim(@cRecipientTablePath)+'PositionType R2
+				on R2.CompanyID = R1.CompanyID 
+				and ISNULL(D2.Description, '''') = ISNULL(R2.Description, '''')
+				and ISNULL(D2.Title, '''') = ISNULL(R2.Title, '''')
+				and isnull(convert(nvarchar(255), D2.ApprovedDate), '''') = isnull(convert(nvarchar(255), R2.ApprovedDate), '''')
+				and isnull(convert(nvarchar(255), D2.EffectiveDate), '''') = isnull(convert(nvarchar(255), R2.EffectiveDate), '''')
+				and isnull(convert(nvarchar(255), D2.ClosedDate), '''') = isnull(convert(nvarchar(255), R2.ClosedDate), '''')
+				and ISNULL(D2.Requirements, '''') = ISNULL(R2.Requirements, '''')
+				and ISNULL(D2.Code, '''') = ISNULL(R2.Code, '''')
 
 			-- supervisor 1
 			left join '+trim(@cDonorTablePath)+'Employee D3 on D3.ID = D1.CurrentSupervisor1ID
