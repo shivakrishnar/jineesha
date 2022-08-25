@@ -217,7 +217,9 @@ export const companyList = utilService.gatewayEventHandlerV2(async ({ securityCo
     console.info('tenants.handler.companyList');
 
     const { tenantId } = event.pathParameters;
+
     const email = securityContext.principal.email;
+    const roleMemberships = securityContext.roleMemberships;
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
@@ -229,7 +231,7 @@ export const companyList = utilService.gatewayEventHandlerV2(async ({ securityCo
         queryStringParameters,
     } = event;
 
-    return await companyService.list(tenantId, email, domainName, path, queryStringParameters);
+    return await companyService.list(tenantId, email, roleMemberships, domainName, path, queryStringParameters);
 });
 
 /**

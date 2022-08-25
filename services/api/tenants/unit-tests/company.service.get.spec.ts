@@ -22,7 +22,7 @@ describe('company.service.list', () => {
         });
 
         await companyService
-            .list(mockData.tenantId, mockData.email, mockData.domainName, mockData.path, undefined)
+            .list(mockData.tenantId, mockData.email, ['global.admin', 'super.admin'], mockData.domainName, mockData.path, undefined)
             .then((response) => {
 				expect(response).toBeInstanceOf(PaginatedResult);
                 expect(response).toEqual(mockData.listCompaniesMockData.endpointResponse());
@@ -39,7 +39,7 @@ describe('company.service.list', () => {
         });
 
         await companyService
-            .list(mockData.tenantId, mockData.email, mockData.domainName, mockData.path, { search: 'test' })
+            .list(mockData.tenantId, mockData.email, ['global.admin', 'super.admin'], mockData.domainName, mockData.path, { search: 'test' })
             .then((response) => {
 				expect(response).toBeInstanceOf(PaginatedResult);
                 expect(response).toEqual(mockData.listCompaniesMockData.endpointResponse(true));
@@ -56,7 +56,7 @@ describe('company.service.list', () => {
         });
 
         await companyService
-            .list(mockData.tenantId, mockData.email, mockData.domainName, mockData.path, undefined)
+            .list(mockData.tenantId, mockData.email, ['global.admin', 'super.admin'], mockData.domainName, mockData.path, undefined)
             .then((response) => {
                 expect(response).toEqual(undefined);
             });
@@ -74,7 +74,7 @@ describe('company.service.list', () => {
         });
 
         await companyService
-            .list(mockData.tenantId, mockData.email, mockData.domainName, mockData.path, undefined)
+            .list(mockData.tenantId, mockData.email, ['hr.persona.user'], mockData.domainName, mockData.path, undefined)
             .then((response) => {
 				expect(response).toBeInstanceOf(PaginatedResult);
                 expect(response).toEqual(mockData.listCompaniesMockData.endpointResponse());
@@ -93,7 +93,7 @@ describe('company.service.list', () => {
         });
 
         await companyService
-            .list(mockData.tenantId, mockData.email, mockData.domainName, mockData.path, undefined)
+            .list(mockData.tenantId, mockData.email, ['hr.persona.user'], mockData.domainName, mockData.path, undefined)
             .then((response) => {
 				expect(response).toBeInstanceOf(PaginatedResult);
                 expect(response).toEqual(mockData.listCompaniesMockData.endpointResponse(true));
@@ -112,7 +112,7 @@ describe('company.service.list', () => {
         });
 
         await companyService
-            .list(mockData.tenantId, mockData.email, mockData.domainName, mockData.path, undefined)
+            .list(mockData.tenantId, mockData.email, ['hr.persona.user'], mockData.domainName, mockData.path, undefined)
             .then((response) => {
                 expect(response).toEqual(undefined);
             });
@@ -126,7 +126,7 @@ describe('company.service.list', () => {
         });
 
         await companyService
-            .list(mockData.tenantId, mockData.email, mockData.domainName, mockData.path, undefined)
+            .list(mockData.tenantId, mockData.email, ['hr.persona.user'], mockData.domainName, mockData.path, undefined)
 			.then(() => {
 				done.fail(new Error('Test should throw an exception.'));
 			})

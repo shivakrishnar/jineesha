@@ -31,34 +31,48 @@ import * as uniqueifier from 'uuid/v4';
  * Returns a listing of companies for a specific user within a tenant
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
  * @param {string} email: The email address of the user.
+ * @param {any} roleMemberships: The roles to which the user belongs.
  * @param {string} domainName: The domain name of the request.
  * @param {string} path: The path of the endpoint.
  * @param {any} queryParams: The query parameters that were specified by the user.
  * @returns {Promise<Companies>}: Promise of an array of companies
  */
-export async function list(tenantId: string, email: string, domainName: string, path: string, queryParams: any): Promise<PaginatedResult> {
+export async function list(tenantId: string, email: string, roleMemberships: any, domainName: string, path: string, queryParams: any): Promise<PaginatedResult> {
     console.info('companyService.list');
-
-    const validQueryStringParameters = ['pageToken', 'search'];
-
+    let validQueryStringParameters = ['pageToken', 'search'];
+    const isGA = roleMemberships.indexOf('global.admin') > -1;
+    if(isGA) validQueryStringParameters = [...validQueryStringParameters, 'migration', 'requestingFrom']
     // Pagination validation
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
-
+    let userTenant = tenantId;
+    console.log('userTenant', userTenant)
     try {
-        if (queryParams) utilService.validateQueryParams(queryParams, validQueryStringParameters);
-
+        if (queryParams) {
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+            const migration = queryParams.migration && utilService.parseQueryParamsBoolean(queryParams, 'migration');
+            if (migration) userTenant = queryParams.requestingFrom
+        }
+        
         // Get user info
         const userQuery = new ParameterizedQuery('GetUserById', Queries.getUserById);
         userQuery.setParameter('@username', email);
+        
+        const userPayload = {
+            tenantId: userTenant,
+            queryName: userQuery.name,
+            query: userQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
         const payload = {
             tenantId,
             queryName: userQuery.name,
             query: userQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
+
         const userResult: any = await utilService.invokeInternalService(
             'queryExecutor',
-            payload,
+            userPayload,
             utilService.InvocationType.RequestResponse,
         );
 
