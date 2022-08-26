@@ -234,7 +234,7 @@ GO
 			from '+@cDonorTablePath+'ATApplicationNote T1 
 			join '+@cDonorTablePath+'ATApplication D1 on D1.ID = T1.ATApplicationID
 			left outer join '+@cRecipientTablePath+'ATApplication R1 on R1.ATApplicationKey = D1.ATApplicationKey
-			join '+@cDonorTablePath+'ATSoftStatusType D2 on D2.ID = D1.ATSoftStatusTypeID
+			join '+@cDonorTablePath+'ATJobPosting D2 on D2.ID = D1.ATJobPostingID
 			where D2.CompanyID ='+ @cDonorCompany_ID--+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
@@ -300,7 +300,7 @@ GO
 			from '+@cDonorTablePath+'ATApplicationQuestionBankAnswer T1 
 			join '+@cDonorTablePath+'ATApplication D1 on D1.ID = T1.ATApplicationID
 			left outer join '+@cRecipientTablePath+'ATApplication R1 on R1.ATApplicationKey = D1.ATApplicationKey
-			join '+@cDonorTablePath+'ATSoftStatusType D2 on D2.ID = D1.ATSoftStatusTypeID
+			join '+@cDonorTablePath+'ATJobPosting D2 on D2.ID = D1.ATJobPostingID
 			where D2.CompanyID ='+ @cDonorCompany_ID--+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
@@ -512,7 +512,7 @@ GO
 			from '+@cDonorTablePath+'ATApplicationNote T1 
 			join '+@cDonorTablePath+'ATApplication D1 on D1.ID = T1.ATApplicationID
 			left outer join '+@cRecipientTablePath+'ATApplication R1 on R1.ATApplicationKey = D1.ATApplicationKey
-			join '+@cDonorTablePath+'ATSoftStatusType D2 on D2.ID = D1.ATSoftStatusTypeID
+			join '+@cDonorTablePath+'ATJobPosting D2 on D2.ID = D1.ATJobPostingID
 			where D2.CompanyID ='+ @cDonorCompany_ID--+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
@@ -580,7 +580,7 @@ GO
 			from '+@cDonorTablePath+'ATApplicationQuestionBankAnswer T1 
 			join '+@cDonorTablePath+'ATApplication D1 on D1.ID = T1.ATApplicationID
 			left outer join '+@cRecipientTablePath+'ATApplication R1 on R1.ATApplicationKey = D1.ATApplicationKey
-			join '+@cDonorTablePath+'ATSoftStatusType D2 on D2.ID = D1.ATSoftStatusTypeID
+			join '+@cDonorTablePath+'ATJobPosting D2 on D2.ID = D1.ATJobPostingID
 			where D2.CompanyID ='+ @cDonorCompany_ID--+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
