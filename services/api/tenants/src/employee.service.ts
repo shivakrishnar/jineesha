@@ -851,8 +851,8 @@ async function getLastPayrollPeriodEnd(tenantId: string, employeeEvoData: IEvolu
     const payrolls = await payrollService.getPayrollsByCompanyId(tenantId, employeeEvoData, token);
     const lastPayroll = payrolls.filter((payroll) => payroll.Status === 'Processed').sort((a, b) => b.Id - a.Id)[0];
     const batches = await payrollService.getPayrollBatchesByPayrollId(tenantId, employeeEvoData, token, lastPayroll.Id);
-    const lastBatch = batches.sort((a, b) => b.Id - a.Id)[0];
-    return lastBatch.PeriodEnd;
+    const lastBatch = batches ? batches.sort((a, b) => b.Id - a.Id)[0] : null;
+    return lastBatch ? lastBatch.PeriodEnd : new Date(); 
 }
 /**
  * Get the absence summary for a specific employee
@@ -946,10 +946,9 @@ export async function getEmployeeAbsenceSummary(
                         timeOffDates.push(timeOffRequest);
                     }
                 }
-            })
+            });
             return { scheduledApprovedHours, pendingApprovalHours, timeOffDates };
-        }
-        
+        };
         let unroundedTotalAvailableBalance: number = 0;
         const lastAccrualPeriodEndDate = await getLastPayrollPeriodEnd(tenantName, employee.evoData, payrollApiAccessToken)
 
