@@ -963,12 +963,13 @@ export async function getEmployeeAbsenceSummary(
             const employeeSummary = companyCategory ? getEmployeeTimeOffSummaryByCategoryId(companyCategory.Id) : undefined;
             const { accruedHours = 0, usedHours = 0 } = employeeSummary || {};
             const { scheduledApprovedHours, pendingApprovalHours, timeOffDates } = filterAbsenceData(category.id, lastAccrualPeriodEndDate);
-            const unroundedAvailableBalance = accruedHours - scheduledApprovedHours - pendingApprovalHours - usedHours;
+            const unroundedAvailableBalance = companyCategory.ShowEss == "Y" ? accruedHours - (scheduledApprovedHours + pendingApprovalHours + usedHours) : 0;
             const availableBalance = Math.round((unroundedAvailableBalance + Number.EPSILON) * 100) / 100; //using Number.EPSILON to ensure numbers like 1.005 is rounded correctly
             unroundedTotalAvailableBalance += unroundedAvailableBalance;
 
             return {
                 category: category.categoryDescription,
+                showInSelfService: companyCategory.ShowEss, //Evo toggler per each
                 currentBalance: accruedHours - usedHours,
                 scheduledHours: scheduledApprovedHours,
                 pendingApprovalHours,
