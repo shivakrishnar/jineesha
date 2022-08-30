@@ -199,6 +199,7 @@ const generateDocumentUploadValidationSchema = {
     isPrivate: { required: false, type: Boolean },
     documentId: { required: false, type: String },
     category: { required: false, type: String },
+    docType: { required : true, type: String },
 };
 
 const generateDocumentUploadSchema = Yup.object().shape({
@@ -208,6 +209,7 @@ const generateDocumentUploadSchema = Yup.object().shape({
     isPrivate: Yup.bool(),
     documentId: Yup.string(),
     category: Yup.string(),
+    docType: Yup.string().required(),
 });
 
 // Create Company Document schemas
