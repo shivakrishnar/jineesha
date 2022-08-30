@@ -1,6 +1,6 @@
 
 declare @_donorPath nvarchar(max) = '[@donorTenantId].[dbo].'; -- [db-name].[dbo].
-declare @_hrServicesConnection nvarchar(max) = '[LinkedtoRDS].[@recipTenantId].[dbo].';
+declare @_hrServicesConnection nvarchar(max) = '[@migrationId].[@recipTenantId].[dbo].';
 declare @_donorCompanyId nvarchar(max) = '@donorCompanyId';
 declare @_recipCompanyId nvarchar(max) = '@recipCompanyId';
 
