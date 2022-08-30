@@ -3547,7 +3547,7 @@ export async function isEditableLegacyEmployeeDocument(decodedDocumentId: string
 export async function generateDocumentUploadUrl(tenantId: string, companyId: string, invoker: string, requestPayload: any): Promise<any> {
     console.info('esignature.service.generateDocumentUploadUrl');
 
-    const { employeeId, fileName: filename, title, isPrivate = false, documentId, category } = requestPayload;
+    const { employeeId, fileName: filename, title, isPrivate = false, documentId, category, docType } = requestPayload;
 
     // companyId value must be integral
     if (Number.isNaN(Number(companyId))) {
@@ -3704,6 +3704,7 @@ export async function generateDocumentUploadUrl(tenantId: string, companyId: str
         uploadedBy: invoker,
         tenantId,
         companyId,
+        docType,
         ...employeeMetadata,
         ...documentMetadata,
     };
@@ -3761,6 +3762,7 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
             isonboardingdocument = false,
             filename,
             esignaturemetadataid,
+            doctype
         } = metadata;
 
         // Don't handle documents generated when e-signed. Their metadata has already been persisted to the database
@@ -3869,7 +3871,7 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
             query = new ParameterizedQuery('CreateEsignatureMetadata', Queries.createEsignatureMetadata);
             query.setParameter('@id', esignaturemetadataid);
             query.setParameter('@companyId', companyid);
-            query.setParameter('@type', EsignatureMetadataType.SimpleSignatureRequest);
+            query.setParameter('@type', doctype === 'noSign' ? EsignatureMetadataType.NoSignature : EsignatureMetadataType.SimpleSignatureRequest);
             query.setParameter('@uploadDate', uploadTime);
             query.setParameter('@uploadedBy', `'${uploadedby}'`);
             query.setParameter('@title', `'${title.replace(/'/g, "''")}'`);
@@ -3918,6 +3920,8 @@ export async function saveUploadedDocumentMetadata(uploadedItemS3Key: string, up
     }
 }
 
+
+//TODO: MJ-11134 cleanup createCompanyDocument code, no longer used with the implementation of MJ-9905
 /**
  * Creates a specified document record under a company and uploads the file to S3
  * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
