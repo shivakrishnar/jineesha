@@ -999,8 +999,8 @@ export async function validateUserWithEmployee(tenantId: string, email: string, 
             companyExistsInTenantPayload,
             InvocationType.RequestResponse,
         );
-
-        const userExistsInCompany = result?.recordset[0]?.ID === employeeId;
+        const userRecords = result?.recordset.filter((record) => record.ID === employeeId);
+        const userExistsInCompany = userRecords.length > 0;
 
         return Promise.resolve(userExistsInCompany);
     } catch (error) {
