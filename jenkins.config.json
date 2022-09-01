@@ -14,6 +14,45 @@
       "credentialsId": "5305679f-1782-44ee-b4e1-29c2cf3f6071",
       "storageBucket": "production-tf-states-bucket"
     }
-  }
+  },
+  "services": [
+    {
+      "name": "internal-api",
+      "directory": "services/internal-api",
+      "createDomain": false
+    },
+    {
+      "name": "encryption",
+      "directory": "services/encryption",
+      "createDomain": false,
+      "serverlessPath": "../../node_modules/.bin/serverless",
+      "preDeployCommand": "./build.sh"
+    },
+    {
+      "name": "direct-deposits",
+      "directory": "services/api/direct-deposits",
+      "createDomain": true
+    },
+    {
+      "name": "sec-resource",
+      "directory": "services/api/sec-resource",
+      "createDomain": true
+    },
+    {
+      "name": "tenants",
+      "directory": "services/api/tenants",
+      "createDomain": true
+    },
+    {
+      "name": "group-term-life",
+      "directory": "services/api/group-term-life",
+      "createDomain": true
+    },
+    {
+      "name": "integrations",
+      "directory": "services/integrations",
+      "createDomain": true
+    }
+  ]
 }
   
