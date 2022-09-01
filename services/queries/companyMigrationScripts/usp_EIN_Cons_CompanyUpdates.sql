@@ -310,6 +310,28 @@ GO
 				select 'Alert Recipient Update - C' as Showdata
 			end
 		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%D%'
+		begin
+			----------------QRWSavedReport
+			select @cmdShowDataDonor = 'select T1.Name, T1.Description, T1.QRWConceptID, R2.ID, T1.SelectedFields, case when T1.CompanyID is null then null else '+@cRecipientCompany_ID+' end, T1.ActiveEmployee, T1.OrderBy, T1.SimpleWhere, T1.ComplexWhere, T1.IsPublic
+			from '+@cDonorTablePath+'QRWSavedReport T1
+			join '+@cDonorTablePath+'HRNextUser D2 on D2.ID = T1.HRNextUserID
+			join '+@cDonorTablePath+'HRNextUserCompany D3 on D3.HRnextUserID = D2.ID
+			join '+trim(@cRecipientTablePath)+'HRNextUser R2 on R2.Username = D2.Username
+			where D3.CompanyID ='+ @cDonorCompany_ID +'or T1.CompanyID ='+ @cDonorCompany_ID
+
+			exec (@cmdShowDataDonor)
+			if @cShowStatement = 1
+			begin
+				print @cmdShowDataDonor
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'QRWSavedReport - D' as ShowData
+			end
+		end
+
 	end
 
 	-- ------------------------------------------------------------
@@ -555,6 +577,29 @@ GO
 				select 'Alert Recipient Update - C' as Insertdata
 			end
 		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%D%'
+		begin
+			----------------QRWSavedReport
+			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'QRWSavedReport (Name, Description, QRWConceptID, HRnextUserID, SelectedFields, CompanyID, ActiveEmployee, OrderBy, SimpleWhere, ComplexWhere, IsPublic)
+			select T1.Name, T1.Description, T1.QRWConceptID, R2.ID, T1.SelectedFields, case when T1.CompanyID is null then null else '+@cRecipientCompany_ID+' end, T1.ActiveEmployee, T1.OrderBy, T1.SimpleWhere, T1.ComplexWhere, T1.IsPublic
+			from '+@cDonorTablePath+'QRWSavedReport T1
+			join '+@cDonorTablePath+'HRNextUser D2 on D2.ID = T1.HRNextUserID
+			join '+@cDonorTablePath+'HRNextUserCompany D3 on D3.HRnextUserID = D2.ID
+			join '+trim(@cRecipientTablePath)+'HRNextUser R2 on R2.Username = D2.Username
+			where D3.CompanyID ='+ @cDonorCompany_ID +'or T1.CompanyID ='+ @cDonorCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				print @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'QRWSavedReport - D' as InsertData
+			end
+		end
+
 	end
 
 	-- This Query verifies and loads the data from Donor
