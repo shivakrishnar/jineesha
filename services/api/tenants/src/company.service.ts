@@ -7,6 +7,7 @@ import * as path from 'path';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
+import { Query } from '../../../queries/query';
 import { Company } from './company';
 
 import * as configService from '../../../config.service';
@@ -1176,6 +1177,29 @@ export async function createCompanyMigration(
             await utilService.invokeInternalService('queryExecutor', preMigrationPayload, utilService.InvocationType.RequestResponse, true);
         }
 
+        //execute stored procedure for disabling and enabled audit outbox trigger
+        const createAuditOutboxTriggerScheduledTask = new Query('createAuditOutboxTriggerScheduledTask', Queries.createAuditOutboxTriggerScheduledTask);
+        const payload = {
+            tenantId: recipientTenantId,
+            queryName: createAuditOutboxTriggerScheduledTask.name,
+            query: createAuditOutboxTriggerScheduledTask.value,
+            queryType: QueryType.Batched,
+        } as DatabaseEvent;
+         await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse, true);
+
+         //execute stored procedure
+         const createAuditOutboxTriggerScheduledTaskExecute = new ParameterizedQuery('executeCreateAuditOutboxTrigger', Queries.executeCreateAuditOutboxTrigger);
+
+         createAuditOutboxTriggerScheduledTaskExecute.setParameter('@recipTenantId', recipientTenantId)
+         const executePayload = {
+             tenantId: recipientTenantId,
+             queryName: createAuditOutboxTriggerScheduledTaskExecute.name,
+             query: createAuditOutboxTriggerScheduledTaskExecute.value,
+             queryType: QueryType.StoredProcedure,
+         } as DatabaseEvent;
+          await utilService.invokeInternalService('queryExecutor', executePayload, utilService.InvocationType.RequestResponse, true);
+    
+
         //4-migration creation
         const migrationQuery = new ParameterizedQuery('createCompanyMigration', Queries.createCompanyMigration);
 
@@ -1331,6 +1355,7 @@ export async function runCompanyMigration(donorTenantId, donorCompanyId, recipie
             }),
         };
         await stepFunctions.startExecution(params).promise();
+
     } catch (error) {
         //updating migration table to 'Failed' if migration failed
         const updateParams = {
