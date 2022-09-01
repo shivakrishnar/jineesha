@@ -4,7 +4,7 @@
 /*
 	Syntax	: exec  usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1
 		Ex.	: 	
-			execute usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 1, '600373', '600351', 'ShowData', 'v'
+			execute usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 1, '600373', '600351', 'ShowData', 'U'
 			execute usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'Insert', 'u'
 			execute usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'InsertFullValidate', 'ZZZ'
 			execute usp_EIN_Cons_Dynamic_MultiTable_TwoTier_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'Delete', 'ZZZ'
@@ -659,6 +659,146 @@ GO
 			if @cVerbose_Ind = 1
 			begin
 				select 'Misc EE Updates - T' as ShowData
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%U%'
+		begin
+
+			--This section now runs two parts.  1st is to delete any existing EmployeeAlternateRate records inserted by the Payroll move, second is to Insert data from Donor to Recipient
+			select @cmdShowDataDonor = 'select count(EmployeeID) as RowsToBeDeleted from '+trim(@cRecipientTablePath)+'EmployeeAlternateRate where EmployeeID in (select R1.ID from '+trim(@cRecipientTablePath)+'Employee R1 where R1.CompanyID = '+@cRecipientCompany_ID+')'
+
+			exec (@cmdShowDataDonor)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataDonor
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeAlternateRate Delete - U' as Insertdata
+			end
+
+			----------------Emp Alternate Rate
+			select @cmdShowDataDonor = 'select R1.ID, R2.ID, T1.StartDate, T1.EndDate, T1.HourlyRate, T1.Notes, T1.RateNumber_EVO, T1.PR_Integration_PK, T1.EvoFK_JobNumber, 
+			recipDiv3.ID as Org1ID, --T1.Org1ID, 
+			recipBranch4.ID as Org2ID, --T1.Org2ID, 
+			recipDep5.ID as Org3ID, --T1.Org3ID, 
+			recipTeam6.ID as Org4ID, --T1.Org4ID, 
+			null as Org5ID, 
+			R10.ID, --T1.PositionTypeID, 
+			R8.ID, --T1.WorkerCompTypeID, 
+			R9.ID--, T1.PayGradeTypeID
+			from '+trim(@cDonorTablePath)+'EmployeeAlternateRate T1
+			join '+trim(@cDonorTablePath)+'Employee D1 on D1.ID = T1.EmployeeID
+			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
+
+			left outer join '+trim(@cDonorTablePath)+'RateType D2 on D2.CompanyID = D1.CompanyID and D1.ID = T1.RateTypeID
+			left outer join '+trim(@cRecipientTablePath)+'RateType R2 on isnull(R2.Code, '''') = isnull(D2.Code, '''') and isnull(R2.Description, '''') = isnull(D2.Description, '''')
+
+			join '+trim(@cDonorTablePath)+'OrganizationStructure SD3 on SD3.CompanyID = D1.CompanyID
+			join '+trim(@cRecipientTablePath)+'OrganizationStructure SR3 on SR3.CompanyID = R1.CompanyID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorDiv3 on ISNULL(T1.Org1ID, 0) = ISNULL(donorDiv3.ID, 0)
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipDiv3 on
+			recipDiv3.OrganizationStructureID = SR3.ID and
+			recipDiv3.Code = donorDiv3.Code and
+			recipDiv3.Org1ParentID is null
+			
+			join '+trim(@cDonorTablePath)+'OrganizationStructure SD4 on SD4.CompanyID = D1.CompanyID
+			join '+trim(@cRecipientTablePath)+'OrganizationStructure SR4 on SR4.CompanyID = R1.CompanyID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorBranch4 on ISNULL(donorBranch4.ID, 0) = ISNULL(T1.Org2ID, 0)
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorDiv4 on donorDiv4.ID = donorBranch4.Org1ParentID
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipDiv4 on
+				recipDiv4.OrganizationStructureID = SR4.ID and
+				recipDiv4.Code = donorDiv4.Code and
+				recipDiv4.Org1ParentID is null
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipBranch4 on
+				recipBranch4.OrganizationStructureID = SR4.ID and
+				recipBranch4.Code = donorBranch4.Code and
+				recipBranch4.Org1ParentID = recipDiv4.ID and
+				recipBranch4.Org2ParentID is null
+
+			join '+trim(@cDonorTablePath)+'OrganizationStructure SD5 on SD5.CompanyID = D1.CompanyID
+			join '+trim(@cRecipientTablePath)+'OrganizationStructure SR5 on SR5.CompanyID = R1.CompanyID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorDep5 on donorDep5.ID = T1.Org3ID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorBranch5 on donorBranch5.ID = donorDep5.Org2ParentID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorDiv5 on donorDiv5.ID = donorDep5.Org1ParentID
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipDiv5 on
+				recipDiv5.OrganizationStructureID = SR5.ID and
+				recipDiv5.Code = donorDiv5.Code and
+				recipDiv5.Org1ParentID is null
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipBranch5 on
+				recipBranch5.OrganizationStructureID = SR5.ID and
+				recipBranch5.Code = donorBranch5.Code and
+				recipBranch5.Org1ParentID = recipDiv5.ID and
+				recipBranch5.Org2ParentID is null
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipDep5 on
+				recipDep5.OrganizationStructureID = SR5.ID and
+				recipDep5.Code = donorDep5.Code and
+				recipDep5.Org2ParentID = recipBranch5.ID and
+				recipDep5.Org1ParentID = recipDiv5.ID and
+				recipDep5.Org3ParentID is null
+	
+			join '+trim(@cDonorTablePath)+'OrganizationStructure SD6 on SD6.CompanyID = D1.CompanyID
+			join '+trim(@cRecipientTablePath)+'OrganizationStructure SR6 on SR6.CompanyID = R1.CompanyID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorTeam6 on donorTeam6.ID = T1.Org4ID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorDep6 on donorDep6.ID = donorTeam6.Org3ParentID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorBranch6 on donorBranch6.ID = donorTeam6.Org2ParentID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorDiv6 on donorDiv6.ID = donorTeam6.Org1ParentID
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipDiv6 on
+				recipDiv6.OrganizationStructureID = SR6.ID and
+				recipDiv6.Code = donorDiv6.Code and
+				recipDiv6.Org1ParentID is null
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipBranch6 on
+				recipBranch6.OrganizationStructureID = SR6.ID and
+				recipBranch6.Code = donorBranch6.Code and
+				recipBranch6.Org1ParentID = recipDiv6.ID and
+				recipBranch6.Org2ParentID is null
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipDep6 on
+				recipDep6.OrganizationStructureID = SR6.ID and
+				recipDep6.Code = donorDep6.Code and
+				recipDep6.Org2ParentID = recipBranch6.ID and
+				recipDep6.Org1ParentID = recipDiv6.ID and
+				recipDep6.Org3ParentID is null
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipTeam6 on
+				recipTeam6.OrganizationStructureID = SR6.ID and
+				recipTeam6.Code = donorTeam6.Code and
+				recipTeam6.Org3ParentID = recipDep6.ID and
+				recipTeam6.Org2ParentID = recipBranch6.ID and
+				recipTeam6.Org1ParentID = recipDiv6.ID and
+				recipTeam6.Org4ParentID is null'
+			select @cmdShowDataDonor = @cmdShowDataDonor + '
+
+			--join '+trim(@cDonorTablePath)+'OrganizationStructure SD7 on SD7.CompanyID = D1.CompanyID
+			--left outer join '+trim(@cRecipientTablePath)+'OrganizationStructure SR7 on SR7.CompanyID = R1.CompanyID
+			--left outer join '+trim(@cDonorTablePath)+'OrganizationType D7 on D7.OrganizationStructureID = SD7.ID and isnull(D7.ID,0) = isnull(T1.Org5ID,0)
+			--left outer join '+trim(@cRecipientTablePath)+'OrganizationType R7 on R7.OrganizationStructureID = SR7.ID and R7.OrgLevel = D7.OrgLevel and R7.Code = D7.Code and R7.Org1ParentID = D7.Org1ParentID and R7.Org2ParentID = D7.Org2ParentID and R7.Org3ParentID = D7.Org3ParentID and R7.Org4ParentID = D7.Org4ParentID
+
+			left outer join '+trim(@cDonorTablePath)+'WorkerCompType D8 on D8.CompanyID = D1.CompanyID and D8.ID = T1.WorkerCompTypeID
+			left outer join '+trim(@cRecipientTablePath)+'WorkerCompType R8 on R8.CompanyID = R1.CompanyID and isnull(R8.Code, '''') = isnull(D8.Code, '''') and isnull(R8.Description, '''') = isnull(D8.Description, '''')
+			
+			left outer join '+trim(@cDonorTablePath)+'PayGradeType D9 on D9.CompanyID = D2.CompanyID and D1.ID = T1.PayGradeTypeID
+			left outer join '+trim(@cRecipientTablePath)+'PayGradeType R9 on isnull(R9.Code, '''') = isnull(D9.Code, '''') and isnull(R9.Description, '''') = isnull(D9.Description, '''')
+			
+			left outer join '+trim(@cDonorTablePath)+'PositionType D10 on D10.CompanyID = D1.CompanyID and D10.ID = T1.PositionTypeID
+			left outer join '+trim(@cRecipientTablePath)+'PositionType R10 on R10.CompanyID = R1.CompanyID
+				and ISNULL(D10.Description, '''') = ISNULL(R10.Description, '''')
+				and ISNULL(D10.Title, '''') = ISNULL(R10.Title, '''')
+				and isnull(convert(nvarchar(255), D10.ApprovedDate), '''') = isnull(convert(nvarchar(255), R10.ApprovedDate), '''')
+				and isnull(convert(nvarchar(255), D10.EffectiveDate), '''') = isnull(convert(nvarchar(255), R10.EffectiveDate), '''')
+				and isnull(convert(nvarchar(255), D10.ClosedDate), '''') = isnull(convert(nvarchar(255), R10.ClosedDate), '''')
+				and ISNULL(D10.Requirements, '''') = ISNULL(R10.Requirements, '''')
+				and ISNULL(D10.Code, '''') = ISNULL(R10.Code, '''')
+
+			where D1.CompanyID ='+ @cDonorCompany_ID +' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataDonor)
+			if @cShowStatement = 1
+			begin
+				print @cmdShowDataDonor
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Emp Alternate Rate - U' as ShowData
 			end
 		end
 
@@ -1331,6 +1471,148 @@ GO
 			if @cVerbose_Ind = 1
 			begin
 				select 'Misc EE Updates - T' as ShowData
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%U%'
+		begin
+
+			--Delete Step
+			select @cmdInsert = 'delete from '+trim(@cRecipientTablePath)+'EmployeeAlternateRate where EmployeeID in (select R1.ID from '+trim(@cRecipientTablePath)+'Employee R1 
+			where R1.CompanyID = '+@cRecipientCompany_ID+')'
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeAlternateRate Delete - U' as Insertdata
+			end
+
+			----------------Emp Alternate Rate updates
+			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeAlternateRate (EmployeeID, RateTypeID, StartDate, EndDate, HourlyRate, Notes, RateNumber_EVO, PR_Integration_PK, 
+			EvoFK_JobNumber, Org1ID, Org2ID, Org3ID, Org4ID, Org5ID, PositionTypeID, WorkerCompTypeID, PayGradeTypeID)
+			select R1.ID, R2.ID, T1.StartDate, T1.EndDate, T1.HourlyRate, T1.Notes, T1.RateNumber_EVO, T1.PR_Integration_PK, T1.EvoFK_JobNumber, 
+			recipDiv3.ID as Org1ID, --T1.Org1ID, 
+			recipBranch4.ID as Org2ID, --T1.Org2ID, 
+			recipDep5.ID as Org3ID, --T1.Org3ID, 
+			recipTeam6.ID as Org4ID, --T1.Org4ID, 
+			null as Org5ID, 
+			R10.ID, --T1.PositionTypeID, 
+			R8.ID, --T1.WorkerCompTypeID, 
+			R9.ID--, T1.PayGradeTypeID
+			from '+trim(@cDonorTablePath)+'EmployeeAlternateRate T1
+			join '+trim(@cDonorTablePath)+'Employee D1 on D1.ID = T1.EmployeeID
+			left outer join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
+
+			left outer join '+trim(@cDonorTablePath)+'RateType D2 on D2.CompanyID = D1.CompanyID and D1.ID = T1.RateTypeID
+			left outer join '+trim(@cRecipientTablePath)+'RateType R2 on isnull(R2.Code, '''') = isnull(D2.Code, '''') and isnull(R2.Description, '''') = isnull(D2.Description, '''')
+
+			join '+trim(@cDonorTablePath)+'OrganizationStructure SD3 on SD3.CompanyID = D1.CompanyID
+			join '+trim(@cRecipientTablePath)+'OrganizationStructure SR3 on SR3.CompanyID = R1.CompanyID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorDiv3 on ISNULL(T1.Org1ID, 0) = ISNULL(donorDiv3.ID, 0)
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipDiv3 on
+			recipDiv3.OrganizationStructureID = SR3.ID and
+			recipDiv3.Code = donorDiv3.Code and
+			recipDiv3.Org1ParentID is null
+			
+			join '+trim(@cDonorTablePath)+'OrganizationStructure SD4 on SD4.CompanyID = D1.CompanyID
+			join '+trim(@cRecipientTablePath)+'OrganizationStructure SR4 on SR4.CompanyID = R1.CompanyID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorBranch4 on ISNULL(donorBranch4.ID, 0) = ISNULL(T1.Org2ID, 0)
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorDiv4 on donorDiv4.ID = donorBranch4.Org1ParentID
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipDiv4 on
+				recipDiv4.OrganizationStructureID = SR4.ID and
+				recipDiv4.Code = donorDiv4.Code and
+				recipDiv4.Org1ParentID is null
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipBranch4 on
+				recipBranch4.OrganizationStructureID = SR4.ID and
+				recipBranch4.Code = donorBranch4.Code and
+				recipBranch4.Org1ParentID = recipDiv4.ID and
+				recipBranch4.Org2ParentID is null
+
+			join '+trim(@cDonorTablePath)+'OrganizationStructure SD5 on SD5.CompanyID = D1.CompanyID
+			join '+trim(@cRecipientTablePath)+'OrganizationStructure SR5 on SR5.CompanyID = R1.CompanyID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorDep5 on donorDep5.ID = T1.Org3ID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorBranch5 on donorBranch5.ID = donorDep5.Org2ParentID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorDiv5 on donorDiv5.ID = donorDep5.Org1ParentID
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipDiv5 on
+				recipDiv5.OrganizationStructureID = SR5.ID and
+				recipDiv5.Code = donorDiv5.Code and
+				recipDiv5.Org1ParentID is null
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipBranch5 on
+				recipBranch5.OrganizationStructureID = SR5.ID and
+				recipBranch5.Code = donorBranch5.Code and
+				recipBranch5.Org1ParentID = recipDiv5.ID and
+				recipBranch5.Org2ParentID is null
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipDep5 on
+				recipDep5.OrganizationStructureID = SR5.ID and
+				recipDep5.Code = donorDep5.Code and
+				recipDep5.Org2ParentID = recipBranch5.ID and
+				recipDep5.Org1ParentID = recipDiv5.ID and
+				recipDep5.Org3ParentID is null
+	
+			join '+trim(@cDonorTablePath)+'OrganizationStructure SD6 on SD6.CompanyID = D1.CompanyID
+			join '+trim(@cRecipientTablePath)+'OrganizationStructure SR6 on SR6.CompanyID = R1.CompanyID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorTeam6 on donorTeam6.ID = T1.Org4ID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorDep6 on donorDep6.ID = donorTeam6.Org3ParentID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorBranch6 on donorBranch6.ID = donorTeam6.Org2ParentID
+			left join '+trim(@cDonorTablePath)+'OrganizationType donorDiv6 on donorDiv6.ID = donorTeam6.Org1ParentID
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipDiv6 on
+				recipDiv6.OrganizationStructureID = SR6.ID and
+				recipDiv6.Code = donorDiv6.Code and
+				recipDiv6.Org1ParentID is null
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipBranch6 on
+				recipBranch6.OrganizationStructureID = SR6.ID and
+				recipBranch6.Code = donorBranch6.Code and
+				recipBranch6.Org1ParentID = recipDiv6.ID and
+				recipBranch6.Org2ParentID is null
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipDep6 on
+				recipDep6.OrganizationStructureID = SR6.ID and
+				recipDep6.Code = donorDep6.Code and
+				recipDep6.Org2ParentID = recipBranch6.ID and
+				recipDep6.Org1ParentID = recipDiv6.ID and
+				recipDep6.Org3ParentID is null
+			left join '+trim(@cRecipientTablePath)+'OrganizationType recipTeam6 on
+				recipTeam6.OrganizationStructureID = SR6.ID and
+				recipTeam6.Code = donorTeam6.Code and
+				recipTeam6.Org3ParentID = recipDep6.ID and
+				recipTeam6.Org2ParentID = recipBranch6.ID and
+				recipTeam6.Org1ParentID = recipDiv6.ID and
+				recipTeam6.Org4ParentID is null'
+			select @cmdInsert = @cmdInsert + '
+			--join '+trim(@cDonorTablePath)+'OrganizationStructure SD7 on SD7.CompanyID = D1.CompanyID
+			--left outer join '+trim(@cRecipientTablePath)+'OrganizationStructure SR7 on SR7.CompanyID = R1.CompanyID
+			--left outer join '+trim(@cDonorTablePath)+'OrganizationType D7 on D7.OrganizationStructureID = SD7.ID and isnull(D7.ID,0) = isnull(T1.Org5ID,0)
+			--left outer join '+trim(@cRecipientTablePath)+'OrganizationType R7 on R7.OrganizationStructureID = SR7.ID and R7.OrgLevel = D7.OrgLevel and R7.Code = D7.Code and R7.Org1ParentID = D7.Org1ParentID and R7.Org2ParentID = D7.Org2ParentID and R7.Org3ParentID = D7.Org3ParentID and R7.Org4ParentID = D7.Org4ParentID
+
+			left outer join '+trim(@cDonorTablePath)+'WorkerCompType D8 on D8.CompanyID = D1.CompanyID and D8.ID = T1.WorkerCompTypeID
+			left outer join '+trim(@cRecipientTablePath)+'WorkerCompType R8 on R8.CompanyID = R1.CompanyID and isnull(R8.Code, '''') = isnull(D8.Code, '''') and isnull(R8.Description, '''') = isnull(D8.Description, '''')
+			
+			left outer join '+trim(@cDonorTablePath)+'PayGradeType D9 on D9.CompanyID = D2.CompanyID and D1.ID = T1.PayGradeTypeID
+			left outer join '+trim(@cRecipientTablePath)+'PayGradeType R9 on isnull(R9.Code, '''') = isnull(D9.Code, '''') and isnull(R9.Description, '''') = isnull(D9.Description, '''')
+			
+			left outer join '+trim(@cDonorTablePath)+'PositionType D10 on D10.CompanyID = D1.CompanyID and D10.ID = T1.PositionTypeID
+			left outer join '+trim(@cRecipientTablePath)+'PositionType R10 on R10.CompanyID = R1.CompanyID
+				and ISNULL(D10.Description, '''') = ISNULL(R10.Description, '''')
+				and ISNULL(D10.Title, '''') = ISNULL(R10.Title, '''')
+				and isnull(convert(nvarchar(255), D10.ApprovedDate), '''') = isnull(convert(nvarchar(255), R10.ApprovedDate), '''')
+				and isnull(convert(nvarchar(255), D10.EffectiveDate), '''') = isnull(convert(nvarchar(255), R10.EffectiveDate), '''')
+				and isnull(convert(nvarchar(255), D10.ClosedDate), '''') = isnull(convert(nvarchar(255), R10.ClosedDate), '''')
+				and ISNULL(D10.Requirements, '''') = ISNULL(R10.Requirements, '''')
+				and ISNULL(D10.Code, '''') = ISNULL(R10.Code, '''')
+
+			where D1.CompanyID ='+ @cDonorCompany_ID +' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				print @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'Emp Alternate Rate - U' as ShowData
 			end
 		end
 
