@@ -15,10 +15,12 @@ export async function createPaginatedResult(
     baseUrl: string,
     totalResults: number,
     currentPage: number,
+    pageSize?: string,
 ): Promise<PaginatedResult> {
     console.info('paginationService.createPaginatedResult');
 
-    const limit = configService.getPageLimitDefault();
+    let limit = configService.getPageLimitDefault();
+    if (pageSize) limit = pageSize === 'all' ? totalResults : parseInt(pageSize);
     const totalNumberOfPages = results.length <= limit ? Math.ceil(totalResults / limit) : 1;
     let nextPageToken = { pageNumber: currentPage + 1 };
     let previousPageToken = { pageNumber: currentPage - 1 };
@@ -81,13 +83,17 @@ export async function retrievePaginationData(
  * @param {Query} query: The query to be appended with pagination filters.
  * @param {number} page: The page number specified by the user.
  * @param {boolean} useMaxLimit: Determines whether or not to use the maximum limit.
+ * @param {number} pageSize: The number of rows returned per page
  * @returns {Promise<Query>}: Promise of a paginated query
  */
-export async function appendPaginationFilter(query: Query, page = 1, useMaxLimit = false): Promise<Query> {
+export async function appendPaginationFilter(query: Query, page = 1, useMaxLimit = false, pageSize?: Number): Promise<Query> {
     console.info('paginationService.appendPaginationFilter');
-
-    const limit = useMaxLimit ? configService.getPageLimitMax() : configService.getPageLimitDefault();
-
+    let limit;
+    if (pageSize) {
+        limit = pageSize
+     } else {
+        limit = useMaxLimit ? configService.getPageLimitMax() : configService.getPageLimitDefault();
+     }
     const offset = (page - 1) * limit;
     query.appendFilter(
         `

@@ -39,13 +39,12 @@ import * as uniqueifier from 'uuid/v4';
  */
 export async function list(tenantId: string, email: string, roleMemberships: any, domainName: string, path: string, queryParams: any): Promise<PaginatedResult> {
     console.info('companyService.list');
-    let validQueryStringParameters = ['pageToken', 'search'];
+    let validQueryStringParameters = ['pageToken', 'search', 'pageSize'];
     const isGA = roleMemberships.indexOf('global.admin') > -1;
     if(isGA) validQueryStringParameters = [...validQueryStringParameters, 'migration', 'requestingFrom']
     // Pagination validation
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
     let userTenant = tenantId;
-    console.log('userTenant', userTenant)
     try {
         if (queryParams) {
             utilService.validateQueryParams(queryParams, validQueryStringParameters);
@@ -84,6 +83,8 @@ export async function list(tenantId: string, email: string, roleMemberships: any
         const userId = userResult.recordset[0].ID;
 
         const query = new ParameterizedQuery('ListCompanies', Queries.listCompanies);
+        const searchString = queryParams?.search || '';
+        query.setStringParameter('@search', searchString);
 
         if (!isGaOrSuperAdmin) {
             const userCompaniesQuery = new ParameterizedQuery('GetUserCompaniesById', Queries.getUserCompaniesById);
@@ -104,11 +105,19 @@ export async function list(tenantId: string, email: string, roleMemberships: any
             query.appendFilter(`ID in (${companyIds})`, true);
         }
 
-        const searchString = queryParams?.search || '';
-        query.setStringParameter('@search', searchString);
-
         query.appendFilter(' order by ID', false);
-        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+        let paginatedQuery;
+        if (queryParams?.pageSize) {
+            let pageSize = queryParams.pageSize;
+            if (queryParams.pageSize === 'all') {
+                paginatedQuery = query;
+            } else {
+                pageSize = parseInt(pageSize)
+                paginatedQuery = await paginationService.appendPaginationFilter(query, page, false, pageSize)
+            }
+        } else {
+            paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+        }
         payload.queryName = paginatedQuery.name;
         payload.query = paginatedQuery.value;
 
@@ -127,7 +136,9 @@ export async function list(tenantId: string, email: string, roleMemberships: any
             },
         );
 
-        return await paginationService.createPaginatedResult(companies, baseUrl, totalCount, page);
+        const pageSize = queryParams?.pageSize;
+
+        return await paginationService.createPaginatedResult(companies, baseUrl, totalCount, page, pageSize);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
