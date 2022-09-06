@@ -6,6 +6,8 @@ String nextVersion
 String semanticVersion
 @Field String skipIntegrationTests
 @Field boolean isReleaseBuild = false
+@Field String[] selectedServices
+@Field String[] allServices
 
 // The git remote
 final String gitCredentials = "ssh-bitbucket-asuresoftware"
@@ -69,6 +71,32 @@ stage("Build") {
             configData = readJSON file: './jenkins.config.json'
             teamEmail = configData.teamEmail
             teamsWebhookUrl = configData.teamsWebhookUrl
+
+            allServices = configData.services.collect { service -> return service.name }
+            selectedServices = allServices // set default
+
+            if (!isReleaseBuild) {
+                timeout(time: timeoutDays, unit: "DAYS") {
+                    stage("Choose services to deploy") {
+                        String delimiter = ','
+                        String services = input(id: 'selectedServices', message: 'Select services to deploy', parameters: [
+                            extendedChoice(
+                                name: 'Services',
+                                multiSelectDelimiter: delimiter,
+                                type: 'PT_CHECKBOX',
+                                value: allServices.join(delimiter),
+                                defaultValue: allServices.join(delimiter)
+                            )
+                        ])
+                        
+                        if (!services) {
+                            throw new Exception('Silly Mojo, you need to choose a service to deploy!');
+                        }
+
+                        selectedServices = services.split(delimiter)
+                    }
+                }
+            }
 
             sh "git checkout -b temp-${env.BRANCH_NAME}"
 
@@ -210,68 +238,51 @@ void runWithAwsCredentials(String awsCredentialsId, String command) {
 }
 
 void deploy(String environment) {
-    node(nodeName){
-        sh "ls -lah"
+    node(nodeName) {
         String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
-        deployInternalServices(awsCredentialsId, environment)
-        deployService('services/api/direct-deposits', awsCredentialsId, environment)  
-        deployService('services/api/sec-resource', awsCredentialsId, environment)  
-        deployService('services/api/tenants', awsCredentialsId, environment)      
-        deployService('services/api/group-term-life', awsCredentialsId, environment)    
-        deployService('services/integrations', awsCredentialsId, environment)
-    }
-}
 
-void deployInternalServices(String awsCredentialsId, String environment) {
-    dir('services/internal-api') {
-         nvm(nodeVersion) {
-            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=4096 node_modules/.bin/serverless deploy --variables ${environment}")
-        }
-    }
-    dir('services/encryption') {
-         nvm(nodeVersion) {
-            runWithAwsCredentials(awsCredentialsId, "./build.sh && node --max-old-space-size=4096 ../../node_modules/.bin/serverless deploy --variables ${environment}")
+        for (String serviceName in selectedServices) {
+            echo serviceName
+            Object service = configData.services.find { service -> service.name == serviceName }
+
+            deployService(service, awsCredentialsId, environment)
         }
     }
 }
 
+void deployService(
+    Object service,
+    String awsCredentialsId,
+    String environment
+) {
+    dir(service.directory) {
+        nvm(nodeVersion) {
+            String serverlessPath = service.serverlessPath ? service.serverlessPath : 'node_modules/.bin/serverless'
+            echo serverlessPath
 
-void deployService(String directory, String awsCredentialsId, String environment) {
-    dir(directory) {
-         nvm(nodeVersion) {
-            runWithAwsCredentials(awsCredentialsId, "node_modules/.bin/serverless create_domain --variables ${environment}")
-            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=4096 node_modules/.bin/serverless deploy --variables ${environment}")
+            if (service.createDomain) {
+                echo "creating domain"
+                runWithAwsCredentials(awsCredentialsId, "${serverlessPath} create_domain --variables ${environment}")
+            }
+
+            if (service.preDeployCommand) {
+                echo "running predeploy command"
+                runWithAwsCredentials(awsCredentialsId, service.preDeployCommand)
+            }
+
+            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=4096 ${serverlessPath} deploy --variables ${environment}")
         }
     }
 }
 
 void installServiceApiDependencies() {
-    dir('services/internal-api') {
-        sh 'npm install'
-    }
+    for (String serviceName in allServices) {
+        echo serviceName
+        Object service = configData.services.find { service -> service.name == serviceName }
 
-    dir('services/integrations') {
-        sh 'npm install'
-    }
-
-    dir('services/api/direct-deposits') {
-        sh 'npm install'
-    }
-
-    dir('services/api/sec-resource') {
-        sh 'npm install'
-    }
-
-    dir('services/api/tenants') {
-        sh 'npm install'
-    }
-
-    dir('services/api/group-term-life') {
-        sh 'npm install'
-    }
-
-    dir('services/encryption') {
-        sh 'npm install'
+        dir(service.directory) {
+            sh 'npm install'
+        }
     }
 }
 
