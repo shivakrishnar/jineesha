@@ -33,7 +33,7 @@ GO
 	create procedure usp_EIN_Cons_CompanyWrapper_V1
 
 		@cDonorDatabasePath		char(75),
-		@cRecipientDatabasePath	char(75),
+		@cRecipientDatabasePath	char(100),
 		@cVerbose_Ind			bit,
 		@cShowStatement			bit,
 		@cRecipientCompany_ID	char(10),
