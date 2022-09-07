@@ -484,13 +484,23 @@ export async function listCompanyMigrations(): Promise<any> {
 
     try {
         const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
-        const params = {
+        let params = {
             TableName: 'HrCompanyMigrations',
             IndexName: 'ID-Index',
+            ExclusiveStartKey: null,
         };
-
-        const results = await dynamoDbClient.scan(params).promise();
-        return results.Items.map((migration) => {
+        let completeResults = [];
+        let lastEvaluatedKey;
+        
+        do {
+            if(lastEvaluatedKey) params.ExclusiveStartKey = lastEvaluatedKey;
+            const results = await dynamoDbClient.scan(params).promise();
+            completeResults = [...completeResults, ...results.Items]
+            lastEvaluatedKey = results.LastEvaluatedKey ? results.LastEvaluatedKey : null;
+        }
+        while (lastEvaluatedKey != null );
+        
+        return completeResults.map((migration) => {
             return {
                 id: migration.ID,
                 status: migration.Status,
@@ -500,6 +510,7 @@ export async function listCompanyMigrations(): Promise<any> {
                 timestamp: migration.Timestamp,
             };
         });
+        
     } catch (error) {
         console.error(error);
         throw errorService.getErrorResponse(0);
