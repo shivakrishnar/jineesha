@@ -851,8 +851,8 @@ async function getLastPayrollPeriodEnd(tenantId: string, employeeEvoData: IEvolu
     const payrolls = await payrollService.getPayrollsByCompanyId(tenantId, employeeEvoData, token);
     const lastPayroll = payrolls.filter((payroll) => payroll.Status === 'Processed').sort((a, b) => b.Id - a.Id)[0];
     const batches = await payrollService.getPayrollBatchesByPayrollId(tenantId, employeeEvoData, token, lastPayroll.Id);
-    const lastBatch = batches.sort((a, b) => b.Id - a.Id)[0];
-    return lastBatch.PeriodEnd;
+    const lastBatch = batches ? batches.sort((a, b) => b.Id - a.Id)[0] : null;
+    return lastBatch ? lastBatch.PeriodEnd : new Date(); 
 }
 /**
  * Get the absence summary for a specific employee
@@ -946,10 +946,9 @@ export async function getEmployeeAbsenceSummary(
                         timeOffDates.push(timeOffRequest);
                     }
                 }
-            })
+            });
             return { scheduledApprovedHours, pendingApprovalHours, timeOffDates };
-        }
-        
+        };
         let unroundedTotalAvailableBalance: number = 0;
         const lastAccrualPeriodEndDate = await getLastPayrollPeriodEnd(tenantName, employee.evoData, payrollApiAccessToken)
 
@@ -964,12 +963,13 @@ export async function getEmployeeAbsenceSummary(
             const employeeSummary = companyCategory ? getEmployeeTimeOffSummaryByCategoryId(companyCategory.Id) : undefined;
             const { accruedHours = 0, usedHours = 0 } = employeeSummary || {};
             const { scheduledApprovedHours, pendingApprovalHours, timeOffDates } = filterAbsenceData(category.id, lastAccrualPeriodEndDate);
-            const unroundedAvailableBalance = accruedHours - scheduledApprovedHours - pendingApprovalHours - usedHours;
+            const unroundedAvailableBalance = companyCategory.ShowEss == "Y" ? accruedHours - (scheduledApprovedHours + pendingApprovalHours + usedHours) : 0;
             const availableBalance = Math.round((unroundedAvailableBalance + Number.EPSILON) * 100) / 100; //using Number.EPSILON to ensure numbers like 1.005 is rounded correctly
             unroundedTotalAvailableBalance += unroundedAvailableBalance;
 
             return {
                 category: category.categoryDescription,
+                showInSelfService: companyCategory.ShowEss, //Evo toggler per each
                 currentBalance: accruedHours - usedHours,
                 scheduledHours: scheduledApprovedHours,
                 pendingApprovalHours,

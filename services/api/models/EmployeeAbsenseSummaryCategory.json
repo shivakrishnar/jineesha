@@ -8,6 +8,10 @@
             "description": "Name of the category",
             "type": "string"
         },
+        "showInSelfService": {
+            "description": "Determines if the toggler in Evo is turned on/off for this particular time off category",
+            "type": ["string", "null"]
+        },
         "currentBalance": {
             "description": "The current time off accrual balance for this category",
             "type": ["number", "null"]

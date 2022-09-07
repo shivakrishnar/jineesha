@@ -5,6 +5,7 @@ export type EmployeeAbsenceSummary = {
 
 export type EmployeeAbsenceSummaryCategory = {
   category: string;
+  showInSelfService: string,
   currentBalance: number;
   scheduledHours: number;
   pendingApprovalHours: number;

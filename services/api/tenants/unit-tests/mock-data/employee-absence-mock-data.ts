@@ -87,7 +87,7 @@ export const getEvolutionCompanyTimeOffCategoriesByCompanyId = [
       "EdsId": 5,
       "EDGroupsId": null,
       "ShowEss": "Y",
-      "ShowEDsInEss": false,
+      "ShowEDsInEss": true,
       "AutoCreateForStatuses": {
           "NonApplicable": true,
           "FullTime": true,
@@ -111,7 +111,7 @@ export const getEvolutionCompanyTimeOffCategoriesByCompanyId = [
       "Description": "Sick",
       "EdsId": 9,
       "EDGroupsId": null,
-      "ShowEss": "Y",
+      "ShowEss": "N",
       "ShowEDsInEss": false,
       "AutoCreateForStatuses": {
           "NonApplicable": false,
@@ -134,10 +134,11 @@ export const getEvolutionCompanyTimeOffCategoriesByCompanyId = [
 ]
 
 export const expectedEmployeeAbsenceSummary = {
-  totalAvailableBalance: 46,
+  totalAvailableBalance: 6,
   categories: [
       {
           category: 'Vacation',
+          showInSelfService: 'Y',
           currentBalance: 22,
           scheduledHours: 16,
           pendingApprovalHours: 0,
@@ -163,10 +164,11 @@ export const expectedEmployeeAbsenceSummary = {
       },
       {
           category: 'Sick',
+          showInSelfService: 'N',
           currentBalance: 48,
           scheduledHours: 0,
           pendingApprovalHours: 8,
-          availableBalance: 40,
+          availableBalance: 0, 
           timeOffDates: [
             {
               SubmitDate: '2021-09-27T00:00:00.000Z',
@@ -189,11 +191,12 @@ export const expectedEmployeeAbsenceSummary = {
   ],
 };
 export const expectedApprovedEmployeeAbsenceSummary = {
-  totalAvailableBalance: 46,
+  totalAvailableBalance: 6,
   categories: [
       {
           category: 'Vacation',
           currentBalance: 22,
+          showInSelfService: 'Y',
           scheduledHours: 16,
           pendingApprovalHours: 0,
           availableBalance: 6,
@@ -218,19 +221,21 @@ export const expectedApprovedEmployeeAbsenceSummary = {
       },
       {
           category: 'Sick',
+          showInSelfService: 'N',
           currentBalance: 48,
           scheduledHours: 0,
           pendingApprovalHours: 8,
-          availableBalance: 40,
+          availableBalance: 0, //because showInSelfService is turned off so balance will be zero and it will not be added to the total
           timeOffDates: []
       },
   ],
 };
 export const expectedUpcomingEmployeeAbsenceSummary = {
-  totalAvailableBalance: 46,
+  totalAvailableBalance: 6,
   categories: [
       {
           category: 'Vacation',
+          showInSelfService: 'Y',
           currentBalance: 22,
           scheduledHours: 16,
           pendingApprovalHours: 0,
@@ -248,10 +253,11 @@ export const expectedUpcomingEmployeeAbsenceSummary = {
       },
       {
           category: 'Sick',
+          showInSelfService: 'N',
           currentBalance: 48,
           scheduledHours: 0,
           pendingApprovalHours: 8,
-          availableBalance: 40,
+          availableBalance: 0,
           timeOffDates: [
             {
               SubmitDate: '2021-09-27T00:00:00.000Z',
@@ -266,10 +272,11 @@ export const expectedUpcomingEmployeeAbsenceSummary = {
   ],
 };
 export const expectedApprovedUpcomingEmployeeAbsenceSummary = {
-  totalAvailableBalance: 46,
+  totalAvailableBalance: 6,
   categories: [
       {
           category: 'Vacation',
+          showInSelfService: 'Y',
           currentBalance: 22,
           scheduledHours: 16,
           pendingApprovalHours: 0,
@@ -287,19 +294,21 @@ export const expectedApprovedUpcomingEmployeeAbsenceSummary = {
       },
       {
           category: 'Sick',
+          showInSelfService: 'N',
           currentBalance: 48,
           scheduledHours: 0,
           pendingApprovalHours: 8,
-          availableBalance: 40,
+          availableBalance: 0,
           timeOffDates: []
       },
   ],
 };
 export const expectedEmptyDBEmployeeAbsenceSummary = {
-  totalAvailableBalance: 70,
+  totalAvailableBalance: 22,
   categories: [
       {
           category: 'Vacation',
+          showInSelfService: 'Y',
           currentBalance: 22,
           scheduledHours: 0,
           pendingApprovalHours: 0,
@@ -308,10 +317,11 @@ export const expectedEmptyDBEmployeeAbsenceSummary = {
       },
       {
           category: 'Sick',
+          showInSelfService: 'N',
           currentBalance: 48,
           scheduledHours: 0,
           pendingApprovalHours: 0,
-          availableBalance: 48,
+          availableBalance: 0,
           timeOffDates: []
       },
   ],
