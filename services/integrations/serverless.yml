@@ -1,4 +1,4 @@
-service: asure-integrations
+service: asure-integrations${opt:branchName, ''}
 
 provider:
   stage: ${file(${self:custom.configFile}):stage}
@@ -558,7 +558,7 @@ custom:
     includeModules: true
     packager: 'npm'
   customDomain:
-    basePath: integrations
+    basePath: integrations${opt:branchName, ''}
     domainName: hr-services.${file(${self:custom.configFile}):domain}
     certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
     createRoute53Record: false

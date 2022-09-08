@@ -1,4 +1,4 @@
-service: asure-tenants
+service: asure-tenants${opt:branchName, ''}
 
 provider:
   stage: ${file(${self:custom.configFile}):stage}
@@ -87,8 +87,8 @@ provider:
     - Effect: Allow
       Action: states:StartExecution
       Resource:
-        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}"
-        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrCompanyMigrator-${self:provider.stage}"
+        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator${opt:branchName, ''}-${self:provider.stage}"
+        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrCompanyMigrator${opt:branchName, ''}-${self:provider.stage}"
 
     - Effect: Allow
       Action:
@@ -268,7 +268,7 @@ functions:
           cors:
             origin: '*'
 
-  listEmployeeCompaniesBySsoAccount:
+  listEeCompaniesBySsoAccount:
     handler: src/handler.listEmployeeCompaniesBySsoAccount
     events:
       - http:
@@ -478,7 +478,7 @@ functions:
 stepFunctions:
   stateMachines:
      HrDatabaseCreator:
-      name: HrDatabaseCreator-${self:provider.stage}
+      name: HrDatabaseCreator${opt:branchName, ''}-${self:provider.stage}
 
       definition:
         Comment: "State machine for creating a new tenant database within RDS"
@@ -535,7 +535,7 @@ stepFunctions:
             End: true
 
      HrCompanyMigrator:
-      name: HrCompanyMigrator-${self:provider.stage}
+      name: HrCompanyMigrator${opt:branchName, ''}-${self:provider.stage}
 
       definition:
         Comment: "Create company Migration"
@@ -607,7 +607,7 @@ custom:
     includeModules: true
     packager: 'npm'
   customDomain:
-    basePath: 'internal'
+    basePath: internal${opt:branchName, ''}
     domainName: hr-services.${file(${self:custom.configFile}):domain}
     certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
     createRoute53Record: false
