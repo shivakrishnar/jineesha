@@ -84,7 +84,7 @@ provider:
       Resource: "*"
 
 functions:
-  createGtlRecord:
+  createGtl:
     handler: handler.createGtlRecord
     events:
         - http:
@@ -93,7 +93,7 @@ functions:
             cors:
               origin: '*'
   
-  listGtlRecordsByEmployee:
+  listGtlByEmployee:
     handler: handler.listGtlRecordsByEmployee
     events:
         - http:
@@ -102,7 +102,7 @@ functions:
             cors:
               origin: '*'
 
-  updateGtlRecord:
+  updateGtl:
     handler: handler.updateGtlRecord
     events:
         - http:
@@ -111,7 +111,7 @@ functions:
             cors:
               origin: '*'
 
-  deleteGtlRecordsByEmployee:
+  deleteGtlByEmployee:
     handler: handler.deleteGtlRecordsByEmployee
     events:
         - http:
