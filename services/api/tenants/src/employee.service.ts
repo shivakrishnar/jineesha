@@ -1171,7 +1171,7 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
                 const spouse = beneficiariesArray.filter(beneficiary => {
                     return beneficiary.relationship === EmployeeRelationship.Spouse
                 })
-                lifeCostPerPay = await calculateLifeRate(tenantId, benefitObj, null, spouse[0].birthDate, spouse[0].isSmoker)
+                lifeCostPerPay = await calculateLifeRate(tenantId, benefitObj, null, spouse[0]?.birthDate, spouse[0]?.isSmoker)
             } else if (benefitObj.PlanTypeCode === PlanCode.DVL) {
                 lifeCostPerPay = await calculateLifeRate(tenantId, benefitObj, benefitObj.DependentVoluntaryLifeRate)
             }
