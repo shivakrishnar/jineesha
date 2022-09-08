@@ -33,7 +33,7 @@ GO
 	create procedure usp_EIN_Cons_HRNext_Sec_DataSet_V1
 	
 		@cDonorDatabasePath		char(75),
-		@cRecipientDatabasePath	char(75),
+		@cRecipientDatabasePath	char(100),
 		@cVerbose_Ind			bit,
 		@cShowStatement			bit,
 		@cRecipientCompany_ID	char(8),
@@ -65,7 +65,7 @@ GO
 	declare @cmdShowDataDonor nvarchar(max)
 	declare @cmdShowDataRecipient nvarchar(max)
 	declare @cDonorTablePath char(75)
-	declare @cRecipientTablePath char(75)
+	declare @cRecipientTablePath char(100)
 	declare @cDonorCompanyID char(8)
 	declare @cRecipientCompanyID char(8)
 	declare @ColumnName nvarchar(max)

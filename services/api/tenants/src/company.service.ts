@@ -1143,6 +1143,7 @@ export async function createCompanyMigration(
         connectionQuery.setParameter('@password', password);
         connectionQuery.setParameter('@username', username);
         connectionQuery.setParameter('@rdsEndpoint', rdsEndpoint);
+        connectionQuery.setParameter('@migrationId', migrationId);
 
         const connectionPayload = {
             tenantId: donorTenantId,
@@ -1182,7 +1183,8 @@ export async function createCompanyMigration(
         migrationQuery.setParameter('@donorCompanyId', donorCompanyId);
         migrationQuery.setParameter('@recipTenantId', recipientTenantId);
         migrationQuery.setParameter('@recipCompanyId', recipientCompanyId);
-
+        migrationQuery.setParameter('@migrationId', migrationId);
+        
         const migrationPayload = {
             tenantId: donorTenantId,
             queryName: migrationQuery.name,
@@ -1234,7 +1236,9 @@ export async function createCompanyMigration(
     } finally {
         //6-dropping linked server connection
         const dropConnectionQuery = new ParameterizedQuery('dropLinkedServerConnection', Queries.dropLinkedServerConnection);
-
+        
+        dropConnectionQuery.setParameter('@migrationId', migrationId)
+        
         const dropConnectionPayload = {
             tenantId: donorTenantId,
             queryName: dropConnectionQuery.name,
