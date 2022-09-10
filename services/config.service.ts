@@ -106,3 +106,5 @@ export const getSignaturePageFontUrl = () => process.env.signaturePageFontUrl;
 export const getPayrollBaseUrl = () => process.env.payrollBaseUrl;
 
 export const getDbBackupBucket = () => process.env.dbBackupBucket;
+
+export const getBranchName = () => process.env.branchName;
