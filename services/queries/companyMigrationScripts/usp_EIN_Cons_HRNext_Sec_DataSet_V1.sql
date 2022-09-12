@@ -142,7 +142,7 @@ GO
 		begin
 			select @cmdShowDataRecipient = 'select R1.ID, '+@cRecipientCompany_ID+'
 			from '+trim(@cDonorTablePath)+'HRnextUser D1
-			join '+trim(@cRecipientTablePath)+'HRnextUser R1 on R1.Username = D1.Username
+			join '+trim(@cRecipientTablePath)+'HRnextUser R1 on R1.Username = D1.Username collate Latin1_General_100_CS_AS
 			join '+trim(@cDonorTablePath)+'HRnextUserCompany D2 on D2.HRnextUserID = D1.ID
 			where D2.CompanyID = '+@cDonorCompany_ID
 			
@@ -165,7 +165,7 @@ GO
 		begin
 			select @cmdShowDataRecipient = 'select R1.ID, R2.ID
 			from '+trim(@cDonorTablePath)+'HRnextUser D1
-			join '+trim(@cRecipientTablePath)+'HRnextUser R1 on R1.Username = D1.Username
+			join '+trim(@cRecipientTablePath)+'HRnextUser R1 on R1.Username = D1.Username collate Latin1_General_100_CS_AS
 			join '+trim(@cDonorTablePath)+'HRnextUserEmployee D2 on D2.HRnextUserID = D1.ID
 			join '+trim(@cDonorTablePath)+'Employee D3 on D3.ID = D2.EmployeeID
 			join '+trim(@cRecipientTablePath)+'Employee R2 on R2.EmployeeCode = D3.EmployeeCode
@@ -390,7 +390,7 @@ GO
 			select @cmdShowDataRecipient = 'select R1.ID, D1.SC_AdminUsername, SC_AdminPassword, SC_SSOUsername, SC_SSOPassword, SC_SSOClockCard2, SC_SSOClockCard3
 			from '+trim(@cDonorTablePath)+'UserCompanyTimeclockCredential D1
 			join '+trim(@cDonorTablePath)+'HRnextUser D2 on D1.HRnextUserID = D2.ID
-			join '+trim(@cRecipientTablePath)+'HRnextUser R1 on D2.Username = R1.Username
+			join '+trim(@cRecipientTablePath)+'HRnextUser R1 on D2.Username = R1.Username collate Latin1_General_100_CS_AS
 			where D1.CompanyID = '+@cDonorCompany_ID
 
 			exec (@cmdShowDataRecipient)
@@ -543,7 +543,7 @@ GO
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'HRnextUserCompany (HRnextUserID, CompanyID)
 			select R1.ID, '+@cRecipientCompany_ID+'
 			from '+trim(@cDonorTablePath)+'HRnextUser D1
-			join '+trim(@cRecipientTablePath)+'HRnextUser R1 on R1.Username = D1.Username
+			join '+trim(@cRecipientTablePath)+'HRnextUser R1 on R1.Username = D1.Username collate Latin1_General_100_CS_AS
 			join '+trim(@cDonorTablePath)+'HRnextUserCompany D2 on D2.HRnextUserID = D1.ID
 			where D2.CompanyID = '+@cDonorCompany_ID
 			
@@ -563,7 +563,7 @@ GO
 			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'HRnextUserEmployee (HRnextUserID, EmployeeID)
 			select R1.ID, R2.ID
 			from '+trim(@cDonorTablePath)+'HRnextUser D1
-			join '+trim(@cRecipientTablePath)+'HRnextUser R1 on R1.Username = D1.Username
+			join '+trim(@cRecipientTablePath)+'HRnextUser R1 on R1.Username = D1.Username collate Latin1_General_100_CS_AS
 			join '+trim(@cDonorTablePath)+'HRnextUserEmployee D2 on D2.HRnextUserID = D1.ID
 			join '+trim(@cDonorTablePath)+'Employee D3 on D3.ID = D2.EmployeeID
 			join '+trim(@cRecipientTablePath)+'Employee R2 on R2.EmployeeCode = D3.EmployeeCode
@@ -1077,7 +1077,7 @@ GO
 				join '+trim(@cDonorTablePath)+'HRnextUserCompany donor_huc on donor_huc.HRnextUserID = donor_hu.ID
 				join '+trim(@cDonorTablePath)+'SecPermission donor_sp on donor_sp.ID = donor_spu.PermissionID
 
-				join '+trim(@cRecipientTablePath)+'HRnextUser recip_hu on recip_hu.Username = donor_hu.Username
+				join '+trim(@cRecipientTablePath)+'HRnextUser recip_hu on recip_hu.Username = donor_hu.Username collate Latin1_General_100_CS_AS
 				join '+trim(@cRecipientTablePath)+'SecPermission recip_sp on
 					isnull(recip_sp.Name, '''') = isnull(donor_sp.Name, '''')
 					and isnull(recip_sp.Description, '''') = isnull(donor_sp.Description, '''')
@@ -1115,7 +1115,7 @@ GO
 					and isnull(recip_sr.TenantId, 0) = isnull(donor_sr.TenantId, 0)
 
 				join '+trim(@cDonorTablePath)+'HRnextUser donor_u on donor_u.ID = donor_sru.UserID
-				join '+trim(@cRecipientTablePath)+'HRnextUser recip_u on recip_u.Username = donor_u.Username
+				join '+trim(@cRecipientTablePath)+'HRnextUser recip_u on recip_u.Username = donor_u.Username collate Latin1_General_100_CS_AS
 
 				where donor_sr.CompanyID = '+@cDonorCompany_ID+' and recip_sr.CompanyID = '+@cRecipientCompany_ID
 
@@ -1159,7 +1159,7 @@ GO
 			select R1.ID, '+@cRecipientCompany_ID+' as CompanyID, D1.SC_AdminUsername, SC_AdminPassword, SC_SSOUsername, SC_SSOPassword, SC_SSOClockCard2, SC_SSOClockCard3
 			from '+trim(@cDonorTablePath)+'UserCompanyTimeclockCredential D1
 			join '+trim(@cDonorTablePath)+'HRnextUser D2 on D1.HRnextUserID = D2.ID
-			join '+trim(@cRecipientTablePath)+'HRnextUser R1 on D2.Username = R1.Username
+			join '+trim(@cRecipientTablePath)+'HRnextUser R1 on D2.Username = R1.Username collate Latin1_General_100_CS_AS
 			where D1.CompanyID = '+@cDonorCompany_ID
 
 			exec (@cmdInsert)

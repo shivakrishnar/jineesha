@@ -456,8 +456,8 @@ GO
 		------------------------------------------------
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%F%'
 		begin
-			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeAbsence (EmployeeID, AbsenceTypeID, AbsenceStatusTypeID, FMLALeaveTypeID, FMLAEntitlementTypeID, StartDate, R2.ID, ReturnDate, Notes, PrivateNotes, HoursTaken, HoursPerDayTaken, IsWeekendsIncluded, PR_Integration_PK, SubmitDate, EvoFK_TimeOffCategoryId)
-			select R1.ID, NULL, D1.AbsenceStatusTypeID, D1.FMLALeaveTypeID, D1.FMLAEntitlementTypeID, D1.StartDate, D1.ApprovedByEmployeeID, 
+			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeAbsence (EmployeeID, AbsenceTypeID, AbsenceStatusTypeID, FMLALeaveTypeID, FMLAEntitlementTypeID, StartDate, ApprovedByEmployeeID, ReturnDate, Notes, PrivateNotes, HoursTaken, HoursPerDayTaken, IsWeekendsIncluded, PR_Integration_PK, SubmitDate, EvoFK_TimeOffCategoryId)
+			select R1.ID, NULL, D1.AbsenceStatusTypeID, D1.FMLALeaveTypeID, D1.FMLAEntitlementTypeID, D1.StartDate, R2.ID, 
 			D1.ReturnDate, D1.Notes, D1.PrivateNotes, D1.HoursTaken, D1.HoursPerDayTaken, D1.IsWeekendsIncluded, D1.PR_Integration_PK, D1.SubmitDate, D1.EvoFK_TimeOffCategoryId
 			from '+trim(@cDonorTablePath)+'EmployeeAbsence D1
 			join '+trim(@cDonorTablePath)+'Employee D2 on D1.EmployeeID = D2.ID
