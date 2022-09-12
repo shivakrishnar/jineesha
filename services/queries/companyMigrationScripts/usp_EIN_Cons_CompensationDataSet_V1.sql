@@ -4,7 +4,7 @@
 /*
 	Syntax	: exec  usp_EIN_Cons_CompensationDataSet_V1
 		Ex.	: 	
-			execute usp_EIN_Cons_CompensationDataSet_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 1, '600373', '600351', 'ShowData','e'
+			execute usp_EIN_Cons_CompensationDataSet_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 1, '600373', '600351', 'ShowData','F'
 			execute usp_EIN_Cons_CompensationDataSet_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'Insert','ZZZ'
 			execute usp_EIN_Cons_CompensationDataSet_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'InsertFullValidate','ZZZ'
 			execute usp_EIN_Cons_CompensationDataSet_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'Delete','ZZZ'
@@ -236,6 +236,51 @@ GO
 				select 'Company SwipeClock Fields Update - E' as Showdata
 			end
 		end
+
+		------------------------------------------------
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%F%'
+		begin
+			select @cmdShowDataRecipient = 'select R1.ID, D1.EmployeeID, NULL, D1.AbsenceStatusTypeID, D1.FMLALeaveTypeID, D1.FMLAEntitlementTypeID, D1.StartDate, R2.ID, 
+			D1.ReturnDate, D1.Notes, D1.PrivateNotes, D1.HoursTaken, D1.HoursPerDayTaken, D1.IsWeekendsIncluded, D1.PR_Integration_PK, D1.SubmitDate, D1.EvoFK_TimeOffCategoryId
+			from '+trim(@cDonorTablePath)+'EmployeeAbsence D1
+			join '+trim(@cDonorTablePath)+'Employee D2 on D1.EmployeeID = D2.ID
+			join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D2.EmployeeCode 
+			left outer join '+trim(@cDonorTablePath)+'Employee D3 on D3.ID = D1.ApprovedByEmployeeID and D3.CompanyID = '+@cDonorCompany_ID+'
+			left outer join '+trim(@cRecipientTablePath)+'Employee R2 on D3.EmployeeCode = R2.EmployeeCode and R2.CompanyID = '+@cRecipientCompany_ID+'
+			where D1.AbsenceStatusTypeID = 1 and D2.CompanyID = '+@cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeAbsence Existing Records - F' as Showdata
+			end
+		end
+
+		------------------------------------------------
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
+		begin
+			select @cmdShowDataRecipient = 'select D1.EmployeeAbsenceID, R2.ID, D1.AbsenceDate, D1.HoursTaken, D1.PR_Integration_PK
+			from '+trim(@cDonorTablePath)+'EmployeeAbsenceDetail D1
+			join '+trim(@cDonorTablePath)+'EmployeeAbsence D2 on D2.ID = D1.EmployeeAbsenceID
+			join '+trim(@cDonorTablePath)+'Employee D3 on D3.ID = D2.EmployeeID
+			join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D3.EmployeeCode
+			join '+trim(@cRecipientTablePath)+'EmployeeAbsence R2 on R2.EmployeeID = R1.ID and D1.AbsenceDate between R2.StartDate and R2.ReturnDate
+			where D2.AbsenceStatusTypeID = 1 and D3.CompanyID = '+@cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdShowDataRecipient)
+			if @cShowStatement = 1
+			begin
+				select @cmdShowDataRecipient
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeAbsenceDetail Existing Records - G' as Showdata
+			end
+		end
 	
 	end
 
@@ -407,6 +452,54 @@ GO
 				select 'Company SwipeClock Fields Insert - E' as Insertdata
 			end
 		end
+
+		------------------------------------------------
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%F%'
+		begin
+			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeAbsence (EmployeeID, AbsenceTypeID, AbsenceStatusTypeID, FMLALeaveTypeID, FMLAEntitlementTypeID, StartDate, R2.ID, ReturnDate, Notes, PrivateNotes, HoursTaken, HoursPerDayTaken, IsWeekendsIncluded, PR_Integration_PK, SubmitDate, EvoFK_TimeOffCategoryId)
+			select R1.ID, NULL, D1.AbsenceStatusTypeID, D1.FMLALeaveTypeID, D1.FMLAEntitlementTypeID, D1.StartDate, D1.ApprovedByEmployeeID, 
+			D1.ReturnDate, D1.Notes, D1.PrivateNotes, D1.HoursTaken, D1.HoursPerDayTaken, D1.IsWeekendsIncluded, D1.PR_Integration_PK, D1.SubmitDate, D1.EvoFK_TimeOffCategoryId
+			from '+trim(@cDonorTablePath)+'EmployeeAbsence D1
+			join '+trim(@cDonorTablePath)+'Employee D2 on D1.EmployeeID = D2.ID
+			join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D2.EmployeeCode 
+			left outer join '+trim(@cDonorTablePath)+'Employee D3 on D3.ID = D1.ApprovedByEmployeeID and D3.CompanyID = '+@cDonorCompany_ID+'
+			left outer join '+trim(@cRecipientTablePath)+'Employee R2 on D3.EmployeeCode = R2.EmployeeCode and R2.CompanyID = '+@cRecipientCompany_ID+'
+			where D1.AbsenceStatusTypeID = 1 and D2.CompanyID = '+@cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeAbsence Existing Records - F' as Insertdata
+			end
+		end
+
+		------------------------------------------------
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%G%'
+		begin
+			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'EmployeeAbsenceDetail (EmployeeAbsenceID, AbsenceDate, HoursTaken, PR_Integration_PK)
+			select R2.ID, D1.AbsenceDate, D1.HoursTaken, D1.PR_Integration_PK
+			from '+trim(@cDonorTablePath)+'EmployeeAbsenceDetail D1
+			join '+trim(@cDonorTablePath)+'EmployeeAbsence D2 on D2.ID = D1.EmployeeAbsenceID
+			join '+trim(@cDonorTablePath)+'Employee D3 on D3.ID = D2.EmployeeID
+			join '+trim(@cRecipientTablePath)+'Employee R1 on R1.EmployeeCode = D3.EmployeeCode
+			join '+trim(@cRecipientTablePath)+'EmployeeAbsence R2 on R2.EmployeeID = R1.ID and D1.AbsenceDate between R2.StartDate and R2.ReturnDate
+			where D2.AbsenceStatusTypeID = 1 and D3.CompanyID = '+@cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				select @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'EmployeeAbsenceDetail Existing Records - G' as Insertdata
+			end
+		end
+
 	end
 
 	-- This Query verifies and loads the data from Donor
