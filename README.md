@@ -80,3 +80,11 @@ This repo makes use of Architectual Decision Records (ADRs). We manage these ADR
 
 'npm run lint' will lint TS files
 Use node V 12 or above for linting and commiting
+
+### Deploying branch builds to dev or staging
+
+The Jenkins pipeline for this repository allows developers to not only deploy specific services for an expedited build process, but also to deploy branch builds that are separate from the main build. This allows developers to test their changes without affecting other developers work. To deploy branch builds, go to Jenkins, start a build for your asure.hr.services branch and follow the prompts. Once your services have finished deploying, simply append the branch name to the end of the service name in the URL to access it. For example:
+
+`https://hr-services.dev.evolution-software.com/internalMJ-1234/`
+
+After you are done with a branch build, remember to tear it down by running the pipeline and choosing the `Tear down branch build` build type. **It is the developer's responsibility to remove any unused branch builds in order to keep the AWS environments clean!**
