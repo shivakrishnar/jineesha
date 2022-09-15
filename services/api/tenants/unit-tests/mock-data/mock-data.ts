@@ -1324,6 +1324,17 @@ export const coveredBeneficiariesResult = {
         }
     ]
 }
+export const spouseBeneficiariesResult = {
+    recordset: [
+        {
+            EmployeeBenefitID: 25,
+            FirstName: 'John',
+            LastName: 'Fields',
+            Relationship: 'Spouse',
+            IsPrimary: true
+        }
+    ]
+}
 
 export const emptyBenefitsResult = {
     recordsets: [[{ totalCount: 0 }], []],
