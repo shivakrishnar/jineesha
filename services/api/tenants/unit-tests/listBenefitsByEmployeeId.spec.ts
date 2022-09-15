@@ -32,6 +32,8 @@ describe('listBenefitsByEmployeeId Service', () => {
                 return Promise.resolve(mockData.coveredDependentsResult);
             } else if (payload.queryName === 'listCoveredBeneficiariesByEmployeeId') {
                 return Promise.resolve(mockData.coveredBeneficiariesResult);
+            } else if (payload.queryName === 'listEmployeeBeneficiariesByEmployeeIdAndRelationshipType') {
+                return Promise.resolve(mockData.spouseBeneficiariesResult)
             }
         });
 

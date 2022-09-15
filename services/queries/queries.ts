@@ -230,6 +230,7 @@ export const Queries = {
     listCoveredBeneficiariesByEmployeeId: fs
         .readFileSync(path.join(basePath, 'employees/listCoveredBeneficiariesByEmployeeId.sql'))
         .toString(),
+    listEmployeeBeneficiariesByEmployeeIdAndRelationshipType: fs.readFileSync(path.join(basePath, 'employees/listEmployeeBeneficiariesByEmployeeIdAndRelationshipType.sql')).toString(),
     getAgeBandPremiumByAgeAndPlanId: fs.readFileSync(path.join(basePath, 'employees/getAgeBandPremiumByAgeAndPlanId.sql')).toString(),
     getDirectReportOfManagerByEmailAddressAndEmployeeId: fs
         .readFileSync(path.join(basePath, 'employees/getDirectReportOfManagerByEmailAddressAndEmployeeId.sql'))
