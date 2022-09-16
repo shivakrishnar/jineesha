@@ -481,7 +481,7 @@ export async function sendEventNotification(payload: INotificationEvent): Promis
 
     const lambda = new AWS.Lambda();
     const params = {
-        FunctionName: `hr-services-internal-${configService.getStage()}-eventNotifier`,
+        FunctionName: `hr-services-internal${configService.getBranchName() || ''}-${configService.getStage()}-eventNotifier`,
         InvocationType: 'Event',
         Payload: JSON.stringify(payload),
     };
@@ -506,7 +506,7 @@ export async function logToAuditTrail(payload: any): Promise<void> {
 
     const lambda = new AWS.Lambda();
     const params = {
-        FunctionName: `hr-services-internal-${configService.getStage()}-auditLogger`,
+        FunctionName: `hr-services-internal${configService.getBranchName() || ''}-${configService.getStage()}-auditLogger`,
         InvocationType: 'Event',
         Payload: JSON.stringify(payload),
     };
@@ -556,7 +556,7 @@ export async function invokeInternalService(
 
     const lambda = new AWS.Lambda();
     const params = {
-        FunctionName: `hr-services-internal-${configService.getStage()}-${serviceName}`,
+        FunctionName: `hr-services-internal${configService.getBranchName() || ''}-${configService.getStage()}-${serviceName}`,
         InvocationType: invocationType,
         Payload: JSON.stringify(payload),
     };

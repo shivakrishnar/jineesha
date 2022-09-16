@@ -1,4 +1,4 @@
-service: asure-security-resource
+service: asure-security-resource${opt:branchName, ''}
 
 provider:
   stage: ${file(${self:custom.configFile}):stage}
@@ -90,7 +90,7 @@ provider:
       Resource: arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings/index/*
 
 functions:         
-  listSecResourcesBySubGroupId:
+  listSecResBySubGroup:
     handler: src/handler.listSecResourcesBySubGroupId
     events:
         - http:
@@ -99,7 +99,7 @@ functions:
             cors:
               origin: '*'
               
-  listSecResourceSubGroups:
+  listSecResSubGroups:
     handler: src/handler.listSecResourceSubGroups
     events:
         - http:
@@ -145,7 +145,7 @@ custom:
     includeModules: true
     packager: 'npm'
   customDomain:
-    basePath: 'sec-resource'
+    basePath: sec-resource${opt:branchName, ''}
     domainName: hr-services.${file(${self:custom.configFile}):domain}
     certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
     createRoute53Record: false

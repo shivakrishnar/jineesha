@@ -6,8 +6,10 @@ String nextVersion
 String semanticVersion
 @Field String skipIntegrationTests
 @Field boolean isReleaseBuild = false
+@Field String branchBuildType
 @Field String[] selectedServices
 @Field String[] allServices
+@Field String slsBranchNameParam = ""
 
 // The git remote
 final String gitCredentials = "ssh-bitbucket-asuresoftware"
@@ -59,6 +61,14 @@ stage("Build") {
                 ])
             isReleaseBuild = buildTypeResponse == 'Yes'
         }
+    } else {
+        stage('Choose deployment type') {
+            branchBuildType = input(id: 'userInput', message: 'Choose deployment type',
+                parameters: [
+                    [$class: 'ChoiceParameterDefinition', choices: 'Regular build\nCreate branch build\nTear down branch build', name: "choices"]
+                ])
+            echo branchBuildType
+        }
     }
     try {
         node(nodeName) {
@@ -77,9 +87,9 @@ stage("Build") {
 
             if (!isReleaseBuild) {
                 timeout(time: timeoutDays, unit: "DAYS") {
-                    stage("Choose services to deploy") {
+                    stage("Choose services") {
                         String delimiter = ','
-                        String services = input(id: 'selectedServices', message: 'Select services to deploy', parameters: [
+                        String services = input(id: 'selectedServices', message: 'Select services', parameters: [
                             extendedChoice(
                                 name: 'Services',
                                 multiSelectDelimiter: delimiter,
@@ -106,6 +116,10 @@ stage("Build") {
                 sh "npm test"
             }
 
+            if (!isMasterBranch && branchBuildType != 'Regular build') {
+                slsBranchNameParam = "--branchName ${env.BRANCH_NAME}"
+            }
+
             // Bump the build version
             currentVersion = getVersion()
             sh "npm --no-git-tag-version version ${semanticVersion}"
@@ -123,9 +137,23 @@ stage("Build") {
                         [$class: 'ChoiceParameterDefinition', choices: environmentsList, name: "choices"]
                     ])
             }
-            deploy(targetEnvironment)
-            if (skipIntegrationTests == "no") {
-                runIntegrationTests(targetEnvironment)
+
+            if (branchBuildType == 'Tear down branch build') {
+                destroyService(targetEnvironment)
+            } else {
+                deploy(targetEnvironment)
+                if (skipIntegrationTests == "no") {
+                    runIntegrationTests(targetEnvironment)
+                }
+
+                if (slsBranchNameParam != "") {
+                    stage("Destroy branch build?") {
+                        timeout(time: timeoutDays, unit: "DAYS") {
+                            input(id: "userInput", message: "Destroy branch build?")
+                            destroyService(targetEnvironment)
+                        }
+                    }
+                }
             }
         } else {
             stage("deploy - development") {
@@ -262,7 +290,7 @@ void deployService(
 
             if (service.createDomain) {
                 echo "creating domain"
-                runWithAwsCredentials(awsCredentialsId, "${serverlessPath} create_domain --variables ${environment}")
+                runWithAwsCredentials(awsCredentialsId, "${serverlessPath} create_domain --variables ${environment} ${slsBranchNameParam}")
             }
 
             if (service.preDeployCommand) {
@@ -270,7 +298,26 @@ void deployService(
                 runWithAwsCredentials(awsCredentialsId, service.preDeployCommand)
             }
 
-            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=4096 ${serverlessPath} deploy --variables ${environment}")
+            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=4096 ${serverlessPath} deploy --variables ${environment} ${slsBranchNameParam}")
+        }
+    }
+}
+
+void destroyService(String environment) {
+    node(nodeName) {
+        String awsCredentialsId = configData.awsConfig["${environment}"].credentialsId
+
+        for (String serviceName in selectedServices) {
+            echo serviceName
+            Object service = configData.services.find { service -> service.name == serviceName }
+
+            dir(service.directory) {
+                nvm(nodeVersion) {
+                    String serverlessPath = service.serverlessPath ? service.serverlessPath : 'node_modules/.bin/serverless'
+                    echo serverlessPath
+                    runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=4096 ${serverlessPath} remove --variables ${environment} ${slsBranchNameParam}")
+                }
+            }
         }
     }
 }

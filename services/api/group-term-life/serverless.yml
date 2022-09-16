@@ -1,4 +1,4 @@
-service: asure-group-term-life
+service: asure-group-term-life${opt:branchName, ''}
 
 provider:
   stage: ${file(${self:custom.configFile}):stage}
@@ -84,7 +84,7 @@ provider:
       Resource: "*"
 
 functions:
-  createGtlRecord:
+  createGtl:
     handler: handler.createGtlRecord
     events:
         - http:
@@ -93,7 +93,7 @@ functions:
             cors:
               origin: '*'
   
-  listGtlRecordsByEmployee:
+  listGtlByEmployee:
     handler: handler.listGtlRecordsByEmployee
     events:
         - http:
@@ -102,7 +102,7 @@ functions:
             cors:
               origin: '*'
 
-  updateGtlRecord:
+  updateGtl:
     handler: handler.updateGtlRecord
     events:
         - http:
@@ -111,7 +111,7 @@ functions:
             cors:
               origin: '*'
 
-  deleteGtlRecordsByEmployee:
+  deleteGtlByEmployee:
     handler: handler.deleteGtlRecordsByEmployee
     events:
         - http:
@@ -157,7 +157,7 @@ custom:
     includeModules: true
     packager: 'npm'
   customDomain:
-    basePath: 'gtl'
+    basePath: gtl${opt:branchName, ''}
     domainName: hr-services.${file(${self:custom.configFile}):domain}
     certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
     createRoute53Record: false

@@ -1,4 +1,4 @@
-service: asure-integrations
+service: asure-integrations${opt:branchName, ''}
 
 provider:
   stage: ${file(${self:custom.configFile}):stage}
@@ -178,7 +178,7 @@ functions:
             cors:
               origin: '*'
 
-  updateSignatureRequestStatus:
+  updateSignRequestStatus:
     handler: esignature/src/handler.updateSignatureRequestStatus
     events:
         - http:
@@ -214,7 +214,7 @@ functions:
             cors:
               origin: '*'
 
-  listCompanySignatureRequests:
+  listCompanySignRequests:
     handler: esignature/src/handler.listCompanySignatureRequests
     events:
         - http:
@@ -223,7 +223,7 @@ functions:
             cors:
               origin: '*'
 
-  listEmployeeCategoriesByCompany:
+  listEeCategoriesByCompany:
     handler: esignature/src/handler.listEmployeeDocumentCategoriesByCompany
     events:
       - http:
@@ -241,7 +241,7 @@ functions:
           cors:
             origin: '*'
 
-  listCompanyDocumentCategories:
+  listCompanyDocCategories:
     handler: esignature/src/handler.listCompanyDocumentCategories
     events:
       - http:
@@ -277,7 +277,7 @@ functions:
           cors:
             origin: '*'
 
-  scheduledGenerateBilling:
+  schedGenerateBilling:
     handler: esignature/src/handler.generateInternalBillingReport
     events:
       - schedule: cron(59, 11, 1, *, ?, *)
@@ -291,7 +291,7 @@ functions:
           cors:
             origin: '*'
 
-  listEmployeeDocumentsByTenant:
+  listEeDocumentsByTenant:
     handler: esignature/src/handler.listEmployeeDocumentsByTenant
     events:
         - http:
@@ -300,7 +300,7 @@ functions:
             cors:
               origin: '*'
 
-  listEmployeeDocumentsByCompany:
+  listEeDocumentsByCompany:
     handler: esignature/src/handler.listEmployeeDocumentsByCompany
     events:
         - http:
@@ -318,7 +318,7 @@ functions:
             cors:
               origin: '*'
 
-  getDocumentPreviewByTenant:
+  getDocPreviewByTenant:
     handler: esignature/src/handler.getDocumentPreviewByTenant
     events:
         - http:
@@ -327,7 +327,7 @@ functions:
             cors:
               origin: '*'
 
-  getDocumentPreviewByCompany:
+  getDocPreviewByCompany:
     handler: esignature/src/handler.getDocumentPreviewByCompany
     events:
         - http:
@@ -354,7 +354,7 @@ functions:
             cors:
               origin: '*'
 
-  generateDocumentUploadUrl:
+  generateDocUploadUrl:
     handler: esignature/src/handler.generateDocumentUploadUrl
     events:
         - http:
@@ -363,7 +363,9 @@ functions:
             cors:
               origin: '*'
 
-  saveUploadedDocumentMetadata:
+  saveUploadedDocMetadata:
+    # TODO: (MJ-11339) re-enable for branch builds after implementing fix for MJ-11339
+    enabled: '"${self:custom.branchBuildName}" == ""'
     handler: esignature/src/handler.saveUploadedDocumentMetadata
     memorySize: 1024
     events:
@@ -411,7 +413,7 @@ functions:
     layers:
         - {Ref: LibreofficeLambdaLayer}
 
-  createOnboardingSimpleSignDoc:
+  createObSimpleSignDoc:
     handler: esignature/src/handler.createOnboardingSimpleSignDocument
     memorySize: 2048
     events:
@@ -441,7 +443,7 @@ functions:
             cors:
               origin: '*'
 
-  applicantTrackingWebhook:
+  appTrackWebhook:
     handler: applicant-tracking/src/handler.applicantDataImport
     events:
         - http:
@@ -460,7 +462,7 @@ functions:
             cors:
               origin: '*'
 
-  getOnboardingDocumentPreview:
+  getObDocumentPreview:
     handler: esignature/src/handler.getOnboardingDocumentPreview
     events:
         - http:
@@ -487,7 +489,7 @@ functions:
             cors:
               origin: '*'
 
-  updateEsignatureProductTier:
+  updateEsignProductTier:
     handler: esignature/src/handler.updateEsignatureProductTier
     events:
         - http:
@@ -496,7 +498,7 @@ functions:
             cors:
               origin: '*'
 
-  getIntegrationDetailsByCompanyId:
+  getIntDetailsByCompanyId:
     handler: remote-services/src/handler.getIntegrationDetailsByCompanyId
     events:
         - http:
@@ -538,6 +540,7 @@ plugins:
   - serverless-domain-manager
   - serverless-apigw-binary
   - serverless-offline
+  - serverless-plugin-conditional-functions
 
 package:
   individually: false
@@ -545,6 +548,7 @@ package:
 
 custom:
   configFile: ../${opt:variables, 'local'}.serverless.variables.json
+  branchBuildName: ${opt:branchName, ''}
   warmup:
     timeout: 80
     schedule: 'cron(0/5 * * * ? *)'    # Run every 5 minutes
@@ -558,7 +562,7 @@ custom:
     includeModules: true
     packager: 'npm'
   customDomain:
-    basePath: integrations
+    basePath: integrations${opt:branchName, ''}
     domainName: hr-services.${file(${self:custom.configFile}):domain}
     certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
     createRoute53Record: false
