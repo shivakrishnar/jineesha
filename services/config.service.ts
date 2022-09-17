@@ -108,3 +108,5 @@ export const getPayrollBaseUrl = () => process.env.payrollBaseUrl;
 export const getDbBackupBucket = () => process.env.dbBackupBucket;
 
 export const getBranchName = () => process.env.branchName;
+
+export const getTokenizationServiceHostUrl = () => process.env.tokenizationServiceHostUrl;

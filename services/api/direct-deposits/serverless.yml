@@ -37,6 +37,7 @@ provider:
     fromEmail: ${file(${self:custom.configFile}):fromEmail}
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
     scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
+    tokenizationServiceHostUrl: ${file(${self:custom.configFile}):tokenizationServiceHostUrl}
 
   iamRoleStatements:
     - Effect: Allow
@@ -79,6 +80,21 @@ provider:
         - ses:SendEmail
         - ses:SendRawEmail
       Resource: "arn:aws:ses:us-east-1:*:*"
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:PutItem
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
+      Resource: "arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings"
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+      Resource: arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings/index/*
 
 functions:
   listDirectDeposits:

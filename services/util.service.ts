@@ -29,7 +29,6 @@ import { SecurityContext } from './internal-api/authentication/securityContext';
 import { SecurityContextProvider } from './internal-api/authentication/securityContextProvider';
 import { DatabaseEvent, QueryType } from './internal-api/database/events';
 import { INotificationEvent } from './internal-api/notification/events';
-
 import { ParameterizedQuery } from './queries/parameterizedQuery';
 import { Queries } from './queries/queries';
 import { Query } from './queries/query';
