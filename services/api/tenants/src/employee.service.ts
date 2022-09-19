@@ -7,7 +7,6 @@ import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Query } from '../../../queries/query';
 import { Role } from '../../models/Role';
 import { PlanCode } from '../../models/PlanCode';
-import { EmployeeRelationship } from '../../models/EmployeeRelationship';
 
 import * as errorService from '../../../errors/error.service';
 import * as paginationService from '../../../pagination/pagination.service';
@@ -1119,9 +1118,25 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
             queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        const [coveredDependentsResult, coveredBeneficiariesResult] = await Promise.all<any>([
+        const spouseBeneficiaryQuery = new ParameterizedQuery(
+            'listEmployeeBeneficiariesByEmployeeIdAndRelationshipType',
+            Queries.listEmployeeBeneficiariesByEmployeeIdAndRelationshipType
+        )
+
+        spouseBeneficiaryQuery.setParameter('@employeeId', employeeId);
+        spouseBeneficiaryQuery.setParameter('@relationship', "Spouse");
+
+        const spouseBeneficiaryPayload = {
+            tenantId,
+            queryName: spouseBeneficiaryQuery.name,
+            query: spouseBeneficiaryQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const [coveredDependentsResult, coveredBeneficiariesResult, spouseBeneficiaryResult] = await Promise.all<any>([
             utilService.invokeInternalService('queryExecutor', coveredDependentsPayload, utilService.InvocationType.RequestResponse),
             utilService.invokeInternalService('queryExecutor', coveredBeneficiariesPayload, utilService.InvocationType.RequestResponse),
+            utilService.invokeInternalService('queryExecutor', spouseBeneficiaryPayload, utilService.InvocationType.RequestResponse)
         ]);
 
         const coveredDependentsArray = coveredDependentsResult.recordset.map((dependent) => {
@@ -1164,14 +1179,12 @@ export async function listBenefitsByEmployeeId( //we’ll want to separate Benef
             const selfIncludedCoveredArray = [...selfArray, ...filteredCoveredDependentArray];
 
             let lifeCostPerPay = 0;
-            
+            const spouse = spouseBeneficiaryResult.recordset[0];
+
             if(benefitObj.PlanTypeCode === PlanCode.VoluntaryLife) {
                 lifeCostPerPay = await calculateLifeRate(tenantId, benefitObj, null, benefitObj.BirthDate, benefitObj.IsSmoker)
-            } else if (benefitObj.PlanTypeCode === PlanCode.SVL) {
-                const spouse = beneficiariesArray.filter(beneficiary => {
-                    return beneficiary.relationship === EmployeeRelationship.Spouse
-                })
-                lifeCostPerPay = await calculateLifeRate(tenantId, benefitObj, null, spouse[0]?.birthDate, spouse[0]?.isSmoker)
+            } else if (benefitObj.PlanTypeCode === PlanCode.SVL) {                
+                lifeCostPerPay = await calculateLifeRate(tenantId, benefitObj, null, spouse?.BirthDate, spouse?.IsSmoker)
             } else if (benefitObj.PlanTypeCode === PlanCode.DVL) {
                 lifeCostPerPay = await calculateLifeRate(tenantId, benefitObj, benefitObj.DependentVoluntaryLifeRate)
             }
