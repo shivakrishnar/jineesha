@@ -193,7 +193,8 @@ export const Queries = {
     createLinkedServerConnection: fs.readFileSync(path.join(basePath, 'companies/createLinkedServerConnection.sql')).toString(),
     createCompanyMigration: fs.readFileSync(path.join(basePath, 'companies/createCompanyMigration.sql')).toString(),
     dropLinkedServerConnection: fs.readFileSync(path.join(basePath, 'companies/dropLinkedServerConnection.sql')).toString(),
-
+    
+    
     // Employees
     getEmployeeByCompanyIdAndId: fs.readFileSync(path.join(basePath, 'employees/getEmployeeByCompanyIdAndId.sql')).toString(),
     getEmployeeByCompanyIdAndCode: fs.readFileSync(path.join(basePath, 'employees/getEmployeeByCompanyIdAndCode.sql')).toString(),
@@ -235,6 +236,8 @@ export const Queries = {
     getDirectReportOfManagerByEmailAddressAndEmployeeId: fs
         .readFileSync(path.join(basePath, 'employees/getDirectReportOfManagerByEmailAddressAndEmployeeId.sql'))
         .toString(),
+    createAuditOutboxTriggerScheduledTask: fs.readFileSync(path.join(basePath, 'companies/createAuditOutboxTriggerScheduledTask.sql')).toString(),
+    executeCreateAuditOutboxTrigger: fs.readFileSync(path.join(basePath, 'companies/executeCreateAuditOutboxTrigger.sql')).toString(),
 
     // Group Term Life
     createGtlRecord: fs.readFileSync(path.join(basePath, 'gtl/createGtlRecord.sql')).toString(),
