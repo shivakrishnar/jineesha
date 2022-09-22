@@ -18,6 +18,7 @@ import { DatabaseEvent, QueryType } from '../../../internal-api/database/events'
 import { PaginatedResult, PaginationData } from '../../../pagination/paginatedResult';
 import { InvocationType } from '../../../util.service';
 import { IPayrollApiCredentials } from '../../models/IPayrollApiCredentials';
+import { getTokenizedOutput } from '../../../remote-services/tokenization.service';
 
 /**
  * Executes the specified query and returns the result as a DirectDeposit
@@ -224,9 +225,12 @@ export async function create(
         const createQuery = new ParameterizedQuery('DirectDepositCreate', Queries.directDepositCreate);
         // Truncate the amount field by removing excess decimal places. This will not round the value.
         const truncatedAmount = parseInt('' + amount * 100, 10) / 100 || 0;
+        const tokenizationResponse = await getTokenizedOutput(tenantId, [accountNumber]);
+        const tokenizedValue = tokenizationResponse[0];
+
         createQuery.setParameter('@employeeId', employeeId);
         createQuery.setParameter('@routingNumber', routingNumber);
-        createQuery.setParameter('@accountNumber', accountNumber);
+        createQuery.setParameter('@accountNumber', tokenizedValue);
         createQuery.setParameter('@amountType', amountType);
         createQuery.setParameter('@amount', truncatedAmount);
         // TODO: MJ-1177: Determine the status based on the role of the user.

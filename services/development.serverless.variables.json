@@ -48,5 +48,6 @@
     "tlmWriteRole": "7ea8dbf4-af4c-4e3b-b577-6d9a771917d9",
     "payrollBaseUrl": "evolution-software.com",
     "dbBackupBucket": "dev.gremlins",
-    "connectionStringsStreamArn": "arn:aws:dynamodb:us-east-1:317299412255:table/ConnectionStrings/stream/2022-05-25T21:19:54.178"
+    "connectionStringsStreamArn": "arn:aws:dynamodb:us-east-1:317299412255:table/ConnectionStrings/stream/2022-05-25T21:19:54.178",
+    "tokenizationServiceHostUrl": "https://3u2xlaafg3.execute-api.us-east-1.amazonaws.com/dev"
 }
