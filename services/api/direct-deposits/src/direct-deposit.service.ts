@@ -264,9 +264,7 @@ export async function create(
             employeeId,
         } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
 
-        const payrollApiCredentials = await utilService.getPayrollApiCredentials(tenantId);
-        const payrollApiToken: string = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
-        await utilService.clearCache(tenantId, payrollApiToken);
+        await utilService.clearCache(tenantId, accessToken);
 
         return new DirectDeposit(resultSet[0]);
     } catch (error) {
@@ -524,7 +522,7 @@ export async function update(
             } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
         }
 
-        await utilService.clearCache(tenantId, payrollApiToken);
+        await utilService.clearCache(tenantId, accessToken);
 
         return await updateDirectDeposit(id, amount, amountType, userEmail, companyId, tenantId, employeeId);
     } catch (error) {
@@ -688,7 +686,7 @@ export async function remove(
             } as IAudit); // Async call to invoke audit lambda - DO NOT AWAIT!!
         }
 
-        await utilService.clearCache(tenantId, payrollApiToken);
+        await utilService.clearCache(tenantId, accessToken);
     } catch (error) {
         console.error(error);
         if (error instanceof ErrorMessage) {
