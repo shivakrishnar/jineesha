@@ -474,9 +474,7 @@ async function createEmailRecordListEntries(
         } as DatabaseEvent;
         await utilService.invokeInternalService('queryExecutor', payload, InvocationType.Event);
 
-        const payrollApiCredentials = await utilService.getPayrollApiCredentials(tenantId);
-        const payrollApiToken: string = await getPayrollApiToken(accessToken, tenantId, payrollApiCredentials);
-        await utilService.clearCache(tenantId, payrollApiToken);
+        await utilService.clearCache(tenantId, accessToken);
     } catch (error) {
         console.error(error);
     }
