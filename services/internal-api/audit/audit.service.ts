@@ -141,7 +141,7 @@ async function createAuditDetailEntries(tenantId: string, auditId: number, audit
         fieldQuery.setParameter('@oldValue', [undefined, null, 'null'].includes(oldValues[i]) ? '[Blank]' : oldValues[i]);
         fieldQuery.setParameter('@newValue', [undefined, null, 'null'].includes(newValues[i]) ? '[Blank]' : newValues[i]);
         fieldQuery.setParameter('@areaOfChange', areaOfChange);
-        fieldQuery.setParameter('@keyDetails', keyDetails)
+        fieldQuery.setParameter('@keyDetails', keyDetails || 'null')
         auditDetailQuery.appendFilter(fieldQuery.value, false);
 
         const companyDetails: CompanyInfo = await utilService.validateCompany(tenantId, companyId);
@@ -152,7 +152,7 @@ async function createAuditDetailEntries(tenantId: string, auditId: number, audit
                 name: companyDetails.CompanyName,
                 id: Number(companyId),
             },
-            employe: employeeDisplayName,
+            employee: employeeDisplayName,
             changes: {
                 area: areaOfChange,
                 field: fieldKeys[i],
@@ -177,7 +177,7 @@ async function createAuditDetailEntries(tenantId: string, auditId: number, audit
         query: auditDetailQuery.value,
         queryType: QueryType.Simple,
     } as DatabaseEvent;
-    await utilService.invokeInternalService('queryExecutor', payload, InvocationType.Event);
+    await utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 }
 
 /**
