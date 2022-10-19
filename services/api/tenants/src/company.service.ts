@@ -508,6 +508,12 @@ async function handleSsoPatch(
                             );
                             createdAccounts.push(user.key);
 
+                            const userSsoRoles = await ssoService.getRoleMemberships(donorTenantId, user.key, donorTenantToken)
+
+                            for (const role of userSsoRoles) {
+                                await ssoService.addRoleToAccount(recipientTenantId, createdAccount.id, role.roleId, recipientTenantToken)
+                            }
+
                             // Note: (MJ-8259) We cannot delete right now because the endpoint requires the user to have the asure-admin role.
                             // Previously, we were disabling created accounts as a rollback action. We are now opting to skip rollbacks to allow for smoother migrations.
                             // rollbackActions.push(async () => {
@@ -543,7 +549,7 @@ async function handleSsoPatch(
 
                             //     await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
                             // });
-
+                            
                             updatedUsers.push(user.key);
                         } else {
                             console.log(`Skipping user with id ${account.id} and evoSbUserId ${account.evoSbUserId}`);
