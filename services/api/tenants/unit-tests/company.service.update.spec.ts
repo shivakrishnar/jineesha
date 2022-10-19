@@ -190,6 +190,12 @@ describe('company.service.update.sso.account', () => {
         (ssoService as any).createSsoAccount = jest.fn(() => {
             return mockData.createdSsoAccountResponse;
         });
+        (ssoService as any).getRoleMemberships = jest.fn(() => {
+            return mockData.roleMembershipsResponse;
+        });
+        (ssoService as any).addRoleToAccount = jest.fn(() => {
+            return mockData.addRoleResponse;
+        });
 
         await companyService
             .companyUpdate(mockData.oldTenantId, mockData.oldCompanyId, mockData.ssoAccountCopyPatchInstructions)
