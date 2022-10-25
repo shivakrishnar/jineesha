@@ -265,6 +265,43 @@ export const createdSsoAccountResponse: SsoAccount = {
     href: 'test.com',
 };
 
+export const roleMembershipsResponse = [
+    {
+    "accountId": "0cf30332-a47e-4c15-91e9-3463ebfa9e5f",
+    "id": "2d2581f1-d0e9-4e39-8d7f-3984258b682e",
+    "createdAt": "2019-06-27T13:56:44.669Z",
+    "createdBy": {
+     "id": "07098667-f7af-4b5c-9903-703ab116a4f8",
+     "username": "default-admin-test-user"
+    },
+    "enabled": true,
+    "roleId": "7331d3b1-e857-4b98-829c-6c7887ad5c2e"
+   },
+   {
+    "accountId": "0cf30332-a47e-4c15-91e9-3463ebfa9e5f",
+    "id": "de6f36cd-5c31-411b-ad78-cc49a4bb6e45",
+    "createdAt": "2019-06-27T13:56:44.669Z",
+    "createdBy": {
+     "id": "07098667-f7af-4b5c-9903-703ab116a4f8",
+     "username": "default-admin-test-user"
+    },
+    "enabled": true,
+    "roleId": "cbfebb6b-91e6-4289-8567-bdf0f8f65b04"
+   }
+];
+
+export const addRoleResponse = {
+    "accountId": "0cf30332-a47e-4c15-91e9-3463ebfa9e5f",
+    "id": "2d2581f1-d0e9-4e39-8d7f-3984258b682e",
+    "createdAt": "2019-06-27T13:56:44.669Z",
+    "createdBy": {
+        "id": "07098667-f7af-4b5c-9903-703ab116a4f8",
+        "username": "default-admin-test-user"
+    },
+    "enabled": true,
+    "roleId": "7331d3b1-e857-4b98-829c-6c7887ad5c2e"
+};
+
 export const emptyDBResponse = {
     recordset: [],
     output: {},
