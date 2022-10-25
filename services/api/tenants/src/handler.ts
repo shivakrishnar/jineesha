@@ -274,8 +274,9 @@ export const companyUpdate = utilService.gatewayEventHandlerV2(async ({ security
 
     const { patch } = requestBody;
     const { tenantId, companyId } = event.pathParameters;
+    const accessToken: string = event.headers.authorization.replace(/Bearer /i, '');
 
-    return await companyService.companyUpdate(tenantId, companyId, patch);
+    return await companyService.companyUpdate(tenantId, companyId, patch, accessToken);
 });
 
 /**
@@ -917,7 +918,7 @@ export async function migrateSsoAccounts(event: any, context: Context, callback:
     console.info(`received event: ${JSON.stringify(event)}`);
 
     try {
-        const { donorCompanyId, donorTenantId, recipientCompanyId, recipientTenantId } = event;
+        const { donorCompanyId, donorTenantId, recipientCompanyId, recipientTenantId, accessToken } = event;
         const patchInstructions: PatchInstruction[] = [
             {
                 op: PatchOperation.Copy,
@@ -929,7 +930,7 @@ export async function migrateSsoAccounts(event: any, context: Context, callback:
             },
         ];
 
-        const response = await companyService.companyUpdate(donorTenantId, donorCompanyId, patchInstructions);
+        const response = await companyService.companyUpdate(donorTenantId, donorCompanyId, patchInstructions, accessToken);
         return callback(undefined, { statusCode: 200, body: JSON.stringify(response) });
     } catch (error) {
         console.error(`unable to migrate sso account data: ${JSON.stringify(error)}`);
@@ -977,5 +978,7 @@ export const runCompanyMigration = utilService.gatewayEventHandlerV2(async ({ se
 
     await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin]);
 
-    return await companyService.runCompanyMigration( donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId);
+    const accessToken: string = event.headers.authorization.replace(/Bearer /i, '');
+
+    return await companyService.runCompanyMigration( donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId, accessToken);
 });
