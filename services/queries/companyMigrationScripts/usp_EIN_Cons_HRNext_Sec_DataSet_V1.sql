@@ -117,10 +117,7 @@ GO
 				D1.IsPayrollRightsGranted_EVO,
 				D1.IsCompanyRightsGranted_EVO,
 				D1.IsEmployeeRightsGranted_EVO,
-				case
-					when D1.IsPayrollRightsGranted_EVO = 1 or D1.IsCompanyRightsGranted_EVO = 1 or D1.IsEmployeeRightsGranted_EVO = 1 then null
-					else D1.PR_Integration_PK
-				end as PR_Integration_PK,
+				D1.PR_Integration_PK,
 				D1.EvoFK_Username,
 				D1.IntegrationRPOSSOKey
 			from '+trim(@cDonorTablePath)+'HRnextUser D1
@@ -517,10 +514,7 @@ GO
 				D1.IsPayrollRightsGranted_EVO,
 				D1.IsCompanyRightsGranted_EVO,
 				D1.IsEmployeeRightsGranted_EVO,
-				case
-					when D1.IsPayrollRightsGranted_EVO = 1 or D1.IsCompanyRightsGranted_EVO = 1 or D1.IsEmployeeRightsGranted_EVO = 1 then null
-					else D1.PR_Integration_PK
-				end as PR_Integration_PK,
+				D1.PR_Integration_PK,
 				D1.EvoFK_Username,
 				D1.IntegrationRPOSSOKey
 			from '+trim(@cDonorTablePath)+'HRnextUser D1
