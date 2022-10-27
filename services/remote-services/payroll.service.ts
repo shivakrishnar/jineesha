@@ -191,3 +191,22 @@ export async function getPayrollBatchesByPayrollId(
         console.log(e);
     }
 }
+
+export async function getPayrollUserByUsername(
+    tenantName: string,
+    username: string,
+    token: string,
+): Promise<any> {
+    console.info('payrollService.getPayrollUserByUsername');
+
+    const apiUrl = `${unproxiedBaseUrl}/${tenantName}/accounts?username=${username}`;
+    try {
+        return await request.get({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            json: true,
+        });
+    } catch (e) {
+        throw e;
+    }
+}

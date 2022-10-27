@@ -23,6 +23,7 @@ import { CompanyDetail, ICompany } from './ICompany';
 import { PatchInstruction, PatchOperation } from './patchInstruction';
 import { ssoRoles, SsoAccount } from '../../../remote-services/sso.service';
 import * as ssoService from '../../../remote-services/sso.service';
+import * as payrollService from '../../../remote-services/payroll.service';
 import { CompanyAnnouncement } from './CompanyAnnouncement';
 import { CompanyOpenEnrollment } from './CompanyOpenEnrollment';
 import * as databaseService from '../../../internal-api/database/database.service';
@@ -426,6 +427,7 @@ async function handleSsoPatch(
     donorTenantId: string,
     donorCompanyId: string,
     instruction: PatchInstruction,
+    token?: string,
 ): Promise<{ response?: any; rollbackAction: () => void }> {
     console.info('companyService.handleSsoPatch');
 
@@ -499,62 +501,65 @@ async function handleSsoPatch(
                         delete account.tenantId;
                         // generate a cryptographically-secure temp password
                         account.password = await crypto.randomBytes(8).toString('hex');
-
-                        if (!account.evoSbUserId) {
-                            const createdAccount: SsoAccount = await ssoService.createSsoAccount(
-                                recipientTenantId,
-                                account,
-                                recipientTenantToken,
-                            );
-                            createdAccounts.push(user.key);
-
-                            const userSsoRoles = await ssoService.getRoleMemberships(donorTenantId, user.key, donorTenantToken)
-
-                            for (const role of userSsoRoles) {
-                                await ssoService.addRoleToAccount(recipientTenantId, createdAccount.id, role.roleId, recipientTenantToken)
-                            }
-
-                            // Note: (MJ-8259) We cannot delete right now because the endpoint requires the user to have the asure-admin role.
-                            // Previously, we were disabling created accounts as a rollback action. We are now opting to skip rollbacks to allow for smoother migrations.
-                            // rollbackActions.push(async () => {
-                            //     const account: SsoAccount = { enabled: false };
-                            //     await ssoService.updateSsoAccountById(createdAccount.id, recipientTenantId, account, recipientTenantToken);
-                            // });
-
-                            // update PR_Integration_PK in recipient database
-                            const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
-                            query.setStringParameter('@ssoId', createdAccount.id);
-                            query.setParameter('@userId', user.id);
-
-                            const payload = {
-                                tenantId: recipientTenantId,
-                                queryName: query.name,
-                                query: query.value,
-                                queryType: QueryType.Simple,
-                            } as DatabaseEvent;
-
-                            await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-                            // Note: (MJ-8259) Opting to skip database update rollbacks to allow for smoother migrations.
-                            // rollbackActions.push(async () => {
-                            //     const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
-                            //     query.setStringParameter('@ssoId', user.key);
-                            //     query.setParameter('@userId', user.id);
-
-                            //     const payload = {
-                            //         tenantId: recipientTenantId,
-                            //         queryName: query.name,
-                            //         query: query.value,
-                            //         queryType: QueryType.Simple,
-                            //     } as DatabaseEvent;
-
-                            //     await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-                            // });
-                            
-                            updatedUsers.push(user.key);
-                        } else {
-                            console.log(`Skipping user with id ${account.id} and evoSbUserId ${account.evoSbUserId}`);
-                            skippedUsers.push(user.key);
+                        if (account.evoSbUserId) {
+                            const payrollApiAccessToken: any = await utilService.getEvoTokenWithHrToken(recipientTenantId, token);
+                            const tenantObject = await ssoService.getTenantById(recipientTenantId, payrollApiAccessToken);
+                            const tenantName = tenantObject.subdomain;
+                            const payrollUser = await payrollService.getPayrollUserByUsername(tenantName, account.username, payrollApiAccessToken);
+                            account.evoSbUserId = payrollUser.id;
+                            account.clients = payrollUser.clients;
                         }
+
+                        const createdAccount: SsoAccount = await ssoService.createSsoAccount(
+                            recipientTenantId,
+                            account,
+                            recipientTenantToken,
+                        );
+                        createdAccounts.push(user.key);
+
+                        const userSsoRoles = await ssoService.getRoleMemberships(donorTenantId, user.key, donorTenantToken)
+
+                        for (const role of userSsoRoles) {
+                            await ssoService.addRoleToAccount(recipientTenantId, createdAccount.id, role.roleId, recipientTenantToken)
+                        }
+
+                        // Note: (MJ-8259) We cannot delete right now because the endpoint requires the user to have the asure-admin role.
+                        // Previously, we were disabling created accounts as a rollback action. We are now opting to skip rollbacks to allow for smoother migrations.
+                        // rollbackActions.push(async () => {
+                        //     const account: SsoAccount = { enabled: false };
+                        //     await ssoService.updateSsoAccountById(createdAccount.id, recipientTenantId, account, recipientTenantToken);
+                        // });
+
+                        // update PR_Integration_PK in recipient database
+                        const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
+                        query.setStringParameter('@ssoId', createdAccount.id);
+                        query.setParameter('@userId', user.id);
+
+                        const payload = {
+                            tenantId: recipientTenantId,
+                            queryName: query.name,
+                            query: query.value,
+                            queryType: QueryType.Simple,
+                        } as DatabaseEvent;
+
+                        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+                        // Note: (MJ-8259) Opting to skip database update rollbacks to allow for smoother migrations.
+                        // rollbackActions.push(async () => {
+                        //     const query = new ParameterizedQuery('UpdateUserSsoIdById', Queries.updateUserSsoIdById);
+                        //     query.setStringParameter('@ssoId', user.key);
+                        //     query.setParameter('@userId', user.id);
+
+                        //     const payload = {
+                        //         tenantId: recipientTenantId,
+                        //         queryName: query.name,
+                        //         query: query.value,
+                        //         queryType: QueryType.Simple,
+                        //     } as DatabaseEvent;
+
+                        //     await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+                        // });
+                        
+                        updatedUsers.push(user.key);
                     } catch (e) {
                         console.error(`${user.key}: ${e}`);
                     }
@@ -805,10 +810,11 @@ async function handleEsignatureDocs(donorTenantId: string, donorCompanyId: strin
  * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
  * @param {string} companyId: The unique identifier for the company.
  * @param {PatchInstruction[]} patch: The list of instructions the patch is should attempt to execute
+ * @param {string} token: access token
  * The patch instructions will be executed in the order provided.
  * The array as a whole is atomic, if an instruction fails, all previous instructions will be rolled back.
  */
-export async function companyUpdate(tenantId: string, companyId: string, patch: PatchInstruction[]): Promise<any> {
+export async function companyUpdate(tenantId: string, companyId: string, patch: PatchInstruction[], token?: string): Promise<any> {
     console.info('companyService.companyUpdate');
 
     const rollbackActions = [];
@@ -821,7 +827,7 @@ export async function companyUpdate(tenantId: string, companyId: string, patch: 
                     rollbackActions.push(await updateHelloSignConfigurations(tenantId, companyId, instruction));
                     break;
                 case '/sso/account':
-                    const ssoResponse = await handleSsoPatch(tenantId, companyId, instruction);
+                    const ssoResponse = await handleSsoPatch(tenantId, companyId, instruction, token);
                     rollbackActions.push(ssoResponse.rollbackAction);
                     response = { ...response, ...ssoResponse.response };
                     break;
@@ -1281,7 +1287,7 @@ export async function createCompanyMigration(
 }
 
 //executes the step function to create the company migration
-export async function runCompanyMigration(donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId) {
+export async function runCompanyMigration(donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId, accessToken) {
     console.info('company.service.runCompanyMigration');
     const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
     const migrationId = uniqueifier();
@@ -1358,6 +1364,7 @@ export async function runCompanyMigration(donorTenantId, donorCompanyId, recipie
                 recipientTenantId,
                 recipientCompanyId,
                 migrationId,
+                accessToken,
             }),
         };
         await stepFunctions.startExecution(params).promise();
