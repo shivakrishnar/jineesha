@@ -5,6 +5,5 @@ from
     dbo.EmployeeDirectDeposit 
 where
     RoutingNumber = '@routingNumber' and
-    Account = '@accountNumber' and
-    @designationColumnName = 1 and
+    (Account = '@accountNumber' OR  Account = '@tokenizedAccountNumber') and
     EmployeeID = @employeeId

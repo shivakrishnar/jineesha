@@ -117,20 +117,23 @@ export async function list(
 async function getDuplicateBankAccountQuery(
     routingNumber: string,
     accountNumber: string,
-    designation: string,
     employeeId: string,
+    tenantId: string,
 ): Promise<ParameterizedQuery> {
+    let tokenizedAccountNumber;
+    if (accountNumber[0] == '#') {
+        tokenizedAccountNumber = accountNumber;
+    } else {
+        const tokenizationResponse = await getTokenizedOutput(tenantId, [accountNumber]);
+        tokenizedAccountNumber = tokenizationResponse[0] || accountNumber;
+    }
+
     const bankAccountsQuery = new ParameterizedQuery('CheckForDuplicateBankAccounts', Queries.checkForDuplicateBankAccounts);
     bankAccountsQuery.setParameter('@routingNumber', routingNumber);
     bankAccountsQuery.setParameter('@accountNumber', accountNumber);
+    bankAccountsQuery.setParameter('@tokenizedAccountNumber', tokenizedAccountNumber);
     bankAccountsQuery.setParameter('@employeeId', employeeId);
-    if (designation === 'Checking') {
-        bankAccountsQuery.setParameter('@designationColumnName', 'Checking');
-    } else if (designation === 'Savings') {
-        bankAccountsQuery.setParameter('@designationColumnName', 'IsSavings');
-    } else {
-        bankAccountsQuery.setParameter('@designationColumnName', 'IsMoneyMarket');
-    }
+
     return bankAccountsQuery;
 }
 
@@ -159,7 +162,7 @@ async function executeDuplicatesQuery(tenantId: string, query: Query): Promise<v
     if (duplicates.length > 0) {
         let moreInfo = '';
         if (duplicates[0].DuplicateType === 'accounts') {
-            moreInfo = 'Routing number, account number and designation must be collectively unique.';
+            moreInfo = 'Routing number and account number must be collectively unique.';
         } else if (duplicates[0].DuplicateType === 'remainder') {
             moreInfo = 'You can only have one direct deposit with an amountType of Balance Remainder';
         }
@@ -214,7 +217,7 @@ export async function create(
     }
 
     try {
-        const bankAccountQuery = await getDuplicateBankAccountQuery(routingNumber, accountNumber, designation, employeeId);
+        const bankAccountQuery = await getDuplicateBankAccountQuery(routingNumber, accountNumber, employeeId, tenantId);
         let duplicatesQuery;
         if (amountType === 'Balance Remainder') {
             const remainderOfPayQuery = await getDuplicateRemainderOfPayQuery(employeeId);
