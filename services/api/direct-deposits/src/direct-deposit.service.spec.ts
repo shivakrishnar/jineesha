@@ -165,7 +165,7 @@ describe('directDepositService.create', () => {
                 expect(error.code).toEqual(40);
                 expect(error.message).toEqual('Conflict. The provided request object already exists.');
                 const developerMessage = 'There are already records in the database with the same provided information.';
-                const moreInfo = 'Routing number, account number and designation must be collectively unique.';
+                const moreInfo = 'Routing number and account number must be collectively unique.';
                 expect(error.developerMessage).toEqual(developerMessage);
                 expect(error.moreInfo).toEqual(moreInfo);
             });
