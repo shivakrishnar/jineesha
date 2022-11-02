@@ -1034,6 +1034,7 @@ export async function listCompanyAnnouncements(
                 expiresDate: record.ExpiresDate,
                 isOn: record.IsOn,
                 isHighPriority: record.IsHighPriority,
+                imageIDs: record.imageIDs
             };
         });
 

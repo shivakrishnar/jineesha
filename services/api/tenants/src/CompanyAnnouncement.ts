@@ -7,4 +7,5 @@ export type CompanyAnnouncement = {
     expiresDate: Date;
     isOn: boolean;
     isHighPriority: boolean;
+    imageIDs: string;
 };
