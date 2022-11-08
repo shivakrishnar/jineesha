@@ -516,6 +516,10 @@ GO
                     and isnull(recip_pocr.Active, 0) = isnull(donor_pocr.Active, 0)
 
                 left join '+trim(@cDonorTablePath)+'WorkerCompType donor_wct on donor_eo.EPO_WorkerCompTypeID = donor_wct.ID
+                left join '+trim(@cDonorTablePath)+'CountryStateType donor_wctcst on donor_wctcst.ID = donor_wct.CountryStateTypeID
+                left join '+trim(@cRecipientTablePath)+'CountryStateType recip_wctcst on
+                    recip_wctcst.CountryCode = donor_wctcst.CountryCode
+                    and recip_wctcst.StateCode = donor_wctcst.StateCode
                 left join '+trim(@cRecipientTablePath)+'WorkerCompType recip_wct on recip_wct.CompanyID = '+@cRecipientCompany_ID+'
                     and isnull(recip_wct.Code, '''') = isnull(donor_wct.Code, '''')
                     and isnull(recip_wct.Description, '''') = isnull(donor_wct.Description, '''')
@@ -525,6 +529,7 @@ GO
                     and isnull(recip_wct.ExperienceRating, 0) = isnull(donor_wct.ExperienceRating, 0)
                     and isnull(recip_wct.EvoFK_EDGroup, 0) = isnull(donor_wct.EvoFK_EDGroup, 0)
                     and isnull(recip_wct.OvertimeToReduce_EVO, '''') = isnull(donor_wct.OvertimeToReduce_EVO, '''')
+                    and isnull(recip_wct.CountryStateTypeID, 0) = isnull(recip_wctcst.ID, 0)
 
                 left join '+trim(@cDonorTablePath)+'PayGroupType donor_pgt on donor_eo.EPO_PayGroupTypeID = donor_pgt.ID
                 left join '+trim(@cRecipientTablePath)+'PayGroupType recip_pgt on recip_pgt.CompanyID = '+@cRecipientCompany_ID+'
@@ -1140,6 +1145,10 @@ GO
                     and isnull(recip_pocr.Active, 0) = isnull(donor_pocr.Active, 0)
 
                 left join '+trim(@cDonorTablePath)+'WorkerCompType donor_wct on donor_eo.EPO_WorkerCompTypeID = donor_wct.ID
+                left join '+trim(@cDonorTablePath)+'CountryStateType donor_wctcst on donor_wctcst.ID = donor_wct.CountryStateTypeID
+                left join '+trim(@cRecipientTablePath)+'CountryStateType recip_wctcst on
+                    recip_wctcst.CountryCode = donor_wctcst.CountryCode
+                    and recip_wctcst.StateCode = donor_wctcst.StateCode
                 left join '+trim(@cRecipientTablePath)+'WorkerCompType recip_wct on recip_wct.CompanyID = '+@cRecipientCompany_ID+'
                     and isnull(recip_wct.Code, '''') = isnull(donor_wct.Code, '''')
                     and isnull(recip_wct.Description, '''') = isnull(donor_wct.Description, '''')
@@ -1149,6 +1158,7 @@ GO
                     and isnull(recip_wct.ExperienceRating, 0) = isnull(donor_wct.ExperienceRating, 0)
                     and isnull(recip_wct.EvoFK_EDGroup, 0) = isnull(donor_wct.EvoFK_EDGroup, 0)
                     and isnull(recip_wct.OvertimeToReduce_EVO, '''') = isnull(donor_wct.OvertimeToReduce_EVO, '''')
+                    and isnull(recip_wct.CountryStateTypeID, 0) = isnull(recip_wctcst.ID, 0)
 
                 left join '+trim(@cDonorTablePath)+'PayGroupType donor_pgt on donor_eo.EPO_PayGroupTypeID = donor_pgt.ID
                 left join '+trim(@cRecipientTablePath)+'PayGroupType recip_pgt on recip_pgt.CompanyID = '+@cRecipientCompany_ID+'
