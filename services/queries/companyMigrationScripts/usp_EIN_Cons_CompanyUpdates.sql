@@ -4,7 +4,7 @@
 /*
 	Syntax	: exec  usp_EIN_Cons_CompanyUpdates
 		Ex.	: 	
-			execute usp_EIN_Cons_CompanyUpdates '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 1, '600373', '600351', 'ShowData','e'
+			execute usp_EIN_Cons_CompanyUpdates '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 1, '600373', '600351', 'ShowData','A'
 			execute usp_EIN_Cons_CompanyUpdates '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'Insert','ZZZ'
 			execute usp_EIN_Cons_CompanyUpdates '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'InsertFullValidate','ZZZ'
 			execute usp_EIN_Cons_CompanyUpdates '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'Delete','ZZZ'
@@ -139,6 +139,9 @@ GO
 				donor_c.IsLandingSectionOnExpiringLicenses,
 				donor_c.IsLandingSectionOnPayrollSummaryQuickLink,
 				donor_c.LandingSectionHistoryInMonths,
+				donor_c.IsLandingSectionOnEmployeeOnBoarding,
+				donor_c.IsLandingSectionOnDirectDeposit,
+				donor_c.IsLandingSectionOnI9,
 				recip_ept.ID as EsignatureProductTierID
 			from
 				'+trim(@cRecipientTablePath)+'Company recip_c
@@ -382,8 +385,12 @@ GO
                 recip_c.IsLandingSectionOnExpiringCertifications = donor_c.IsLandingSectionOnExpiringCertifications,
                 recip_c.IsLandingSectionOnExpiringLicenses = donor_c.IsLandingSectionOnExpiringLicenses,
                 recip_c.IsLandingSectionOnPayrollSummaryQuickLink = donor_c.IsLandingSectionOnPayrollSummaryQuickLink,
+				recip_c.IsLandingSectionOnEmployeeOnBoarding = donor_c.IsLandingSectionOnEmployeeOnBoarding,
+				recip_c.IsLandingSectionOnDirectDeposit = donor_c.IsLandingSectionOnDirectDeposit,
+				recip_c.IsLandingSectionOnI9 = donor_c.IsLandingSectionOnI9,
                 recip_c.LandingSectionHistoryInMonths = donor_c.LandingSectionHistoryInMonths,
-			    recip_c.EsignatureProductTierID = recip_ept.ID
+			    recip_c.EsignatureProductTierID = recip_ept.ID '
+			select @cmdInsert = @cmdInsert + '
 			from
 				'+trim(@cRecipientTablePath)+'Company recip_c
 			join '+trim(@cDonorTablePath)+'Company donor_c on donor_c.ID = '+@cDonorCompany_ID+'
