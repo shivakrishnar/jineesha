@@ -4,7 +4,7 @@
 /*
 	Syntax	: exec  usp_EIN_Cons_Documents_V1
 		Ex.	: 	
-			execute usp_EIN_Cons_Documents_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'ShowData', 'zzz'
+			execute usp_EIN_Cons_Documents_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'ShowData', 'b'
 			execute usp_EIN_Cons_Documents_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'Insert', 'N'
 			execute usp_EIN_Cons_Documents_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'InsertFullValidate', 'ZZZ'
 			execute usp_EIN_Cons_Documents_V1 '[adhr-1].[dbo].', '[adhr-2].[dbo].', 1, 0, '600373', '600351', 'Delete', 'ZZZ'
@@ -118,14 +118,12 @@ GO
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%B%'
 		begin
 			-----------------Document by Employee
-			select @cmdShowDataDonor = 'select T1.HRnextAccountID, T1.CompanyID, R1.ID, DocumentCategory, FSRowGuid, Title, Description, Extension, Size, UploadDate, IsPrivateDocument, IsPublishedToEmployee, Filename, ContentType, UploadByUsername, R2.ID, ESignDate, T1.ESignName, R3.ID, IsPublishedToManager, FSDocument, FSDocumentTN, Pointer, ExternalDocumentID
+			select @cmdShowDataDonor = 'select T1.HRnextAccountID, T1.CompanyID, R1.ID, DocumentCategory, FSRowGuid, Title, Description, Extension, Size, UploadDate, IsPrivateDocument, IsPublishedToEmployee, Filename, ContentType, UploadByUsername, R2.ID, ESignDate, T1.ESignName, NULL as ApplicantID, IsPublishedToManager, FSDocument, FSDocumentTN, Pointer, ExternalDocumentID
 			from '+@cDonorTablePath+'Document T1
 			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
 			left outer join '+@cRecipientTablePath+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 			left outer join '+@cDonorTablePath+'EmployeeOnboard D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.EmployeeOnboardID
 			left outer join '+@cRecipientTablePath+'EmployeeOnboard R2 on R2.CompanyID = R1.CompanyID and R2.EmployeeCode = D2.EmployeeCode
-			left outer join '+@cDonorTablePath+'ATApplication D3 on D3.ID = T1.ATApplicationID
-			Left outer join '+@cRecipientTablePath+'ATApplication R3 on R3.ATApplicationKey = D3.ATApplicationKey
 			where D1.CompanyID = '+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdShowDataDonor)
@@ -676,6 +674,29 @@ GO
 			end
 		end
 
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%T%'
+		begin
+			-- ApplicantDocument
+			select @cmdShowDataDonor = 'select D1.HRnextAccountID, case when D1.CompanyID is null then null else '+@cRecipientCompany_ID+' end, D1.EmployeeID, D1.DocumentCategory, D1.FSRowGuid, D1.Title, D1.Description, D1.Extension, D1.Size, 
+			D1.UploadDate, D1.IsPrivateDocument, D1.IsPublishedToEmployee, D1.Filename, D1.ContentType, D1.UploadByUsername, D1.EmployeeOnboardID, D1.ESignDate, D1.ESignName, R1.ID, D1.IsPublishedToManager, 
+			D1.FSDocument, D1.FSDocumentTN, D1.Pointer, D1.ExternalDocumentID
+			from '+@cDonorTablePath+'Document D1
+			left outer join '+@cDonorTablePath+'ATApplication D2 on D2.ID = D1.ATApplicationID
+			join '+@cDonorTablePath+'ATJobPosting D3 on D3.ID = D2.ATJobPostingID
+			join '+@cRecipientTablePath+'ATApplication R1 on R1.ATApplicationKey = D2.ATApplicationKey
+			where D3.CompanyID = '+ @cDonorCompany_ID
+
+			exec (@cmdShowDataDonor)
+			if @cShowStatement = 1
+			begin
+				print @cmdShowDataDonor
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'ApplicantDocument - T' as ShowData
+			end
+		end
+
 		select @cFailCodes = 'ShowData'-- Not Available At This Time'
 	
 	end
@@ -715,14 +736,12 @@ GO
 		begin
 			-----------------Document by Employee
 			select @cmdInsert = 'insert into '+@cRecipientTablePath+'Document (HRnextAccountID, CompanyID, EmployeeID, DocumentCategory, FSRowGuid, Title, Description, Extension, Size, UploadDate, IsPrivateDocument, IsPublishedToEmployee, Filename, ContentType, UploadByUsername, EmployeeOnboardID, ESignDate, ESignName, ATApplicationID, IsPublishedToManager, FSDocument, FSDocumentTN, Pointer, ExternalDocumentID)
-			select T1.HRnextAccountID, case when T1.CompanyID is null then null else '+@cRecipientCompany_ID+' end, R1.ID, DocumentCategory, FSRowGuid, Title, Description, Extension, Size, UploadDate, IsPrivateDocument, IsPublishedToEmployee, Filename, ContentType, UploadByUsername, R2.ID, ESignDate, T1.ESignName, R3.ID, IsPublishedToManager, FSDocument, FSDocumentTN, Pointer, ExternalDocumentID
+			select T1.HRnextAccountID, case when T1.CompanyID is null then null else '+@cRecipientCompany_ID+' end, R1.ID, DocumentCategory, FSRowGuid, Title, Description, Extension, Size, UploadDate, IsPrivateDocument, IsPublishedToEmployee, Filename, ContentType, UploadByUsername, R2.ID, ESignDate, T1.ESignName, NULL, IsPublishedToManager, FSDocument, FSDocumentTN, Pointer, ExternalDocumentID
 			from '+@cDonorTablePath+'Document T1
 			join '+@cDonorTablePath+'Employee D1 on D1.ID = T1.EmployeeID
 			left outer join '+@cRecipientTablePath+'Employee R1 on R1.EmployeeCode = D1.EmployeeCode
 			left outer join '+@cDonorTablePath+'EmployeeOnboard D2 on D2.CompanyID = D1.CompanyID and D2.ID = T1.EmployeeOnboardID
 			left outer join '+@cRecipientTablePath+'EmployeeOnboard R2 on R2.CompanyID = R1.CompanyID and R2.EmployeeCode = D2.EmployeeCode
-			left outer join '+@cDonorTablePath+'ATApplication D3 on D3.ID = T1.ATApplicationID
-			Left outer join '+@cRecipientTablePath+'ATApplication R3 on R3.ATApplicationKey = D3.ATApplicationKey
 			where D1.CompanyID = '+ @cDonorCompany_ID+' and R1.CompanyID = '+@cRecipientCompany_ID
 
 			exec (@cmdInsert)
@@ -1277,6 +1296,32 @@ GO
 			if @cVerbose_Ind = 1
 			begin
 				select 'CompanyLogoDocument - S' as InsertData
+			end
+		end
+
+		if @cTableToRun = 'ZZZ' or @cTableToRun like '%T%'
+		begin
+			-- ApplicantDocument
+			select @cmdInsert = 'insert into '+@cRecipientTablePath+'Document (HRnextAccountID, CompanyID, EmployeeID, DocumentCategory, FSRowGuid, Title, Description, Extension, Size, 
+			UploadDate, IsPrivateDocument, IsPublishedToEmployee, Filename, ContentType, UploadByUsername, EmployeeOnboardID, ESignDate, ESignName, ATApplicationID, IsPublishedToManager, 
+			FSDocument, FSDocumentTN, Pointer, ExternalDocumentID)
+			select D1.HRnextAccountID, case when D1.CompanyID is null then null else '+@cRecipientCompany_ID+' end, D1.EmployeeID, D1.DocumentCategory, D1.FSRowGuid, D1.Title, D1.Description, D1.Extension, D1.Size, 
+			D1.UploadDate, D1.IsPrivateDocument, D1.IsPublishedToEmployee, D1.Filename, D1.ContentType, D1.UploadByUsername, D1.EmployeeOnboardID, D1.ESignDate, D1.ESignName, R1.ID, D1.IsPublishedToManager, 
+			D1.FSDocument, D1.FSDocumentTN, D1.Pointer, D1.ExternalDocumentID
+			from '+@cDonorTablePath+'Document D1
+			left outer join '+@cDonorTablePath+'ATApplication D2 on D2.ID = D1.ATApplicationID
+			join '+@cDonorTablePath+'ATJobPosting D3 on D3.ID = D2.ATJobPostingID
+			join '+@cRecipientTablePath+'ATApplication R1 on R1.ATApplicationKey = D2.ATApplicationKey
+			where D3.CompanyID = '+ @cDonorCompany_ID
+
+			exec (@cmdInsert)
+			if @cShowStatement = 1
+			begin
+				print @cmdInsert
+			end
+			if @cVerbose_Ind = 1
+			begin
+				select 'ApplicantDocument - T' as InsertData
 			end
 		end
 
