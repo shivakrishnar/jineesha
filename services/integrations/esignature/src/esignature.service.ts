@@ -1589,7 +1589,7 @@ export async function createSignUrl(tenantId: string, companyId: string, employe
             response = await eSigner.embedded.getSignUrl(signatureId);
         } catch (e) {
             if (e.message) {
-                if (!e.message.includes('Signature not found')) {
+                if (!e.message.includes('Signature not found') && !e.message.includes('characters long')) {
                     throw e;
                 }
             } else {
