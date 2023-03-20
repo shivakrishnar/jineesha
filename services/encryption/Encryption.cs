@@ -81,5 +81,63 @@ namespace Encryption
 
             return ms.ToArray();
         }
+
+        /// <summary>
+        /// Encrypts a given plaintext <paramref name="plainText"/> 
+        /// </summary>
+        /// <returns>
+        /// The ciphertext representation of the given plaintext
+        /// </returns>
+        /// <param name="plainText"> The text to be encrypted </param>
+        public static string Encrypt(string plainText)
+        {
+            LambdaLogger.Log("Encryption.EncryptionService.Encrypt");
+
+            if(string.IsNullOrWhiteSpace(plainText))
+            {
+                return null;
+            }
+
+            try
+            {
+                var cipher = JsonConvert.DeserializeObject<Cipher>(Utils.GetSecret("EvoApiServiceAccountEncryptionKeys"));
+                var saltBytes = Encoding.Unicode.GetBytes(cipher.salt);
+                var clearDataBytes = Encoding.Unicode.GetBytes(plainText);
+                var pdb = new Rfc2898DeriveBytes(cipher.keyPhrase, saltBytes);
+                var encryptedData = Encrypt(clearDataBytes, pdb.GetBytes(32), pdb.GetBytes(16));
+                var cipherText = Convert.ToBase64String(encryptedData);
+                return cipherText;
+            }
+            catch (Exception ex)
+            {
+                LambdaLogger.Log(String.Format("Error encrypting plainText. Reason: {0}", ex.ToString()));
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Encrypts a given plaintext
+        /// </summary>
+        /// <returns>
+        /// A byte representation of the Encrypted plaintext
+        /// </returns>
+        /// <param name="clearData"> The byte representation of the original plaintext</param>
+        /// <param name="Key"> The Rfc2898DeriveBytes key for the cipher</param>
+        /// <param name="IV"> The initialization vector to use in the encryption</param>
+        private static byte[] Encrypt(byte[] clearData, byte[] key, byte[] IV)
+        {
+            LambdaLogger.Log("Encryption.EncryptionService.Encrypt");
+
+            var alg = Rijndael.Create();
+            alg.Key = key;
+            alg.IV = IV;
+            var ms = new MemoryStream();
+            var cs = new CryptoStream(ms, alg.CreateEncryptor(), CryptoStreamMode.Write);
+            cs.Write(clearData, 0, clearData.Length);
+            cs.FlushFinalBlock();
+            cs.Close();
+            var retByte = ms.ToArray();
+            return retByte;
+        }
     }
 }

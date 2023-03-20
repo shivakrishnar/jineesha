@@ -37,6 +37,27 @@ namespace Encryption
         }
 
         /// <summary>
+        /// Encrypts a given plaintext
+        /// </summary>
+        /// <returns>
+        /// A response containing the ciphertext representation of the plaintext
+        /// </returns>
+        /// <param name="request"> The encryption request event payload</param>
+        /// <param name="context"> The Lambda invocation context</param>
+        public APIGatewayProxyResponse Encrypt(EncryptionRequest request, ILambdaContext context)
+        {
+            LambdaLogger.Log("Encryption.Handler.Encrypt");
+
+            if (String.IsNullOrEmpty(request.PlainText))
+            {
+                return CreateResponse(null);
+            }
+
+            var result = EncryptionService.Encrypt(request.PlainText);
+            return CreateResponse(result);
+        }
+
+        /// <summary>
         /// Creates a response payload for the lambda execution results
         /// </summary>
         /// <returns>
