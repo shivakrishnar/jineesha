@@ -37,6 +37,12 @@ functions:
     package:
       artifact: asure.encryption.zip
 
+  encrypt:
+    handler: Asure.HR.Encryption::Encryption.Handler::Encrypt
+
+    package:
+      artifact: asure.encryption.zip
+
 plugins:
   - serverless-plugin-warmup
 custom:
