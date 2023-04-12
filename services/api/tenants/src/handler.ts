@@ -892,8 +892,29 @@ export async function deleteTenantDatabase(event: any, context: Context, callbac
     }
 }
 
+/**
+ * check for existence of integration user in a tenant
+ */
+export const checkIntegrationUserExistence = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('tenants.handler.checkIntegrationUserExistence');
+
+    const { tenantId } = event.pathParameters;
+
+    const requiredPolicy = {
+        action: 'tenant:add-role-membership',
+        resource: `tenants/${tenantId}`,
+    };
+
+    securityContext.requireAuthorizedTo(requiredPolicy);
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+
+    return await tenantService.checkIntegrationUserExistence(tenantId);
+});
+
 /*
- * create company HR data migration 
+ * creates company HR data migration 
  */
 export async function createCompanyMigration(event: any, context: Context, callback: ProxyCallback): Promise<void> {
     console.info('tenants.handler.createCompanyMigration');

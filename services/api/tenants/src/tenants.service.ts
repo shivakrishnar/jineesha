@@ -402,6 +402,39 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
 //     return JSON.stringify(messageAttachment);
 // }
 
+
+/**
+ * Checks if there is an integration user created for that tenant DB or not 
+ * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
+ */
+export async function checkIntegrationUserExistence(tenantId: string): Promise<any> {
+    console.info('tenantService.integrationUserExists');
+    try {
+        const query = new ParameterizedQuery('integrationUserExists', Queries.integrationUserExists);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const integrationUserExists = result.recordset[0].integrationUserExists;
+
+        if (!integrationUserExists) {
+            console.warn(`Integration user for tenant: ${tenantId} not found.`);
+            return false;
+        }
+        return true;
+    }
+    catch(error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
 /**
  * Returns the connection string data for a given tenant
  * @param {string} tenantId: The tenantId to find
@@ -420,7 +453,10 @@ export async function getConnectionStringByTenant(tenantId: string): Promise<any
     };
     try {
         const { Items } = await dynamoDbClient.query(params).promise();
-        return Items.length > 0 ? Items : undefined;
+        const integrationUserExists = await checkIntegrationUserExistence(tenantId)
+        const fullItems = [{ ...Items[0],  integrationUserExists }]
+        return Items.length > 0 ?  fullItems : undefined;
+        
     } catch (error) {
         console.error(error);
     }
@@ -484,7 +520,7 @@ export async function listCompanyMigrations(): Promise<any> {
 
     try {
         const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
-        let params = {
+        const params = {
             TableName: 'HrCompanyMigrations',
             IndexName: 'ID-Index',
             ExclusiveStartKey: null,
@@ -738,3 +774,4 @@ export async function deleteTenantDatabase(tenantId: string, tenantUrl: string):
         throw errorService.getErrorResponse(0).setMoreInfo('Check the CloudWatch logs for more info.');
     }
 }
+

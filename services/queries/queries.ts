@@ -38,6 +38,7 @@ export const Queries = {
     companyExistsInTenant: fs.readFileSync(path.join(basePath, 'miscellaneous/companyExistsInTenant.sql')).toString(),
     employeeExistsInCompany: fs.readFileSync(path.join(basePath, 'miscellaneous/employeeExistsInCompany.sql')).toString(),
     userExistsInCompany: fs.readFileSync(path.join(basePath, 'miscellaneous/userExistsInCompany.sql')).toString(),
+    integrationUserExists: fs.readFileSync(path.join(basePath, 'miscellaneous/integrationUserExists.sql')).toString(),
 
     // Alerts
     alertEventList: fs.readFileSync(path.join(basePath, 'alerts/listAlertEventsByCompanyId.sql')).toString(),
