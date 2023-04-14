@@ -53,6 +53,12 @@ const emailAcknowledgedSchema = {
     emailAcknowledged: { required: true, type: Boolean },
 };
 
+const addIntegrationUserSchema = {
+    username: { required: true, type: String },
+    password: { required: true, type: String },
+};
+
+
 /**
  * Adds an SSO global admin account to a specified tenant
  */
@@ -100,7 +106,7 @@ export const addTenantDb = utilService.gatewayEventHandlerV2(async ({ securityCo
     utilService.validateAndThrow(requestBody, createTenantDbSchema);
     utilService.checkAdditionalProperties(createTenantDbSchema, requestBody, 'Tenant DB');
 
-    await tenantService.addRdsDatabase(requestBody, securityContext);
+    await tenantService.addRdsDatabase(requestBody, securityContext, requestBody);
 
     return { statusCode: 204, headers: new Headers() };
 });
@@ -913,6 +919,32 @@ export const checkIntegrationUserExistence = utilService.gatewayEventHandlerV2(a
     return await tenantService.checkIntegrationUserExistence(tenantId);
 });
 
+/**
+ * Adds an integration user to a given tenant DB
+ */
+export const addIntegrationUserCredentials = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('tenants.handler.addIntegrationUserCredentials');
+    console.log(event.pathParameters);
+
+    const { tenantId } = event.pathParameters;
+    const requiredPolicy = {
+        action: 'tenant:add-ahr-database',
+        resource: `tenants/${tenantId}`,
+    };
+
+    securityContext.requireAuthorizedTo(requiredPolicy);
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(requestBody, addIntegrationUserSchema);
+    utilService.checkAdditionalProperties(addIntegrationUserSchema, requestBody, 'IntegrationUserCredentials');
+
+    await tenantService.addIntegrationUserCredentials(tenantId, requestBody);
+
+    return { statusCode: 204, headers: new Headers() };
+});
+
+
 /*
  * creates company HR data migration 
  */
@@ -1001,5 +1033,5 @@ export const runCompanyMigration = utilService.gatewayEventHandlerV2(async ({ se
 
     const accessToken: string = event.headers.authorization.replace(/Bearer /i, '');
 
-    return await companyService.runCompanyMigration( donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId, accessToken);
+    return await companyService.runCompanyMigration(donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId, accessToken);
 });

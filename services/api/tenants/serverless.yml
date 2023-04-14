@@ -205,6 +205,15 @@ functions:
     events:
       - stream: ${file(${self:custom.configFile}):connectionStringsStreamArn}
 
+  addIntegrationUserCredentials:
+    handler: src/handler.addIntegrationUserCredentials
+    events:
+        - http:
+            path: /tenants/{tenantId}/integration-user-credentials
+            method: patch
+            cors:
+              origin: '*'
+
   listCompanies:
     handler: src/handler.companyList
     events:
