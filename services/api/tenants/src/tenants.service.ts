@@ -323,12 +323,12 @@ export async function publishMessage(message: any): Promise<void> {
  */
 export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatabase): Promise<TenantDatabase> {
     console.info('tenants.service.createRdsTenantDb');
-
-    let pool: ConnectionPool;
-    console.log('info1')
-    console.log(rdsEndpoint)
-    console.log('info2')
+    console.log('DBInfo: ')
     console.log(dbInfo)
+    console.log('integrationUserPassword:')
+    console.log(dbInfo.integrationUserPassword)
+    
+    let pool: ConnectionPool;
 
     try {
         let data = await s3Client
@@ -369,12 +369,12 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
             .replace(/(NEW_HR_TENANT_SUBDOMAIN)/g, dbInfo.subdomain.toLowerCase())
             .replace(/(API_DOMAIN)/g, configService.getApiDomain())
             .replace(/(DOMAIN)/g, configService.getDomain())
-            .replace(/(PAYROLL_BASE_URL)/g, configService.getPayrollBaseUrl());
+            .replace(/(PAYROLL_BASE_URL)/g, configService.getPayrollBaseUrl())
+            .replace(/(INTEGRATION_USER_USERNAME)/g, dbInfo.integrationUsername)
+            .replace(/(INTEGRATION_USER_PASSWORD)/g, dbInfo.integrationUserPassword);
 
         console.info('executing auth-setup.sql...');
         await databaseService.executeBatch(pool, stripBom(postDeploymentScript));
-
-        // await addIntegrationUserCredentials(dbInfo.id, requestBody);
 
         // Send notification of successful creation:
         const success = buildDbCreationMessageAttachment(dbInfo, rdsEndpoint, 'RDS Database Creation', teamsGood);
@@ -448,7 +448,11 @@ export async function checkIntegrationUserExistence(tenantId: string): Promise<a
         } as DatabaseEvent;
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
         const integrationUserExists = result.recordset[0].integrationUserExists;
-
+        console.log('result: ')
+        console.log(result)
+        console.log('integrationUserExists: ');
+        console.log(integrationUserExists);
+        console.log('type: ' + typeof(integrationUserExists))
         if (!integrationUserExists) {
             console.info(`Integration user for tenant: ${tenantId} not found.`);
             return false;

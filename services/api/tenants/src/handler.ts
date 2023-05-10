@@ -47,6 +47,8 @@ const createTenantDbSchema = {
     id: { required: true, type: UUID },
     name: { required: true, type: String },
     subdomain: { required: true, type: String },
+    integrationUsername: { required: true, type: String },
+    integrationUserPassword: { required: true, type: String },
 };
 
 const emailAcknowledgedSchema = {
@@ -92,6 +94,8 @@ export const addAdmin = utilService.gatewayEventHandlerV2(async ({ securityConte
 export const addTenantDb = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('tenants.handler.addTenantDb');
     const { id: tenantId } = requestBody;
+    console.log('requestBody:')
+    console.log(requestBody)
 
     // Note: this is the guards against at-will creation of databases in the Production tier
     const requiredPolicy = {
@@ -105,8 +109,9 @@ export const addTenantDb = utilService.gatewayEventHandlerV2(async ({ securityCo
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(requestBody, createTenantDbSchema);
     utilService.checkAdditionalProperties(createTenantDbSchema, requestBody, 'Tenant DB');
+    console.log('pre-check done')
 
-    await tenantService.addRdsDatabase(requestBody, securityContext, requestBody);
+    await tenantService.addRdsDatabase(requestBody, securityContext);
 
     return { statusCode: 204, headers: new Headers() };
 });
