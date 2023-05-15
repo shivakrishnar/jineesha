@@ -47,11 +47,19 @@ const createTenantDbSchema = {
     id: { required: true, type: UUID },
     name: { required: true, type: String },
     subdomain: { required: true, type: String },
+    integrationUsername: { required: true, type: String },
+    integrationUserPassword: { required: true, type: String },
 };
 
 const emailAcknowledgedSchema = {
     emailAcknowledged: { required: true, type: Boolean },
 };
+
+const addIntegrationUserSchema = {
+    username: { required: true, type: String },
+    password: { required: true, type: String },
+};
+
 
 /**
  * Adds an SSO global admin account to a specified tenant
@@ -86,6 +94,8 @@ export const addAdmin = utilService.gatewayEventHandlerV2(async ({ securityConte
 export const addTenantDb = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
     console.info('tenants.handler.addTenantDb');
     const { id: tenantId } = requestBody;
+    console.log('requestBody:')
+    console.log(requestBody)
 
     // Note: this is the guards against at-will creation of databases in the Production tier
     const requiredPolicy = {
@@ -99,6 +109,7 @@ export const addTenantDb = utilService.gatewayEventHandlerV2(async ({ securityCo
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(requestBody, createTenantDbSchema);
     utilService.checkAdditionalProperties(createTenantDbSchema, requestBody, 'Tenant DB');
+    console.log('pre-check done')
 
     await tenantService.addRdsDatabase(requestBody, securityContext);
 
@@ -892,8 +903,55 @@ export async function deleteTenantDatabase(event: any, context: Context, callbac
     }
 }
 
+/**
+ * check for existence of integration user in a tenant
+ */
+export const checkIntegrationUserExistence = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('tenants.handler.checkIntegrationUserExistence');
+
+    const { tenantId } = event.pathParameters;
+
+    const requiredPolicy = {
+        action: 'tenant:add-role-membership',
+        resource: `tenants/${tenantId}`,
+    };
+
+    securityContext.requireAuthorizedTo(requiredPolicy);
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+
+    return await tenantService.checkIntegrationUserExistence(tenantId);
+});
+
+/**
+ * Adds an integration user to a given tenant DB
+ */
+export const addIntegrationUserCredentials = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('tenants.handler.addIntegrationUserCredentials');
+    console.log(event.pathParameters);
+
+    const { tenantId } = event.pathParameters;
+    const requiredPolicy = {
+        action: 'tenant:add-ahr-database',
+        resource: `tenants/${tenantId}`,
+    };
+
+    securityContext.requireAuthorizedTo(requiredPolicy);
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(requestBody, addIntegrationUserSchema);
+    utilService.checkAdditionalProperties(addIntegrationUserSchema, requestBody, 'IntegrationUserCredentials');
+
+    await tenantService.addIntegrationUserCredentials(tenantId, requestBody);
+
+    return { statusCode: 204, headers: new Headers() };
+});
+
+
 /*
- * create company HR data migration 
+ * creates company HR data migration 
  */
 export async function createCompanyMigration(event: any, context: Context, callback: ProxyCallback): Promise<void> {
     console.info('tenants.handler.createCompanyMigration');
@@ -980,5 +1038,5 @@ export const runCompanyMigration = utilService.gatewayEventHandlerV2(async ({ se
 
     const accessToken: string = event.headers.authorization.replace(/Bearer /i, '');
 
-    return await companyService.runCompanyMigration( donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId, accessToken);
+    return await companyService.runCompanyMigration(donorTenantId, donorCompanyId, recipientTenantId, recipientCompanyId, accessToken);
 });

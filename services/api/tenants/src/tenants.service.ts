@@ -67,15 +67,37 @@ export type TenantDatabase = {
     id: string;
     name: string;
     subdomain: string;
+    integrationUsername: string;
+    integrationUserPassword: string;
 };
 
 /**
  * Creates a tenant database in RDS
  * @param {TenantDatabase} dbInfo: The details of the tenant database to create
  */
-export async function addRdsDatabase(dbInfo: TenantDatabase, securityContext: SecurityContext): Promise<void> {
+export async function addRdsDatabase(dbInfo: TenantDatabase, securityContext: SecurityContext, ): Promise<void> {
     console.info('tenants.service.addRdsDatabase');
 
+    // const { integrationUsername, integrationPassword } = dbInfo;
+    AWS.config.update({
+        region: configService.getAwsRegion(),
+    });
+
+    //password encryption
+    const lambda = new AWS.Lambda();
+    const encryptionParams = {
+        FunctionName: `asure-encryption-${configService.getStage()}-encrypt`,
+        InvocationType: 'RequestResponse',
+        Payload: JSON.stringify({
+            plainText: dbInfo.integrationUserPassword,
+        }),
+    };
+    const encryptServiceResponse = await lambda.invoke(encryptionParams).promise();
+    const response = JSON.parse(encryptServiceResponse.Payload.toString());
+    const encryptedPassword = response.body;
+    //end password encryption
+
+    dbInfo.integrationUserPassword = encryptedPassword;
     const stepFunctions = new AWS.StepFunctions();
     const {
         principal: { id: accountId },
@@ -297,11 +319,15 @@ export async function publishMessage(message: any): Promise<void> {
 /**
  * Creates a tenant database on a given RDS instance.
  * @param {string} rdsEndpoint: The url of the RDS instance that will host the database
- * @param {TenantDatase} dbInfo: The tenant database to be created
+ * @param {TenantDatabase} dbInfo: The tenant database to be created
  */
 export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatabase): Promise<TenantDatabase> {
     console.info('tenants.service.createRdsTenantDb');
-
+    console.log('DBInfo: ')
+    console.log(dbInfo)
+    console.log('integrationUserPassword:')
+    console.log(dbInfo.integrationUserPassword)
+    
     let pool: ConnectionPool;
 
     try {
@@ -343,7 +369,9 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
             .replace(/(NEW_HR_TENANT_SUBDOMAIN)/g, dbInfo.subdomain.toLowerCase())
             .replace(/(API_DOMAIN)/g, configService.getApiDomain())
             .replace(/(DOMAIN)/g, configService.getDomain())
-            .replace(/(PAYROLL_BASE_URL)/g, configService.getPayrollBaseUrl());
+            .replace(/(PAYROLL_BASE_URL)/g, configService.getPayrollBaseUrl())
+            .replace(/(INTEGRATION_USER_USERNAME)/g, dbInfo.integrationUsername)
+            .replace(/(INTEGRATION_USER_PASSWORD)/g, dbInfo.integrationUserPassword);
 
         console.info('executing auth-setup.sql...');
         await databaseService.executeBatch(pool, stripBom(postDeploymentScript));
@@ -402,6 +430,44 @@ export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatab
 //     return JSON.stringify(messageAttachment);
 // }
 
+
+/**
+ * Checks if there is an integration user created for that tenant DB or not 
+ * @param {string} tenantId: The unique identifier (SSO tenantId GUID) for the tenant
+ * The returned value added as a response item returned by getConnectionStringByTenant endpoint
+ */
+export async function checkIntegrationUserExistence(tenantId: string): Promise<any> {
+    console.info('tenantService.integrationUserExists');
+    try {
+        const query = new ParameterizedQuery('integrationUserExists', Queries.integrationUserExists);
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const integrationUserExists = result.recordset[0].integrationUserExists;
+        console.log('result: ')
+        console.log(result)
+        console.log('integrationUserExists: ');
+        console.log(integrationUserExists);
+        console.log('type: ' + typeof(integrationUserExists))
+        if (!integrationUserExists) {
+            console.info(`Integration user for tenant: ${tenantId} not found.`);
+            return false;
+        }
+        return true;
+    }
+    catch(error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
 /**
  * Returns the connection string data for a given tenant
  * @param {string} tenantId: The tenantId to find
@@ -420,7 +486,10 @@ export async function getConnectionStringByTenant(tenantId: string): Promise<any
     };
     try {
         const { Items } = await dynamoDbClient.query(params).promise();
-        return Items.length > 0 ? Items : undefined;
+        const integrationUserExists = await checkIntegrationUserExistence(tenantId);
+        const fullItems = [{ ...Items[0],  integrationUserExists }];
+        return Items.length > 0 ?  fullItems : undefined;
+        
     } catch (error) {
         console.error(error);
     }
@@ -484,7 +553,7 @@ export async function listCompanyMigrations(): Promise<any> {
 
     try {
         const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
-        let params = {
+        const params = {
             TableName: 'HrCompanyMigrations',
             IndexName: 'ID-Index',
             ExclusiveStartKey: null,
@@ -738,3 +807,58 @@ export async function deleteTenantDatabase(tenantId: string, tenantUrl: string):
         throw errorService.getErrorResponse(0).setMoreInfo('Check the CloudWatch logs for more info.');
     }
 }
+
+/**
+ * Update Integration User Credentials for a given tenant DB
+ * @param {string} tenantId: The unique identifier for the tenant the user belongs to.
+ * @param {any} request: The body that comes with the PATCH request.
+ * @returns {any}: A Promise of the update response.
+ */
+export async function addIntegrationUserCredentials(
+    tenantId: string,
+    request: any,
+): Promise<any> {
+    console.info('tenantService.addIntegrationUserCredentials');
+    try {
+        const { username, password } = request;
+
+        AWS.config.update({
+            region: configService.getAwsRegion(),
+        });
+
+        //password encryption
+        const lambda = new AWS.Lambda();
+        const params = {
+            FunctionName: `asure-encryption-${configService.getStage()}-encrypt`,
+            InvocationType: 'RequestResponse',
+            Payload: JSON.stringify({
+                plainText: password,
+            }),
+        };
+        const encryptServiceResponse = await lambda.invoke(params).promise();
+        const response = JSON.parse(encryptServiceResponse.Payload.toString());
+        const encryptedPassword = response.body;
+
+        const query = new ParameterizedQuery('addIntegrationUserCredentials', Queries.addIntegrationUserCredentials);
+        query.setParameter('@username', username);
+        query.setParameter('@password', encryptedPassword);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+
+
