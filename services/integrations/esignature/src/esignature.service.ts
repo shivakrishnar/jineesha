@@ -5394,11 +5394,13 @@ export async function createSimpleSignDocument(
 
         // upload to database
         const { Title, Category } = documentResult.recordset[0];
+
+        const revisedTitle = Title.replace(/'/g, "''"); //check for apostrophe then escape it if any
         const uploadDate = new Date().toISOString();
         const fileMetadataQuery = new ParameterizedQuery('createFileMetadata', Queries.createFileMetadata);
         fileMetadataQuery.setParameter('@companyId', companyId);
         fileMetadataQuery.setStringParameter('@employeeCode', employeeCode);
-        fileMetadataQuery.setParameter('@title', Title);
+        fileMetadataQuery.setParameter('@title', revisedTitle);
         fileMetadataQuery.setStringParameter('@category', Category);
         fileMetadataQuery.setParameter('@uploadDate', uploadDate);
         fileMetadataQuery.setParameter('@pointer', newKey);
