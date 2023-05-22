@@ -448,11 +448,6 @@ export async function checkIntegrationUserExistence(tenantId: string): Promise<a
         } as DatabaseEvent;
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
         const integrationUserExists = result.recordset[0].integrationUserExists;
-        console.log('result: ')
-        console.log(result)
-        console.log('integrationUserExists: ');
-        console.log(integrationUserExists);
-        console.log('type: ' + typeof(integrationUserExists))
         if (!integrationUserExists) {
             console.info(`Integration user for tenant: ${tenantId} not found.`);
             return false;
