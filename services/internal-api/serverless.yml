@@ -16,6 +16,9 @@ provider:
     sesSmtpCredentialsId: ${file(${self:custom.configFile}):sesSmtpCredentialsId}
     sesSmtpServerHost: ${file(${self:custom.configFile}):sesSmtpServerHost}
     sesSmtpServerPort: ${file(${self:custom.configFile}):sesSmtpServerPort}
+    postmarkSmtpCredentialsId: ${file(${self:custom.configFile}):postmarkSmtpCredentialsId}
+    postmarkSmtpServerHost: ${file(${self:custom.configFile}):postmarkSmtpServerHost}
+    postmarkSmtpServerPort: ${file(${self:custom.configFile}):postmarkSmtpServerPort}
     payrollApiCredentialsId: ${file(${self:custom.configFile}):payrollApiCredentialsId}
     ssoCredentialsId: ${file(${self:custom.configFile}):ssoCredentialsId}
     asureAdminRoleId: ${file(${self:custom.configFile}):asureAdminRoleId}

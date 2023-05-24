@@ -42,6 +42,12 @@ export const getSesSmtpServerHost = () => process.env.sesSmtpServerHost;
 
 export const getSesSmtpServerPort = () => process.env.sesSmtpServerPort;
 
+export const getPostmarkSmtpCredentials = () => process.env.postmarkSmtpCredentialsId;
+
+export const getPostmarkSmtpServerHost = () => process.env.postmarkSmtpServerHost;
+
+export const getPostmarkSmtpServerPort = () => process.env.postmarkSmtpServerPort;
+
 export const getEsignatureApiCredentials = () => process.env.eSignatureApiCredentialsId;
 
 export const eSignatureApiDevModeOn = () => {
@@ -98,7 +104,10 @@ export const getIndirectClientPricingData = () => process.env.indirectClientPric
 export const getSsoPublicKeys = () => {
     const key1 = process.env.ssoPublicKey1.split('|');
     const key2 = process.env.ssoPublicKey2.split('|');
-    return [{ keyId: key1[0], publicKey: key1[1] }, { keyId: key2[0], publicKey: key2[1] }];
+    return [
+        { keyId: key1[0], publicKey: key1[1] },
+        { keyId: key2[0], publicKey: key2[1] },
+    ];
 };
 
 export const getSignaturePageFontUrl = () => process.env.signaturePageFontUrl;

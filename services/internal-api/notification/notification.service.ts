@@ -226,6 +226,11 @@ type SesSmtpCredentials = {
     password: string;
 };
 
+type PostmarkCredentials = {
+    username: string;
+    password: string;
+};
+
 /**
  * Sends an HTML-based email message using via SMTP
  * @param {EmailMessage} emailMessage: The message to be sent
@@ -252,6 +257,7 @@ async function sendSmtpHtmlEmail(message: EmailMessage, smtpCredentials: SmtpCre
         attachments: unTypedAttachments,
     };
 
+    console.info('sending the email...');
     await transporter.sendMail(mail);
 }
 
@@ -574,16 +580,16 @@ async function submitBillingEventNotification(event: IBillingEvent): Promise<voi
     const emailMessage = new EmailMessage(`${month} Esignature Billing Report`, message, configService.getFromEmailAddress(), [
         event.recipient || configService.getBillingRecipient(),
     ]);
-    const sesCredentials: SesSmtpCredentials = JSON.parse(await utilService.getSecret(configService.getSesSmtpCredentials()));
-    if (!sesCredentials) {
+    const postmarkCredentials: PostmarkCredentials = JSON.parse(await utilService.getSecret(configService.getPostmarkSmtpCredentials()));
+    if (!postmarkCredentials) {
         return;
     }
 
     const smtpCredentials = {
-        host: configService.getSesSmtpServerHost(),
-        port: Number(configService.getSesSmtpServerPort()),
-        username: sesCredentials.username,
-        password: sesCredentials.password,
+        host: configService.getPostmarkSmtpServerHost(),
+        port: Number(configService.getPostmarkSmtpServerPort()),
+        username: postmarkCredentials.username,
+        password: postmarkCredentials.password,
         senderEmailAddress: configService.getFromEmailAddress(),
     };
 
