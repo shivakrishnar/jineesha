@@ -60,7 +60,6 @@ const addIntegrationUserSchema = {
     password: { required: true, type: String },
 };
 
-
 /**
  * Adds an SSO global admin account to a specified tenant
  */
@@ -405,6 +404,27 @@ export const getConnectionStringByTenant = utilService.gatewayEventHandlerV2(asy
         console.error(error);
     }
 });
+
+/**
+ * Returns the data import types from the specific Tenant
+ */
+export const getDataImportTypes = utilService.gatewayEventHandlerV2(
+    async ({ event, securityContext }: IGatewayEventInput) => {
+        console.info('tenants.handler.getDataImportTypes');
+
+        utilService.validateAndThrow(event.pathParameters, adminsUriSchema);
+        await utilService.checkAuthorization(securityContext, event, [
+            Role.globalAdmin,
+            Role.serviceBureauAdmin,
+            Role.superAdmin,
+            Role.hrAdmin,
+        ]);
+    
+        const { tenantId } = event.pathParameters;
+
+        return await tenantService.listDataImportTypes(tenantId);
+    },
+);
 
 /**
  * Returns a listing of the connection strings stored in DynamoDB
