@@ -1445,4 +1445,4 @@ export const companyOpenEnrollmentResponse = {
             introduction: null,
         },
     ],
-};
+}; 

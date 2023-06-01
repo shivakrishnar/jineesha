@@ -27,6 +27,12 @@ const dataImportTypeUriSchema = {
     dataImportTypeId: { required: true, type: String },
 };
 
+const dataImportEventDetailUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+    dataImportId: { required: true, type: String },
+};
+
 
 /**
  * Returns the data import types from the specific Tenant
@@ -104,5 +110,33 @@ export const getDataImportEventByType = utilService.gatewayEventHandlerV2(
         } = event;
 
         return await employeeImportService.listDataImports(tenantId, companyId, dataImportTypeId, queryStringParameters, domainName, path);
+    },
+);
+
+/**
+ * Returns the data event details from the specific event
+ */
+export const getDataImportEventDetails = utilService.gatewayEventHandlerV2(
+    async ({ event, securityContext }: IGatewayEventInput) => {
+        console.info('employeeImport.handler.getDataImportEventDetails');
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, dataImportEventDetailUriSchema);
+
+        await utilService.checkAuthorization(securityContext, event, [
+            Role.globalAdmin,
+            Role.serviceBureauAdmin,
+            Role.superAdmin,
+            Role.hrAdmin,
+        ]);
+
+        const { tenantId, companyId, dataImportId } = event.pathParameters;
+        const {
+            requestContext: { domainName, path },
+            queryStringParameters
+        } = event;
+
+        return await employeeImportService.listDataImportEventDetails(tenantId, companyId, dataImportId, queryStringParameters, domainName, path);
     },
 );

@@ -16,3 +16,16 @@ export interface IDataImport  {
     creationDate: string;
     lastUpdatedDate: string;
 }
+
+export interface IDataImportEventDetail  {
+    id: number;
+    dataImportEventId: number;
+    csvRowStatus: string;
+    csvRowNumber: number;
+    csvRowNotes: string;
+    csvRowData: string;
+    lastUserId: number;
+    lastProgramEvent?: string;
+    creationDate: string;
+    lastUpdatedDate: string;
+}
