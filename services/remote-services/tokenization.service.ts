@@ -12,14 +12,14 @@ import { ErrorMessage } from '../errors/errorMessage';
 export async function getTokenizedOutput(tenantId: string, values: string[]): Promise<any> {
     console.info('util.service.getTokenizedOutput');
     const tenantConnectionStringData = await tenantService.getConnectionStringByTenant(tenantId);
-    const TokenizationTenantID  =  (tenantConnectionStringData[0])?.TokenizationTenantID;
-    const apiUrl = `${configService.getTokenizationServiceHostUrl()}/api/v1.0/${TokenizationTenantID}/tokenization/Encrypt`;
     
     try {
-        if(!TokenizationTenantID) {
-            console.log("Unable to obtain the tokenizationTenantID data");
+        const TokenizationTenantID  =  (tenantConnectionStringData[0])?.TokenizationTenantID;
+        if(!TokenizationTenantID || !configService.getTokenizationServiceHostUrl()) {
+            console.info("Unable to obtain the tokenizationTenantID data");
             return values;
         }
+        const apiUrl = `${configService.getTokenizationServiceHostUrl()}/api/v1.0/${TokenizationTenantID}/tokenization/Encrypt`;
         const result = await request.post({
             url: apiUrl,
             json: true,
