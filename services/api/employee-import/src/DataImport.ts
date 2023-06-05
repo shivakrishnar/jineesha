@@ -1,10 +1,18 @@
 export interface IDataImportType  {
-    ID: number;
-    Name: string;
-    Description?: string;
-    ImportProcess?: string;
-    LastUserId: number;
-    LastProgramEvent?: string;
-    CreationDate: string;
-    LastUpdatedDate: string;
+    id: number;
+    name: string;
+    description?: string;
+    importProcess?: string;
+    lastProgramEvent?: string;
+}
+
+export interface IDataImport  {
+    id: number;
+    companyId: number;
+    dataImportTypeId: number;
+    status: string;
+    lastUserId: number;
+    lastProgramEvent?: string;
+    creationDate: string;
+    lastUpdatedDate: string;
 }

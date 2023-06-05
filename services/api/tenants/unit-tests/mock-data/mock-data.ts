@@ -2,7 +2,6 @@ import { EsignatureAppConfiguration } from '../../../../remote-services/integrat
 import { SsoAccount } from '../../../../remote-services/sso.service';
 import { PatchInstruction, PatchOperation } from '../../src/patchInstruction';
 
-export const devTenantId = 'e5a19feb-0fca-4b61-9b7a-43a2a6dd7414';
 export const oldTenantId = '1234';
 export const newTenantId = '5678';
 export const oldCompanyId = '1234';
@@ -1447,25 +1446,3 @@ export const companyOpenEnrollmentResponse = {
         },
     ],
 };
-
-export const dataImportTypeResponse = {
-    recordsets: [ [ [Object], [Object] ] ],
-    recordset: [
-      {
-        ID: '1',
-        Name: 'Employee update1',
-        Description: 'Employee update Desc',
-        ImportProcess: 'UPDATE',
-        LastProgramEvent: ''
-      },
-      {
-        ID: '2',
-        Name: 'Alternate Rate update',
-        Description: 'Alternate Rate Desc',
-        ImportProcess: 'UPDATE',
-        LastProgramEvent: ''
-      }
-    ],
-    output: {},
-    rowsAffected: [ 2 ]
-  }

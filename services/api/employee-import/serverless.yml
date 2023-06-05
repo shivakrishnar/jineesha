@@ -135,6 +135,24 @@ functions:
             method: get
             cors:
               origin: '*'
+
+  getDataImportEvent:
+    handler: src/handler.getDataImportEvent
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/data-imports
+            method: get
+            cors:
+              origin: '*'
+
+  getDataImportEventByType:
+    handler: src/handler.getDataImportEventByType
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/data-import-types/{dataImportTypeId}/data-imports
+            method: get
+            cors:
+              origin: '*'
   
 resources:
   Resources:
