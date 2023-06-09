@@ -262,4 +262,9 @@ export const Queries = {
     getSecResourceSubGroupById: fs.readFileSync(path.join(basePath, 'sec-resource/getSecResourceSubGroupById.sql')).toString(),
     listSecResourceSubGroups: fs.readFileSync(path.join(basePath, 'sec-resource/listSecResourceSubGroups.sql')).toString(),
     getQuickLinkVisibilityByUsername: fs.readFileSync(path.join(basePath, 'sec-resource/getQuickLinkVisibilityByUsername.sql')).toString(),
+
+    // Employee Import
+    listDataImportTypes: fs.readFileSync(path.join(basePath, 'employee-importing/listDataImportTypes.sql')).toString(),
+    listDataImportByCompany: fs.readFileSync(path.join(basePath, 'employee-importing/listDataImportByCompany.sql')).toString(),
+    listDataImportByCompanyAndDataImportType: fs.readFileSync(path.join(basePath, 'employee-importing/listDataImportByCompanyAndDataImportType.sql')).toString(),
 };
