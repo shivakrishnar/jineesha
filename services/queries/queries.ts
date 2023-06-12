@@ -264,7 +264,7 @@ export const Queries = {
     getQuickLinkVisibilityByUsername: fs.readFileSync(path.join(basePath, 'sec-resource/getQuickLinkVisibilityByUsername.sql')).toString(),
 
     // Employee Import
-    listDataImportTypes: fs.readFileSync(path.join(basePath, 'employee-importing/listDataImportTypes.sql')).toString(),
-    listDataImportByCompany: fs.readFileSync(path.join(basePath, 'employee-importing/listDataImportByCompany.sql')).toString(),
-    listDataImportByCompanyAndDataImportType: fs.readFileSync(path.join(basePath, 'employee-importing/listDataImportByCompanyAndDataImportType.sql')).toString(),
+    listDataImportTypes: fs.readFileSync(path.join(basePath, 'employee-import/listDataImportTypes.sql')).toString(),
+    listDataImportByCompany: fs.readFileSync(path.join(basePath, 'employee-import/listDataImportByCompany.sql')).toString(),
+    listDataImportByCompanyAndDataImportType: fs.readFileSync(path.join(basePath, 'employee-import/listDataImportByCompanyAndType.sql')).toString(),
 };
