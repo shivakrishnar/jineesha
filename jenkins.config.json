@@ -39,6 +39,11 @@
       "createDomain": true
     },
     {
+      "name": "employee-import",
+      "directory": "services/api/employee-import",
+      "createDomain": true
+    },
+    {
       "name": "tenants",
       "directory": "services/api/tenants",
       "createDomain": true
