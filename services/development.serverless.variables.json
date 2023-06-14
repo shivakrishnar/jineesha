@@ -36,6 +36,7 @@
     "hrCredentialsId": "hrCredentials",
     "saltId": "salt",
     "fileBucketName": "development.hr.files",
+    "employeeImportBucketName": "hr.development.employee-import",
     "hrServicesDomain": "https://hr-services.dev.evolution-software.com",
     "eSignatureCallbackPath": "integrations/tenants/0/companies/0/esignatures/callback",
     "hrApplicationId": "c254ec95-4c45-4eb2-9697-dc0c03dfed6a",

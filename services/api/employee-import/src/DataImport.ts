@@ -4,6 +4,7 @@ export interface IDataImportType  {
     description?: string;
     importProcess?: string;
     lastProgramEvent?: string;
+    s3TemplatePath?: string;
 }
 
 export interface IDataImport  {

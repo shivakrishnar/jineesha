@@ -1,6 +1,7 @@
 import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
 import * as paginationService from '../../../pagination/pagination.service';
+import * as configService from '../../../config.service';
 
 import { PaginatedResult } from '../../../pagination/paginatedResult';
 import { ErrorMessage } from '../../../errors/errorMessage';
@@ -8,6 +9,7 @@ import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { IDataImportType, IDataImportEventDetail, IDataImport } from './DataImport';
+import * as mime from 'mime-types';
 
 /**
  * Returns a listing of data importing type for a specific tenant
@@ -15,8 +17,8 @@ import { IDataImportType, IDataImportEventDetail, IDataImport } from './DataImpo
  * @returns {Promise<DataImportTypes>}: Promise of an array of DataImportType
  */
 export async function listDataImportTypes(tenantId: string): Promise<IDataImportType[]> {
-    console.info('tenantsService.listDataImportTypes');
-    
+    console.info('EmployeeImport.Service.ListDataImportTypes');
+
     try {
         const query = new ParameterizedQuery('listDataImportTypes', Queries.listDataImportTypes);
 
@@ -26,7 +28,7 @@ export async function listDataImportTypes(tenantId: string): Promise<IDataImport
             query: query.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        
+
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
 
         // This endpoint should return an empty list (not 404) if tenant not found in AHR.
@@ -41,7 +43,7 @@ export async function listDataImportTypes(tenantId: string): Promise<IDataImport
                 name: record.Name,
                 description: record.Description,
                 importProcess: record.ImportProcess,
-                lastProgramEvent: record.LastProgramEvent
+                lastProgramEvent: record.LastProgramEvent,
             };
         });
 
@@ -63,21 +65,21 @@ export async function listDataImportTypes(tenantId: string): Promise<IDataImport
  * @returns {Promise<DataImportTypes>}: Promise of an array of DataImportType
  */
 export async function listDataImports(
-    tenantId: string, 
-    companyId: string, 
-    dataImportTypeId: string, 
+    tenantId: string,
+    companyId: string,
+    dataImportTypeId: string,
     queryParams: any,
     domainName: string,
-    path: string): Promise<PaginatedResult> {
-    console.info('companyService.listDataImports');
-    
+    path: string,
+): Promise<PaginatedResult> {
+    console.info('EmployeeImport.Service.ListDataImports');
+
     const validQueryStringParameters = ['pageToken'];
 
     // Pagination validation
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-
         let query = new ParameterizedQuery('listDataImportByCompany', Queries.listDataImportByCompany);
 
         if (queryParams) {
@@ -101,7 +103,7 @@ export async function listDataImports(
         } as DatabaseEvent;
 
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-        
+
         if (result.recordsets[1].length === 0) {
             return undefined;
         }
@@ -203,5 +205,102 @@ export async function listDataImportEventDetails(
 
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * This method will generate a signed URL that will give you access to download the template under a tenant
+ * @param {string} tenantId: The unique identifier for the tenant
+ * @param {string} dataImportTypeId: The unique identifer for the DataImportType
+ * @returns {Promise<any>}: A Promise of a URL or file
+ */
+export async function getTemplate(tenantId: string, dataImportTypeId: string): Promise<any> {
+    console.info('EmployeeImport.Service.getTemplate');
+
+    try {
+
+        const query = new ParameterizedQuery('getDataImportTypeById', Queries.getDataImportTypeById);
+        query.setParameter('@dataImportTypeId', dataImportTypeId);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        if (!result || !result.recordset.length || !result.recordset[0].S3TemplatePath) {
+            return undefined;
+        }
+
+        const bucketName = configService.getEmployeeImportBucketName();
+        const key = result.recordset[0].S3TemplatePath;
+
+        const params = {
+            Bucket: bucketName,
+            Key: key,
+        };
+
+        const url = await utilService.getSignedUrlSync('getObject', params);
+        const fileName = key.split('/').reverse()[0];
+        const mimeType = mime.contentType(fileName);
+
+        return { data: url, mimeType: `.${mimeType}` };
+    } catch (error) {
+        if (error.message) {
+            if (error.message.includes('Not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
+            }
+        }
+
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * This method will generate a signed URL that will give you access to upload a file
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} companyId: The unique identifer for the company
+  * @param {string} fileName: File name with extension
+ * @returns {Promise<any>}: A Promise of a URL or file
+ */
+export async function uploadUrl(
+    tenantId: string,
+    companyId: string,
+    fileName: string,
+): Promise<any> {
+    console.info('EmployeeImport.Service.uploadUrl');
+
+    try {
+        const bucketName = configService.getEmployeeImportBucketName();
+
+        const uploadS3Filename = fileName.replace(/[^a-zA-Z0-9.]/g, '');
+
+        let key = `imports/${tenantId}/${companyId}/${uploadS3Filename}`;
+        key = utilService.sanitizeForS3(key);
+
+        const mimeType = "text/csv";
+
+        const params = {
+            Bucket: bucketName, 
+            Key: key,
+            ACL: 'bucket-owner-full-control',
+            ContentType: mimeType,
+            ContentEncoding: 'base64',
+        };
+
+        const url = await utilService.getSignedUrlSync('putObject', params);
+
+        return { url, mimeType };
+    } catch (e) {
+        console.log(e);
+        throw e;
     }
 }

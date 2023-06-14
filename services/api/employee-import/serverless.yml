@@ -40,6 +40,7 @@ provider:
     tlmReadRole: ${file(${self:custom.configFile}):tlmReadRole}
     tlmWriteRole: ${file(${self:custom.configFile}):tlmWriteRole}
     fileBucketName: ${file(${self:custom.configFile}):fileBucketName}
+    employeeImportBucketName: ${file(${self:custom.configFile}):employeeImportBucketName}
     payrollBaseUrl: ${file(${self:custom.configFile}):payrollBaseUrl}
     dbBackupBucket: ${file(${self:custom.configFile}):dbBackupBucket}
 
@@ -153,13 +154,31 @@ functions:
             method: get
             cors:
               origin: '*'
-  
+
   getDataImportEventDetails:
     handler: src/handler.getDataImportEventDetails
     events:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/data-imports/{dataImportId}/data-import-details
             method: get
+            cors:
+              origin: '*'
+
+  getTemplate:
+    handler: src/handler.getTemplate
+    events:
+        - http:
+            path: /tenants/{tenantId}/data-import-types/{dataImportTypeId}/template
+            method: get
+            cors:
+              origin: '*'
+  
+  uploadUrl:
+    handler: src/handler.uploadUrl
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/data-imports/upload-url
+            method: post
             cors:
               origin: '*'
 

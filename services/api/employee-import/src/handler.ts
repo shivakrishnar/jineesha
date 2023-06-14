@@ -7,7 +7,6 @@ import * as UUID from '@smallwins/validate/uuid';
 import { IGatewayEventInput } from '../../../util.service';
 import { Role } from '../../models/Role';
 
-
 const headerSchema = {
     authorization: { required: true, type: String },
 };
@@ -33,92 +32,99 @@ const dataImportEventDetailUriSchema = {
     dataImportId: { required: true, type: String },
 };
 
+const getTemplateUriSchema = {
+    tenantId: { required: true, type: String },
+    dataImportTypeId: { required: true, type: String },
+};
+
+const saveFileHeaderUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+};
+
+const saveFileBodySchema = {
+    fileName: { required: true, type: String },
+};
 
 /**
  * Returns the data import types from the specific Tenant
  */
-export const getDataImportTypes = utilService.gatewayEventHandlerV2(
-    async ({ event, securityContext }: IGatewayEventInput) => {
-        console.info('tenants.handler.getDataImportTypes');
+export const getDataImportTypes = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('employee-import.handler.getDataImportTypes');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, adminsUriSchema);
-        await utilService.checkAuthorization(securityContext, event, [
-            Role.globalAdmin,
-            Role.serviceBureauAdmin,
-            Role.superAdmin,
-            Role.hrAdmin,
-        ]);
-    
-        const { tenantId } = event.pathParameters;
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, adminsUriSchema);
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+    ]);
 
-        return await employeeImportService.listDataImportTypes(tenantId);
-    },
-);
+    const { tenantId } = event.pathParameters;
+
+    return await employeeImportService.listDataImportTypes(tenantId);
+});
 
 /**
  * Returns the data imports from the specific Tenant and Company
  */
-export const getDataImportEvent = utilService.gatewayEventHandlerV2(
-    async ({ event, securityContext }: IGatewayEventInput) => {
-        console.info('tenants.handler.getDataImportEvent');
+export const getDataImportEvent = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('employee-import.handler.getDataImportEvent');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, companyUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, companyUriSchema);
 
-        await utilService.checkAuthorization(securityContext, event, [
-            Role.globalAdmin,
-            Role.serviceBureauAdmin,
-            Role.superAdmin,
-            Role.hrAdmin,
-        ]);
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+    ]);
 
-        const { tenantId, companyId } = event.pathParameters;
-        const {
-            requestContext: { domainName, path },
-            queryStringParameters
-        } = event;
+    const { tenantId, companyId } = event.pathParameters;
+    const {
+        requestContext: { domainName, path },
+        queryStringParameters,
+    } = event;
 
-        return await employeeImportService.listDataImports(tenantId, companyId, "", queryStringParameters, domainName, path);
-    },
-);
+    return await employeeImportService.listDataImports(tenantId, companyId, '', queryStringParameters, domainName, path);
+});
 
 /**
  * Returns the data imports from the specific Tenant, Company and Data Import Type
  */
-export const getDataImportEventByType = utilService.gatewayEventHandlerV2(
-    async ({ event, securityContext }: IGatewayEventInput) => {
-        console.info('tenants.handler.getDataImportEventByType');
+export const getDataImportEventByType = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('employee-import.handler.getDataImportEventByType');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, dataImportTypeUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, dataImportTypeUriSchema);
 
-        await utilService.checkAuthorization(securityContext, event, [
-            Role.globalAdmin,
-            Role.serviceBureauAdmin,
-            Role.superAdmin,
-            Role.hrAdmin,
-        ]);
-    
-        const { tenantId, companyId, dataImportTypeId } = event.pathParameters;
-        const {
-            requestContext: { domainName, path },
-            queryStringParameters
-        } = event;
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+    ]);
 
-        return await employeeImportService.listDataImports(tenantId, companyId, dataImportTypeId, queryStringParameters, domainName, path);
-    },
-);
+    const { tenantId, companyId, dataImportTypeId } = event.pathParameters;
+    const {
+        requestContext: { domainName, path },
+        queryStringParameters,
+    } = event;
+
+    return await employeeImportService.listDataImports(tenantId, companyId, dataImportTypeId, queryStringParameters, domainName, path);
+});
 
 /**
  * Returns the data event details from the specific event
  */
 export const getDataImportEventDetails = utilService.gatewayEventHandlerV2(
     async ({ event, securityContext }: IGatewayEventInput) => {
-        console.info('employeeImport.handler.getDataImportEventDetails');
+        console.info('employee-import.handler.getDataImportEventDetails');
 
         utilService.normalizeHeaders(event);
         utilService.validateAndThrow(event.headers, headerSchema);
@@ -140,3 +146,57 @@ export const getDataImportEventDetails = utilService.gatewayEventHandlerV2(
         return await employeeImportService.listDataImportEventDetails(tenantId, companyId, dataImportId, queryStringParameters, domainName, path);
     },
 );
+
+/**
+ * Returns the file from the AWS S3
+ */
+export const getTemplate = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('employee-import.handler.getTemplate');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, getTemplateUriSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+    ]);
+
+    const { tenantId, dataImportTypeId } = event.pathParameters;
+
+    return await employeeImportService.getTemplate(tenantId, dataImportTypeId);
+});
+
+/**
+ * Returns a signed URL
+ */
+export const uploadUrl = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('employee-import.handler.uploadUrl');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, saveFileHeaderUriSchema);
+
+    await utilService.requirePayload(requestBody);
+    utilService.validateAndThrow(requestBody, saveFileBodySchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+    ]);
+
+    const { tenantId, companyId } = event.pathParameters;
+    const { fileName } = requestBody;
+
+    utilService.validateExtensions(fileName, ["csv"]);
+
+    return await employeeImportService.uploadUrl(
+        tenantId,
+        companyId,
+        fileName
+    );
+});
