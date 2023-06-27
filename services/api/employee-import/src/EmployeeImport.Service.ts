@@ -7,7 +7,7 @@ import { ErrorMessage } from '../../../errors/errorMessage';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
-import { IDataImportType, IDataImport } from './DataImport';
+import { IDataImportType, IDataImportEventDetail, IDataImport } from './DataImport';
 
 /**
  * Returns a listing of data importing type for a specific tenant
@@ -114,6 +114,80 @@ export async function listDataImports(
                 companyId: record.CompanyID,
                 dataImportTypeId: record.DataImportTypeID,
                 status: record.Status,
+                lastUserId: record.LastUserID,
+                lastProgramEvent: record.LastProgramEvent,
+                creationDate: record.CreationDate,
+                lastUpdatedDate: record.LastUpdatedDate,
+            };
+        });
+
+        return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Returns a listing of data importing type for a specific tenant
+ * @param {string} tenantId: The unique identifier for the tenant the data importing type belongs to.
+ * @returns {Promise<DataImportEventDetails>}: Promise of an array of DataImportEventDetails
+ */
+export async function listDataImportEventDetails(
+    tenantId: string,  
+    companyId: string,
+    dataImportEventId: string, 
+    queryParams: any,
+    domainName: string,
+    path: string): Promise<PaginatedResult> {
+    console.info('employeeImport.service.listDataImportEventDetails');
+    
+    const validQueryStringParameters = ['pageToken'];
+
+    // Pagination validation
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    try {
+
+        let query = new ParameterizedQuery('listDataImportEventDetail', Queries.listDataImportEventDetail);
+
+        if (queryParams) {
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+        }
+
+        query.setParameter('@CompanyId', companyId);
+
+        query.setParameter('@DataImportEventId', dataImportEventId);
+
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+
+        const payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        if (result.recordsets[1].length === 0) {
+            return undefined;
+        }
+
+        const totalCount = result.recordsets[0][0].totalCount;
+
+        const results: IDataImportEventDetail[] = result.recordsets[1].map((record) => {
+            return {
+                id: record.ID,
+                dataImportEventId: record.DataImportEventID,
+                csvRowStatus: record.CSVRowStatus,
+                csvRowNumber: record.CSVRowNumber,
+                csvRowNotes: record.CSVRowNotes,
+                csvRowData: record.CSVRowData,
                 lastUserId: record.LastUserID,
                 lastProgramEvent: record.LastProgramEvent,
                 creationDate: record.CreationDate,

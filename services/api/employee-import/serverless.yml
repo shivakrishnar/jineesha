@@ -154,6 +154,15 @@ functions:
             cors:
               origin: '*'
   
+  getDataImportEventDetails:
+    handler: src/handler.getDataImportEventDetails
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/data-imports/{dataImportId}/data-import-details
+            method: get
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

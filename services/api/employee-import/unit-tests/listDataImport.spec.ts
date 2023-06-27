@@ -39,11 +39,33 @@ describe('dataimport.service.list', () => {
         });
 
         await employeeImportService
-            .listDataImports(mockData.devTenantId, mockData.devCompanyId, "", null, mockData.domainName, mockData.path)
+            .listDataImports(mockData.devTenantId, mockData.CompanyId, "", null, mockData.domainName, mockData.path)
             .then((response) => {
                 expect(response).toBeInstanceOf(PaginatedResult);
                 expect(response.results.length).toBe(mockData.dataImportsResponse.results.length);
                 expect(response.results).toEqual(mockData.dataImportsResponse.results);
+            });
+    });
+});
+
+describe('dataimporteventdetails.service.list', () => {
+    beforeEach(() => {
+        setup();
+    });
+
+    test('returns the list of data import event details', async () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'listDataImportEventDetail') {
+				return Promise.resolve(mockData.dataImportEventDetails);
+			}
+        });
+
+        await employeeImportService
+            .listDataImportEventDetails(mockData.devTenantId, mockData.CompanyId, mockData.DataImportEventId, null, mockData.domainName, mockData.path)
+            .then((response) => {
+                expect(response).toBeInstanceOf(PaginatedResult);
+                expect(response.results.length).toBe(mockData.dataImportEventDetailsResponse.results.length);
+                expect(response.results).toEqual(mockData.dataImportEventDetailsResponse.results);
             });
     });
 });
