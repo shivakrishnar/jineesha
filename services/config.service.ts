@@ -36,6 +36,8 @@ export const getStage = () => process.env.stage;
 
 export const getFromEmailAddress = () => process.env.fromEmail;
 
+export const getBillingNotificationFromEmail = () => process.env.billingNotificationFromEmail;
+
 export const getSesSmtpCredentials = () => process.env.sesSmtpCredentialsId;
 
 export const getSesSmtpServerHost = () => process.env.sesSmtpServerHost;
