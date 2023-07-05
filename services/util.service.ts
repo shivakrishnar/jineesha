@@ -1431,3 +1431,30 @@ export async function getPaysPerYear(payFrequencyCode, deductionFrequencyCode): 
     }
     return paysPerYear
 }
+
+/**
+ * Validates that a file name contains the given extension
+ * @param {string} fileName: The identifier of file name.
+ * @param {string[]} extensions: The target extensions.
+ */
+export function validateExtensions(fileName: string, extensions: string[]): void {
+    console.info('utilService.validateExtensions');
+
+    if (extensions.length == 0)
+    {
+        const errorMessage = `No extension provided for validation`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
+    let fileExtension = fileName.split('.')[fileName.split('.').length - 1];
+
+    extensions.forEach((extension) => {   
+        fileExtension = fileExtension.toLowerCase();
+        extension = extension.toLowerCase();
+
+        if (fileExtension != extension) {
+            const errorMessage = `File with extension not allowed`;
+            throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        }
+    });    
+}

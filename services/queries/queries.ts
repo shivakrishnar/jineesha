@@ -268,5 +268,5 @@ export const Queries = {
     listDataImportByCompany: fs.readFileSync(path.join(basePath, 'employee-import/listDataImportByCompany.sql')).toString(),
     listDataImportByCompanyAndDataImportType: fs.readFileSync(path.join(basePath, 'employee-import/listDataImportByCompanyAndType.sql')).toString(),
     listDataImportEventDetail: fs.readFileSync(path.join(basePath, 'employee-import/listDataImportEventDetail.sql')).toString(),
-    
+    getDataImportTypeById: fs.readFileSync(path.join(basePath, 'employee-import/getDataImportTypeById.sql')).toString(),
 };
