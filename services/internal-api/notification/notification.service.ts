@@ -590,7 +590,7 @@ async function submitBillingEventNotification(event: IBillingEvent): Promise<voi
         port: Number(configService.getPostmarkSmtpServerPort()),
         username: postmarkCredentials.username,
         password: postmarkCredentials.password,
-        senderEmailAddress: configService.getFromEmailAddress(),
+        senderEmailAddress: configService.getBillingNotificationFromEmail(),
     };
 
     const attachment: Attachment = new Attachment({ filename: `${yearMonth}_Esign_Billing_Report.csv`, content: event.reportCsv });

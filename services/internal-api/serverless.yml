@@ -26,6 +26,7 @@ provider:
     stage: ${file(${self:custom.configFile}):stage}
     apiDomain: ${file(${self:custom.configFile}):apiDomain}
     fromEmail: ${file(${self:custom.configFile}):fromEmail}
+    billingNotificationFromEmail: ${file(${self:custom.configFile}):billingNotificationFromEmail}
     hrCredentialsId: ${file(${self:custom.configFile}):hrCredentialsId}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
     ssoPublicKey1: ${file(${self:custom.configFile}):ssoPublicKey1}

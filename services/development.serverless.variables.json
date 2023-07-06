@@ -28,6 +28,7 @@
     "postmarkSmtpServerHost": "smtp.postmarkapp.com",
     "postmarkSmtpServerPort": "587",
     "fromEmail": "email_test+dev@asuresoftware.com",
+    "billingNotificationFromEmail": "email_test+dev@asuresoftware.com",
     "eSignatureApiCredentialsId": "eSignatureApiCredentials",
     "eSignatureApiDevModeOn": "true",
     "integrationId": "8077ac79-faac-47cb-a240-a15cd5791915",

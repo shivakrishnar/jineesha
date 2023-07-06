@@ -26,6 +26,7 @@
     "domainCertificateArn": "arn:aws:acm:us-east-1:049280833483:certificate/ddf05210-51ba-4689-9327-3ea683d9eb4a",
     "apiDomain": "https://api.staging.evolution-software.com",
     "fromEmail": "email_test+staging@asuresoftware.com",
+    "billingNotificationFromEmail": "email_test+staging@asuresoftware.com",
     "ssoCredentialsId": "ssoCredentials",
     "integrationId": "8077ac79-faac-47cb-a240-a15cd5791915",
     "goldilocksApplicationId": "8f8a2b63-985b-4c59-9a9b-e25572068601",
