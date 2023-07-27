@@ -46,6 +46,16 @@ const saveFileBodySchema = {
     fileName: { required: true, type: String },
 };
 
+const dataImportsUriSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+};
+
+const dataImportsBodySchema = {
+    dataImportTypeId: { required: true, type: String },
+    fileName: { required: true, type: String },
+};
+
 /**
  * Returns the data import types from the specific Tenant
  */
@@ -122,30 +132,35 @@ export const getDataImportEventByType = utilService.gatewayEventHandlerV2(async 
 /**
  * Returns the data event details from the specific event
  */
-export const getDataImportEventDetails = utilService.gatewayEventHandlerV2(
-    async ({ event, securityContext }: IGatewayEventInput) => {
-        console.info('employee-import.handler.getDataImportEventDetails');
+export const getDataImportEventDetails = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('employee-import.handler.getDataImportEventDetails');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, dataImportEventDetailUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, dataImportEventDetailUriSchema);
 
-        await utilService.checkAuthorization(securityContext, event, [
-            Role.globalAdmin,
-            Role.serviceBureauAdmin,
-            Role.superAdmin,
-            Role.hrAdmin,
-        ]);
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+    ]);
 
-        const { tenantId, companyId, dataImportId } = event.pathParameters;
-        const {
-            requestContext: { domainName, path },
-            queryStringParameters
-        } = event;
+    const { tenantId, companyId, dataImportId } = event.pathParameters;
+    const {
+        requestContext: { domainName, path },
+        queryStringParameters,
+    } = event;
 
-        return await employeeImportService.listDataImportEventDetails(tenantId, companyId, dataImportId, queryStringParameters, domainName, path);
-    },
-);
+    return await employeeImportService.listDataImportEventDetails(
+        tenantId,
+        companyId,
+        dataImportId,
+        queryStringParameters,
+        domainName,
+        path,
+    );
+});
 
 /**
  * Returns the file from the AWS S3
@@ -192,11 +207,37 @@ export const uploadUrl = utilService.gatewayEventHandlerV2(async ({ securityCont
     const { tenantId, companyId } = event.pathParameters;
     const { fileName } = requestBody;
 
-    utilService.validateExtensions(fileName, ["csv"]);
+    utilService.validateExtensions(fileName, ['csv']);
 
-    return await employeeImportService.uploadUrl(
-        tenantId,
-        companyId,
-        fileName
-    );
+    return await employeeImportService.uploadUrl(tenantId, companyId, fileName);
 });
+
+/**
+ * Get the CSV file from S3 and import into the database
+ */
+export const dataImports = utilService.gatewayEventHandlerV2(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('employee-import.handler.dataImports');
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, headerSchema);
+        utilService.validateAndThrow(event.pathParameters, dataImportsUriSchema);
+
+        await utilService.requirePayload(requestBody);
+        utilService.validateAndThrow(requestBody, dataImportsBodySchema);
+
+        await utilService.checkAuthorization(securityContext, event, [
+            Role.globalAdmin,
+            Role.serviceBureauAdmin,
+            Role.superAdmin,
+            Role.hrAdmin,
+        ]);
+
+        const { tenantId, companyId } = event.pathParameters;
+        const { dataImportTypeId, fileName } = requestBody;
+
+        utilService.validateExtensions(fileName, ['csv']);
+
+        return await employeeImportService.dataImports(tenantId, companyId, dataImportTypeId, fileName);
+    },
+);

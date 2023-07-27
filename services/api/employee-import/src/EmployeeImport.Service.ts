@@ -140,22 +140,22 @@ export async function listDataImports(
  * @returns {Promise<DataImportEventDetails>}: Promise of an array of DataImportEventDetails
  */
 export async function listDataImportEventDetails(
-    tenantId: string,  
+    tenantId: string,
     companyId: string,
-    dataImportEventId: string, 
+    dataImportEventId: string,
     queryParams: any,
     domainName: string,
-    path: string): Promise<PaginatedResult> {
+    path: string,
+): Promise<PaginatedResult> {
     console.info('employeeImport.service.listDataImportEventDetails');
-    
+
     const validQueryStringParameters = ['pageToken'];
 
     // Pagination validation
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-
-        let query = new ParameterizedQuery('listDataImportEventDetail', Queries.listDataImportEventDetail);
+        const query = new ParameterizedQuery('listDataImportEventDetail', Queries.listDataImportEventDetail);
 
         if (queryParams) {
             utilService.validateQueryParams(queryParams, validQueryStringParameters);
@@ -218,7 +218,6 @@ export async function getTemplate(tenantId: string, dataImportTypeId: string): P
     console.info('EmployeeImport.Service.getTemplate');
 
     try {
-
         const query = new ParameterizedQuery('getDataImportTypeById', Queries.getDataImportTypeById);
         query.setParameter('@dataImportTypeId', dataImportTypeId);
 
@@ -268,14 +267,10 @@ export async function getTemplate(tenantId: string, dataImportTypeId: string): P
  * This method will generate a signed URL that will give you access to upload a file
  * @param {string} tenantId: The unique identifer for the tenant
  * @param {string} companyId: The unique identifer for the company
-  * @param {string} fileName: File name with extension
+ * @param {string} fileName: File name with extension
  * @returns {Promise<any>}: A Promise of a URL or file
  */
-export async function uploadUrl(
-    tenantId: string,
-    companyId: string,
-    fileName: string,
-): Promise<any> {
+export async function uploadUrl(tenantId: string, companyId: string, fileName: string): Promise<any> {
     console.info('EmployeeImport.Service.uploadUrl');
 
     try {
@@ -286,10 +281,10 @@ export async function uploadUrl(
         let key = `imports/${tenantId}/${companyId}/${uploadS3Filename}`;
         key = utilService.sanitizeForS3(key);
 
-        const mimeType = "text/csv";
+        const mimeType = 'text/csv';
 
         const params = {
-            Bucket: bucketName, 
+            Bucket: bucketName,
             Key: key,
             ACL: 'bucket-owner-full-control',
             ContentType: mimeType,
@@ -299,6 +294,78 @@ export async function uploadUrl(
         const url = await utilService.getSignedUrlSync('putObject', params);
 
         return { url, mimeType };
+    } catch (e) {
+        console.log(e);
+        throw e;
+    }
+}
+
+/**
+ * This method will get the CSV file from S3 and import into the database
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} companyId: The unique identifer for the company
+ * @param {string} fileName: File name with extension
+ * @returns {Promise<any>}: A Promise of a URL or file
+ */
+export async function dataImports(tenantId: string, companyId: string, dataImportTypeId: string, fileName: string): Promise<any> {
+    console.info('EmployeeImport.Service.dataImports');
+
+    try {
+        const bucketName = configService.getEmployeeImportBucketName();
+        let key = `imports/${tenantId}/${companyId}/${fileName}`;
+        key = utilService.sanitizeForS3(key);
+        const params = {
+            Bucket: bucketName,
+            Key: key,
+        };
+
+        const signedUrl = await utilService.getSignedUrlSync('getObject', params);
+        const response = await fetch(signedUrl);
+        const encodedData = await response.text();
+        const decodedData = Buffer.from(encodedData, 'base64');
+        const csvData = decodedData.toString('utf-8');
+        const csvLines = csvData.split('\n');
+        csvLines.shift();
+
+        if (!csvLines.length) {
+            console.error('===> csvLines have no data');
+            return undefined;
+        }
+
+        const dataEventQuery = new ParameterizedQuery('insertDataImportEvent', Queries.insertDataImportEvent);
+        dataEventQuery.setParameter('@CompanyID', companyId);
+        dataEventQuery.setParameter('@DataImportTypeID', dataImportTypeId);
+        const insertDataImportEventDetailSqlTemplate = Queries.insertDataImportEventDetail;
+
+        let counter = 0;
+        for (const line of csvLines) {
+            if (line) {
+                counter++;
+                const dataEventDetailQuery = new ParameterizedQuery('insertDataImportEventDetail', insertDataImportEventDetailSqlTemplate);
+                dataEventDetailQuery.setParameter('@CSVRowNumber', counter);
+                dataEventDetailQuery.setStringParameter('@CSVRowData', line.trim());
+                dataEventQuery.combineQueries(dataEventDetailQuery, false);
+            }
+        }
+        const getDataEventIdQuery = new ParameterizedQuery('dataEventIdQuery', 'select @DataImportEventID as DataImportEventID');
+        dataEventQuery.combineQueries(getDataEventIdQuery, false);
+
+        const payload = {
+            tenantId,
+            queryName: dataEventQuery.name,
+            query: dataEventQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        if (!result || !result.recordset.length || !result.recordset[0].DataImportEventID) {
+            console.error('===> DataImportEventID was not returned from the database');
+            return undefined;
+        }
+        const dataImportEventId: number = result.recordset[0].DataImportEventID;
+        const relativePath: string = `/${key}`;
+
+        return { tenantId, companyId, dataImportTypeId, fileName, dataImportEventId, rowsCount: counter, relativePath };
     } catch (e) {
         console.log(e);
         throw e;
