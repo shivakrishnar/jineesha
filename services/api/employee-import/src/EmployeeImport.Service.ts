@@ -1,3 +1,4 @@
+import * as AWS from 'aws-sdk';
 import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
 import * as paginationService from '../../../pagination/pagination.service';
@@ -11,8 +12,9 @@ import { InvocationType } from '../../../util.service';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
-import { IDataImportType, IDataImportEventDetail, IDataImport } from './DataImport';
+import { IDataImportType, IDataImportEventDetail, IDataImport, EmployeeUpdateCsvRowType } from './DataImport';
 import * as mime from 'mime-types';
+import fetch from 'node-fetch';
 
 /**
  * Returns a listing of data importing type for a specific tenant
@@ -307,13 +309,18 @@ export async function uploadUrl(tenantId: string, companyId: string, fileName: s
  * This method will get the CSV file from S3 and import into the database
  * @param {string} tenantId: The unique identifer for the tenant
  * @param {string} companyId: The unique identifer for the company
+ * @param {string} dataImportTypeId: The unique identifier for the data import type
  * @param {string} fileName: File name with extension
+ * @param {number} userId: The unique identifer for the user
  * @returns {Promise<any>}: A Promise of a URL or file
  */
-export async function dataImports(tenantId: string, companyId: string, dataImportTypeId: string, fileName: string): Promise<any> {
+export async function dataImports(tenantId: string, companyId: string, dataImportTypeId: string, fileName: string, userId: number): Promise<any> {
     console.info('EmployeeImport.Service.dataImports');
 
     try {
+        //
+        // Getting the csv file from S3 bucket...
+        //
         const bucketName = configService.getEmployeeImportBucketName();
         let key = `imports/${tenantId}/${companyId}/${fileName}`;
         key = utilService.sanitizeForS3(key);
@@ -324,9 +331,7 @@ export async function dataImports(tenantId: string, companyId: string, dataImpor
 
         const signedUrl = await utilService.getSignedUrlSync('getObject', params);
         const response = await fetch(signedUrl);
-        const encodedData = await response.text();
-        const decodedData = Buffer.from(encodedData, 'base64');
-        const csvData = decodedData.toString('utf-8');
+        const csvData = await response.text();
         const csvLines = csvData.split('\n');
         csvLines.shift();
 
@@ -335,9 +340,13 @@ export async function dataImports(tenantId: string, companyId: string, dataImpor
             return undefined;
         }
 
+        //
+        // Putting the file contents into the database...
+        //
         const dataEventQuery = new ParameterizedQuery('insertDataImportEvent', Queries.insertDataImportEvent);
         dataEventQuery.setParameter('@CompanyID', companyId);
         dataEventQuery.setParameter('@DataImportTypeID', dataImportTypeId);
+        dataEventQuery.setParameter('@UserID', userId);
         const insertDataImportEventDetailSqlTemplate = Queries.insertDataImportEventDetail;
 
         let counter = 0;
@@ -366,12 +375,129 @@ export async function dataImports(tenantId: string, companyId: string, dataImpor
             return undefined;
         }
         const dataImportEventId: number = result.recordset[0].DataImportEventID;
-        const relativePath: string = `/${key}`;
 
-        return { tenantId, companyId, dataImportTypeId, fileName, dataImportEventId, rowsCount: counter, relativePath };
-    } catch (e) {
-        console.log(e);
-        throw e;
+        //
+        // Calling the step function to do the validation and update for each row of the csv file...
+        //
+        const stepFunctionInputs = { tenantId, companyId, dataImportTypeId, fileName, dataImportEventId, csvRelativePath: key, userId };
+        const stepFunctions = new AWS.StepFunctions();     
+        const stepFunctionsParams = {
+            stateMachineArn: configService.getHrEmployeeImportStateMachineArn(),
+            input: JSON.stringify(stepFunctionInputs),
+        };
+
+        await stepFunctions.startExecution(stepFunctionsParams).promise();
+
+        return stepFunctionInputs;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * @param {EmployeeUpdateCsvRowType} jsonCsvRow: The csv row with employee data
+ * @param {number} rowNumber: Current row number of the csv row
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} companyId: The unique identifer for the company
+ * @param {string} dataImportTypeId: The ID of DataImportType
+ * @param {string} dataImportEventId: The ID of DataImportEvent
+ * @returns {Promise<any>}: A Promise of the result [true or false]
+ */
+export async function updateEmployee(
+    jsonCsvRow: EmployeeUpdateCsvRowType,
+    rowNumber: number,
+    tenantId: string,
+    companyId: string,
+    dataImportTypeId: string,
+    dataImportEventId: string,
+): Promise<any> {
+    console.info('EmployeeImport.Service.updateEmployee');
+
+    try {
+        //
+        // Handling the csv columns order
+        //
+        const csvRowDesiredOrder = [
+            "Employee Code", "Birthdate", "Time Clock Number", "Email", "Home Phone",
+            "Work Phone", "Cell Phone", "Gender", "Ethnicity", "Education Level", 
+            "Tobacco User", "Disabled", "Military Reserve", "Veteran", "Memo 1", 
+            "Memo 2", "Memo 3", "Pay Frequency", "Standard Payroll Hours", 
+            "FLSA Classification", "Position", "Reports To 1", "Reports To 2", 
+            "Reports To 3", "Supervisor (SC)", "Benefit Class/Eligibility Group", 
+            "EEO Category", "Worker Comp Code", "Change Reason", "Comment"
+            ];
+        const jsonCsvRowReordered = {};
+        csvRowDesiredOrder.forEach(key => {
+            jsonCsvRowReordered[key] = jsonCsvRow[key];            
+        });
+        const stringCsvRow = Object.values(jsonCsvRowReordered).join(",");
+
+        //
+        // Validating employee details...
+        //
+        const validateEmployeeDetailsDataEventQuery = new ParameterizedQuery('validateEmployeeDetails', Queries.validateEmployeeDetails);
+        validateEmployeeDetailsDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
+        validateEmployeeDetailsDataEventQuery.setParameter('@RowNumber', rowNumber);
+        validateEmployeeDetailsDataEventQuery.setStringParameter('@TenantId', tenantId);
+        validateEmployeeDetailsDataEventQuery.setParameter('@CompanyId', companyId);
+        validateEmployeeDetailsDataEventQuery.setParameter('@DataImportTypeId', dataImportTypeId);
+        validateEmployeeDetailsDataEventQuery.setParameter('@DataImportEventId', dataImportEventId);
+
+        const validateEmployeeDetailsPayload = {
+            tenantId,
+            queryName: validateEmployeeDetailsDataEventQuery.name,
+            query: validateEmployeeDetailsDataEventQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            validateEmployeeDetailsPayload,
+            utilService.InvocationType.RequestResponse,
+        );
+        if (!result || !result.recordset.length || result.recordset[0].StatusResult === undefined || result.recordset[0].StatusResult === null) {
+            console.error('===> StatusResult was not returned from the database');
+            return undefined;
+        }
+        const statusResult: number = result.recordset[0].StatusResult;
+
+        //
+        // Updating employee...
+        //
+        if (statusResult === 0) {
+            console.log(
+                `===> The employee row was not pass the validation: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`,
+            );
+            return undefined;
+        }
+        const updateEmployeeDataEventQuery = new ParameterizedQuery('updateEmployee', Queries.updateEmployee);
+        updateEmployeeDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
+        updateEmployeeDataEventQuery.setParameter('@RowNumber', rowNumber);
+        updateEmployeeDataEventQuery.setStringParameter('@TenantId', tenantId);
+        updateEmployeeDataEventQuery.setParameter('@CompanyId', companyId);
+        updateEmployeeDataEventQuery.setParameter('@DataImportTypeId', dataImportTypeId);
+        updateEmployeeDataEventQuery.setParameter('@DataImportEventId', dataImportEventId);
+
+        const updateEmployeePayload = {
+            tenantId,
+            queryName: updateEmployeeDataEventQuery.name,
+            query: updateEmployeeDataEventQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', updateEmployeePayload, utilService.InvocationType.RequestResponse);
+
+        return { isSuccess: true, message: 'Employee was updated successfully' };
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
     }
 }
 

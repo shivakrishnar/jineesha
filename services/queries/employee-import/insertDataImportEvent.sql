@@ -2,12 +2,14 @@ declare @DataImportEventID bigint = 0
 
 insert into dbo.DataImportEvent(
 	CompanyID, 
-	DataImportTypeID, 
-	Status, 
+	DataImportTypeID,
+	LastUserID,
+	Status,
 	CreationDate
 ) values (
 	@CompanyID,
 	@DataImportTypeID,
+	@UserID,
 	'Ready',
 	GETDATE()
 )
