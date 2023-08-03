@@ -191,6 +191,18 @@ functions:
             cors:
               origin: '*'              
 
+  setCompletedStatusGlobal:
+    handler: src/handler.setCompletedStatusGlobal
+    memorySize: 1024
+
+  setFailedStatusGlobal:
+    handler: src/handler.setFailedStatusGlobal
+    memorySize: 1024
+
+  updateEmployee:
+    handler: src/handler.updateEmployee
+    memorySize: 1024
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

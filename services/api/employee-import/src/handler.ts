@@ -6,6 +6,7 @@ import * as UUID from '@smallwins/validate/uuid';
 
 import { IGatewayEventInput } from '../../../util.service';
 import { Role } from '../../models/Role';
+import { Context, ProxyCallback } from 'aws-lambda';
 
 const headerSchema = {
     authorization: { required: true, type: String },
@@ -215,29 +216,72 @@ export const uploadUrl = utilService.gatewayEventHandlerV2(async ({ securityCont
 /**
  * Get the CSV file from S3 and import into the database
  */
-export const dataImports = utilService.gatewayEventHandlerV2(
-    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-        console.info('employee-import.handler.dataImports');
+export const dataImports = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('employee-import.handler.dataImports');
 
-        utilService.normalizeHeaders(event);
-        utilService.validateAndThrow(event.headers, headerSchema);
-        utilService.validateAndThrow(event.pathParameters, dataImportsUriSchema);
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, dataImportsUriSchema);
 
-        await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, dataImportsBodySchema);
+    await utilService.requirePayload(requestBody);
+    utilService.validateAndThrow(requestBody, dataImportsBodySchema);
 
-        await utilService.checkAuthorization(securityContext, event, [
-            Role.globalAdmin,
-            Role.serviceBureauAdmin,
-            Role.superAdmin,
-            Role.hrAdmin,
-        ]);
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+    ]);
 
-        const { tenantId, companyId } = event.pathParameters;
-        const { dataImportTypeId, fileName } = requestBody;
+    const { tenantId, companyId } = event.pathParameters;
+    const { dataImportTypeId, fileName } = requestBody;
 
-        utilService.validateExtensions(fileName, ['csv']);
+    utilService.validateExtensions(fileName, ['csv']);
 
-        return await employeeImportService.dataImports(tenantId, companyId, dataImportTypeId, fileName);
-    },
-);
+    return await employeeImportService.dataImports(tenantId, companyId, dataImportTypeId, fileName);
+});
+
+/**
+ * Set 'Completed' in the Employee Import record
+ */
+export const setCompletedStatusGlobal = async (event: any, context: Context, callback: ProxyCallback) => {
+    console.info('employee-import.handler.setCompletedStatusGlobal');
+    console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
+
+    try {
+        return callback(undefined, { statusCode: 200, body: JSON.stringify('Employee import completed') });
+    } catch (error) {
+        console.error(`Unable to set completed status to Employee import process. Reason: ${JSON.stringify(error)}`);
+        return callback(error);
+    }
+};
+
+/**
+ * Set 'Failed' in the Employee Import record
+ */
+export const setFailedStatusGlobal = async (event: any, context: Context, callback: ProxyCallback) => {
+    console.info('employee-import.handler.setFailedStatusGlobal');
+    console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
+
+    try {
+        return callback(undefined, { statusCode: 200, body: JSON.stringify('Employee import failed') });
+    } catch (error) {
+        console.error(`Unable to set failed status to Employee import process. Reason: ${JSON.stringify(error)}`);
+        return callback(error);
+    }
+};
+
+/**
+ * Update an employee. DO NOT create an endpoint for this, it's for internal use only.
+ */
+export const updateEmployee = async (event: any, context: Context, callback: ProxyCallback) => {
+    console.info('employee-import.handler.updateEmployee');
+    console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
+
+    try {
+        return callback(undefined, { statusCode: 200, body: JSON.stringify('Employee import failed') });
+    } catch (error) {
+        console.error(`Unable to set failed status to Employee import process. Reason: ${JSON.stringify(error)}`);
+        return callback(error);
+    }
+};
