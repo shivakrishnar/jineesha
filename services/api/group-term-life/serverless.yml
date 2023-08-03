@@ -3,7 +3,7 @@ service: asure-group-term-life${opt:branchName, ''}
 provider:
   stage: ${file(${self:custom.configFile}):stage}
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs16.x
   timeout: 900   # AWS API Gateway timeout limit (30s)
   versionFunctions: false
   memorySize: 1024

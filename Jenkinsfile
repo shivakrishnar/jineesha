@@ -25,7 +25,7 @@ final String gitCredentials = "ssh-bitbucket-asuresoftware"
 
 // Project Name - this value is set by the name of the Jenkins job which should also be the name of the repo
 @Field final String projectName
-@Field final String nodeVersion = "v12.14.0"
+@Field final String nodeVersion = "v16.18.1"
 @Field final String nodeName = "linux"
 
 String commit_id

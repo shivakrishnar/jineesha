@@ -412,29 +412,40 @@ export const generateBillingReport = utilService.gatewayEventHandlerV2(
         utilService.normalizeHeaders(event);
         utilService.validateAndThrow(event.headers, headerSchema);
 
-        const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
-            return role === Role.globalAdmin;
-        });
-
-        if (!isAuthorized) {
-            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
-        }
-
         // default the request body if nothing was passed or default optional params if only some were passed
         requestBody = requestBody || {};
-        requestBody = {
-            returnReport: requestBody.returnReport || false,
-            targetEmail: requestBody.targetEmail || '',
-            month: requestBody.month || 0,
-            year: requestBody.year || 0,
-        };
 
-        await utilService.requirePayload(requestBody);
-        utilService.validateAndThrow(requestBody, billingValidationSchema);
-        utilService.checkAdditionalProperties(billingValidationSchema, requestBody, 'Billing Options');
-        await utilService.validateRequestBody(billingSchema, requestBody);
+        if (requestBody.tenantId) {
+            await utilService.checkAuthorization(securityContext, event, [
+                Role.globalAdmin,
+                Role.superAdmin
+            ]);
 
-        return await esignatureService.generateBillingReport(requestBody);
+            return await esignatureService.generateBillingReportByTenant(requestBody.tenantId);
+        }
+        else {
+            const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {
+                return role === Role.globalAdmin;
+            });
+    
+            if (!isAuthorized) {
+                throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the required role to use this endpoint');
+            }
+    
+            requestBody = {
+                returnReport: requestBody.returnReport || false,
+                targetEmail: requestBody.targetEmail || '',
+                month: requestBody.month || 0,
+                year: requestBody.year || 0,
+            };
+    
+            await utilService.requirePayload(requestBody);
+            utilService.validateAndThrow(requestBody, billingValidationSchema);
+            utilService.checkAdditionalProperties(billingValidationSchema, requestBody, 'Billing Options');
+            await utilService.validateRequestBody(billingSchema, requestBody);
+    
+            return await esignatureService.generateBillingReport(requestBody);
+        }        
     },
 );
 
