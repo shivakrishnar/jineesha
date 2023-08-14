@@ -1154,6 +1154,111 @@ export async function generateBillingReport(options: BillingReportOptions): Prom
     }
 }
 
+export async function generateBillingReportByTenant(tenantId: string): Promise<string> {
+    console.info('esignatureService.generateBillingReportByTenant');
+
+    // get all tenant IDs
+    const connectionStrings = await tenantsService.listConnectionStrings();
+    
+    // filter the domain by tenantid
+    const tenantDomain = connectionStrings.Items.find(function (conn) { return conn.TenantID == tenantId});
+    if (!tenantDomain)
+        throw errorService.getErrorResponse(72).setDeveloperMessage('Domain not found for the tenantid.');
+
+    // get esign legacy cutoff date
+    const ssm = new AWS.SSM({ region: configService.getAwsRegion() });
+    const params = {
+        Name: '/hr/esignature/simplesign/legacyClientCutOffDate',
+        WithDecryption: false,
+    };
+    const ssmResult = await ssm.getParameter(params).promise();
+    const legacyClientCutOffDate = ssmResult.Parameter.Value;
+
+    // set up defaults for month/year
+    const today = new Date();
+
+    // run query for every tenant
+    const getBillableSignRequests: ParameterizedQuery = new ParameterizedQuery('getBillableSignRequests', Queries.getBillableSignRequests);
+    getBillableSignRequests.setParameter('@month', today.getUTCMonth());
+    getBillableSignRequests.setParameter('@year', today.getUTCFullYear());
+    getBillableSignRequests.setStringParameter('@esignLegacyCutoff', legacyClientCutOffDate);
+
+    const payload = {
+        tenantId: '',
+        queryName: getBillableSignRequests.name,
+        query: getBillableSignRequests.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+
+    const queryResultPromises = [];
+    let tenantError = {};
+
+    let csvOut = 'Domain,Company,Billable Documents\r\n';
+    payload.tenantId = tenantId;
+
+    queryResultPromises.push(
+        utilService.withTimeout(() => {
+            return utilService.invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse).then(
+                (result: any) => {
+                    result.tenantId = tenantId;
+                    return result;
+                },
+                (err) => {
+                    tenantError = { tenantId, domain: tenantDomain.Domain, reason: err };
+                    return { error: true, reason: err };
+                },
+            );
+        }, 17500),
+    );
+
+    const queryResults = await pSettle(queryResultPromises);
+    let successfulTenant = false;
+    queryResults.forEach((queryResult: any) => {
+        if (queryResult.isFulfilled && !queryResult.value.error) {
+            successfulTenant = true;
+            queryResult.value.recordsets[0].forEach((row) => {
+                if (row.BillingEventType === 'CompanyDeleted') {
+                    // handle deleted companies
+                    const {
+                        companyName,
+                        companyCode,
+                        companyCreateDate,
+                        allBillableSignRequests,
+                        nonOnboardingBillableSignRequests,
+                        esignatureStatus,
+                        existingEsignatureBillingEvents,
+                    } = JSON.parse(row.Metadata);
+                    const company = `${companyName} (${companyCode})`;
+                    const billableDocs = new Date(companyCreateDate) <= new Date(legacyClientCutOffDate) ? nonOnboardingBillableSignRequests : allBillableSignRequests;
+                    if (billableDocs > 0 || esignatureStatus === 'E Sign' || existingEsignatureBillingEvents) {
+                        csvOut += `${tenantDomain.Domain},${company},${billableDocs}\r\n`;
+                    }
+                } else {
+                    csvOut += `${tenantDomain.Domain},${row.company},${row.billableDocuments}\r\n`;
+                }
+            });
+        }
+    });
+
+    
+    if (!successfulTenant) {
+        console.info(
+            `failed executions without error messages: ${JSON.stringify(
+                tenantError,
+            )}`,
+        );
+
+        console.info(`failed executions with error messages: ${JSON.stringify(tenantError)}`);
+
+        throw errorService.getErrorResponse(72).setDeveloperMessage(`Billing report failed, an error occurred when trying to get esign info for the tenant: ${tenantDomain.Domain}`);
+
+    }
+    else {
+        console.info(`successful execution`);
+        return csvOut;
+    }    
+}
+
 const s3Client = new AWS.S3({
     region: configService.getAwsRegion(),
     useAccelerateEndpoint: true,

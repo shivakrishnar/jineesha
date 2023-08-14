@@ -33,7 +33,7 @@ import { ParameterizedQuery } from './queries/parameterizedQuery';
 import { Queries } from './queries/queries';
 import { Query } from './queries/query';
 import { Role } from './api/models/Role';
-import { ConfigurationOptions } from 'aws-sdk/lib/config';
+import { ConfigurationOptions } from 'aws-sdk';
 
 export type ApiInvocationEvent = APIGatewayEvent | ScheduledEvent;
 
