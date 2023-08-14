@@ -260,11 +260,19 @@ export const setCompletedStatusGlobal = async (event: any, context: Context, cal
  * Set 'Failed' in the Employee Import record
  */
 export const setFailedStatusGlobal = async (event: any, context: Context, callback: ProxyCallback) => {
-    console.info('employee-import.handler.setFailedStatusGlobal');
-    console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
-
     try {
-        return callback(undefined, { statusCode: 200, body: JSON.stringify('Employee import failed') });
+        console.info('employee-import.handler.setFailedStatusGlobal');
+        console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
+
+        const { tenantId, dataImportEventId, errorMessage } = event;
+
+        console.log("Variables parsed");
+
+        employeeImportService.setFailedDataImportEvent(tenantId, dataImportEventId, errorMessage);
+        return callback(undefined, {
+            statusCode: 200,
+            body: JSON.stringify('End of failed status assignment and error message on the database'),
+        });
     } catch (error) {
         console.error(`Unable to set failed status to Employee import process. Reason: ${JSON.stringify(error)}`);
         return callback(error);
@@ -279,9 +287,9 @@ export const updateEmployee = async (event: any, context: Context, callback: Pro
     console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
 
     try {
-        return callback(undefined, { statusCode: 200, body: JSON.stringify('Employee import failed') });
+        return callback(undefined, { statusCode: 200, body: JSON.stringify('Employee import updated') });
     } catch (error) {
-        console.error(`Unable to set failed status to Employee import process. Reason: ${JSON.stringify(error)}`);
+        console.error(`Unable to update the employee. Reason: ${JSON.stringify(error)}`);
         return callback(error);
     }
 };
