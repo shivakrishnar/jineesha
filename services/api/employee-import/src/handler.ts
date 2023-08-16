@@ -242,6 +242,29 @@ export const dataImports = utilService.gatewayEventHandlerV2(async ({ securityCo
 });
 
 /**
+ * Set 'Processing' in the Employee Import record
+ */
+export const setProcessingStatusGlobal = async (event: any, context: Context, callback: ProxyCallback) => {
+    try {
+        console.info('employee-import.handler.setProcessingStatusGlobal');
+        console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
+
+        const { tenantId, dataImportEventId } = event;
+
+        console.log('Variables parsed');
+
+        employeeImportService.setDataImportEventStatusGlobal(tenantId, dataImportEventId, 'Processing');
+
+        console.log('Status processed');
+
+        return callback(undefined, event);
+    } catch (error) {
+        console.error(`Unable to set Processing status to DataImportEvent data. Reason: ${JSON.stringify(error)}`);
+        return callback(error);
+    }
+};
+
+/**
  * Set 'Completed' in the Employee Import record
  */
 export const setCompletedStatusGlobal = async (event: any, context: Context, callback: ProxyCallback) => {
@@ -266,7 +289,7 @@ export const setFailedStatusGlobal = async (event: any, context: Context, callba
 
         const { tenantId, dataImportEventId, errorMessage } = event;
 
-        console.log("Variables parsed");
+        console.log('Variables parsed');
 
         employeeImportService.setFailedDataImportEvent(tenantId, dataImportEventId, errorMessage);
         return callback(undefined, {

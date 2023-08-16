@@ -383,13 +383,9 @@ export async function setFailedDataImportEvent(tenantId: string, dataImportEvent
     console.info('EmployeeImport.Service.setFailedDataImportEvent');
 
     try {
-
         if (!tenantId || !dataImportEventId) {
-            throw errorService
-                .getErrorResponse(30)
-                .setDeveloperMessage('Expected value to tenantId and dataImportEventId not met.');
+            throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to tenantId and dataImportEventId not met.');
         }
-
 
         const updateDataImportEventFailedQuery = new ParameterizedQuery('updateDataImportEventFailed', Queries.updateDataImportEventFailed);
         updateDataImportEventFailedQuery.setParameter('@DataImportEventId', dataImportEventId);
@@ -405,6 +401,44 @@ export async function setFailedDataImportEvent(tenantId: string, dataImportEvent
         console.log(updateDataImportEventFailedPayload);
 
         await utilService.invokeInternalService('queryExecutor', updateDataImportEventFailedPayload, InvocationType.RequestResponse);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * This method will update the DataImportEvent table with the Processing status
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} dataImportEventId: The unique identifer for the Employee Import event
+ * @param {string} status: Global import status to be saved in DataImportEvent table
+ */
+export async function setDataImportEventStatusGlobal(tenantId: string, dataImportEventId: string, status: string): Promise<any> {
+    console.info('EmployeeImport.Service.setDataImportEventStatusGlobal');
+
+    try {
+        if (!tenantId || !dataImportEventId) {
+            throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to tenantId and dataImportEventId not met.');
+        }
+
+        const updateDataImportEventStatusQuery = new ParameterizedQuery('updateDataImportEventStatus', Queries.updateDataImportEventStatus);
+        updateDataImportEventStatusQuery.setParameter('@DataImportEventId', dataImportEventId);
+        updateDataImportEventStatusQuery.setParameter('@Status', status);
+
+        const updateDataImportEventStatusPayload = {
+            tenantId,
+            queryName: updateDataImportEventStatusQuery.name,
+            query: updateDataImportEventStatusQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        console.log(updateDataImportEventStatusPayload);
+
+        await utilService.invokeInternalService('queryExecutor', updateDataImportEventStatusPayload, InvocationType.RequestResponse);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
