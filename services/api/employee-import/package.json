@@ -1,7 +1,7 @@
 {
-    "name": "hr.services.api.tenants",
+    "name": "hr.services.api.employee.import",
     "version": "1.1.3",
-    "description": "Builds RESTful services for handling creation of new tenants",
+    "description": "Builds RESTful services for handling creation of new employee import",
     "engine": {
         "node": ">=8.10.0"
     },
@@ -12,7 +12,6 @@
     },
     "dependencies": {
         "@smallwins/validate": "^4.3.0",
-        "@types/lodash": "^4.14.88",
         "@types/nodemailer": "^4.6.5",
         "@types/speakeasy": "^2.0.2",
         "@types/yup": "^0.26.2",
@@ -23,7 +22,6 @@
         "io-ts": "^1.4.0",
         "io-ts-types": "^0.3.14",
         "jsonwebtoken": "^7.3.0",
-        "lodash": "^4.17.4",
         "mssql": "4.3.1",
         "njwt": "^0.4.0",
         "nodemailer": "^5.1.1",
@@ -55,12 +53,12 @@
         "lint-staged": "^8.0.4",
         "prettier": "1.15.0",
         "randomstring": "^1.1.5",
-        "serverless": "1.58.0",
+        "serverless": "^2.72.4",
         "serverless-aws-documentation": "^1.1.0",
         "serverless-cli": "^1.0.0",
         "serverless-cloudformation-resource-counter": "^0.1.1",
         "serverless-domain-manager": "^2.6.6",
-        "serverless-offline": "^5.12.0",
+        "serverless-offline": "^8.0.0",
         "serverless-plugin-warmup": "^5.0.0",
         "serverless-pseudo-parameters": "^2.4.0",
         "serverless-stack-output": "^0.2.3",

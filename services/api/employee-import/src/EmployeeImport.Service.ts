@@ -5,6 +5,7 @@ import * as configService from '../../../config.service';
 
 import { PaginatedResult } from '../../../pagination/paginatedResult';
 import { ErrorMessage } from '../../../errors/errorMessage';
+import { InvocationType } from '../../../util.service';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
@@ -369,5 +370,47 @@ export async function dataImports(tenantId: string, companyId: string, dataImpor
     } catch (e) {
         console.log(e);
         throw e;
+    }
+}
+
+/**
+ * This method will update the DataImportEvent table with the error returned by AWS occured on the Step Funciton execution
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} dataImportEventId: The unique identifer for the Employee Import event
+ * @param {string} errorMessage: Error message returned by AWS
+ */
+export async function setFailedDataImportEvent(tenantId: string, dataImportEventId: string, errorMessage: string): Promise<any> {
+    console.info('EmployeeImport.Service.setFailedDataImportEvent');
+
+    try {
+
+        if (!tenantId || !dataImportEventId) {
+            throw errorService
+                .getErrorResponse(30)
+                .setDeveloperMessage('Expected value to tenantId and dataImportEventId not met.');
+        }
+
+
+        const updateDataImportEventFailedQuery = new ParameterizedQuery('updateDataImportEventFailed', Queries.updateDataImportEventFailed);
+        updateDataImportEventFailedQuery.setParameter('@DataImportEventId', dataImportEventId);
+        updateDataImportEventFailedQuery.setParameter('@ErrorMessage', JSON.stringify(errorMessage));
+
+        const updateDataImportEventFailedPayload = {
+            tenantId,
+            queryName: updateDataImportEventFailedQuery.name,
+            query: updateDataImportEventFailedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        console.log(updateDataImportEventFailedPayload);
+
+        await utilService.invokeInternalService('queryExecutor', updateDataImportEventFailedPayload, InvocationType.RequestResponse);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
     }
 }
