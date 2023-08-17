@@ -272,4 +272,5 @@ export const Queries = {
     insertDataImportEvent: fs.readFileSync(path.join(basePath, 'employee-import/insertDataImportEvent.sql')).toString(),
     insertDataImportEventDetail: fs.readFileSync(path.join(basePath, 'employee-import/insertDataImportEventDetail.sql')).toString(),
     updateDataImportEventFailed: fs.readFileSync(path.join(basePath, 'employee-import/updateDataImportEventFailed.sql')).toString(),
+    updateDataImportEventStatus: fs.readFileSync(path.join(basePath, 'employee-import/updateDataImportEventStatus.sql')).toString(),
 };

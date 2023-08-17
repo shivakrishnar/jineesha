@@ -191,6 +191,10 @@ functions:
             cors:
               origin: '*'              
 
+  setProcessingStatusGlobal:
+    handler: src/handler.setProcessingStatusGlobal
+    memorySize: 1024
+
   setCompletedStatusGlobal:
     handler: src/handler.setCompletedStatusGlobal
     memorySize: 1024
