@@ -3,6 +3,8 @@ import * as utilService from '../../../util.service';
 import * as paginationService from '../../../pagination/pagination.service';
 import * as configService from '../../../config.service';
 
+import { IEmployeeImportEvent, NotificationEventType } from './../../../internal-api/notification/events';
+
 import { PaginatedResult } from '../../../pagination/paginatedResult';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { InvocationType } from '../../../util.service';
@@ -439,6 +441,115 @@ export async function setDataImportEventStatusGlobal(tenantId: string, dataImpor
         console.log(updateDataImportEventStatusPayload);
 
         await utilService.invokeInternalService('queryExecutor', updateDataImportEventStatusPayload, InvocationType.RequestResponse);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * This method will update the DataImportEvent table with the Processing status
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} dataImportEventId: The unique identifer for the Employee Import event
+ */
+export async function processFinalStatusAndNotify(tenantId: string, dataImportEventId: string): Promise<any> {
+    console.info('EmployeeImport.Service.processFinalStatusAndNotify');
+
+    console.log(tenantId);
+    console.log(dataImportEventId);
+
+    try {
+        if (!tenantId || !dataImportEventId) {
+            throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to tenantId and dataImportEventId not met.');
+        }
+
+        const getImportSummaryQuery = new ParameterizedQuery('getDataImportEventDetailSummary', Queries.getDataImportEventDetailSummary);
+        getImportSummaryQuery.setParameter('@dataImportEventId', dataImportEventId);
+
+        const payload = {
+            tenantId,
+            queryName: getImportSummaryQuery.name,
+            query: getImportSummaryQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        console.log(payload);
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        console.log(result);
+
+        if (result.recordsets[0].length === 0) {
+            return undefined;
+        }
+
+        let finalStatusGlobal = 'Processed';
+
+        if (result.recordset.length == 1) {
+            if (result.recordset[0].CSVRowStatus != 'Processed') {
+                finalStatusGlobal = 'Failed';
+            }
+        } else if (result.recordset.length > 1) {
+            if (result.recordset.filter((a) => a.CSVRowStatus == 'Processed').length > 0) {
+                finalStatusGlobal = 'Partially Processed';
+            } else {
+                finalStatusGlobal = 'Failed';
+            }
+        }
+
+        console.log(finalStatusGlobal);
+
+        setDataImportEventStatusGlobal(tenantId, dataImportEventId, finalStatusGlobal);
+
+        console.log('Status updated');
+
+        const getUserInfoQuery = new ParameterizedQuery('getUserFromDataImportEventID', Queries.getUserFromDataImportEventID);
+        getUserInfoQuery.setParameter('@dataImportEventId', dataImportEventId);
+
+        const payloadUser = {
+            tenantId,
+            queryName: getUserInfoQuery.name,
+            query: getUserInfoQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+        console.log(payload);
+
+        const resultUserInfo: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payloadUser,
+            utilService.InvocationType.RequestResponse,
+        );
+        console.log(resultUserInfo);
+
+        if (resultUserInfo.recordsets[0].length > 0 && resultUserInfo.recordset[0].Email) {
+            const creationDate = new Date(resultUserInfo.recordset[0].CreationDate);
+
+            console.log('Send email to user');
+
+            // send email
+            utilService.sendEventNotification({
+                urlParameters: {},
+                invokerEmail: '',
+                type: NotificationEventType.EmployeeImport,
+                recipient: resultUserInfo.recordset[0].Email || '',
+                status: finalStatusGlobal,
+                creationDate: creationDate.toLocaleString('en-us', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'}),
+                additionalMessage:
+                    finalStatusGlobal == 'Partially Processed'
+                        ? result.recordset
+                              .map((a) => a.CSVRowStatus + ': ' + a.total)
+                              .toString()
+                              .replaceAll(',', '<br />')
+                        : '',
+            } as IEmployeeImportEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
+
+            console.log('Email sent to user');
+        }
+
+        console.info(`successful executions`);
+        
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

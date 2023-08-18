@@ -265,13 +265,20 @@ export const setProcessingStatusGlobal = async (event: any, context: Context, ca
 };
 
 /**
- * Set 'Completed' in the Employee Import record
+ * Set 'Completed', 'Partially Processed' or 'Failed' status in the Employee Import record
+ * A notification will be send to the user with the result
  */
 export const setCompletedStatusGlobal = async (event: any, context: Context, callback: ProxyCallback) => {
-    console.info('employee-import.handler.setCompletedStatusGlobal');
-    console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
-
     try {
+        console.info('employee-import.handler.setCompletedStatusGlobal');
+        console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
+
+        const { tenantId, dataImportEventId } = event;
+
+        console.log('Variables parsed');
+
+        employeeImportService.processFinalStatusAndNotify(tenantId, dataImportEventId);
+
         return callback(undefined, { statusCode: 200, body: JSON.stringify('Employee import completed') });
     } catch (error) {
         console.error(`Unable to set completed status to Employee import process. Reason: ${JSON.stringify(error)}`);
