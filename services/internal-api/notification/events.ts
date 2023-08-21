@@ -11,6 +11,7 @@ export enum NotificationEventType {
     EsignatureBatchEvent = 'EsignatureBatchEvent',
     BillingEvent = 'BillingEvent',
     EsignatureEvent = 'EsignatureEvent',
+    EmployeeImport = 'EmployeeImportEvent'
 }
 
 export enum AlertCategory {
@@ -38,6 +39,13 @@ export interface IEsignatureEvent extends INotificationEvent {
 
 export interface IBillingEvent extends INotificationEvent {
     reportCsv: string;
+    recipient?: string;
+    additionalMessage?: string;
+}
+
+export interface IEmployeeImportEvent extends INotificationEvent {
+    status: string;
+    creationDate: string;
     recipient?: string;
     additionalMessage?: string;
 }

@@ -18,6 +18,7 @@ import {
     IEsignatureEvent,
     INotificationEvent,
     IBillingEvent,
+    IEmployeeImportEvent,
     NotificationEventType,
 } from './events';
 import { IDirectDepositMetadataKeys } from './metadata-keys/IDirectDepositMetadataKeys';
@@ -598,6 +599,38 @@ async function submitBillingEventNotification(event: IBillingEvent): Promise<voi
     return await sendSmtpHtmlEmail(emailMessage, smtpCredentials, [attachment]);
 }
 
+async function submitEmployeeImportEventNotification(event: IEmployeeImportEvent): Promise<void> {
+    console.info('notification.service.submitEmployeeImportEventNotification');
+    
+    let message = `Your import created in ${event.creationDate} has finished with the status: <strong>${event.status}</strong>.`;
+    if (event.additionalMessage) {
+        message += `<br /><br />Details:<br /> ${event.additionalMessage}`;
+    }
+
+    message += `<br /><br />Review your import detail through the Import Tool page.<br /><br />
+                <span style="color: #ccc; font-style: italic;">Don't answer this email, it was sent by unmonitored email box.</span>`;
+
+    const emailMessage = new EmailMessage(`Employee Import Result`, message, configService.getFromEmailAddress(), [event.recipient]);
+    const postmarkCredentials: PostmarkCredentials = JSON.parse(await utilService.getSecret(configService.getPostmarkSmtpCredentials()));
+    if (!postmarkCredentials) {
+        return;
+    }
+
+    console.log("a");
+
+    const smtpCredentials = {
+        host: configService.getPostmarkSmtpServerHost(),
+        port: Number(configService.getPostmarkSmtpServerPort()),
+        username: postmarkCredentials.username,
+        password: postmarkCredentials.password,
+        senderEmailAddress: configService.getBillingNotificationFromEmail(),
+    };
+
+    console.log("b");
+
+    return await sendSmtpHtmlEmail(emailMessage, smtpCredentials, []);
+}
+
 /**
  *  Routes and executes the notification event based on its type
  * @param {INotificationEvent} event: The request notification event
@@ -619,6 +652,9 @@ export async function processEvent(event: INotificationEvent): Promise<boolean> 
                 return true;
             case NotificationEventType.BillingEvent:
                 await submitBillingEventNotification(event as IBillingEvent);
+                break;
+            case NotificationEventType.EmployeeImport:
+                await submitEmployeeImportEventNotification(event as IEmployeeImportEvent);
                 break;
             default:
                 return false;
