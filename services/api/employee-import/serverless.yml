@@ -24,6 +24,7 @@ provider:
     hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
     hrDatabaseCreatorStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}
     hrCompanyMigratorStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrCompanyMigrator-${self:provider.stage}
+    hrEmployeeImportStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrEmployeeImportStateMachine-${self:provider.stage}
     teamNotificationTopicArn: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:mojojojo-status-notification
     scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
@@ -90,6 +91,7 @@ provider:
       Resource:
         - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator${opt:branchName, ''}-${self:provider.stage}"
         - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrCompanyMigrator${opt:branchName, ''}-${self:provider.stage}"
+        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrEmployeeImportStateMachine${opt:branchName, ''}-${self:provider.stage}"
 
     - Effect: Allow
       Action:
@@ -189,7 +191,7 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/data-imports
             method: post
             cors:
-              origin: '*'              
+              origin: '*'
 
   setProcessingStatusGlobal:
     handler: src/handler.setProcessingStatusGlobal

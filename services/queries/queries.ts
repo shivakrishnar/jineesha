@@ -275,5 +275,6 @@ export const Queries = {
     updateDataImportEventStatus: fs.readFileSync(path.join(basePath, 'employee-import/updateDataImportEventStatus.sql')).toString(),
     getDataImportEventDetailSummary: fs.readFileSync(path.join(basePath, 'employee-import/getDataImportEventDetailSummary.sql')).toString(),
     getUserFromDataImportEventID: fs.readFileSync(path.join(basePath, 'employee-import/getUserFromDataImportEventID.sql')).toString(),
-
+    updateEmployee: fs.readFileSync(path.join(basePath, 'employee-import/updateEmployee.sql')).toString(),
+    validateEmployeeDetails: fs.readFileSync(path.join(basePath, 'employee-import/validateEmployeeDetails.sql')).toString(),
 };

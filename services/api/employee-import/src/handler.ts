@@ -55,6 +55,16 @@ const dataImportsUriSchema = {
 const dataImportsBodySchema = {
     dataImportTypeId: { required: true, type: String },
     fileName: { required: true, type: String },
+    userId: { required: true, type: Number },
+};
+
+const employeeUpdateBodySchema = {
+    row: { required: true, type: null },
+    rowNumber: { required: true, type: Number },
+    tenantId: { required: true, type: String },
+    companyId: { required: true, type: String },
+    dataImportTypeId: { required: true, type: String },
+    dataImportEventId: { required: true, type: String }
 };
 
 /**
@@ -234,11 +244,11 @@ export const dataImports = utilService.gatewayEventHandlerV2(async ({ securityCo
     ]);
 
     const { tenantId, companyId } = event.pathParameters;
-    const { dataImportTypeId, fileName } = requestBody;
+    const { dataImportTypeId, fileName, userId } = requestBody;
 
     utilService.validateExtensions(fileName, ['csv']);
 
-    return await employeeImportService.dataImports(tenantId, companyId, dataImportTypeId, fileName);
+    return await employeeImportService.dataImports(tenantId, companyId, dataImportTypeId, fileName, userId);
 });
 
 /**
@@ -310,16 +320,21 @@ export const setFailedStatusGlobal = async (event: any, context: Context, callba
 };
 
 /**
- * Update an employee. DO NOT create an endpoint for this, it's for internal use only.
+ * Update an employee
  */
 export const updateEmployee = async (event: any, context: Context, callback: ProxyCallback) => {
-    console.info('employee-import.handler.updateEmployee');
-    console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
-
     try {
-        return callback(undefined, { statusCode: 200, body: JSON.stringify('Employee import updated') });
+        console.info('employee-import.handler.updateEmployee');
+        console.info(`employee-import.handler.updateEmployee event: ${JSON.stringify(event)}`);
+
+        await utilService.requirePayload(event);
+        utilService.validateAndThrow(event, employeeUpdateBodySchema);
+
+        const { row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId } = event;
+
+        return await employeeImportService.updateEmployee(row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId);
     } catch (error) {
-        console.error(`Unable to update the employee. Reason: ${JSON.stringify(error)}`);
+        console.error(`Reason: ${JSON.stringify(error)}`);
         return callback(error);
     }
 };
