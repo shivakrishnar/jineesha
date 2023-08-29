@@ -82,7 +82,7 @@ export async function listDataImports(
 ): Promise<PaginatedResult> {
     console.info('EmployeeImport.Service.ListDataImports');
 
-    const validQueryStringParameters = ['pageToken'];
+    const validQueryStringParameters = ['pageToken', 'search', 'status', 'active'];
 
     // Pagination validation
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
@@ -90,18 +90,42 @@ export async function listDataImports(
     try {
         let query = new ParameterizedQuery('listDataImportByCompany', Queries.listDataImportByCompany);
 
-        if (queryParams) {
-            utilService.validateQueryParams(queryParams, validQueryStringParameters);
-        }
-
         if (dataImportTypeId) {
             query = new ParameterizedQuery('listDataImportByCompanyAndDataImportType', Queries.listDataImportByCompanyAndDataImportType);
             query.setParameter('@dataImportTypeId', dataImportTypeId);
         }
 
+        if (queryParams) {
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+
+            if (queryParams['search']) {
+                query = new ParameterizedQuery('listDataImportByCompanyWithSearch', Queries.listDataImportByCompanyWithSearch);
+                query.setStringParameter('@searchFilter1', '%' + queryParams['search'] + '%');
+                query.setStringParameter('@searchFilter2', '%' + queryParams['search'] + '%');
+            }
+
+            if (queryParams['status']) {
+                query.setStringParameter('@status', queryParams['status']);
+            }
+            else {
+                query.setStringParameter('@status', '%');
+            }
+
+            if (queryParams['active']) {
+                query.setStringParameter('@active', queryParams['active']);
+            }
+            else {
+                query.setStringParameter('@active', '%');
+            }
+        }
+        else {
+            query.setStringParameter('@status', '%');
+            query.setStringParameter('@active', '%');
+        }
+
         query.setParameter('@companyId', companyId);
 
-        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page, true, );
 
         const payload = {
             tenantId,
@@ -123,15 +147,17 @@ export async function listDataImports(
                 id: record.ID,
                 companyId: record.CompanyID,
                 dataImportTypeId: record.DataImportTypeID,
+                dataImportTypeName: record.DataImportTypeName,
                 status: record.Status,
                 lastUserId: record.LastUserID,
                 lastProgramEvent: record.LastProgramEvent,
                 creationDate: record.CreationDate,
                 lastUpdatedDate: record.LastUpdatedDate,
+                userName: record.Username
             };
         });
 
-        return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page);
+        return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page, '6');
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

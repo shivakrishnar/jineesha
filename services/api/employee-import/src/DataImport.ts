@@ -11,11 +11,14 @@ export interface IDataImport  {
     id: number;
     companyId: number;
     dataImportTypeId: number;
+    dataImportTypeName: string;
     status: string;
     lastUserId: number;
     lastProgramEvent?: string;
     creationDate: string;
     lastUpdatedDate: string;
+    details?: string;
+    userName: string;
 }
 
 export interface IDataImportEventDetail  {
