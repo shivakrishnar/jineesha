@@ -233,6 +233,8 @@ export const dataImports = utilService.gatewayEventHandlerV2(async ({ securityCo
     utilService.validateAndThrow(event.headers, headerSchema);
     utilService.validateAndThrow(event.pathParameters, dataImportsUriSchema);
 
+    const hrAccessToken = event.headers.authorization.replace(/Bearer /i, '');
+
     await utilService.requirePayload(requestBody);
     utilService.validateAndThrow(requestBody, dataImportsBodySchema);
 
@@ -248,7 +250,7 @@ export const dataImports = utilService.gatewayEventHandlerV2(async ({ securityCo
 
     utilService.validateExtensions(fileName, ['csv']);
 
-    return await employeeImportService.dataImports(tenantId, companyId, dataImportTypeId, fileName, userId);
+    return await employeeImportService.dataImports(tenantId, companyId, dataImportTypeId, fileName, userId, hrAccessToken);
 });
 
 /**
@@ -330,9 +332,9 @@ export const updateEmployee = async (event: any, context: Context, callback: Pro
         await utilService.requirePayload(event);
         utilService.validateAndThrow(event, employeeUpdateBodySchema);
 
-        const { row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId } = event;
+        const { row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId, hrAccessToken } = event;
 
-        return await employeeImportService.updateEmployee(row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId);
+        return await employeeImportService.updateEmployee(row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId, hrAccessToken);
     } catch (error) {
         console.error(`Reason: ${JSON.stringify(error)}`);
         return callback(error);

@@ -397,7 +397,7 @@ select  @cStatus = 1
 	  if len(trim(@cDataValue)) = 0
 		select @cColumnsToUpdate = @cColumnsToUpdate + 'N'
 	  else
-		if @cDataValue not between 1 and 2080
+		if cast(@cDataValue as decimal(14,6)) not between 1 and 2080
 			begin
 				select @cErrorMessage = @cErrorMessage + 'Invalid Standard Payroll Hours,', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 				if @nGlobalError_Nbr = 5

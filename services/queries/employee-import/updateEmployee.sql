@@ -111,9 +111,9 @@ select @cStatus = 1
 	  select @cDataValue = value from #CSVtable where Row_Num = 21
 	  if len(trim(@cDataValue)) > 0
 	  begin
-		update Employee set CurrentPositionTypeID = (select ID from PositionType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Title))
+		update Employee set CurrentPositionTypeID = (select top(1) ID from PositionType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Title) order by ID desc)
 			where EmployeeCode = @cEmployeeCode and CompanyID = @nCompanyId
-		update EmployeePositionOrganization set PositionTypeID = (select ID from PositionType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Title))
+		update EmployeePositionOrganization set PositionTypeID = (select top(1) ID from PositionType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Title) order by ID desc)
 			where EmployeeID = @nEmployeeID and EffectiveDate = @dMaxDate
 	  end
 
@@ -158,9 +158,9 @@ select @cStatus = 1
 	  select @cDataValue = value from #CSVtable where Row_Num = 28
 	  if len(trim(@cDataValue)) > 0
 	  begin
-		update Employee set CurrentWorkerCompTypeID = (select ID from WorkerCompType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Description))
+		update Employee set CurrentWorkerCompTypeID = (select top(1) ID from WorkerCompType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Description) order by ID desc)
 			where EmployeeCode = @cEmployeeCode and CompanyID = @nCompanyId
-		update EmployeePositionOrganization set WorkerCompTypeID = (select ID from WorkerCompType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Description))
+		update EmployeePositionOrganization set WorkerCompTypeID = (select top(1) ID from WorkerCompType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Description) order by ID desc)
 			where ID = @nEmployeeID --does EPO
 	  end
 
