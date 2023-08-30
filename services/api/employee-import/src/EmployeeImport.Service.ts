@@ -3,6 +3,7 @@ import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
 import * as paginationService from '../../../pagination/pagination.service';
 import * as configService from '../../../config.service';
+import * as payrollService from '../../../remote-services/payroll.service';
 
 import { IEmployeeImportEvent, NotificationEventType } from './../../../internal-api/notification/events';
 
@@ -15,6 +16,8 @@ import { DatabaseEvent, QueryType } from '../../../internal-api/database/events'
 import { IDataImportType, IDataImportEventDetail, IDataImport, EmployeeUpdateCsvRowType } from './DataImport';
 import * as mime from 'mime-types';
 import fetch from 'node-fetch';
+import { IEvolutionKey } from '../../models/IEvolutionKey';
+import * as ssoService from '../../../remote-services/sso.service';
 
 /**
  * Returns a listing of data importing type for a specific tenant
@@ -312,9 +315,10 @@ export async function uploadUrl(tenantId: string, companyId: string, fileName: s
  * @param {string} dataImportTypeId: The unique identifier for the data import type
  * @param {string} fileName: File name with extension
  * @param {number} userId: The unique identifer for the user
+ * @param {string} hrAccessToken: The access token from AHR
  * @returns {Promise<any>}: A Promise of a URL or file
  */
-export async function dataImports(tenantId: string, companyId: string, dataImportTypeId: string, fileName: string, userId: number): Promise<any> {
+export async function dataImports(tenantId: string, companyId: string, dataImportTypeId: string, fileName: string, userId: number, hrAccessToken: string): Promise<any> {
     console.info('EmployeeImport.Service.dataImports');
 
     try {
@@ -378,11 +382,13 @@ export async function dataImports(tenantId: string, companyId: string, dataImpor
 
         //
         // Calling the step function to do the validation and update for each row of the csv file...
-        //
-        const stepFunctionInputs = { tenantId, companyId, dataImportTypeId, fileName, dataImportEventId, csvRelativePath: key, userId };
+        // I've leave the line below as a example for local test, please DO NOT remove this line.
+        //const stepFunctionArnName = 'arn:aws:states:us-east-1:317299412255:stateMachine:HrEmployeeImportStateMachine-development';
+        const stepFunctionArnName = configService.getHrEmployeeImportStateMachineArn();
+        const stepFunctionInputs = { tenantId, companyId, dataImportTypeId, fileName, dataImportEventId, csvRelativePath: key, userId, hrAccessToken };
         const stepFunctions = new AWS.StepFunctions();     
         const stepFunctionsParams = {
-            stateMachineArn: configService.getHrEmployeeImportStateMachineArn(),
+            stateMachineArn: stepFunctionArnName,
             input: JSON.stringify(stepFunctionInputs),
         };
 
@@ -405,6 +411,7 @@ export async function dataImports(tenantId: string, companyId: string, dataImpor
  * @param {string} companyId: The unique identifer for the company
  * @param {string} dataImportTypeId: The ID of DataImportType
  * @param {string} dataImportEventId: The ID of DataImportEvent
+ * @param {string} hrAccessToken: The access token from AHR
  * @returns {Promise<any>}: A Promise of the result [true or false]
  */
 export async function updateEmployee(
@@ -414,6 +421,7 @@ export async function updateEmployee(
     companyId: string,
     dataImportTypeId: string,
     dataImportEventId: string,
+    hrAccessToken: string,
 ): Promise<any> {
     console.info('EmployeeImport.Service.updateEmployee');
 
@@ -421,6 +429,9 @@ export async function updateEmployee(
         //
         // Handling the csv columns order
         //
+
+        console.info('===> Handling the csv columns order');
+
         const csvRowDesiredOrder = [
             "Employee Code", "Birthdate", "Time Clock Number", "Email", "Home Phone",
             "Work Phone", "Cell Phone", "Gender", "Ethnicity", "Education Level", 
@@ -439,6 +450,9 @@ export async function updateEmployee(
         //
         // Validating employee details...
         //
+
+        console.info('===> Validating employee details');
+
         const validateEmployeeDetailsDataEventQuery = new ParameterizedQuery('validateEmployeeDetails', Queries.validateEmployeeDetails);
         validateEmployeeDetailsDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
         validateEmployeeDetailsDataEventQuery.setParameter('@RowNumber', rowNumber);
@@ -454,24 +468,21 @@ export async function updateEmployee(
             queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        const result: any = await utilService.invokeInternalService(
-            'queryExecutor',
-            validateEmployeeDetailsPayload,
-            utilService.InvocationType.RequestResponse,
-        );
-        if (!result || !result.recordset.length || result.recordset[0].StatusResult === undefined || result.recordset[0].StatusResult === null) {
-            console.error('===> StatusResult was not returned from the database');
+        const validateEmployeeResult: any = await utilService.invokeInternalService('queryExecutor', validateEmployeeDetailsPayload, utilService.InvocationType.RequestResponse);
+        if (!validateEmployeeResult || !validateEmployeeResult.recordset.length || validateEmployeeResult.recordset[0].StatusResult === undefined || validateEmployeeResult.recordset[0].StatusResult === null) {
+            console.error('===> StatusResult was not returned from the validateEmployee script');
             return undefined;
         }
-        const statusResult: number = result.recordset[0].StatusResult;
+        const validateEmployeeStatusResult: number = validateEmployeeResult.recordset[0].StatusResult;
 
         //
-        // Updating employee...
+        // Updating employee on AHR...
         //
-        if (statusResult === 0) {
-            console.log(
-                `===> The employee row was not pass the validation: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`,
-            );
+
+        console.info('===> Updating employee on AHR');
+
+        if (validateEmployeeStatusResult === 0) {
+            console.info(`===> The employee row was not pass the validation: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`);
             return undefined;
         }
         const updateEmployeeDataEventQuery = new ParameterizedQuery('updateEmployee', Queries.updateEmployee);
@@ -489,7 +500,234 @@ export async function updateEmployee(
             queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        await utilService.invokeInternalService('queryExecutor', updateEmployeePayload, utilService.InvocationType.RequestResponse);
+        const updateEmployeeResult: any = await utilService.invokeInternalService('queryExecutor', updateEmployeePayload, utilService.InvocationType.RequestResponse);
+
+        if (!updateEmployeeResult || !updateEmployeeResult.recordset.length || updateEmployeeResult.recordset[0].StatusResult === undefined || updateEmployeeResult.recordset[0].StatusResult === null) {
+            console.error('===> StatusResult was not returned from the updateEmployee script');
+            return undefined;
+        }
+        const updateEmployeeStatusResult: number = updateEmployeeResult.recordset[0].StatusResult;
+
+        //
+        // Updating employee on EVO...
+        //
+
+		console.info('===> Starting the process to update an employee in EVO');
+
+        if (updateEmployeeStatusResult === 0) {
+            console.info(`===> The employee row was not updated on AHR: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`);
+            return undefined;
+        }
+
+        console.info('===> Getting EVO information from AHR');
+
+        const getEmployeeByEmployeeCodeDataEventQuery = new ParameterizedQuery('getEmployeeByEmployeeCode', Queries.getEmployeeByEmployeeCode);
+        getEmployeeByEmployeeCodeDataEventQuery.setParameter('@CompanyID', companyId);		
+        getEmployeeByEmployeeCodeDataEventQuery.setStringParameter('@EmployeeCode', jsonCsvRowReordered["Employee Code"]);
+
+        const getEmployeeByEmployeeCodePayload = {
+            tenantId,
+            queryName: getEmployeeByEmployeeCodeDataEventQuery.name,
+            query: getEmployeeByEmployeeCodeDataEventQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const getEmployeeByEmployeeCodeResult: any = await utilService.invokeInternalService('queryExecutor', getEmployeeByEmployeeCodePayload, utilService.InvocationType.RequestResponse);
+
+        if (!getEmployeeByEmployeeCodeResult || !getEmployeeByEmployeeCodeResult.recordset.length || 
+            getEmployeeByEmployeeCodeResult.recordset[0].EvoEmployeeId === undefined || getEmployeeByEmployeeCodeResult.recordset[0].EvoEmployeeId === null ||
+            getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === undefined || getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === null ||
+            getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === undefined || getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === null) {
+            console.error('===> getEmployeeByEmployeeCodeResult do not have what we need to update on EVO');
+            return undefined;
+        }
+
+        const hrEmployee: any = getEmployeeByEmployeeCodeResult.recordset[0];
+        const evoKeys: IEvolutionKey = {
+            clientId: hrEmployee.EvoClientId,
+            companyId: hrEmployee.EvoCompanyId,
+            employeeId: hrEmployee.EvoEmployeeId
+        };
+
+        console.info('===> Configuring EVO object information before API call');
+
+        if (!hrAccessToken || !hrAccessToken.length) {
+            console.info('===> hrAccessToken not found and we need him to update the employee on EVO');
+            return undefined;
+        }        
+        const evoAccessToken: string = await utilService.getEvoTokenWithHrToken(tenantId, hrAccessToken);
+        const tenantObject = await ssoService.getTenantById(tenantId, evoAccessToken);
+        const tenantName = tenantObject.subdomain;
+        const evoEmployee: any = await payrollService.getEmployeeFromEvo(tenantName, evoKeys, evoAccessToken);
+
+        if (!evoEmployee) {
+            console.error('===> evoEmployee does not exists in EVO');
+            return undefined;
+        }
+
+        console.info('===> Getting PositionType from AHR for EVO');
+
+        const getPositionTypeEvoIdByCodeDataEventQuery = new ParameterizedQuery('getPositionTypeEvoIdByCode', Queries.getPositionTypeEvoIdByCode);
+        getPositionTypeEvoIdByCodeDataEventQuery.setParameter('@CompanyID', companyId);		
+        getPositionTypeEvoIdByCodeDataEventQuery.setStringParameter('@Code', jsonCsvRowReordered["Position"]);
+
+        const getPositionTypeEvoIdByCodePayload = {
+            tenantId,
+            queryName: getPositionTypeEvoIdByCodeDataEventQuery.name,
+            query: getPositionTypeEvoIdByCodeDataEventQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const getPositionTypeEvoIdByCodeResult: any = await utilService.invokeInternalService('queryExecutor', getPositionTypeEvoIdByCodePayload, utilService.InvocationType.RequestResponse);
+
+        if (getPositionTypeEvoIdByCodeResult || getPositionTypeEvoIdByCodeResult.recordset.length){
+            evoEmployee.positionId = getPositionTypeEvoIdByCodeResult.recordset[0].PositionTypeEvoId;
+        }
+
+        console.info('===> Getting WorkerCompType from AHR for EVO');
+
+        const getWorkerCompTypeEvoIdByCodeDataEventQuery = new ParameterizedQuery('getWorkerCompTypeEvoIdByCode', Queries.getWorkerCompTypeEvoIdByCode);
+        getWorkerCompTypeEvoIdByCodeDataEventQuery.setParameter('@CompanyID', companyId);		
+        getWorkerCompTypeEvoIdByCodeDataEventQuery.setStringParameter('@Code', jsonCsvRowReordered["Worker Comp Code"]);
+
+        const getWorkerCompTypeEvoIdByCodePayload = {
+            tenantId,
+            queryName: getWorkerCompTypeEvoIdByCodeDataEventQuery.name,
+            query: getWorkerCompTypeEvoIdByCodeDataEventQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const getWorkerCompTypeEvoIdByCodeResult: any = await utilService.invokeInternalService('queryExecutor', getWorkerCompTypeEvoIdByCodePayload, utilService.InvocationType.RequestResponse);
+
+        if (getWorkerCompTypeEvoIdByCodeResult || getWorkerCompTypeEvoIdByCodeResult.recordset.length){
+            evoEmployee.workersCompensationId = getWorkerCompTypeEvoIdByCodeResult.recordset[0].WorkerCompTypeEvoId;
+        }
+
+        console.info('===> Configuring the others fields of the EVO object');
+
+        evoEmployee.employeeNumber = jsonCsvRowReordered["Employee Code"];
+        evoEmployee.email = jsonCsvRowReordered["Email"] || null;
+        evoEmployee.standardHours = jsonCsvRowReordered["Standard Payroll Hours"] || null;
+        evoEmployee.timeClockNumber = jsonCsvRowReordered["Time Clock Number"] || null;
+        evoEmployee.payFrequency = jsonCsvRowReordered["Pay Frequency"] || null;
+        evoEmployee.person.email = jsonCsvRowReordered["Email"] || null;        
+        evoEmployee.person.birthDate = jsonCsvRowReordered["Birthdate"] || null;
+
+        if (jsonCsvRowReordered["EEO Category"] && jsonCsvRowReordered["EEO Category"] === "0") {
+            evoEmployee.eeoCode = "None";
+        } else if (jsonCsvRowReordered["EEO Category"] && jsonCsvRowReordered["EEO Category"] === "1.1") {
+            evoEmployee.eeoCode = "Executive";
+        } else if (jsonCsvRowReordered["EEO Category"] && jsonCsvRowReordered["EEO Category"] === "1.2") {
+            evoEmployee.eeoCode = "Manager";
+        } else if (jsonCsvRowReordered["EEO Category"] && jsonCsvRowReordered["EEO Category"] === "2") {
+            evoEmployee.eeoCode = "Professional";
+        } else if (jsonCsvRowReordered["EEO Category"] && jsonCsvRowReordered["EEO Category"] === "3") {
+            evoEmployee.eeoCode = "Technician";
+        } else if (jsonCsvRowReordered["EEO Category"] && jsonCsvRowReordered["EEO Category"] === "4") {
+            evoEmployee.eeoCode = "Sales";
+        } else if (jsonCsvRowReordered["EEO Category"] && jsonCsvRowReordered["EEO Category"] === "5") {
+            evoEmployee.eeoCode = "Administrative";
+        } else if (jsonCsvRowReordered["EEO Category"] && jsonCsvRowReordered["EEO Category"] === "6") {
+            evoEmployee.eeoCode = "Craft";
+        } else if (jsonCsvRowReordered["EEO Category"] && jsonCsvRowReordered["EEO Category"] === "7") {
+            evoEmployee.eeoCode = "Operative";
+        } else if (jsonCsvRowReordered["EEO Category"] && jsonCsvRowReordered["EEO Category"] === "8") {
+            evoEmployee.eeoCode = "Laborer";
+        } else if (jsonCsvRowReordered["EEO Category"] && jsonCsvRowReordered["EEO Category"] === "9") {
+            evoEmployee.eeoCode = "Service";
+        } else {
+            evoEmployee.eeoCode = null;
+        }
+
+        if (jsonCsvRowReordered["FLSA Classification"] && jsonCsvRowReordered["FLSA Classification"].toUpperCase() === "NA") {
+            evoEmployee.federalTaxReporting.exemptions.flsaStatus = "NA";
+        } else if (jsonCsvRowReordered["FLSA Classification"] && jsonCsvRowReordered["FLSA Classification"].toUpperCase() === "N") {
+            evoEmployee.federalTaxReporting.exemptions.flsaStatus = "NonExempt";
+        } else if (jsonCsvRowReordered["FLSA Classification"] && jsonCsvRowReordered["FLSA Classification"].toUpperCase() === "E") {
+            evoEmployee.federalTaxReporting.exemptions.flsaStatus = "Exempt";
+        } else {
+            evoEmployee.federalTaxReporting.exemptions.flsaStatus = null;
+        }
+
+        if (jsonCsvRowReordered["Ethnicity"] && jsonCsvRowReordered["Ethnicity"] === "2") {
+            evoEmployee.person.ethnicity = "TwoOrMoreRaces";
+        } else if (jsonCsvRowReordered["Ethnicity"] && jsonCsvRowReordered["Ethnicity"].toUpperCase() === "A") {
+            evoEmployee.person.ethnicity = "Asian";
+        } else if (jsonCsvRowReordered["Ethnicity"] && jsonCsvRowReordered["Ethnicity"].toUpperCase() === "B") {
+            evoEmployee.person.ethnicity = "BlackOrAfricanAmerican";
+        } else if (jsonCsvRowReordered["Ethnicity"] && jsonCsvRowReordered["Ethnicity"].toUpperCase() === "H") {
+            evoEmployee.person.ethnicity = "HispanicOrLatino";
+        } else if (jsonCsvRowReordered["Ethnicity"] && jsonCsvRowReordered["Ethnicity"].toUpperCase() === "I") {
+            evoEmployee.person.ethnicity = "AmericanIndianOrAlaskaNative";
+        } else if (jsonCsvRowReordered["Ethnicity"] && jsonCsvRowReordered["Ethnicity"].toUpperCase() === "NA") {
+            evoEmployee.person.ethnicity = "NotApplicable";
+        } else if (jsonCsvRowReordered["Ethnicity"] && jsonCsvRowReordered["Ethnicity"].toUpperCase() === "O") {
+            evoEmployee.person.ethnicity = "Other";
+        } else if (jsonCsvRowReordered["Ethnicity"] && jsonCsvRowReordered["Ethnicity"].toUpperCase() === "P") {
+            evoEmployee.person.ethnicity = "NativeHawaiianOrOtherPacificIslander";
+        } else if (jsonCsvRowReordered["Ethnicity"] && jsonCsvRowReordered["Ethnicity"].toUpperCase() === "W") {
+            evoEmployee.person.ethnicity = "White";
+        } else {
+            evoEmployee.person.ethnicity = null;
+        }
+
+        if (jsonCsvRowReordered["Gender"] && jsonCsvRowReordered["Gender"] === "M") {
+            evoEmployee.person.gender = "M";
+        } else if (jsonCsvRowReordered["Gender"] && jsonCsvRowReordered["Gender"] === "F") {
+            evoEmployee.person.gender = "F";
+        } else if (jsonCsvRowReordered["Gender"] && jsonCsvRowReordered["Gender"] === "N/A") {
+            evoEmployee.person.gender = "NA";
+        } else if (jsonCsvRowReordered["Gender"] && jsonCsvRowReordered["Gender"] === "NB") {
+            evoEmployee.person.gender = "NonBinary";
+        } else {
+            evoEmployee.person.gender = null;
+        }
+
+        if (jsonCsvRowReordered["Veteran"] && jsonCsvRowReordered["Veteran"].toUpperCase() === "YES") {
+            evoEmployee.person.veteran = "Y";
+        } else if (jsonCsvRowReordered["Veteran"] && jsonCsvRowReordered["Veteran"].toUpperCase() === "NO") {
+            evoEmployee.person.veteran = "N";
+        } else if (jsonCsvRowReordered["Veteran"] && jsonCsvRowReordered["Veteran"].toUpperCase() === "DECLINED TO DISCLOSE - N/A") {
+            evoEmployee.person.veteran = "Unknown";
+        } else {
+            evoEmployee.person.veteran = null;
+        }
+
+        if (jsonCsvRowReordered["Military Reserve"] && jsonCsvRowReordered["Military Reserve"].toUpperCase() === "YES") {
+            evoEmployee.person.militaryReserve = "Y";
+        } else if (jsonCsvRowReordered["Military Reserve"] && jsonCsvRowReordered["Military Reserve"].toUpperCase() === "NO") {
+            evoEmployee.person.militaryReserve = "N";
+        } else if (jsonCsvRowReordered["Military Reserve"] && jsonCsvRowReordered["Military Reserve"].toUpperCase() === "DECLINED TO DISCLOSE - N/A") {
+            evoEmployee.person.militaryReserve = "Unknown";
+        } else {
+            evoEmployee.person.militaryReserve = null;
+        }
+
+        const phoneList: Array<any> = [];
+        phoneList.push({
+            "number": jsonCsvRowReordered["Cell Phone"] || null,
+            "extension": null,
+            "description": "Primary"
+        });
+        phoneList.push({
+            "number": jsonCsvRowReordered["Home Phone"] || null,
+            "extension": null,
+            "description": "Secondary"
+        });
+        phoneList.push({
+            "number": jsonCsvRowReordered["Work Phone"] || null,
+            "extension": null,
+            "description": "Tertiary"
+        });
+        evoEmployee.person.phones = phoneList;
+
+        console.info('===> Calling EVO API to update evoEmployee');
+        console.info(evoEmployee);
+
+        const updateEvoEmployeeStatusResult: any = await payrollService.updateEmployeeInEvo(tenantName, evoKeys, evoAccessToken, evoEmployee);
+
+        console.info('===> updateEvoEmployeeStatusResult');
+        console.info(updateEvoEmployeeStatusResult);
 
         return { isSuccess: true, message: 'Employee was updated successfully' };
     } catch (error) {
@@ -661,7 +899,7 @@ export async function processFinalStatusAndNotify(tenantId: string, dataImportEv
                 type: NotificationEventType.EmployeeImport,
                 recipient: resultUserInfo.recordset[0].Email || '',
                 status: finalStatusGlobal,
-                creationDate: creationDate.toLocaleString('en-us', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'}),
+                creationDate: creationDate.toLocaleString('en-us', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
                 additionalMessage:
                     finalStatusGlobal == 'Partially Processed'
                         ? result.recordset
