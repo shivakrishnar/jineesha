@@ -166,6 +166,15 @@ functions:
             cors:
               origin: '*'
 
+  downloadImportData:
+    handler: src/handler.downloadImportData
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/data-imports/{dataImportId}/download
+            method: get
+            cors:
+              origin: '*'
+
   getTemplate:
     handler: src/handler.getTemplate
     events:

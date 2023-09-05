@@ -5,12 +5,16 @@ insert into dbo.DataImportEvent(
 	DataImportTypeID,
 	LastUserID,
 	Status,
-	CreationDate
+	CreationDate,
+	Active,
+	Filename
 ) values (
 	@CompanyID,
 	@DataImportTypeID,
 	@UserID,
 	'Ready',
-	GETDATE()
+	GETDATE(),
+	1,
+	@FileName
 )
 select @DataImportEventID = SCOPE_IDENTITY()

@@ -19,6 +19,8 @@ import fetch from 'node-fetch';
 import { IEvolutionKey } from '../../models/IEvolutionKey';
 import * as ssoService from '../../../remote-services/sso.service';
 
+const employeeImportPageSize = '6';
+
 /**
  * Returns a listing of data importing type for a specific tenant
  * @param {string} tenantId: The unique identifier for the tenant the data importing type belongs to.
@@ -125,7 +127,7 @@ export async function listDataImports(
 
         query.setParameter('@companyId', companyId);
 
-        const paginatedQuery = await paginationService.appendPaginationFilter(query, page, true, );
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page, true, parseInt(employeeImportPageSize));
 
         const payload = {
             tenantId,
@@ -157,7 +159,7 @@ export async function listDataImports(
             };
         });
 
-        return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page, '6');
+        return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page, employeeImportPageSize);
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -377,6 +379,8 @@ export async function dataImports(tenantId: string, companyId: string, dataImpor
         dataEventQuery.setParameter('@CompanyID', companyId);
         dataEventQuery.setParameter('@DataImportTypeID', dataImportTypeId);
         dataEventQuery.setParameter('@UserID', userId);
+        dataEventQuery.setStringParameter('@FileName', fileName);
+
         const insertDataImportEventDetailSqlTemplate = Queries.insertDataImportEventDetail;
 
         let counter = 0;
@@ -779,7 +783,7 @@ export async function setFailedDataImportEvent(tenantId: string, dataImportEvent
             throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to tenantId and dataImportEventId not met.');
         }
 
-        const updateDataImportEventFailedQuery = new ParameterizedQuery('updateDataImportEventFailed', Queries.updateDataImportEventFailed);
+        const updateDataImportEventFailedQuery = new ParameterizedQuery('updateDataImportEventError', Queries.updateDataImportEventError);
         updateDataImportEventFailedQuery.setParameter('@DataImportEventId', dataImportEventId);
         updateDataImportEventFailedQuery.setParameter('@ErrorMessage', JSON.stringify(errorMessage));
 
@@ -789,9 +793,7 @@ export async function setFailedDataImportEvent(tenantId: string, dataImportEvent
             query: updateDataImportEventFailedQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-
-        console.log(updateDataImportEventFailedPayload);
-
+        
         await utilService.invokeInternalService('queryExecutor', updateDataImportEventFailedPayload, InvocationType.RequestResponse);
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -809,7 +811,7 @@ export async function setFailedDataImportEvent(tenantId: string, dataImportEvent
  * @param {string} dataImportEventId: The unique identifer for the Employee Import event
  * @param {string} status: Global import status to be saved in DataImportEvent table
  */
-export async function setDataImportEventStatusGlobal(tenantId: string, dataImportEventId: string, status: string): Promise<any> {
+export async function setDataImportEventStatusGlobal(tenantId: string, dataImportEventId: string, status: string, active: number): Promise<any> {
     console.info('EmployeeImport.Service.setDataImportEventStatusGlobal');
 
     try {
@@ -820,6 +822,7 @@ export async function setDataImportEventStatusGlobal(tenantId: string, dataImpor
         const updateDataImportEventStatusQuery = new ParameterizedQuery('updateDataImportEventStatus', Queries.updateDataImportEventStatus);
         updateDataImportEventStatusQuery.setParameter('@DataImportEventId', dataImportEventId);
         updateDataImportEventStatusQuery.setParameter('@Status', status);
+        updateDataImportEventStatusQuery.setParameter('@Active', active);       
 
         const updateDataImportEventStatusPayload = {
             tenantId,
@@ -891,7 +894,7 @@ export async function processFinalStatusAndNotify(tenantId: string, dataImportEv
 
         console.log(finalStatusGlobal);
 
-        setDataImportEventStatusGlobal(tenantId, dataImportEventId, finalStatusGlobal);
+        setDataImportEventStatusGlobal(tenantId, dataImportEventId, finalStatusGlobal, 0);
 
         console.log('Status updated');
 
@@ -948,4 +951,103 @@ export async function processFinalStatusAndNotify(tenantId: string, dataImportEv
         console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
     }
+}
+
+/**
+ * Returns a CSV file with the row from database from DataImportEventId
+ * @param {string} tenantId: The unique identifier for  a tenant
+ * @param {string} companyId: The unique identifier for a company
+ * @param {string} dataImportId: The unique identifier for a import event
+ * @param {string[]} queryParams: Used for status parameter 
+ * @returns {Promise<any>}: Promise of any.
+ */
+export async function downloadImportData(tenantId: string, companyId: string, dataImportId: string, queryParams: any, domainName: string, path: string,): Promise<any> {
+    console.info('EmployeeImport.Service.downloadImportData');
+    
+    try {
+        const validQueryStringParameters = ['status'];
+
+        let query = new ParameterizedQuery('getImportTypeAndImportedFilePathByImportEventID', Queries.getImportTypeAndImportedFilePathByImportEventID);
+        query.setParameter('@ID', dataImportId);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        if (result.recordsets[0].length === 0) {
+            return undefined;
+        }
+
+        if (queryParams && queryParams['status']) {
+            const dataImportTypeName = result.recordset[0].Name;
+
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+            
+            query = new ParameterizedQuery('getCSVRowsByStatus', Queries.getCSVRowsByStatus);
+            query.setParameter('@DataImportEventId', dataImportId);
+            query.setStringParameter('@Status', queryParams['status']);
+
+            const payloadDetails = {
+                tenantId: tenantId,
+                queryName: query.name,
+                query: query.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+        
+            const resultDetails: any = await utilService.invokeInternalService('queryExecutor', payloadDetails, utilService.InvocationType.RequestResponse);
+        
+            if (resultDetails.recordsets[0].length === 0) {
+                return undefined;
+            }
+        
+            let csvOut = '';
+            
+            if (dataImportTypeName === 'Update Employee Info') {
+                csvOut = 'Employee Code,Birthdate,Time Clock Number,Email,Home Phone,Work Phone,Cell Phone,Gender,Ethnicity,Education Level,Tobacco User,Disabled,Military Reserve,Veteran,Memo 1,Memo 2,Memo 3,Pay Frequency,Standard Payroll Hours,FLSA Classification,Position,Reports To 1,Reports To 2,Reports To 3,Supervisor (SC),Benefit Class/Eligibility Group,EEO Category,Worker Comp Code,Change Reason,Comment,Error (correct the error indicated and remove this column before re-uploading your file)\r\n';
+            }
+            else if (dataImportTypeName === 'Update Compensation') {
+                csvOut = "Employee Identifier,Effective Date,End Date,Pay Type,Rate,Jobs Number,Worker Comp Code,Change Reason,Comment,Error (correct the error indicated and remove this column before re-uploading your file)\r\n"
+            }
+            else if (dataImportTypeName === 'Update Alternate Rate') {
+                csvOut = "Alternate Rate,Error (correct the error indicated and remove this column before re-uploading your file)\r\n"
+            }
+            else {
+                return undefined;
+            }
+        
+            resultDetails.recordsets[0].forEach((row) => {
+                csvOut += `${row.CSVRowData},${row.CSVRowNotes}\r\n`;
+            });
+
+            return { data: csvOut, mimeType: 'text/csv' };
+        }
+        else {
+            
+            const fileName = result.recordset[0].FileName;
+
+            const bucketName = configService.getEmployeeImportBucketName();
+            const key = `imports/${tenantId}/${companyId}/${fileName}`;
+
+            const params = {
+                Bucket: bucketName,
+                Key: key,
+            };
+
+            const url = await utilService.getSignedUrlSync('getObject', params);
+            const mimeType = mime.contentType(fileName);
+
+            return { data: url, mimeType: `.${mimeType}` };
+        }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }  
 }
