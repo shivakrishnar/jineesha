@@ -18,7 +18,7 @@ declare @dMaxDate			datetime
 declare @cStatus			int
 select @cStatus = 1
 
-	  select row_number() over(order by (select 0)) as Row_Num, * 
+   select row_number() over(order by (select 0)) as Row_Num, * 
 		into #CSVtable
 		from string_split(@cCSVRow, ',') 
 
@@ -111,9 +111,9 @@ select @cStatus = 1
 	  select @cDataValue = value from #CSVtable where Row_Num = 21
 	  if len(trim(@cDataValue)) > 0
 	  begin
-		update Employee set CurrentPositionTypeID = (select top(1) ID from PositionType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Title) order by ID desc)
+		update Employee set CurrentPositionTypeID = (select top 1 ID from PositionType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Title))
 			where EmployeeCode = @cEmployeeCode and CompanyID = @nCompanyId
-		update EmployeePositionOrganization set PositionTypeID = (select top(1) ID from PositionType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Title) order by ID desc)
+		update EmployeePositionOrganization set PositionTypeID = (select top 1 ID from PositionType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Title))
 			where EmployeeID = @nEmployeeID and EffectiveDate = @dMaxDate
 	  end
 
@@ -158,10 +158,16 @@ select @cStatus = 1
 	  select @cDataValue = value from #CSVtable where Row_Num = 28
 	  if len(trim(@cDataValue)) > 0
 	  begin
-		update Employee set CurrentWorkerCompTypeID = (select top(1) ID from WorkerCompType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Description) order by ID desc)
+		update Employee set CurrentWorkerCompTypeID = (select ID from WorkerCompType where 
+			Code = (left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1)) and 
+			CountryStateTypeID = (select ID from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')','')) and 
+			CompanyID = @nCompanyId)
 			where EmployeeCode = @cEmployeeCode and CompanyID = @nCompanyId
-		update EmployeePositionOrganization set WorkerCompTypeID = (select top(1) ID from WorkerCompType where CompanyID = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Description) order by ID desc)
-			where ID = @nEmployeeID --does EPO
+		update EmployeePositionOrganization set WorkerCompTypeID = (select ID from WorkerCompType where 
+			Code = (left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1)) and 
+			CountryStateTypeID = (select ID from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')','')) and 
+			CompanyID = @nCompanyId)
+			where EmployeeID = @nEmployeeID
 	  end
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 29

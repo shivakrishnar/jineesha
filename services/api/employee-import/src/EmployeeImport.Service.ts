@@ -506,48 +506,8 @@ export async function updateEmployee(
         const validateEmployeeStatusResult: number = validateEmployeeResult.recordset[0].StatusResult;
 
         //
-        // Updating employee on AHR...
-        //
-
-        console.info('===> Updating employee on AHR');
-
-        if (validateEmployeeStatusResult === 0) {
-            console.info(`===> The employee row was not pass the validation: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`);
-            return undefined;
-        }
-        const updateEmployeeDataEventQuery = new ParameterizedQuery('updateEmployee', Queries.updateEmployee);
-        updateEmployeeDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
-        updateEmployeeDataEventQuery.setParameter('@RowNumber', rowNumber);
-        updateEmployeeDataEventQuery.setStringParameter('@TenantId', tenantId);
-        updateEmployeeDataEventQuery.setParameter('@CompanyId', companyId);
-        updateEmployeeDataEventQuery.setParameter('@DataImportTypeId', dataImportTypeId);
-        updateEmployeeDataEventQuery.setParameter('@DataImportEventId', dataImportEventId);
-
-        const updateEmployeePayload = {
-            tenantId,
-            queryName: updateEmployeeDataEventQuery.name,
-            query: updateEmployeeDataEventQuery.value,
-            queryType: QueryType.Simple,
-        } as DatabaseEvent;
-
-        const updateEmployeeResult: any = await utilService.invokeInternalService('queryExecutor', updateEmployeePayload, utilService.InvocationType.RequestResponse);
-
-        if (!updateEmployeeResult || !updateEmployeeResult.recordset.length || updateEmployeeResult.recordset[0].StatusResult === undefined || updateEmployeeResult.recordset[0].StatusResult === null) {
-            console.error('===> StatusResult was not returned from the updateEmployee script');
-            return undefined;
-        }
-        const updateEmployeeStatusResult: number = updateEmployeeResult.recordset[0].StatusResult;
-
-        //
         // Updating employee on EVO...
         //
-
-		console.info('===> Starting the process to update an employee in EVO');
-
-        if (updateEmployeeStatusResult === 0) {
-            console.info(`===> The employee row was not updated on AHR: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`);
-            return undefined;
-        }
 
         console.info('===> Getting EVO information from AHR');
 
@@ -609,17 +569,21 @@ export async function updateEmployee(
         } as DatabaseEvent;
 
         const getPositionTypeEvoIdByCodeResult: any = await utilService.invokeInternalService('queryExecutor', getPositionTypeEvoIdByCodePayload, utilService.InvocationType.RequestResponse);
-
-        if (getPositionTypeEvoIdByCodeResult || getPositionTypeEvoIdByCodeResult.recordset.length){
+        if (getPositionTypeEvoIdByCodeResult && getPositionTypeEvoIdByCodeResult.recordset.length){
             evoEmployee.positionId = getPositionTypeEvoIdByCodeResult.recordset[0].PositionTypeEvoId;
         }
 
         console.info('===> Getting WorkerCompType from AHR for EVO');
 
         const getWorkerCompTypeEvoIdByCodeDataEventQuery = new ParameterizedQuery('getWorkerCompTypeEvoIdByCode', Queries.getWorkerCompTypeEvoIdByCode);
-        getWorkerCompTypeEvoIdByCodeDataEventQuery.setParameter('@CompanyID', companyId);		
-        getWorkerCompTypeEvoIdByCodeDataEventQuery.setStringParameter('@Code', jsonCsvRowReordered["Worker Comp Code"]);
+        getWorkerCompTypeEvoIdByCodeDataEventQuery.setParameter('@CompanyID', companyId);	
+        
+        const WCCode = jsonCsvRowReordered["Worker Comp Code"].substring(0, jsonCsvRowReordered["Worker Comp Code"].indexOf('('));
+        const WCStateCode = jsonCsvRowReordered["Worker Comp Code"].substring(jsonCsvRowReordered["Worker Comp Code"].indexOf('(') + 1, jsonCsvRowReordered["Worker Comp Code"].indexOf(')'));
 
+        getWorkerCompTypeEvoIdByCodeDataEventQuery.setStringParameter('@Code', WCCode);
+        getWorkerCompTypeEvoIdByCodeDataEventQuery.setStringParameter('@StateCode', WCStateCode);
+        
         const getWorkerCompTypeEvoIdByCodePayload = {
             tenantId,
             queryName: getWorkerCompTypeEvoIdByCodeDataEventQuery.name,
@@ -628,8 +592,7 @@ export async function updateEmployee(
         } as DatabaseEvent;
 
         const getWorkerCompTypeEvoIdByCodeResult: any = await utilService.invokeInternalService('queryExecutor', getWorkerCompTypeEvoIdByCodePayload, utilService.InvocationType.RequestResponse);
-
-        if (getWorkerCompTypeEvoIdByCodeResult || getWorkerCompTypeEvoIdByCodeResult.recordset.length){
+        if (getWorkerCompTypeEvoIdByCodeResult && getWorkerCompTypeEvoIdByCodeResult.recordset.length){
             evoEmployee.workersCompensationId = getWorkerCompTypeEvoIdByCodeResult.recordset[0].WorkerCompTypeEvoId;
         }
 
@@ -759,13 +722,74 @@ export async function updateEmployee(
         console.info('===> updateEvoEmployeeStatusResult');
         console.info(updateEvoEmployeeStatusResult);
 
+        //
+        // Updating employee on AHR...
+        //
+
+        console.info('===> Updating employee on AHR');
+
+        if (validateEmployeeStatusResult === 0) {
+            console.info(`===> The employee row was not pass the validation: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`);
+            return undefined;
+        }
+        const updateEmployeeDataEventQuery = new ParameterizedQuery('updateEmployee', Queries.updateEmployee);
+        updateEmployeeDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
+        updateEmployeeDataEventQuery.setParameter('@RowNumber', rowNumber);
+        updateEmployeeDataEventQuery.setStringParameter('@TenantId', tenantId);
+        updateEmployeeDataEventQuery.setParameter('@CompanyId', companyId);
+        updateEmployeeDataEventQuery.setParameter('@DataImportTypeId', dataImportTypeId);
+        updateEmployeeDataEventQuery.setParameter('@DataImportEventId', dataImportEventId);
+
+        const updateEmployeePayload = {
+            tenantId,
+            queryName: updateEmployeeDataEventQuery.name,
+            query: updateEmployeeDataEventQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const updateEmployeeResult: any = await utilService.invokeInternalService('queryExecutor', updateEmployeePayload, utilService.InvocationType.RequestResponse);
+
+        if (!updateEmployeeResult || !updateEmployeeResult.recordset.length || updateEmployeeResult.recordset[0].StatusResult === undefined || updateEmployeeResult.recordset[0].StatusResult === null) {
+            console.error('===> StatusResult was not returned from the updateEmployee script');
+            return undefined;
+        }
+        const updateEmployeeStatusResult: number = updateEmployeeResult.recordset[0].StatusResult;
+        if (updateEmployeeStatusResult === 0) {
+            console.info(`===> The employee row was not updated on AHR: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`);
+            return undefined;
+        }
+
         return { isSuccess: true, message: 'Employee was updated successfully' };
     } catch (error) {
-        if (error instanceof ErrorMessage) {
-            throw error;
+        console.info(error);
+
+        let msgError = '';
+        if (error.error && error.error.developerMessage) {
+            msgError = error.error.developerMessage;
         }
-        console.error(error);
-        throw errorService.getErrorResponse(0);
+        else if (typeof(error) === 'object') {
+            msgError = error.toString();
+        }
+        else {
+            msgError = error;
+        }
+
+        console.info(msgError);
+
+        const updateDataImportEventDetailErrorQuery = new ParameterizedQuery('updateDataImportEventDetailError', Queries.updateDataImportEventDetailError);
+        updateDataImportEventDetailErrorQuery.setParameter('@DataImportEventId', dataImportEventId);
+        updateDataImportEventDetailErrorQuery.setParameter('@CSVRowNumber', rowNumber + 1);
+        updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError);
+
+        const updateDataImportEventDetailErrorPayload = {
+            tenantId,
+            queryName: updateDataImportEventDetailErrorQuery.name,
+            query: updateDataImportEventDetailErrorQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const updateDataImportEventDetailErrorResult: any = await utilService.invokeInternalService('queryExecutor', updateDataImportEventDetailErrorPayload, utilService.InvocationType.RequestResponse);
+        console.info(updateDataImportEventDetailErrorResult);
     }
 }
 
@@ -831,7 +855,7 @@ export async function setDataImportEventStatusGlobal(tenantId: string, dataImpor
             queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        console.log(updateDataImportEventStatusPayload);
+        console.info(updateDataImportEventStatusPayload);
 
         await utilService.invokeInternalService('queryExecutor', updateDataImportEventStatusPayload, InvocationType.RequestResponse);
     } catch (error) {

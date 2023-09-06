@@ -574,9 +574,11 @@ select  @cStatus = 1
 	  if len(trim(@cDataValue)) = 0
 		select @cColumnsToUpdate = @cColumnsToUpdate + 'N'
 	  else
-		if @cDataValue not in (select trim(str(ID,3)) from WorkerCompType where CompanyID = @nCompanyId) and 
-		   @cDataValue not in (select Code from WorkerCompType where CompanyID = @nCompanyId) and 
-		   @cDataValue not in (select isnull(Description,'') from WorkerCompType where CompanyID = @nCompanyId)
+		if (select count(ID) from WorkerCompType 
+			where 
+				Code = (left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1)) and 
+				CountryStateTypeID = (select ID from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')','')) and 
+				CompanyID = @nCompanyId) <> 1
 			begin
 				select @cErrorMessage = @cErrorMessage + 'Invalid Worker Comp Code,', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 				if @nGlobalError_Nbr = 5

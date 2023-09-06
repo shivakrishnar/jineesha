@@ -283,4 +283,5 @@ export const Queries = {
     getWorkerCompTypeEvoIdByCode: fs.readFileSync(path.join(basePath, 'employee-import/getWorkerCompTypeEvoIdByCode.sql')).toString(),
     getImportTypeAndImportedFilePathByImportEventID: fs.readFileSync(path.join(basePath, 'employee-import/getImportTypeAndImportedFilePathByImportEventID.sql')).toString(),
     getCSVRowsByStatus: fs.readFileSync(path.join(basePath, 'employee-import/getCSVRowsByStatus.sql')).toString(),
+    updateDataImportEventDetailError: fs.readFileSync(path.join(basePath, 'employee-import/updateDataImportEventDetailError.sql')).toString(),
 };
