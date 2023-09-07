@@ -272,7 +272,7 @@ export const Queries = {
     getDataImportTypeById: fs.readFileSync(path.join(basePath, 'employee-import/getDataImportTypeById.sql')).toString(),
     insertDataImportEvent: fs.readFileSync(path.join(basePath, 'employee-import/insertDataImportEvent.sql')).toString(),
     insertDataImportEventDetail: fs.readFileSync(path.join(basePath, 'employee-import/insertDataImportEventDetail.sql')).toString(),
-    updateDataImportEventFailed: fs.readFileSync(path.join(basePath, 'employee-import/updateDataImportEventFailed.sql')).toString(),
+    updateDataImportEventError: fs.readFileSync(path.join(basePath, 'employee-import/updateDataImportEventError.sql')).toString(),
     updateDataImportEventStatus: fs.readFileSync(path.join(basePath, 'employee-import/updateDataImportEventStatus.sql')).toString(),
     getDataImportEventDetailSummary: fs.readFileSync(path.join(basePath, 'employee-import/getDataImportEventDetailSummary.sql')).toString(),
     getUserFromDataImportEventID: fs.readFileSync(path.join(basePath, 'employee-import/getUserFromDataImportEventID.sql')).toString(),
@@ -281,4 +281,6 @@ export const Queries = {
     getEmployeeByEmployeeCode: fs.readFileSync(path.join(basePath, 'employee-import/getEmployeeByEmployeeCode.sql')).toString(),
     getPositionTypeEvoIdByCode: fs.readFileSync(path.join(basePath, 'employee-import/getPositionTypeEvoIdByCode.sql')).toString(),
     getWorkerCompTypeEvoIdByCode: fs.readFileSync(path.join(basePath, 'employee-import/getWorkerCompTypeEvoIdByCode.sql')).toString(),
+    getImportTypeAndImportedFilePathByImportEventID: fs.readFileSync(path.join(basePath, 'employee-import/getImportTypeAndImportedFilePathByImportEventID.sql')).toString(),
+    getCSVRowsByStatus: fs.readFileSync(path.join(basePath, 'employee-import/getCSVRowsByStatus.sql')).toString(),
 };

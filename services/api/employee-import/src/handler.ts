@@ -265,7 +265,7 @@ export const setProcessingStatusGlobal = async (event: any, context: Context, ca
 
         console.log('Variables parsed');
 
-        employeeImportService.setDataImportEventStatusGlobal(tenantId, dataImportEventId, 'Processing');
+        employeeImportService.setDataImportEventStatusGlobal(tenantId, dataImportEventId, 'Processing', 1);
 
         console.log('Status processed');
 
@@ -308,8 +308,6 @@ export const setFailedStatusGlobal = async (event: any, context: Context, callba
 
         const { tenantId, dataImportEventId, errorMessage } = event;
 
-        console.log('Variables parsed');
-
         employeeImportService.setFailedDataImportEvent(tenantId, dataImportEventId, errorMessage);
         return callback(undefined, {
             statusCode: 200,
@@ -340,3 +338,29 @@ export const updateEmployee = async (event: any, context: Context, callback: Pro
         return callback(error);
     }
 };
+
+/**
+ * Get the original CSV file or get the CSV row from database and return in CSV format
+ */
+export const downloadImportData = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('employee-import.handler.downloadImportData');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, dataImportEventDetailUriSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+    ]);
+
+    const { tenantId, companyId, dataImportId } = event.pathParameters;
+    const {
+        requestContext: { domainName, path },
+        queryStringParameters,
+    } = event;
+
+    return await employeeImportService.downloadImportData(tenantId, companyId, dataImportId, queryStringParameters, domainName, path);
+});
