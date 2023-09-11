@@ -54,7 +54,7 @@ select @cStatus = 1
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 8
 	  if len(trim(@cDataValue)) > 0
-		update Employee set GenderTypeID = (select ID from GenderType where CompanyID = @nCompanyId and EmployeeCode = @cEmployeeCode and @cDataValue = str(ID,2))
+		update Employee set GenderTypeID = (select ID from GenderType where @cDataValue = Code)
 		where ID = @nEmployeeID
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 9
