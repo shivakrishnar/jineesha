@@ -1,5 +1,5 @@
 select
-	evtType.Name, evt.FileName
+	evt.FileName, evtType.CSVHeader
 from
 	dbo.DataImportEvent evt inner join
 		dbo.DataImportType evtType on evt.DataImportTypeID = evtType.ID

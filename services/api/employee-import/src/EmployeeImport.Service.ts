@@ -462,15 +462,24 @@ export async function updateEmployee(
 
         console.info('===> Handling the csv columns order');
 
-        const csvRowDesiredOrder = [
-            "Employee Code", "Birthdate", "Time Clock Number", "Email", "Home Phone",
-            "Work Phone", "Cell Phone", "Gender", "Ethnicity", "Education Level", 
-            "Tobacco User", "Disabled", "Military Reserve", "Veteran", "Memo 1", 
-            "Memo 2", "Memo 3", "Pay Frequency", "Standard Payroll Hours", 
-            "FLSA Classification", "Position", "Reports To 1", "Reports To 2", 
-            "Reports To 3", "Supervisor (SC)", "Benefit Class/Eligibility Group", 
-            "EEO Category", "Worker Comp Code", "Change Reason", "Comment"
-            ];
+        let queryCSVHeader = new ParameterizedQuery('getImportTypeAndImportedFilePathByImportEventID', Queries.getImportTypeAndImportedFilePathByImportEventID);
+        queryCSVHeader.setParameter('@ID', dataImportEventId);
+
+        const payloadCSVHeader = {
+            tenantId,
+            queryName: queryCSVHeader.name,
+            query: queryCSVHeader.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const resultCSVHeader: any = await utilService.invokeInternalService('queryExecutor', payloadCSVHeader, utilService.InvocationType.RequestResponse);
+        console.info(resultCSVHeader);
+        
+        if (resultCSVHeader.recordsets[0].length === 0) {
+            return undefined;
+        }
+
+        const csvRowDesiredOrder = resultCSVHeader.recordset[0].CSVHeader.split(',');
         const jsonCsvRowReordered = {};
         csvRowDesiredOrder.forEach(key => {
             jsonCsvRowReordered[key] = jsonCsvRow[key];            
@@ -1010,7 +1019,7 @@ export async function downloadImportData(tenantId: string, companyId: string, da
         }
 
         if (queryParams && queryParams['status']) {
-            const dataImportTypeName = result.recordset[0].Name;
+            const csvHeader = result.recordset[0].CSVHeader;
 
             utilService.validateQueryParams(queryParams, validQueryStringParameters);
             
@@ -1031,21 +1040,7 @@ export async function downloadImportData(tenantId: string, companyId: string, da
                 return undefined;
             }
         
-            let csvOut = '';
-            
-            if (dataImportTypeName === 'Update Employee Info') {
-                csvOut = 'Employee Code,Birthdate,Time Clock Number,Email,Home Phone,Work Phone,Cell Phone,Gender,Ethnicity,Education Level,Tobacco User,Disabled,Military Reserve,Veteran,Memo 1,Memo 2,Memo 3,Pay Frequency,Standard Payroll Hours,FLSA Classification,Position,Reports To 1,Reports To 2,Reports To 3,Supervisor (SC),Benefit Class/Eligibility Group,EEO Category,Worker Comp Code,Change Reason,Comment,Error (correct the error indicated and remove this column before re-uploading your file)\r\n';
-            }
-            else if (dataImportTypeName === 'Update Compensation') {
-                csvOut = "Employee Identifier,Effective Date,End Date,Pay Type,Rate,Jobs Number,Worker Comp Code,Change Reason,Comment,Error (correct the error indicated and remove this column before re-uploading your file)\r\n"
-            }
-            else if (dataImportTypeName === 'Update Alternate Rate') {
-                csvOut = "Alternate Rate,Error (correct the error indicated and remove this column before re-uploading your file)\r\n"
-            }
-            else {
-                return undefined;
-            }
-        
+            let csvOut = csvHeader + ',Error (correct the error indicated and remove this column before re-uploading your file)\r\n';
             resultDetails.recordsets[0].forEach((row) => {
                 csvOut += `${row.CSVRowData},${row.CSVRowNotes}\r\n`;
             });
