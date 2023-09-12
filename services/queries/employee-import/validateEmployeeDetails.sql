@@ -177,25 +177,21 @@ select  @cStatus = 1
 			select @cColumnsToUpdate = @cColumnsToUpdate + 'Y'
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 8 
-	  if len(trim(@cDataValue)) = 0
-		select @cColumnsToUpdate = @cColumnsToUpdate + 'N'
+	  if @cDataValue not in (select Code from GenderType) or 
+		 len(trim(@cDataValue)) = 0
+		 begin
+			select @cErrorMessage = @cErrorMessage + 'Invalid Gender,', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+			if @nGlobalError_Nbr = 5
+				begin
+					update DataImportEventDetail 
+						set CSVRowStatus = 'Failed', CSVRowNotes = @cErrorMessage, LastUserID = 0, LastProgramEvent = 'usp_DataImportEvent_Validate_Employee', LastUpdatedDate = getdate()
+						where DataImportEventID = @nDataImportEventId and CSVRowNumber = @nRowNumber
+					select @cStatus as StatusResult
+					return
+				end
+		 end
 	  else
-		if @cDataValue not in (select str(ID,1) from GenderType) and 
-		   @cDataValue not in (select Code from GenderType) and 
-		   @cDataValue not in (select isnull(Description,'') from GenderType)
-			begin
-				select @cErrorMessage = @cErrorMessage + 'Invalid Gender,', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
-				if @nGlobalError_Nbr = 5
-					begin
-						update DataImportEventDetail 
-							set CSVRowStatus = 'Failed', CSVRowNotes = @cErrorMessage, LastUserID = 0, LastProgramEvent = 'usp_DataImportEvent_Validate_Employee', LastUpdatedDate = getdate()
-							where DataImportEventID = @nDataImportEventId and CSVRowNumber = @nRowNumber
-						select @cStatus as StatusResult
-						return
-					end
-			end
-		else
-			select @cColumnsToUpdate = @cColumnsToUpdate + 'Y'
+		 select @cColumnsToUpdate = @cColumnsToUpdate + 'Y'
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 9 
 	  if len(trim(@cDataValue)) = 0

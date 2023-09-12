@@ -759,6 +759,8 @@ export async function updateEmployee(
             return undefined;
         }
 
+        utilService.clearCache(tenantId, hrAccessToken);
+
         return { isSuccess: true, message: 'Employee was updated successfully' };
     } catch (error) {
         console.info(error);
