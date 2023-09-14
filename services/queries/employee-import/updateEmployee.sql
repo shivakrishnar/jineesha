@@ -18,9 +18,9 @@ declare @dMaxDate			datetime
 declare @cStatus			int
 select @cStatus = 1
 
-   select row_number() over(order by (select 0)) as Row_Num, * 
+	  select row_number() over(order by (select 0)) as Row_Num, * 
 		into #CSVtable
-		from string_split(@cCSVRow, ',') 
+		from string_split(replace(substring(@cCSVRow,2,len(@cCSVRow)-2), '","','~'), '~') 
 
 	  select @cEmployeeCode = value from #CSVtable where Row_Num = 1
 	  select @nEmployeeID = ID from Employee where EmployeeCode = @cEmployeeCode and CompanyID = @nCompanyId
@@ -120,22 +120,22 @@ select @cStatus = 1
 	  select @cDataValue = value from #CSVtable where Row_Num = 22
 	  if len(trim(@cDataValue)) > 0
 	  begin
-		update Employee set CurrentSupervisor1ID = @cDataValue where ID = @nEmployeeID
-		update EmployeePositionOrganization set Supervisor1ID = @cDataValue where EmployeeID = @nEmployeeID and EffectiveDate = @dMaxDate
+		update Employee set CurrentSupervisor1ID = (select ID from Employee where EmployeeCode = @cDataValue and CompanyID = @nCompanyId) where ID = @nEmployeeID
+		update EmployeePositionOrganization set Supervisor1ID = (select ID from Employee where EmployeeCode = @cDataValue and CompanyID = @nCompanyId) where EmployeeID = @nEmployeeID and EffectiveDate = @dMaxDate
 	  end
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 23
 	  if len(trim(@cDataValue)) > 0
 	  begin
-		update Employee set CurrentSupervisor2ID = @cDataValue where ID = @nEmployeeID
-		update EmployeePositionOrganization set Supervisor2ID = @cDataValue where EmployeeID = @nEmployeeID and EffectiveDate = @dMaxDate
+		update Employee set CurrentSupervisor2ID = (select ID from Employee where EmployeeCode = @cDataValue and CompanyID = @nCompanyId) where ID = @nEmployeeID
+		update EmployeePositionOrganization set Supervisor2ID = (select ID from Employee where EmployeeCode = @cDataValue and CompanyID = @nCompanyId) where EmployeeID = @nEmployeeID and EffectiveDate = @dMaxDate
 	  end
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 24
 	  if len(trim(@cDataValue)) > 0
 	  begin
-		update Employee set CurrentSupervisor3ID = @cDataValue where ID = @nEmployeeID
-		update EmployeePositionOrganization set Supervisor3ID = @cDataValue where EmployeeID = @nEmployeeID and EffectiveDate = @dMaxDate
+		update Employee set CurrentSupervisor3ID = (select ID from Employee where EmployeeCode = @cDataValue and CompanyID = @nCompanyId) where ID = @nEmployeeID
+		update EmployeePositionOrganization set Supervisor3ID = (select ID from Employee where EmployeeCode = @cDataValue and CompanyID = @nCompanyId) where EmployeeID = @nEmployeeID and EffectiveDate = @dMaxDate
 	  end
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 25

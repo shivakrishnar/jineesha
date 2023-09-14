@@ -456,6 +456,12 @@ export async function updateEmployee(
     console.info('EmployeeImport.Service.updateEmployee');
 
     try {
+
+        if (!hrAccessToken || !hrAccessToken.length) {
+            console.info('===> hrAccessToken not found and we need him to update the employee on EVO');
+            throw new Error(`Token not found`);
+        }
+
         //
         // Handling the csv columns order
         //
@@ -476,7 +482,7 @@ export async function updateEmployee(
         console.info(resultCSVHeader);
         
         if (resultCSVHeader.recordsets[0].length === 0) {
-            return undefined;
+            throw new Error(`The CSV header could not be found`);
         }
 
         const csvRowDesiredOrder = resultCSVHeader.recordset[0].CSVHeader.split(',');
@@ -484,12 +490,11 @@ export async function updateEmployee(
         csvRowDesiredOrder.forEach(key => {
             jsonCsvRowReordered[key] = jsonCsvRow[key];            
         });
-        const stringCsvRow = Object.values(jsonCsvRowReordered).join(",");
+        const stringCsvRow = '"' + Object.values(jsonCsvRowReordered).join('","') + '"';
 
         //
         // Validating employee details...
         //
-
         console.info('===> Validating employee details');
 
         const validateEmployeeDetailsDataEventQuery = new ParameterizedQuery('validateEmployeeDetails', Queries.validateEmployeeDetails);
@@ -510,9 +515,13 @@ export async function updateEmployee(
         const validateEmployeeResult: any = await utilService.invokeInternalService('queryExecutor', validateEmployeeDetailsPayload, utilService.InvocationType.RequestResponse);
         if (!validateEmployeeResult || !validateEmployeeResult.recordset.length || validateEmployeeResult.recordset[0].StatusResult === undefined || validateEmployeeResult.recordset[0].StatusResult === null) {
             console.error('===> StatusResult was not returned from the validateEmployee script');
-            return undefined;
+            throw new Error(`Status was not returned from the validateEmployee script`);
         }
         const validateEmployeeStatusResult: number = validateEmployeeResult.recordset[0].StatusResult;
+        if (validateEmployeeStatusResult === 0) {
+            console.info(`===> The employee row was not pass the validation: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`);
+            return undefined;
+        }
 
         //
         // Updating employee on EVO...
@@ -538,7 +547,7 @@ export async function updateEmployee(
             getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === undefined || getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === null ||
             getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === undefined || getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === null) {
             console.error('===> getEmployeeByEmployeeCodeResult do not have what we need to update on EVO');
-            return undefined;
+            throw new Error(`Do not have what we need to update on EVO`);
         }
 
         const hrEmployee: any = getEmployeeByEmployeeCodeResult.recordset[0];
@@ -550,10 +559,7 @@ export async function updateEmployee(
 
         console.info('===> Configuring EVO object information before API call');
 
-        if (!hrAccessToken || !hrAccessToken.length) {
-            console.info('===> hrAccessToken not found and we need him to update the employee on EVO');
-            return undefined;
-        }        
+        
         const evoAccessToken: string = await utilService.getEvoTokenWithHrToken(tenantId, hrAccessToken);
         const tenantObject = await ssoService.getTenantById(tenantId, evoAccessToken);
         const tenantName = tenantObject.subdomain;
@@ -561,7 +567,7 @@ export async function updateEmployee(
 
         if (!evoEmployee) {
             console.error('===> evoEmployee does not exists in EVO');
-            return undefined;
+            throw new Error(`Employee does not exists in EVO`);
         }
 
         console.info('===> Getting PositionType from AHR for EVO');
@@ -736,11 +742,7 @@ export async function updateEmployee(
         //
 
         console.info('===> Updating employee on AHR');
-
-        if (validateEmployeeStatusResult === 0) {
-            console.info(`===> The employee row was not pass the validation: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`);
-            return undefined;
-        }
+        
         const updateEmployeeDataEventQuery = new ParameterizedQuery('updateEmployee', Queries.updateEmployee);
         updateEmployeeDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
         updateEmployeeDataEventQuery.setParameter('@RowNumber', rowNumber);
@@ -760,11 +762,11 @@ export async function updateEmployee(
 
         if (!updateEmployeeResult || !updateEmployeeResult.recordset.length || updateEmployeeResult.recordset[0].StatusResult === undefined || updateEmployeeResult.recordset[0].StatusResult === null) {
             console.error('===> StatusResult was not returned from the updateEmployee script');
-            return undefined;
+            throw new Error(`Status was not returned from the update script`);
         }
         const updateEmployeeStatusResult: number = updateEmployeeResult.recordset[0].StatusResult;
         if (updateEmployeeStatusResult === 0) {
-            console.info(`===> The employee row was not updated on AHR: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`);
+            console.error(`===> The employee row was not updated on AHR: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`);
             return undefined;
         }
 
@@ -1019,6 +1021,9 @@ export async function downloadImportData(tenantId: string, companyId: string, da
         }
 
         if (queryParams && queryParams['status']) {
+
+            console.info('downloading lines with status ' + queryParams['status']);
+
             const csvHeader = result.recordset[0].CSVHeader;
 
             utilService.validateQueryParams(queryParams, validQueryStringParameters);
@@ -1040,14 +1045,16 @@ export async function downloadImportData(tenantId: string, companyId: string, da
                 return undefined;
             }
         
-            let csvOut = csvHeader + ',Error (correct the error indicated and remove this column before re-uploading your file)\r\n';
+            let csvOut = '"' + Object.values(csvHeader.split(',')).join('","') + '"' + `,"Error (correct the error indicated and remove this column before re-uploading your file)"\r\n`;
             resultDetails.recordsets[0].forEach((row) => {
-                csvOut += `${row.CSVRowData},${row.CSVRowNotes}\r\n`;
+                csvOut += `${row.CSVRowData},"${row.CSVRowNotes}"\r\n`;
             });
 
-            return { data: csvOut, mimeType: 'text/csv' };
+            return { data: csvOut, mimeType: `.text/csv; charset=utf-8` };
         }
         else {
+
+            console.info('downloading the original file');
             
             const fileName = result.recordset[0].FileName;
 
