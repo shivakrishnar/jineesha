@@ -284,4 +284,9 @@ export const Queries = {
     getImportTypeAndImportedFilePathByImportEventID: fs.readFileSync(path.join(basePath, 'employee-import/getImportTypeAndImportedFilePathByImportEventID.sql')).toString(),
     getCSVRowsByStatus: fs.readFileSync(path.join(basePath, 'employee-import/getCSVRowsByStatus.sql')).toString(),
     updateDataImportEventDetailError: fs.readFileSync(path.join(basePath, 'employee-import/updateDataImportEventDetailError.sql')).toString(),
+    validateCompensation: fs.readFileSync(path.join(basePath, 'employee-import/validateCompensation.sql')).toString(),
+    insertCompensation: fs.readFileSync(path.join(basePath, 'employee-import/insertCompensation.sql')).toString(),
+    getEmployeeCompensationByEmployeeID: fs.readFileSync(path.join(basePath, 'employee-import/getEmployeeCompensationByEmployeeID.sql')).toString(),
+    updateDataImportEventDetailProcessed: fs.readFileSync(path.join(basePath, 'employee-import/updateDataImportEventDetailProcessed.sql')).toString(),
+    updateCompensation: fs.readFileSync(path.join(basePath, 'employee-import/updateCompensation.sql')).toString(),
 };

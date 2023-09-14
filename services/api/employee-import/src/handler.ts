@@ -364,3 +364,43 @@ export const downloadImportData = utilService.gatewayEventHandlerV2(async ({ sec
 
     return await employeeImportService.downloadImportData(tenantId, companyId, dataImportId, queryStringParameters, domainName, path);
 });
+
+/**
+ * Update compensation
+ */
+export const updateCompensation = async (event: any, context: Context, callback: ProxyCallback) => {
+    try {
+        console.info('employee-import.handler.updateCompensation');
+        console.info(`employee-import.handler.updateCompensation event: ${JSON.stringify(event)}`);
+
+        await utilService.requirePayload(event);
+        utilService.validateAndThrow(event, employeeUpdateBodySchema);
+
+        const { row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId, hrAccessToken } = event;
+
+        return await employeeImportService.updateCompensation(row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId, hrAccessToken);
+    } catch (error) {
+        console.error(`Reason: ${JSON.stringify(error)}`);
+        return callback(error);
+    }
+};
+
+/**
+ * Update Altenate Rate
+ */
+export const updateAlternateRate = async (event: any, context: Context, callback: ProxyCallback) => {
+    try {
+        console.info('employee-import.handler.updateAlternateRate');
+        console.info(`employee-import.handler.updateAlternateRate event: ${JSON.stringify(event)}`);
+
+        await utilService.requirePayload(event);
+        utilService.validateAndThrow(event, employeeUpdateBodySchema);
+
+        const { row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId, hrAccessToken } = event;
+
+        return await employeeImportService.updateCompensation(row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId, hrAccessToken);
+    } catch (error) {
+        console.error(`Reason: ${JSON.stringify(error)}`);
+        return callback(error);
+    }
+};

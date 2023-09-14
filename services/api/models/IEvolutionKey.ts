@@ -3,4 +3,5 @@ export interface IEvolutionKey {
     companyId: string | undefined;
     employeeId: string | undefined;
     earningsAndDeductionsId?: string | undefined;
+    wageId?: string | undefined;
 }

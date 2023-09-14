@@ -46,6 +46,88 @@ export async function updateEvolutionEarningAndDeduction(
     }
 }
 
+export async function getWagesFromEvoEmployee(
+    tenantName: string,
+    evolutionKeys: IEvolutionKey,
+    token: string
+): Promise<any> {
+    console.info('payrollService.getWagesFromEvoEmployee');
+    const { clientId, companyId, employeeId } = evolutionKeys;
+    const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}/wages`;
+    try {
+        return await request.get({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            json: true,
+        });
+    } catch (e) {
+        throw e;
+    }
+}
+
+export async function updateWageInEvo(
+    tenantName: string,
+    evolutionKeys: IEvolutionKey,
+    token: string,
+    requestBody: any,
+): Promise<any> {
+    console.info('payrollService.updateWageInEvo');
+    const { clientId, companyId, employeeId, wageId } = evolutionKeys;
+    const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}/wages/${wageId}`;
+    try {
+        return await request.put({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            body: requestBody,
+            json: true,
+        });
+    } catch (e) {
+        throw e;
+    }
+}
+
+export async function postWageInEvo(
+    tenantName: string,
+    evolutionKeys: IEvolutionKey,
+    token: string,
+    requestBody: any,
+): Promise<any> {
+    console.info('payrollService.postWageInEvo');
+    const { clientId, companyId, employeeId } = evolutionKeys;
+    const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}/wages`;
+    try {
+        return await request.patch({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            body: requestBody,
+            json: true,
+        });
+    } catch (e) {
+        throw e;
+    }
+}
+
+export async function patchWageInEvo(
+    tenantName: string,
+    evolutionKeys: IEvolutionKey,
+    token: string,
+    requestBody: any,
+): Promise<any> {
+    console.info('payrollService.patchWageInEvo');
+    const { clientId, companyId, employeeId, wageId } = evolutionKeys;
+    const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}/wages/${wageId}`;
+    try {
+        return await request.patch({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            body: requestBody,
+            json: true,
+        });
+    } catch (e) {
+        throw e;
+    }
+}
+
 export async function getEmployeeFromEvo(
     tenantName: string,
     evolutionKeys: IEvolutionKey,
@@ -80,6 +162,27 @@ export async function updateEmployeeInEvo(
     const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}`;
     try {
         return await request.put({
+            url: encodeURI(apiUrl),
+            headers: { Authorization: `Bearer ${token}` },
+            body: requestBody,
+            json: true,
+        });
+    } catch (e) {
+        throw e;
+    }
+}
+
+export async function patchEmployeeInEvo(
+    tenantName: string,
+    evolutionKeys: IEvolutionKey,
+    token: string,
+    requestBody: any,
+): Promise<any> {
+    console.info('payrollService.patchEmployeeInEvo');
+    const { clientId, companyId, employeeId } = evolutionKeys;
+    const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}`;
+    try {
+        return await request.patch({
             url: encodeURI(apiUrl),
             headers: { Authorization: `Bearer ${token}` },
             body: requestBody,
@@ -172,6 +275,7 @@ export async function getPayrollsByCompanyId(
         console.log(e);
     }
 }
+
 export async function getPayrollBatchesByPayrollId(
     tenantName: string,
     evolutionKeys: IEvolutionKey,

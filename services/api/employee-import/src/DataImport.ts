@@ -66,3 +66,28 @@ export type EmployeeUpdateCsvRowType = {
     "Change Reason": string;
     "Comment": string;
 }
+
+export type CompensationUpdateCsvRowType = {
+    "Employee Identifier": string;
+    "Effective Date": string;
+    "Pay Type": string;
+    "Rate": string;
+    "Jobs Number": string;
+    "Worker Comp Code": string;
+    "Change Reason": string;
+    "Comment": string;
+}
+
+export type AlternateRateUpdateCsvRowType = {
+    "Employee Identifier": string;
+    "Rate Number": string;
+    "Start Date": string;
+    "End Date": string;
+    "Hourly Rate": string;
+    "Job Number": string;
+    "Worker Comp Code": string;
+    "Organization Level 1": string;
+    "Organization Level 2": string;
+    "Organization Level 3": string;
+    "Organization Level 4": string;
+}
