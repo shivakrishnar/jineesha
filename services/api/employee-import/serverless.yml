@@ -218,6 +218,14 @@ functions:
     handler: src/handler.updateEmployee
     memorySize: 1024
 
+  updateCompensation:
+    handler: src/handler.updateCompensation
+    memorySize: 1024
+
+  updateAlternateRate:
+    handler: src/handler.updateAlternateRate
+    memorySize: 1024
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

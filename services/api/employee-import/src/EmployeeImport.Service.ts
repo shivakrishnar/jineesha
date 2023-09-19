@@ -13,7 +13,8 @@ import { InvocationType } from '../../../util.service';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
-import { IDataImportType, IDataImportEventDetail, IDataImport, EmployeeUpdateCsvRowType } from './DataImport';
+import { IDataImportType, IDataImportEventDetail, IDataImport, EmployeeUpdateCsvRowType, CompensationUpdateCsvRowType, AlternateRateUpdateCsvRowType } from './DataImport';
+import { IWage, IPatchOperation, IEvoPatch } from './Compensation';
 import * as mime from 'mime-types';
 import fetch from 'node-fetch';
 import { IEvolutionKey } from '../../models/IEvolutionKey';
@@ -889,9 +890,6 @@ export async function setDataImportEventStatusGlobal(tenantId: string, dataImpor
 export async function processFinalStatusAndNotify(tenantId: string, dataImportEventId: string): Promise<any> {
     console.info('EmployeeImport.Service.processFinalStatusAndNotify');
 
-    console.log(tenantId);
-    console.log(dataImportEventId);
-
     try {
         if (!tenantId || !dataImportEventId) {
             throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to tenantId and dataImportEventId not met.');
@@ -906,11 +904,8 @@ export async function processFinalStatusAndNotify(tenantId: string, dataImportEv
             query: getImportSummaryQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        console.log(payload);
 
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-        console.log(result);
-
         if (result.recordsets[0].length === 0) {
             return undefined;
         }
@@ -929,11 +924,11 @@ export async function processFinalStatusAndNotify(tenantId: string, dataImportEv
             }
         }
 
-        console.log(finalStatusGlobal);
+        console.info(finalStatusGlobal);
 
         setDataImportEventStatusGlobal(tenantId, dataImportEventId, finalStatusGlobal, 0);
 
-        console.log('Status updated');
+        console.info('Status updated');
 
         const getUserInfoQuery = new ParameterizedQuery('getUserFromDataImportEventID', Queries.getUserFromDataImportEventID);
         getUserInfoQuery.setParameter('@dataImportEventId', dataImportEventId);
@@ -944,19 +939,18 @@ export async function processFinalStatusAndNotify(tenantId: string, dataImportEv
             query: getUserInfoQuery.value,
             queryType: QueryType.Simple,
         } as DatabaseEvent;
-        console.log(payload);
 
         const resultUserInfo: any = await utilService.invokeInternalService(
             'queryExecutor',
             payloadUser,
             utilService.InvocationType.RequestResponse,
         );
-        console.log(resultUserInfo);
+        console.info(resultUserInfo);
 
         if (resultUserInfo.recordsets[0].length > 0 && resultUserInfo.recordset[0].Email) {
             const creationDate = new Date(resultUserInfo.recordset[0].CreationDate);
 
-            console.log('Send email to user');
+            console.info('Send email to user');
 
             // send email
             utilService.sendEventNotification({
@@ -975,7 +969,7 @@ export async function processFinalStatusAndNotify(tenantId: string, dataImportEv
                         : '',
             } as IEmployeeImportEvent); // Async call to invoke notification lambda - DO NOT AWAIT!!
 
-            console.log('Email sent to user');
+            console.info('Email sent to user');
         }
 
         console.info(`successful executions`);
@@ -1078,4 +1072,604 @@ export async function downloadImportData(tenantId: string, companyId: string, da
         console.error(error);
         throw errorService.getErrorResponse(0);
     }  
+}
+
+/**
+ * @param {CompensationUpdateCsvRowType} jsonCsvRow: The csv row with compensation data
+ * @param {number} rowNumber: Current row number of the csv row
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} companyId: The unique identifer for the company
+ * @param {string} dataImportTypeId: The ID of DataImportType
+ * @param {string} dataImportEventId: The ID of DataImportEvent
+ * @param {string} hrAccessToken: The access token from AHR
+ * @returns {Promise<any>}: A Promise of the result [true or false]
+ */
+export async function updateCompensation(
+    jsonCsvRow: CompensationUpdateCsvRowType,
+    rowNumber: number,
+    tenantId: string,
+    companyId: string,
+    dataImportTypeId: string,
+    dataImportEventId: string,
+    hrAccessToken: string,
+): Promise<any> {
+    console.info('EmployeeImport.Service.updateCompensation');
+
+    try {
+        if (!hrAccessToken || !hrAccessToken.length) {
+            console.info('===> hrAccessToken not found and we need him to update the compensation');
+            return undefined;
+        }
+
+        //
+        // Handling the csv columns order
+        //
+
+        console.info('===> Handling the csv columns order');
+
+        let queryCSVHeader = new ParameterizedQuery('getImportTypeAndImportedFilePathByImportEventID', Queries.getImportTypeAndImportedFilePathByImportEventID);
+        queryCSVHeader.setParameter('@ID', dataImportEventId);
+
+        const payloadCSVHeader = {
+            tenantId,
+            queryName: queryCSVHeader.name,
+            query: queryCSVHeader.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const resultCSVHeader: any = await utilService.invokeInternalService('queryExecutor', payloadCSVHeader, utilService.InvocationType.RequestResponse);
+        console.info(resultCSVHeader);
+        
+        if (resultCSVHeader.recordsets[0].length === 0) {
+            throw new Error(`CSV header not found`);
+        }
+
+        const csvRowDesiredOrder = resultCSVHeader.recordset[0].CSVHeader.split(',');
+        const jsonCsvRowReordered = {};
+        csvRowDesiredOrder.forEach(key => {
+            jsonCsvRowReordered[key] = jsonCsvRow[key];            
+        });
+        const stringCsvRow = '"' + Object.values(jsonCsvRowReordered).join('","') + '"';
+
+        //
+        // Validating compensation details...
+        //
+
+        console.info('===> Validating compensation details');
+
+        const validateCompensationDataEventQuery = new ParameterizedQuery('validateCompensation', Queries.validateCompensation);
+        validateCompensationDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
+        validateCompensationDataEventQuery.setParameter('@RowNumber', rowNumber);
+        validateCompensationDataEventQuery.setStringParameter('@TenantId', tenantId);
+        validateCompensationDataEventQuery.setParameter('@CompanyId', companyId);
+        validateCompensationDataEventQuery.setParameter('@DataImportEventId', dataImportEventId);
+
+        const validateCompensationPayload = {
+            tenantId,
+            queryName: validateCompensationDataEventQuery.name,
+            query: validateCompensationDataEventQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const validateCompensationResult: any = await utilService.invokeInternalService('queryExecutor', validateCompensationPayload, utilService.InvocationType.RequestResponse);
+        if (!validateCompensationResult || 
+            !validateCompensationResult.recordset.length || 
+            validateCompensationResult.recordset[0].StatusResult === undefined || 
+            validateCompensationResult.recordset[0].StatusResult === null) {
+            console.error('===> StatusResult was not returned from the validateCompensation script');
+            throw new Error(`Status was not returned from the validateCompensation script`);
+        }
+        const validateCompensationStatusResult: number = validateCompensationResult.recordset[0].StatusResult;
+        if (validateCompensationStatusResult === 0) {
+            console.info(`===> The compensation row was not pass the validation: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`);
+            return undefined;
+        }       
+        
+        //
+        // Updating compensation on AHR...
+        //
+
+        console.info('===> Updating compensation on AHR');
+        
+        const insertCompensationDataEventQuery = new ParameterizedQuery('insertCompensation', Queries.insertCompensation);
+        insertCompensationDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
+        insertCompensationDataEventQuery.setParameter('@RowNumber', rowNumber);
+        insertCompensationDataEventQuery.setStringParameter('@TenantId', tenantId);
+        insertCompensationDataEventQuery.setParameter('@CompanyId', companyId);
+        insertCompensationDataEventQuery.setParameter('@DataImportTypeId', dataImportTypeId);
+        insertCompensationDataEventQuery.setParameter('@DataImportEventId', dataImportEventId);
+
+        const insertCompensationPayload = {
+            tenantId,
+            queryName: insertCompensationDataEventQuery.name,
+            query: insertCompensationDataEventQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const insertCompensationResult: any = await utilService.invokeInternalService('queryExecutor', insertCompensationPayload, utilService.InvocationType.RequestResponse);
+        if (!insertCompensationResult || 
+            !insertCompensationResult.recordset.length || 
+            insertCompensationResult.recordset[0].StatusResult === undefined || 
+            insertCompensationResult.recordset[0].StatusResult === null) {
+            console.error('===> StatusResult was not returned from the insertCompensation script');
+            throw new Error(`StatusResult was not returned from the insertCompensation script`);
+        }
+
+        const insertCompensationStatusResult: number = insertCompensationResult.recordset[0].StatusResult;
+        if (insertCompensationStatusResult === 0) {
+            console.info(`===> The compensation row was not inserted on AHR: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`);
+            return undefined;
+        }
+
+        //
+        // Updating compensation on EVO...
+        //
+
+        console.info('===> Configuring EVO object information before API call');
+       
+        const evoAccessToken: string = await utilService.getEvoTokenWithHrToken(tenantId, hrAccessToken);
+        const tenantObject = await ssoService.getTenantById(tenantId, evoAccessToken);
+        const tenantName = tenantObject.subdomain;
+
+        console.info('===> Getting EVO information from AHR');
+
+        const getEmployeeByEmployeeCodeDataEventQuery = new ParameterizedQuery('getEmployeeByEmployeeCode', Queries.getEmployeeByEmployeeCode);
+        getEmployeeByEmployeeCodeDataEventQuery.setParameter('@CompanyID', companyId);		
+        getEmployeeByEmployeeCodeDataEventQuery.setStringParameter('@EmployeeCode', jsonCsvRowReordered["Employee Identifier"]);
+
+        const getEmployeeByEmployeeCodePayload = {
+            tenantId,
+            queryName: getEmployeeByEmployeeCodeDataEventQuery.name,
+            query: getEmployeeByEmployeeCodeDataEventQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const getEmployeeByEmployeeCodeResult: any = await utilService.invokeInternalService('queryExecutor', getEmployeeByEmployeeCodePayload, utilService.InvocationType.RequestResponse);
+
+        if (!getEmployeeByEmployeeCodeResult || !getEmployeeByEmployeeCodeResult.recordset.length || 
+            getEmployeeByEmployeeCodeResult.recordset[0].EvoEmployeeId === undefined || getEmployeeByEmployeeCodeResult.recordset[0].EvoEmployeeId === null ||
+            getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === undefined || getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === null ||
+            getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === undefined || getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === null) {
+            console.error('===> getEmployeeByEmployeeCodeResult do not have what we need to update on EVO');
+            throw new Error(`Do not have what we need to update on EVO`);
+        }
+
+        const hrEmployee: any = getEmployeeByEmployeeCodeResult.recordset[0];
+        const evoKeys: IEvolutionKey = {
+            clientId: hrEmployee.EvoClientId,
+            companyId: hrEmployee.EvoCompanyId,
+            employeeId: hrEmployee.EvoEmployeeId
+        };
+
+        if (evoKeys.clientId && evoKeys.companyId) {
+
+            console.info('===> Getting EVO Wage information');
+
+            const evoEmployeeWagesResult: any = await payrollService.getWagesFromEvoEmployee(tenantName, evoKeys, evoAccessToken);
+            if (evoEmployeeWagesResult && evoEmployeeWagesResult.results) {
+
+                let myEvoWage: IWage;
+                let myEmpPatch: IEvoPatch
+                let myWagePatch: IEvoPatch
+
+                if (evoEmployeeWagesResult.results.length == 0 || evoEmployeeWagesResult.results.filter(a => a.rate.id == 1).length == 0) {
+                    myEvoWage = InsertEvoWage(evoKeys, tenantName, evoAccessToken);
+                }
+                else {
+                    myEvoWage = evoEmployeeWagesResult.results.filter(a => a.rate.id == 1)[0];
+                }
+
+                //Get all compensation from AHR by EmployeeID
+                const getEmployeeCompensationsQuery = new ParameterizedQuery('getEmployeeCompensationByEmployeeID', Queries.getEmployeeCompensationByEmployeeID);
+                getEmployeeCompensationsQuery.setParameter('@EmployeeID', hrEmployee.ID);
+        
+                const getEmployeeCompensationsPayload = {
+                    tenantId,
+                    queryName: getEmployeeCompensationsQuery.name,
+                    query: getEmployeeCompensationsQuery.value,
+                    queryType: QueryType.Simple,
+                } as DatabaseEvent;
+        
+                const getEmployeeCompensationsResult: any = await utilService.invokeInternalService('queryExecutor', getEmployeeCompensationsPayload, utilService.InvocationType.RequestResponse);
+                if (!getEmployeeCompensationsResult || !getEmployeeCompensationsResult.recordset.length) {
+                    console.error('===> No Compensation found in AHR database');
+                    throw new Error(`No Compensation found in AHR database`);
+                }
+                else {
+                    const evoWageKeys: IEvolutionKey = {
+                        clientId: hrEmployee.EvoClientId,
+                        companyId: hrEmployee.EvoCompanyId,
+                        employeeId: hrEmployee.EvoEmployeeId,
+                        wageId: `${myEvoWage.id}`
+                    };
+
+                    let executedUpdate = false;
+                    getEmployeeCompensationsResult.recordset.forEach(empComp => {
+                        if (empComp.payTypeCode && empComp.payTypeCode === 'H') {
+                            if (!executedUpdate && new Date(empComp.EffectiveDate) <= new Date()) {
+                                myWagePatch = CreateDefaultPatchOperation(myWagePatch, myEvoWage.id, empComp.EffectiveDate, empComp.Rate);
+                                UpdateEvoWage(myEvoWage, empComp, evoWageKeys, tenantName, evoAccessToken);
+                                executedUpdate = true;
+                            }
+                            else {
+                                myWagePatch = LoadToPatchWage(myWagePatch, empComp, myEvoWage.id);
+                            }
+
+                            let myOldRate = empComp.Rate;
+                            empComp.Rate = 0
+                            myEmpPatch = LoadToPatchEmp(myEmpPatch, empComp, myEvoWage.id);
+                            empComp = myOldRate;
+                        }
+                        else {
+                            myEmpPatch = LoadToPatchEmp(myEmpPatch, empComp, myEvoWage.id);
+                            myWagePatch = CreateDefaultPatchOperation(myWagePatch, myEvoWage.id, empComp.EffectiveDate, 0);
+                            UpdateEvoWage(myEvoWage, empComp, evoWageKeys, tenantName, evoAccessToken);
+                        }
+                    });
+
+                    if (myWagePatch.patchOperations) {
+                        myWagePatch.id = myEvoWage.id;
+                        const evoPatchWageResult: any = await payrollService.patchWageInEvo(tenantName, evoWageKeys, evoAccessToken, myWagePatch);
+                        console.info('===> evoPatchWageResult');
+                        console.info(evoPatchWageResult);
+                    }
+                    
+                    if (myEmpPatch.patchOperations) {
+                        myEmpPatch.id = Number(evoKeys.employeeId);
+                        const evoPatchEmployeeResult: any = await payrollService.patchEmployeeInEvo(tenantName, evoKeys, evoAccessToken, myEmpPatch);
+                        console.info('===> evoPatchEmployeeResult');
+                        console.info(evoPatchEmployeeResult);
+                    }
+                    
+                    // Update PR_Integration_PK column of the last compensation inserted above in the AHR
+                    const compensationId = insertCompensationResult.recordset[0].CompensationIdResult;
+
+                    const updateCompensationWageIdQuery = new ParameterizedQuery('updateCompensation', Queries.updateCompensation);
+                    updateCompensationWageIdQuery.setParameter('@evoWageId', myEvoWage.id);
+                    updateCompensationWageIdQuery.setParameter('@employeeCompensationId', compensationId);
+
+                    const updateCompensationPayload = {
+                        tenantId,
+                        queryName: updateCompensationWageIdQuery.name,
+                        query: updateCompensationWageIdQuery.value,
+                        queryType: QueryType.Simple,
+                    } as DatabaseEvent;
+
+                    const updateCompensationResult: any = await utilService.invokeInternalService('queryExecutor', updateCompensationPayload, utilService.InvocationType.RequestResponse);
+                    if (!updateCompensationResult) {
+                        console.error('===> The column responsible for integrating Evo and AHR was not updated');
+                        throw new Error(`The column responsible for integrating Evo and AHR was not updated`);
+                    }
+                }                
+            }
+            else {
+                console.info('===> Path not mapped');
+            }
+        }
+
+        const updateDataImportEventDetailProcessed = new ParameterizedQuery('updateDataImportEventDetailProcessed', Queries.updateDataImportEventDetailProcessed);
+        updateDataImportEventDetailProcessed.setParameter('@DataImportEventId', dataImportEventId);
+        updateDataImportEventDetailProcessed.setParameter('@CSVRowNumber', rowNumber + 1);
+
+        const updateDataImportEventDetailProcessedPayload = {
+            tenantId,
+            queryName: updateDataImportEventDetailProcessed.name,
+            query: updateDataImportEventDetailProcessed.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const updateDataImportEventDetailProcessedResult: any = await utilService.invokeInternalService('queryExecutor', updateDataImportEventDetailProcessedPayload, utilService.InvocationType.RequestResponse);
+        console.info(updateDataImportEventDetailProcessedResult);
+
+        utilService.clearCache(tenantId, hrAccessToken);
+
+        return { isSuccess: true, message: 'Compensation was inserted successfully' };
+    } catch (error) {
+        console.info(error);
+
+        let msgError = '';
+        if (error.error && error.error.developerMessage) {
+            msgError = error.error.developerMessage;
+        }
+        else if (typeof(error) === 'object') {
+            msgError = error.toString();
+        }
+        else {
+            msgError = error;
+        }
+
+        console.info(msgError);
+
+        const updateDataImportEventDetailErrorQuery = new ParameterizedQuery('updateDataImportEventDetailError', Queries.updateDataImportEventDetailError);
+        updateDataImportEventDetailErrorQuery.setParameter('@DataImportEventId', dataImportEventId);
+        updateDataImportEventDetailErrorQuery.setParameter('@CSVRowNumber', rowNumber + 1);
+        updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError);
+
+        const updateDataImportEventDetailErrorPayload = {
+            tenantId,
+            queryName: updateDataImportEventDetailErrorQuery.name,
+            query: updateDataImportEventDetailErrorQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const updateDataImportEventDetailErrorResult: any = await utilService.invokeInternalService('queryExecutor', updateDataImportEventDetailErrorPayload, utilService.InvocationType.RequestResponse);
+        console.info(updateDataImportEventDetailErrorResult);
+    }
+}
+
+function InsertEvoWage(evoKeys: IEvolutionKey, tenantName, evoAccessToken): IWage {
+    console.info('EmployeeImport.service.InsertEvoWage');
+
+    let myEvoWage: IWage = {
+        employeeId: Number(evoKeys.employeeId),
+        rate: {
+            id: 1,
+            isDefault: true,
+            amount: 0
+        }
+    };
+
+    const postEvoWageResult: any = payrollService.postWageInEvo(tenantName, evoKeys, evoAccessToken, myEvoWage);
+    console.info('===> postEvoWageResult');
+    console.info(postEvoWageResult);
+
+    return postEvoWageResult;
+}
+
+function LoadToPatchEmp(myPatch: IEvoPatch, empComp, wageId: number): IEvoPatch {
+    console.info('EmployeeImport.service.LoadToPatchEmp');
+
+    const patchOperation: IPatchOperation = {
+        type: 'Replace',
+        effectiveDate: empComp.EffectiveDate,
+        pathGroup: [
+            {
+                path: '/salary',
+                value: empComp.Rate
+            }
+        ]
+    };
+
+    if (myPatch && myPatch.patchOperations) {
+        myPatch.patchOperations.push(patchOperation);
+    }
+    else {
+        myPatch = {
+            id: wageId,
+            patchOperations: [ patchOperation ]
+        };
+    }
+
+    return myPatch;
+}
+
+function LoadToPatchWage(myPatch: IEvoPatch, empComp, wageId: number): IEvoPatch {
+    console.info('EmployeeImport.service.LoadToPatchWage');
+
+    const patchOperation: IPatchOperation = {
+        type: 'Replace',
+        effectiveDate: empComp.EffectiveDate,
+        pathGroup: [
+            {
+                path: '/rate/id',
+                value: 1
+            },
+            {
+                path: '/rate/amount',
+                value: empComp.Rate
+            },
+            {
+                path: '/rate/isDefault',
+                value: true
+            },
+            {
+                path: '/jobId',
+                value: empComp.jobId
+            },
+            {
+                path: '/workerCompId',
+                value: empComp.workerCompensationId
+            },
+            {
+                path: '/divisionId',
+                value: empComp.org1Id
+            },
+            {
+                path: '/branchId',
+                value: empComp.org2Id
+            },
+            {
+                path: '/departmentId',
+                value: empComp.org3Id
+            },
+            {
+                path: '/teamId',
+                value: empComp.org4Id
+            }
+        ]
+    };
+
+    if (myPatch && myPatch.patchOperations) {
+        myPatch.patchOperations.push(patchOperation);
+    }
+    else {
+        myPatch = {
+            id: wageId,
+            patchOperations: [ patchOperation ]
+        };
+    }
+
+    return myPatch;
+}
+
+function CreateDefaultPatchOperation(myPatch: IEvoPatch, wageId: number, effectiveDate: string, amount: any): IEvoPatch {
+    console.info('EmployeeImport.service.CreateDefaultPatchOperation');
+
+    const patchOperation: IPatchOperation = {
+        type: 'Replace',
+        effectiveDate: effectiveDate,
+        pathGroup: [
+            {
+                path: '/rate/id',
+                value: 1
+            },
+            {
+                path: '/rate/amount',
+                value: amount
+            },
+            {
+                path: '/rate/isDefault',
+                value: true
+            },
+            {
+                path: '/rate/isDefault',
+                value: true
+            }
+        ]
+    };
+
+    if (myPatch && myPatch.patchOperations) {
+        myPatch.patchOperations.push(patchOperation);
+    }
+    else {
+        myPatch = {
+            id: wageId,
+            patchOperations: [
+                patchOperation
+            ]
+        };
+    }
+
+    return myPatch;
+}
+
+async function UpdateEvoWage(myEvoWage: IWage, empComp, evoWageKeys: IEvolutionKey, tenantName, evoAccessToken) {
+    console.info('EmployeeImport.Service.UpdateEvoWage');
+
+    myEvoWage.employeeId = Number(evoWageKeys.employeeId);
+    myEvoWage.divisionId = empComp.org1Id;
+    myEvoWage.branchId = empComp.org2Id;
+    myEvoWage.departmentId = empComp.org3Id;
+    myEvoWage.teamId = empComp.org4Id;
+    myEvoWage.jobId = empComp.jobId;
+    myEvoWage.workersCompensation.id = empComp.workerCompensationId;
+    myEvoWage.workersCompensation.description = empComp.workerCompDesc;
+    myEvoWage.workersCompensation.state.id = empComp.stateId;
+
+    const evoUpdateWageResult: any = await payrollService.updateWageInEvo(tenantName, evoWageKeys, evoAccessToken, myEvoWage);
+    console.info('===> evoUpdateWageResult');
+    console.info(evoUpdateWageResult);
+}
+
+/**
+ * @param {AlternateRateUpdateCsvRowType} jsonCsvRow: The csv row with altenate rate data
+ * @param {number} rowNumber: Current row number of the csv row
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} companyId: The unique identifer for the company
+ * @param {string} dataImportTypeId: The ID of DataImportType
+ * @param {string} dataImportEventId: The ID of DataImportEvent
+ * @param {string} hrAccessToken: The access token from AHR
+ * @returns {Promise<any>}: A Promise of the result [true or false]
+ */
+export async function updateAlternateRate(
+    jsonCsvRow: AlternateRateUpdateCsvRowType,
+    rowNumber: number,
+    tenantId: string,
+    companyId: string,
+    dataImportTypeId: string,
+    dataImportEventId: string,
+    hrAccessToken: string,
+): Promise<any> {
+    console.info('EmployeeImport.Service.updateAlternateRate');
+
+    try {
+        if (!hrAccessToken || !hrAccessToken.length) {
+            console.info('===> hrAccessToken not found and we need him to update the alternate rate');
+            return undefined;
+        } 
+
+        //
+        // Handling the csv columns order
+        //
+
+        console.info('===> Handling the csv columns order');
+
+        let queryCSVHeader = new ParameterizedQuery('getImportTypeAndImportedFilePathByImportEventID', Queries.getImportTypeAndImportedFilePathByImportEventID);
+        queryCSVHeader.setParameter('@ID', dataImportEventId);
+
+        const payloadCSVHeader = {
+            tenantId,
+            queryName: queryCSVHeader.name,
+            query: queryCSVHeader.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const resultCSVHeader: any = await utilService.invokeInternalService('queryExecutor', payloadCSVHeader, utilService.InvocationType.RequestResponse);
+        console.info(resultCSVHeader);
+        
+        if (resultCSVHeader.recordsets[0].length === 0) {
+            return undefined;
+        }
+
+        const csvRowDesiredOrder = resultCSVHeader.recordset[0].CSVHeader.split(',');
+        const jsonCsvRowReordered = {};
+        csvRowDesiredOrder.forEach(key => {
+            jsonCsvRowReordered[key] = jsonCsvRow[key];            
+        });
+        //const stringCsvRow = Object.values(jsonCsvRowReordered).join(",");
+
+        //
+        // Validating employee details...
+        //
+
+        console.info('===> Validating alternate rate details');
+
+        
+
+        //
+        // Updating alternate rate on EVO...
+        //
+
+
+
+        //
+        // Updating alternate rate on AHR...
+        //
+
+        console.info('===> Updating alternate rate on AHR');
+        
+        utilService.clearCache(tenantId, hrAccessToken);
+
+        return { isSuccess: true, message: 'Alternate rate was inserted successfully' };
+    } catch (error) {
+        console.info(error);
+
+        let msgError = '';
+        if (error.error && error.error.developerMessage) {
+            msgError = error.error.developerMessage;
+        }
+        else if (typeof(error) === 'object') {
+            msgError = error.toString();
+        }
+        else {
+            msgError = error;
+        }
+
+        console.info(msgError);
+
+        const updateDataImportEventDetailErrorQuery = new ParameterizedQuery('updateDataImportEventDetailError', Queries.updateDataImportEventDetailError);
+        updateDataImportEventDetailErrorQuery.setParameter('@DataImportEventId', dataImportEventId);
+        updateDataImportEventDetailErrorQuery.setParameter('@CSVRowNumber', rowNumber + 1);
+        updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError);
+
+        const updateDataImportEventDetailErrorPayload = {
+            tenantId,
+            queryName: updateDataImportEventDetailErrorQuery.name,
+            query: updateDataImportEventDetailErrorQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const updateDataImportEventDetailErrorResult: any = await utilService.invokeInternalService('queryExecutor', updateDataImportEventDetailErrorPayload, utilService.InvocationType.RequestResponse);
+        console.info(updateDataImportEventDetailErrorResult);
+    }
 }
