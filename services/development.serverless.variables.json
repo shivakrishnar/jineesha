@@ -54,5 +54,7 @@
     "payrollBaseUrl": "evolution-software.com",
     "dbBackupBucket": "dev.gremlins",
     "connectionStringsStreamArn": "arn:aws:dynamodb:us-east-1:317299412255:table/ConnectionStrings/stream/2022-05-25T21:19:54.178",
-    "tokenizationServiceHostUrl": "https://3u2xlaafg3.execute-api.us-east-1.amazonaws.com/dev"
+    "tokenizationServiceHostUrl": "https://tokenization.treasury.dev.asuresoftware.com",
+    "tokenizationServiceCredentialsId": "tokenization_credentials",
+    "tokenizationAuthUrl": "https://auth.dev.asurehcm.com/t/asuresoftware.com/oauth2/token"
 }

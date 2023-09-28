@@ -126,6 +126,10 @@ async function getDuplicateBankAccountQuery(
     } else {
         const tokenizationResponse = await getTokenizedOutput(tenantId, [accountNumber]);
         tokenizedAccountNumber = tokenizationResponse[0] || accountNumber;
+
+        if (tokenizedAccountNumber[0] !== '#') {
+            throw errorService.getErrorResponse(0).setMoreInfo('Unable to obtain tokenized account number');
+        }
     }
 
     const bankAccountsQuery = new ParameterizedQuery('CheckForDuplicateBankAccounts', Queries.checkForDuplicateBankAccounts);
@@ -230,6 +234,9 @@ export async function create(
         const truncatedAmount = parseInt('' + amount * 100, 10) / 100 || 0;
         const tokenizationResponse = await getTokenizedOutput(tenantId, [accountNumber]);
         const tokenizedValue = tokenizationResponse[0];
+        if (tokenizedValue[0] !== '#') {
+            throw errorService.getErrorResponse(0).setMoreInfo('Unable to obtain tokenized account number');
+        }
 
         createQuery.setParameter('@employeeId', employeeId);
         createQuery.setParameter('@routingNumber', routingNumber);

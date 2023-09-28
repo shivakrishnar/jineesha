@@ -30,11 +30,11 @@
         "request": "^2.88.0",
         "request-promise-native": "^1.0.5",
         "speakeasy": "^2.0.0",
+        "strip-bom": "^3.0.0",
         "superagent": "^3.5.2",
         "uid-generator": "^1.0.0",
         "uuid": "^3.0.1",
-        "yup": "^0.26.6",
-        "strip-bom": "^3.0.0"
+        "yup": "^0.26.6"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.17",
@@ -55,7 +55,7 @@
         "lint-staged": "^8.0.4",
         "prettier": "1.15.0",
         "randomstring": "^1.1.5",
-        "serverless": "^1.60.0",
+        "serverless": "^2.72.4",
         "serverless-aws-documentation": "^1.1.0",
         "serverless-cloudformation-resource-counter": "^0.1.1",
         "serverless-domain-manager": "^5.1.5",
@@ -64,7 +64,7 @@
         "serverless-stack-output": "^0.2.3",
         "serverless-webpack": "^5.2.0",
         "supertest": "~3.0.0",
-        "ts-jest": "^21.2.4",
+        "ts-jest": "^24.1.0",
         "ts-loader": "^4.5.0",
         "typescript": "^3.9.9",
         "typescript-with-globs": "^0.1.4",

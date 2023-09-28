@@ -38,6 +38,8 @@ provider:
     AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
     scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
     tokenizationServiceHostUrl: ${file(${self:custom.configFile}):tokenizationServiceHostUrl}
+    tokenizationServiceCredentialsId: ${file(${self:custom.configFile}):tokenizationServiceCredentialsId}
+    tokenizationAuthUrl: ${file(${self:custom.configFile}):tokenizationAuthUrl}
 
   iamRoleStatements:
     - Effect: Allow
