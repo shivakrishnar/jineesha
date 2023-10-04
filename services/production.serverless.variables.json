@@ -53,5 +53,8 @@
     "tlmWriteRole": "79b72af4-3a02-4259-a1c9-b2d29d39948a",
     "payrollBaseUrl": "evolutionpayroll.com",
     "dbBackupBucket": "gremlins.backups.production",
-    "connectionStringsStreamArn": "arn:aws:dynamodb:us-east-1:863166285603:table/ConnectionStrings/stream/2022-05-25T23:52:58.610"
+    "connectionStringsStreamArn": "arn:aws:dynamodb:us-east-1:863166285603:table/ConnectionStrings/stream/2022-05-25T23:52:58.610",
+    "tokenizationServiceHostUrl": "https://tokenization.treasury.asuresoftware.com",
+    "tokenizationServiceCredentialsId": "tokenization_credentials",
+    "tokenizationAuthUrl": "https://auth.asurehcm.com/t/asuresoftware.com/oauth2/token"
 }

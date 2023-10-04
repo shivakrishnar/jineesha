@@ -124,3 +124,7 @@ export const getDbBackupBucket = () => process.env.dbBackupBucket;
 export const getBranchName = () => process.env.branchName;
 
 export const getTokenizationServiceHostUrl = () => process.env.tokenizationServiceHostUrl;
+
+export const getTokenizationServiceCredentialsId = () => process.env.tokenizationServiceCredentialsId;
+
+export const getTokenizationAuthUrl = () => process.env.tokenizationAuthUrl;
