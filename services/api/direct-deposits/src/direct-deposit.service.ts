@@ -229,18 +229,41 @@ export async function create(
         }
         await executeDuplicatesQuery(tenantId, duplicatesQuery || bankAccountQuery);
 
+        // Checking in the database if the NACHA flag is on
+        const nachaQuery = new ParameterizedQuery('CheckNachaBetaFlagIsOn', Queries.checkNachaBetaFlagIsOn);
+        nachaQuery.setStringParameter('@CompanyID', companyId);
+
+        const nachaPayload = {
+            tenantId,
+            queryName: nachaQuery.name,
+            query: nachaQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const nachaResult: any = await utilService.invokeInternalService('queryExecutor', nachaPayload, utilService.InvocationType.RequestResponse);
+
+        if (!nachaResult || !nachaResult.recordset.length || !nachaResult.recordset[0].Result) {
+            throw errorService.getErrorResponse(0).setMoreInfo(`Nacha was not configured on this tenant: ${tenantId}`);
+        }
+        const nachaBetaFlagIsOn: any = nachaResult.recordset[0].Result;
+
+        let accountNumberValue = accountNumber;
+        if (nachaBetaFlagIsOn === 'Y') {
+            const tokenizationResponse = await getTokenizedOutput(tenantId, [accountNumber]);
+            const tokenizedValue = tokenizationResponse[0];
+            accountNumberValue = tokenizedValue;
+            if (tokenizedValue[0] !== '#') {
+                throw errorService.getErrorResponse(0).setMoreInfo('Unable to obtain tokenized account number');
+            }
+        }
+
         const createQuery = new ParameterizedQuery('DirectDepositCreate', Queries.directDepositCreate);
         // Truncate the amount field by removing excess decimal places. This will not round the value.
         const truncatedAmount = parseInt('' + amount * 100, 10) / 100 || 0;
-        const tokenizationResponse = await getTokenizedOutput(tenantId, [accountNumber]);
-        const tokenizedValue = tokenizationResponse[0];
-        if (tokenizedValue[0] !== '#') {
-            throw errorService.getErrorResponse(0).setMoreInfo('Unable to obtain tokenized account number');
-        }
 
         createQuery.setParameter('@employeeId', employeeId);
         createQuery.setParameter('@routingNumber', routingNumber);
-        createQuery.setParameter('@accountNumber', tokenizedValue);
+        createQuery.setParameter('@accountNumber', accountNumberValue);
         createQuery.setParameter('@amountType', amountType);
         createQuery.setParameter('@amount', truncatedAmount);
         // TODO: MJ-1177: Determine the status based on the role of the user.

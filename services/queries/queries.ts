@@ -29,6 +29,7 @@ export const Queries = {
     checkForDuplicateRemainderOfPay: fs.readFileSync(path.join(basePath, 'direct-deposits/checkForDuplicateRemainderOfPay.sql')).toString(),
     getEmployeeDirectDepositById: fs.readFileSync(path.join(basePath, 'direct-deposits/getEmployeeDirectDepositById.sql')).toString(),
     getEvoData: fs.readFileSync(path.join(basePath, 'direct-deposits/getEvoData.sql')).toString(),
+    checkNachaBetaFlagIsOn: fs.readFileSync(path.join(basePath, 'direct-deposits/checkNachaBetaFlagIsOn.sql')).toString(),
 
     // Miscellaneous
     databaseList: fs.readFileSync(path.join(basePath, 'miscellaneous/database.sql')).toString(),
