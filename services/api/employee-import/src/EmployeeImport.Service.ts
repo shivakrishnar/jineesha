@@ -469,7 +469,7 @@ export async function updateEmployee(
 
         console.info('===> Handling the csv columns order');
 
-        let queryCSVHeader = new ParameterizedQuery('getImportTypeAndImportedFilePathByImportEventID', Queries.getImportTypeAndImportedFilePathByImportEventID);
+        const queryCSVHeader = new ParameterizedQuery('getImportTypeAndImportedFilePathByImportEventID', Queries.getImportTypeAndImportedFilePathByImportEventID);
         queryCSVHeader.setParameter('@ID', dataImportEventId);
 
         const payloadCSVHeader = {
@@ -1107,7 +1107,7 @@ export async function updateCompensation(
 
         console.info('===> Handling the csv columns order');
 
-        let queryCSVHeader = new ParameterizedQuery('getImportTypeAndImportedFilePathByImportEventID', Queries.getImportTypeAndImportedFilePathByImportEventID);
+        const queryCSVHeader = new ParameterizedQuery('getImportTypeAndImportedFilePathByImportEventID', Queries.getImportTypeAndImportedFilePathByImportEventID);
         queryCSVHeader.setParameter('@ID', dataImportEventId);
 
         const payloadCSVHeader = {
@@ -1295,7 +1295,7 @@ export async function updateCompensation(
                                 myWagePatch = LoadToPatchWage(myWagePatch, empComp, myEvoWage.id);
                             }
 
-                            let myOldRate = empComp.Rate;
+                            const myOldRate = empComp.Rate;
                             empComp.Rate = 0
                             myEmpPatch = LoadToPatchEmp(myEmpPatch, empComp, myEvoWage.id);
                             empComp = myOldRate;
@@ -1400,7 +1400,7 @@ export async function updateCompensation(
 function InsertEvoWage(evoKeys: IEvolutionKey, tenantName, evoAccessToken): IWage {
     console.info('EmployeeImport.service.InsertEvoWage');
 
-    let myEvoWage: IWage = {
+    const myEvoWage: IWage = {
         employeeId: Number(evoKeys.employeeId),
         rate: {
             id: 1,
@@ -1594,7 +1594,7 @@ export async function updateAlternateRate(
 
         console.info('===> Handling the csv columns order');
 
-        let queryCSVHeader = new ParameterizedQuery('getImportTypeAndImportedFilePathByImportEventID', Queries.getImportTypeAndImportedFilePathByImportEventID);
+        const queryCSVHeader = new ParameterizedQuery('getImportTypeAndImportedFilePathByImportEventID', Queries.getImportTypeAndImportedFilePathByImportEventID);
         queryCSVHeader.setParameter('@ID', dataImportEventId);
 
         const payloadCSVHeader = {
