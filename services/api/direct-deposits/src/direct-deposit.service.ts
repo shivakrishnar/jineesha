@@ -241,7 +241,7 @@ export async function create(
         } as DatabaseEvent;
 
         const nachaResult: any = await utilService.invokeInternalService('queryExecutor', nachaPayload, utilService.InvocationType.RequestResponse);
-        console.log('===>nachaResult', nachaResult);
+
         if (!nachaResult || !nachaResult.recordset.length || !nachaResult.recordset[0].Result) {
             throw errorService.getErrorResponse(0).setMoreInfo(`Nacha was not configured on this tenant: ${tenantId}`);
         }
