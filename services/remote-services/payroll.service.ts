@@ -96,7 +96,7 @@ export async function postWageInEvo(
     const { clientId, companyId, employeeId } = evolutionKeys;
     const apiUrl = `${baseUrl}/${tenantName}/clients/${clientId}/companies/${companyId}/employees/${employeeId}/wages`;
     try {
-        return await request.patch({
+        return await request.post({
             url: encodeURI(apiUrl),
             headers: { Authorization: `Bearer ${token}` },
             body: requestBody,
