@@ -54,3 +54,10 @@ export class DirectDeposit {
         }
     }
 }
+
+export interface IBetaFlag  {
+    id: number;
+    companyId?: number;
+    isOn: boolean;
+    code: string;
+}

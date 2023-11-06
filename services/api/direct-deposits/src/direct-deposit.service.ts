@@ -1,6 +1,6 @@
 import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
 import { Queries } from '../../../queries/queries';
-import { DirectDeposit } from './directDeposit';
+import { DirectDeposit, IBetaFlag } from './directDeposit';
 
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { IEvolutionKey } from '../../models/IEvolutionKey';
@@ -723,6 +723,57 @@ export async function remove(
     } catch (error) {
         console.error(error);
         if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Returns a listing of beta flag for a specific tenant
+ * @param {string} tenantId: The unique identifier for the tenant the data importing type belongs to.
+ * @returns {Promise<DataImportTypes>}: Promise of an array of BetaFlag
+ */
+export async function listBetaFlags(
+    tenantId: string,
+): Promise<IBetaFlag[]> {
+    console.info('directDepositService.Service.listBetaFlags');
+
+    try {
+        const query = new ParameterizedQuery('listBetaFlags', Queries.listBetaFlags);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        console.info(result);
+
+        // This endpoint should return an empty list (not 404) if tenant not found in AHR.
+        // This makes it easier for the caller to handle.
+        if (!result || !result.recordset.length) {
+            return [];
+        }
+
+        const results: IBetaFlag[] = result.recordset.map((record) => {
+            return {
+                id: record.ID,
+                companyId: record.CompanyID,
+                isOn: record.IsOn,
+                code: record.Code,
+            };
+        });
+
+        return results;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            if (error.statusCode === 404) {
+                return [];
+            }
             throw error;
         }
         throw errorService.getErrorResponse(0);
