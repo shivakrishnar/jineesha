@@ -45,9 +45,10 @@ export class DirectDeposit {
     public obfuscate(): void {
         const accountNumber = this.bankAccount.accountNumber;
         const cleanAccountNumber = accountNumber.charAt(0) === '#' ? accountNumber.substring(1) : accountNumber;
-        if(cleanAccountNumber.length >= 7) {
-            const last4Digits = cleanAccountNumber.slice(-4);
-            this.bankAccount.accountNumber = `*${last4Digits}`;
+        if (cleanAccountNumber.length >= 7) {
+            const subString1 = cleanAccountNumber.slice(0, -4);
+            const subString2 = cleanAccountNumber.slice(-4);
+            this.bankAccount.accountNumber = `${subString1.replace(/./g, '*')}${subString2}`;
         } else {
             this.bankAccount.accountNumber = cleanAccountNumber.replace(/./g, '*');
         }
