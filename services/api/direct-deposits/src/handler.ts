@@ -16,6 +16,10 @@ const headerSchema = {
     authorization: { required: true, type: String },
 };
 
+const betaFlagResourceUriSchema = {
+    tenantId: { required: true, type: String },
+};
+
 const directDepositsResourceUriSchema = {
     tenantId: { required: true, type: String },
     companyId: { required: true, type: String },
@@ -277,4 +281,28 @@ export const remove = utilService.gatewayEventHandlerV2(async ({ securityContext
     await directDepositService.remove(employeeId, tenantId, directDepositId, accessToken, email, companyId);
 
     return { statusCode: 204, headers: new Headers() };
+});
+
+/**
+ * Returns a listing of beta flags for tenant.
+ */
+export const listBetaFlags = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('directDeposits.handler.listBetaFlags');
+
+    const { tenantId } = event.pathParameters;
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, betaFlagResourceUriSchema);
+    utilService.checkBoundedIntegralValues(event.pathParameters);
+
+    const betaFlags = await directDepositService.listBetaFlags(
+        tenantId,
+    );
+
+    if (betaFlags.length === 0) {
+        return { statusCode: 204, headers: new Headers() };
+    }
+
+    return betaFlags;
 });

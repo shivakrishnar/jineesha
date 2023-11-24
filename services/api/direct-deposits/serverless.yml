@@ -99,6 +99,15 @@ provider:
       Resource: arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings/index/*
 
 functions:
+  listBetaFlags:
+    handler: src/handler.listBetaFlags
+    events:
+        - http:
+            path: /tenants/{tenantId}/beta-flags
+            method: get
+            cors:
+              origin: '*'
+
   listDirectDeposits:
     handler: src/handler.list
     events:

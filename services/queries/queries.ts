@@ -30,6 +30,7 @@ export const Queries = {
     getEmployeeDirectDepositById: fs.readFileSync(path.join(basePath, 'direct-deposits/getEmployeeDirectDepositById.sql')).toString(),
     getEvoData: fs.readFileSync(path.join(basePath, 'direct-deposits/getEvoData.sql')).toString(),
     checkNachaBetaFlagIsOn: fs.readFileSync(path.join(basePath, 'direct-deposits/checkNachaBetaFlagIsOn.sql')).toString(),
+    listBetaFlags: fs.readFileSync(path.join(basePath, 'direct-deposits/listBetaFlags.sql')).toString(),
 
     // Miscellaneous
     databaseList: fs.readFileSync(path.join(basePath, 'miscellaneous/database.sql')).toString(),
