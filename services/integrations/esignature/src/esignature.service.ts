@@ -1074,7 +1074,10 @@ export async function generateBillingReport(options: BillingReportOptions): Prom
     const queryResultPromises = [];
     const tenantErrors = [];
 
-    let csvOut = 'Domain,Company,Billable Documents\r\n';
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    let csvOut = `E-Sign Report for ${monthNames[month - 1]} ${year}\r\n`;
+    csvOut += 'Domain,Company,Billable Documents\r\n';
     for (const tenantId of tenantIDs) {
         payload.tenantId = tenantId;
         queryResultPromises.push(
@@ -1154,6 +1157,11 @@ export async function generateBillingReport(options: BillingReportOptions): Prom
     }
 }
 
+function addMonths(date, months) {
+    date.setMonth(date.getMonth() + months);
+    return date;
+  }
+
 export async function generateBillingReportByTenant(tenantId: string): Promise<string> {
     console.info('esignatureService.generateBillingReportByTenant');
 
@@ -1175,12 +1183,15 @@ export async function generateBillingReportByTenant(tenantId: string): Promise<s
     const legacyClientCutOffDate = ssmResult.Parameter.Value;
 
     // set up defaults for month/year
-    const today = new Date();
+    let today = new Date();
+    today = addMonths(today, -1);
+
+    let csvOut = `E-Sign Report for ${today.toLocaleString('en', { month: 'long' })} ${today.toLocaleString('en', { year: 'numeric' })}\r\n`;
 
     // run query for every tenant
     const getBillableSignRequests: ParameterizedQuery = new ParameterizedQuery('getBillableSignRequests', Queries.getBillableSignRequests);
-    getBillableSignRequests.setParameter('@month', today.getUTCMonth());
-    getBillableSignRequests.setParameter('@year', today.getUTCFullYear());
+    getBillableSignRequests.setParameter('@month', today.toLocaleString('en', { month: 'numeric' }));
+    getBillableSignRequests.setParameter('@year', today.toLocaleString('en', { year: 'numeric' }));
     getBillableSignRequests.setStringParameter('@esignLegacyCutoff', legacyClientCutOffDate);
 
     const payload = {
@@ -1193,7 +1204,7 @@ export async function generateBillingReportByTenant(tenantId: string): Promise<s
     const queryResultPromises = [];
     let tenantError = {};
 
-    let csvOut = 'Domain,Company,Billable Documents\r\n';
+    csvOut += 'Domain,Company,Billable Documents\r\n';
     payload.tenantId = tenantId;
 
     queryResultPromises.push(
