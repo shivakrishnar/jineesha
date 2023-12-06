@@ -291,4 +291,9 @@ export const Queries = {
     getEmployeeCompensationByEmployeeID: fs.readFileSync(path.join(basePath, 'employee-import/getEmployeeCompensationByEmployeeID.sql')).toString(),
     updateDataImportEventDetailProcessed: fs.readFileSync(path.join(basePath, 'employee-import/updateDataImportEventDetailProcessed.sql')).toString(),
     updateCompensation: fs.readFileSync(path.join(basePath, 'employee-import/updateCompensation.sql')).toString(),
+    validateAlternateRate: fs.readFileSync(path.join(basePath, 'employee-import/validateAlternateRate.sql')).toString(),
+    insertAlternateRate: fs.readFileSync(path.join(basePath, 'employee-import/insertAlternateRate.sql')).toString(),
+    isEVOIntegratedCompany: fs.readFileSync(path.join(basePath, 'employee-import/isEVOIntegratedCompany.sql')).toString(),
+    getAlternateRatesByEmployee: fs.readFileSync(path.join(basePath, 'employee-import/getAlternateRatesByEmployee.sql')).toString(),
+    updateAlternateRate: fs.readFileSync(path.join(basePath, 'employee-import/updateAlternateRate.sql')).toString(),
 };

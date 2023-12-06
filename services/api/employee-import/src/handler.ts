@@ -398,7 +398,7 @@ export const updateAlternateRate = async (event: any, context: Context, callback
 
         const { row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId, hrAccessToken } = event;
 
-        return await employeeImportService.updateCompensation(row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId, hrAccessToken);
+        return await employeeImportService.updateAlternateRate(row, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId, hrAccessToken);
     } catch (error) {
         console.error(`Reason: ${JSON.stringify(error)}`);
         return callback(error);

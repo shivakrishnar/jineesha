@@ -6,8 +6,8 @@ export interface IWageRate  {
 
 export interface IWageCompensationState  {
     id: number;
-    name: any;
-    abbreviation: any;
+    name?: any;
+    abbreviation?: any;
 }
 
 export interface IWageCompensation {
@@ -22,8 +22,8 @@ export interface IWage  {
     branchId?: any;
     departmentId?: any;
     teamId?: any;
-    employeeId: number;
-    rate: IWageRate;
+    employeeId?: number;
+    rate?: IWageRate;
     workersCompensation?: IWageCompensation;
     positionId?: any;
     payGradeId?: any;
