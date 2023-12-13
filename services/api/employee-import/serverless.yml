@@ -11,6 +11,7 @@ provider:
 
   environment:  #environment variables
     awsRegion: ${file(${self:custom.configFile}):awsRegion}
+    webSocketUrl: ${file(${self:custom.configFile}):webSocketUrl}
     secretsAwsEndPoint: ${file(${self:custom.configFile}):secretsAwsEndPoint}
     apiSecretId: ${file(${self:custom.configFile}):apiSecretId}
     rdsCredentialsId: ${file(${self:custom.configFile}):rdsCredentialsId}
@@ -124,6 +125,19 @@ provider:
         - dynamodb:Scan
         - dynamodb:GetItem
       Resource: arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings/index/*
+
+    - Effect: Allow
+      Action:
+        - "dynamodb:GetItem"
+        - "dynamodb:Query"
+        - "dynamodb:Scan"
+      Resource: arn:aws:dynamodb:us-east-1:*:table/WebSocketConnections
+
+    - Effect: Allow
+      Action:
+        - "execute-api:Invoke"
+        - "execute-api:ManageConnections"
+      Resource: arn:aws:execute-api:us-east-1:*
     
   apiGateway:
     binaryMediaTypes:

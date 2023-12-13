@@ -261,11 +261,11 @@ export const setProcessingStatusGlobal = async (event: any, context: Context, ca
         console.info('employee-import.handler.setProcessingStatusGlobal');
         console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
 
-        const { tenantId, dataImportEventId } = event;
+        const { tenantId, dataImportEventId, dataImportTypeId, hrAccessToken } = event;
 
         console.log('Variables parsed');
 
-        employeeImportService.setDataImportEventStatusGlobal(tenantId, dataImportEventId, 'Processing', 1);
+        employeeImportService.setDataImportEventStatusGlobal(tenantId, dataImportEventId, dataImportTypeId, 'Processing', 1, hrAccessToken);
 
         console.log('Status processed');
 
@@ -285,11 +285,11 @@ export const setCompletedStatusGlobal = async (event: any, context: Context, cal
         console.info('employee-import.handler.setCompletedStatusGlobal');
         console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
 
-        const { tenantId, dataImportEventId } = event;
+        const { tenantId, dataImportEventId, dataImportTypeId, hrAccessToken } = event;
 
         console.log('Variables parsed');
 
-        employeeImportService.processFinalStatusAndNotify(tenantId, dataImportEventId);
+        employeeImportService.processFinalStatusAndNotify(tenantId, dataImportEventId, dataImportTypeId, hrAccessToken);
 
         return callback(undefined, { statusCode: 200, body: JSON.stringify('Employee import completed') });
     } catch (error) {
@@ -306,9 +306,9 @@ export const setFailedStatusGlobal = async (event: any, context: Context, callba
         console.info('employee-import.handler.setFailedStatusGlobal');
         console.info(`employee-import.handler.received event: ${JSON.stringify(event)}`);
 
-        const { tenantId, dataImportEventId, errorMessage } = event;
+        const { tenantId, dataImportEventId, errorMessage, dataImportTypeId, hrAccessToken } = event;
 
-        employeeImportService.setFailedDataImportEvent(tenantId, dataImportEventId, errorMessage);
+        employeeImportService.setFailedDataImportEvent(tenantId, dataImportEventId, dataImportTypeId, errorMessage, hrAccessToken);
         return callback(undefined, {
             statusCode: 200,
             body: JSON.stringify('End of failed status assignment and error message on the database'),

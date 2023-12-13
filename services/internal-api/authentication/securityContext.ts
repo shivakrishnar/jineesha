@@ -19,10 +19,12 @@ import { ApplicationRoleLevel } from './ApplicationRoleLevelEnum';
 export class SecurityContext extends BaseSecurityContext {
     roleMemberships: string[];
     currentRoleLevel: ApplicationRoleLevel;
+    expiration: number;
 
-    public constructor(principal: IAccount, roleMemberships: string[] = [], accessToken: string, policy: ISecurityPolicy) {
+    public constructor(principal: IAccount, roleMemberships: string[] = [], accessToken: string, policy: ISecurityPolicy, exp: number) {
         super(principal, accessToken, policy);
         this.roleMemberships = roleMemberships;
+        this.expiration = exp;
     }
 
     /**

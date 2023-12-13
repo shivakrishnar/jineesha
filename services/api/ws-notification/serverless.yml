@@ -1,0 +1,156 @@
+service:
+  name: websocket-notification
+
+provider:
+  stage: ${file(${self:custom.configFile}):stage}
+  name: aws
+  runtime: nodejs16.x
+  timeout: 900   # AWS API Gateway timeout limit (30s)
+  versionFunctions: false
+  memorySize: 1024
+  logRetentionInDays: ${file(${self:custom.configFile}):logRetentionInDays}
+
+  environment:
+    awsRegion: ${file(${self:custom.configFile}):awsRegion}
+    webSocketUrl: ${file(${self:custom.configFile}):webSocketUrl}
+    secretsAwsEndPoint: ${file(${self:custom.configFile}):secretsAwsEndPoint}
+    apiSecretId: ${file(${self:custom.configFile}):apiSecretId}
+    rdsCredentialsId: ${file(${self:custom.configFile}):rdsCredentialsId}
+    payrollApiCredentialsId: ${file(${self:custom.configFile}):payrollApiCredentialsId}
+    ssoCredentialsId: ${file(${self:custom.configFile}):ssoCredentialsId}
+    asureAdminRoleId: ${file(${self:custom.configFile}):asureAdminRoleId}
+    evoHrGlobalAdmin: ${file(${self:custom.configFile}):evoHrGlobalAdmin}
+    stage: ${file(${self:custom.configFile}):stage}
+    apiDomain: ${file(${self:custom.configFile}):apiDomain}
+    domain: ${file(${self:custom.configFile}):domain}
+    hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
+    scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
+    goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
+    hrApplicationId: ${file(${self:custom.configFile}):hrApplicationId}
+    ssoPublicKey1: ${file(${self:custom.configFile}):ssoPublicKey1}
+    ssoPublicKey2: ${file(${self:custom.configFile}):ssoPublicKey2}
+    pageLimitDefault: 30
+    pageLimitMax: 100
+    AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
+    tenantAdminCredentialsId: ${file(${self:custom.configFile}):tenantAdminCredentialsId}
+    goldilocksTenantId: ${file(${self:custom.configFile}):goldilocksTenantId}
+  
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - "dynamodb:PutItem"
+        - "dynamodb:GetItem"
+        - "dynamodb:UpdateItem"
+        - "dynamodb:DeleteItem"
+        - "dynamodb:BatchGetItem"
+        - "dynamodb:BatchWriteItem"
+        - "dynamodb:Query"
+        - "dynamodb:Scan"
+      Resource:
+        - Fn::GetAtt: [WebSocketConnections, Arn]
+        - Fn::Join:
+            - '/'
+            - - Fn::GetAtt: [WebSocketConnections, Arn]
+              - '*'
+        - Fn::GetAtt: [WebSocketTokens, Arn]
+        - Fn::Join:
+            - '/'
+            - - Fn::GetAtt: [WebSocketTokens, Arn]
+              - '*'
+    
+    - Effect: Allow
+      Action:
+        - "logs:CreateLogStream"
+        - "logs:DescribeLogStreams"
+        - "logs:GetLogEvents"
+        - "logs:PutLogEvents"
+      Resource:
+        - Fn::GetAtt: [WebSocketLogs, Arn]
+        - Fn::Join:
+            - '/'
+            - - Fn::GetAtt: [WebSocketLogs, Arn]
+              - '*'
+  # optional
+  websocketApiName: websockets-test-${file(${self:custom.configFile}):stage}
+  # required for websocket apis
+  # this selects from your payload what your "routeKey" parameter is
+  # from the websocket event types on your function
+  websocketApiRouteSelectionExpression: $request.body.action
+functions:
+  connection:
+    handler: src/handler.connection
+    events:
+      - websocket:
+          route: $connect
+      - websocket:
+          route: $default
+  initializeConnection:
+    handler: src/handler.initializeConnection
+    events:
+      - websocket:
+          route: initializeConnection
+  
+  disconnect:
+    handler: src/handler.disconnect
+    events:
+      - websocket:
+          route: $disconnect
+  
+resources:
+  Resources:
+    WSRequestQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "WSRequestQueue"
+    WebSocketConnections:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: WebSocketConnections
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: ConnectionId
+            AttributeType: S
+          - AttributeName: UserId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ConnectionId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: UserIdIndex
+            KeySchema:
+              - AttributeName: UserId
+                KeyType: HASH
+            Projection:
+              ProjectionType: 'ALL'
+    WebSocketTokens:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: WebSocketTokens
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: ExecutionId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ExecutionId
+            KeyType: HASH
+    
+    WebSocketLogs:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: HrWebSocket-Logs
+plugins:
+  - serverless-webpack
+  - serverless-pseudo-parameters
+  - serverless-offline
+
+custom:
+  configFile: ../../development.serverless.variables.json
+  webpack:
+    webpackConfig: ./webpack/${file(${self:custom.configFile}):webpackConfigurationFile}
+    includeModules: true
+    packager: 'npm'
+  customDomain:
+    basePath: websocket-notification${opt:branchName, ''}
+    domainName: hr-services.${file(${self:custom.configFile}):domain}
+    certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
+    createRoute53Record: false

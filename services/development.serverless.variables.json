@@ -1,5 +1,6 @@
 {
     "awsRegion": "us-east-1",
+    "webSocketUrl": "9klcu9ra85.execute-api.us-east-1.amazonaws.com/development",
     "lambdaExecutionSecurityGroup": "sg-031752f9402eec181",
     "privateSubnetId1": "subnet-053fb4f924f839d19",
     "privateSubnetId2": "subnet-04331ec9789323822",
