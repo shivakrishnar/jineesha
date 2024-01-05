@@ -1,5 +1,6 @@
 {
     "awsRegion": "us-east-1",
+    "webSocketUrl": "",
     "lambdaExecutionSecurityGroup": "sg-0adeb4ed3187e1438",
     "privateSubnetId1": "subnet-05ae5833144ef3591",
     "privateSubnetId2": "subnet-01bd1407811d4af21",

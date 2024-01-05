@@ -34,7 +34,7 @@ export class SecurityContextProvider {
             const accessToken = authHeader.replace(/^Bearer /i, '');
 
             const { header, payload } = jwt.decode(accessToken, { complete: true });
-            const { account, scope, policy: tokenPolicy } = payload;
+            const { account, scope, policy: tokenPolicy, exp } = payload;
 
             let algorithm: string;
             let secret: string;
@@ -70,7 +70,7 @@ export class SecurityContextProvider {
 
             const roleMemberships = utilService.parseRoles(scope);
 
-            return new SecurityContext(account, roleMemberships, accessToken, tokenPolicy);
+            return new SecurityContext(account, roleMemberships, accessToken, tokenPolicy, exp);
         } catch (e) {
             console.error(`Authentication failed: ${e.message}`);
             throw errorService.notAuthenticated();

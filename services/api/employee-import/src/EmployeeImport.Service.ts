@@ -19,6 +19,8 @@ import * as mime from 'mime-types';
 import fetch from 'node-fetch';
 import { IEvolutionKey } from '../../models/IEvolutionKey';
 import * as ssoService from '../../../remote-services/sso.service';
+import * as webSocketNotification from '../../ws-notification/src/ws-notification.Service';
+import { SecurityContextProvider } from '../../../internal-api/authentication/securityContextProvider';
 
 const employeeImportPageSize = '6';
 
@@ -332,7 +334,7 @@ export async function uploadUrl(tenantId: string, companyId: string, fileName: s
 
         return { url, mimeType };
     } catch (e) {
-        console.log(e);
+        console.error(e);
         throw e;
     }
 }
@@ -813,7 +815,7 @@ export async function updateEmployee(
  * @param {string} dataImportEventId: The unique identifer for the Employee Import event
  * @param {string} errorMessage: Error message returned by AWS
  */
-export async function setFailedDataImportEvent(tenantId: string, dataImportEventId: string, errorMessage: string): Promise<any> {
+export async function setFailedDataImportEvent(tenantId: string, dataImportEventId: string, dataImportTypeId: string, errorMessage: string, accessToken: string): Promise<any> {
     console.info('EmployeeImport.Service.setFailedDataImportEvent');
 
     try {
@@ -833,6 +835,73 @@ export async function setFailedDataImportEvent(tenantId: string, dataImportEvent
         } as DatabaseEvent;
         
         await utilService.invokeInternalService('queryExecutor', updateDataImportEventFailedPayload, InvocationType.RequestResponse);
+
+        // looking for import type name for notification
+        const query = new ParameterizedQuery('getDataImportTypeById', Queries.getDataImportTypeById);
+        query.setParameter('@dataImportTypeId', dataImportTypeId);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        if (!result || !result.recordset.length || !result.recordset[0].Name) {
+            console.error('Employee import type not found');
+        }
+        else {
+            const dataImportTypeName = result.recordset[0].Name;
+
+            // authenticate
+            const securityContext = await new SecurityContextProvider().getSecurityContext({
+                event: {
+                    headers: {
+                        Authorization: accessToken,
+                    },
+                },
+            });
+
+            const {
+                principal: {
+                id: userId
+                },
+            } = securityContext;
+
+            const client = new AWS.DynamoDB.DocumentClient({
+                region: configService.getAwsRegion(),
+            });
+
+            const connections = await client.scan({
+                TableName: 'WebSocketConnections',
+                FilterExpression: '#UserId = :UserId',
+                ExpressionAttributeNames: {
+                    '#UserId': 'UserId',
+                },
+                ExpressionAttributeValues: {
+                    ':UserId': userId,
+                },
+            }).promise();
+
+            if (connections.Items.length > 0) {
+                var message : webSocketNotification.Message = {
+                    data: `Employee import, type '${dataImportTypeName}' returned error`,
+                    types: ['Global']
+                };
+
+                const messages = connections.Items.map(async (connection) => {
+                    return webSocketNotification.notifyClient(connection.ConnectionId, message);
+                });
+                await Promise.all(messages);               
+
+            } else {
+                console.info('No active connections found');
+            }
+        }
+
+
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -849,12 +918,12 @@ export async function setFailedDataImportEvent(tenantId: string, dataImportEvent
  * @param {string} dataImportEventId: The unique identifer for the Employee Import event
  * @param {string} status: Global import status to be saved in DataImportEvent table
  */
-export async function setDataImportEventStatusGlobal(tenantId: string, dataImportEventId: string, status: string, active: number): Promise<any> {
+export async function setDataImportEventStatusGlobal(tenantId: string, dataImportEventId: string, dataImportTypeId: string, status: string, active: number, accessToken: string): Promise<any> {
     console.info('EmployeeImport.Service.setDataImportEventStatusGlobal');
 
     try {
-        if (!tenantId || !dataImportEventId) {
-            throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to tenantId and dataImportEventId not met.');
+        if (!tenantId || !dataImportEventId || !dataImportTypeId) {
+            throw errorService.getErrorResponse(30).setDeveloperMessage('Expected value to tenantId, dataImportEventId or dataImportTypeId not met.');
         }
 
         const updateDataImportEventStatusQuery = new ParameterizedQuery('updateDataImportEventStatus', Queries.updateDataImportEventStatus);
@@ -872,6 +941,71 @@ export async function setDataImportEventStatusGlobal(tenantId: string, dataImpor
         console.info(updateDataImportEventStatusPayload);
 
         await utilService.invokeInternalService('queryExecutor', updateDataImportEventStatusPayload, InvocationType.RequestResponse);
+
+        // looking for import type name for notification
+        const query = new ParameterizedQuery('getDataImportTypeById', Queries.getDataImportTypeById);
+        query.setParameter('@dataImportTypeId', dataImportTypeId);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        if (!result || !result.recordset.length || !result.recordset[0].Name) {
+            console.error('Employee import type not found');
+        }
+        else {
+            const dataImportTypeName = result.recordset[0].Name;
+
+            // authenticate
+            const securityContext = await new SecurityContextProvider().getSecurityContext({
+                event: {
+                    headers: {
+                        Authorization: accessToken,
+                    },
+                },
+            });
+
+            const {
+                principal: {
+                  id: userId
+                },
+              } = securityContext;
+
+            const client = new AWS.DynamoDB.DocumentClient({
+                region: configService.getAwsRegion(),
+            });
+
+            const connections = await client.scan({
+                TableName: 'WebSocketConnections',
+                FilterExpression: '#UserId = :UserId',
+                ExpressionAttributeNames: {
+                    '#UserId': 'UserId',
+                },
+                ExpressionAttributeValues: {
+                    ':UserId': userId,
+                },
+            }).promise();
+
+            if (connections.Items.length > 0) {
+                var message : webSocketNotification.Message = {
+                    data: `Employee import, type '${dataImportTypeName}' is ${status.toLowerCase()}`,
+                    types: ['Global']
+                };
+
+                const messages = connections.Items.map(async (connection) => {
+                    return webSocketNotification.notifyClient(connection.ConnectionId, message);
+                });
+                await Promise.all(messages);               
+
+              } else {
+                console.info('no active connections found');
+              }
+        }
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
@@ -887,7 +1021,7 @@ export async function setDataImportEventStatusGlobal(tenantId: string, dataImpor
  * @param {string} tenantId: The unique identifer for the tenant
  * @param {string} dataImportEventId: The unique identifer for the Employee Import event
  */
-export async function processFinalStatusAndNotify(tenantId: string, dataImportEventId: string): Promise<any> {
+export async function processFinalStatusAndNotify(tenantId: string, dataImportEventId: string, dataImportTypeId: string, accessToken: string): Promise<any> {
     console.info('EmployeeImport.Service.processFinalStatusAndNotify');
 
     try {
@@ -926,7 +1060,7 @@ export async function processFinalStatusAndNotify(tenantId: string, dataImportEv
 
         console.info(finalStatusGlobal);
 
-        setDataImportEventStatusGlobal(tenantId, dataImportEventId, finalStatusGlobal, 0);
+        setDataImportEventStatusGlobal(tenantId, dataImportEventId, dataImportTypeId, finalStatusGlobal, 0, accessToken);
 
         console.info('Status updated');
 

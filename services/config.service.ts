@@ -1,5 +1,7 @@
 export const getAwsRegion = () => process.env.awsRegion;
 
+export const getWebSocketUrl = () => process.env.webSocketUrl;
+
 export const getApiDomain = () => process.env.apiDomain;
 
 export const getDomain = () => process.env.domain;

@@ -57,6 +57,11 @@
       "name": "integrations",
       "directory": "services/integrations",
       "createDomain": true
+    },
+    {
+      "name": "websocket-notification",
+      "directory": "services/api/ws-notification",
+      "createDomain": true
     }
   ]
 }
