@@ -1,4 +1,5 @@
 {
+    "workerIdleMemoryLimit": "512MB",
     "transform": {
         ".(ts)": "ts-jest"
     },
