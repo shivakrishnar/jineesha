@@ -5035,7 +5035,7 @@ export async function deleteCompanyDocument(tenantId: string, companyId: string,
             documentQuery,
         );
 
-        if (resultSet[0].length === 0) {
+        if (resultSet.length === 0 || resultSet[0].length === 0) {
             throw errorService.getErrorResponse(50).setDeveloperMessage(`Document with ID ${documentId} not found.`);
         }
 
