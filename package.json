@@ -52,7 +52,7 @@
         "superagent": "~3.5.2",
         "supertest": "~3.0.0",
         "ts-jest": "^24.1.0",
-        "typescript": "^5.1.6"
+        "typescript": "^4.7.4"
     },
     "jest": {
         "transform": {
