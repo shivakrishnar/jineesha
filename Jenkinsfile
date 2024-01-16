@@ -298,7 +298,7 @@ void deployService(
                 runWithAwsCredentials(awsCredentialsId, service.preDeployCommand)
             }
 
-            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=6144 ${serverlessPath} deploy --variables ${environment} ${slsBranchNameParam}")
+            runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=4096 ${serverlessPath} deploy --variables ${environment} ${slsBranchNameParam}")
         }
     }
 }
@@ -315,7 +315,7 @@ void destroyService(String environment) {
                 nvm(nodeVersion) {
                     String serverlessPath = service.serverlessPath ? service.serverlessPath : 'node_modules/.bin/serverless'
                     echo serverlessPath
-                    runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=6144 ${serverlessPath} remove --variables ${environment} ${slsBranchNameParam}")
+                    runWithAwsCredentials(awsCredentialsId, "node --max-old-space-size=4096 ${serverlessPath} remove --variables ${environment} ${slsBranchNameParam}")
                 }
             }
         }
