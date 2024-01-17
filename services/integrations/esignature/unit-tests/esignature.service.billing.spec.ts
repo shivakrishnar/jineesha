@@ -23,7 +23,14 @@ describe('esignatureService.billing.generate-report', () => {
             .then((results) => {
                 expect(typeof results).toBe('string');
 
+                const today = new Date();
+                const month = today.getUTCMonth() || 12;
+                const year  = (today.getUTCMonth() ? today.getUTCFullYear() : today.getUTCFullYear() - 1);
+
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
                 const expectedCsv = [];
+                expectedCsv.push(`E-Sign Report for ${monthNames[month - 1]} ${year}`);
                 expectedCsv.push('Domain,Company,Billable Documents');
                 expectedCsv.push('Test,HRN IT Services (0),2');
                 // deleted companies

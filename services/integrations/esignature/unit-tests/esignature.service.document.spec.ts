@@ -955,7 +955,7 @@ describe('esignatureService.company-document.delete', () => {
                 expect(error.statusCode).toEqual(404);
                 expect(error.code).toEqual(50);
                 expect(error.message).toEqual('The requested resource does not exist.');
-                expect(error.developerMessage).toEqual('The document id: abc123 not found');
+                expect(error.developerMessage).toEqual('Document with ID abc123 not found.');
             });
         done();
     });
