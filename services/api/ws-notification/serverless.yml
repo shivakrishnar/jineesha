@@ -138,8 +138,12 @@ resources:
       Type: AWS::Logs::LogGroup
       Properties:
         LogGroupName: HrWebSocket-Logs
+        
 plugins:
   - serverless-webpack
+  - serverless-aws-documentation
+  - serverless-cloudformation-resource-counter
+  - serverless-domain-manager
   - serverless-pseudo-parameters
   - serverless-offline
 
