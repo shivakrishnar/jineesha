@@ -8,7 +8,6 @@ provider:
   versionFunctions: false
   memorySize: 1024
   logRetentionInDays: ${file(${self:custom.configFile}):logRetentionInDays}
-  region: us-east-1
 
   environment:  #environment variables
     awsRegion: ${file(${self:custom.configFile}):awsRegion}
@@ -24,10 +23,10 @@ provider:
     apiDomain: ${file(${self:custom.configFile}):apiDomain}
     domain: ${file(${self:custom.configFile}):domain}
     hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
-    hrDatabaseCreatorStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}
-    hrCompanyMigratorStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrCompanyMigrator-${self:provider.stage}
-    hrEmployeeImportStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrEmployeeImportStateMachine-${self:provider.stage}
-    teamNotificationTopicArn: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:mojojojo-status-notification
+    hrDatabaseCreatorStateMachineArn: arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}
+    hrCompanyMigratorStateMachineArn: arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrCompanyMigrator-${self:provider.stage}
+    hrEmployeeImportStateMachineArn: arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrEmployeeImportStateMachine-${self:provider.stage}
+    teamNotificationTopicArn: arn:aws:sns:us-east-1:#{AWS::AccountId}:mojojojo-status-notification
     scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
     hrApplicationId: ${file(${self:custom.configFile}):hrApplicationId}
@@ -91,9 +90,9 @@ provider:
     - Effect: Allow
       Action: states:StartExecution
       Resource:
-        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator${opt:branchName, ''}-${self:provider.stage}"
-        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrCompanyMigrator${opt:branchName, ''}-${self:provider.stage}"
-        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrEmployeeImportStateMachine${opt:branchName, ''}-${self:provider.stage}"
+        - "arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrDatabaseCreator${opt:branchName, ''}-${self:provider.stage}"
+        - "arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrCompanyMigrator${opt:branchName, ''}-${self:provider.stage}"
+        - "arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrEmployeeImportStateMachine${opt:branchName, ''}-${self:provider.stage}"
 
     - Effect: Allow
       Action:
@@ -108,7 +107,7 @@ provider:
     - Effect: Allow
       Action:
         - sns:Publish
-      Resource: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:mojojojo-status-notification
+      Resource: arn:aws:sns:us-east-1:#{AWS::AccountId}:mojojojo-status-notification
 
     - Effect: Allow
       Action:

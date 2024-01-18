@@ -8,7 +8,6 @@ provider:
   versionFunctions: false
   memorySize: 1024
   logRetentionInDays: ${file(${self:custom.configFile}):logRetentionInDays}
-  region: us-east-1
 
   environment:  #environment variables
     awsRegion: ${file(${self:custom.configFile}):awsRegion}
@@ -23,10 +22,10 @@ provider:
     apiDomain: ${file(${self:custom.configFile}):apiDomain}
     domain: ${file(${self:custom.configFile}):domain}
     hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
-    hrDatabaseCreatorStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}
-    hrCompanyMigratorStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrCompanyMigrator-${self:provider.stage}
-    hrEmployeeImportStateMachineArn: arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrEmployeeImportStateMachine-${self:provider.stage}
-    teamNotificationTopicArn: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:mojojojo-status-notification
+    hrDatabaseCreatorStateMachineArn: arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}
+    hrCompanyMigratorStateMachineArn: arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrCompanyMigrator-${self:provider.stage}
+    hrEmployeeImportStateMachineArn: arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrEmployeeImportStateMachine-${self:provider.stage}
+    teamNotificationTopicArn: arn:aws:sns:us-east-1:#{AWS::AccountId}:mojojojo-status-notification
     scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
     hrApplicationId: ${file(${self:custom.configFile}):hrApplicationId}
@@ -89,9 +88,9 @@ provider:
     - Effect: Allow
       Action: states:StartExecution
       Resource:
-        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrDatabaseCreator${opt:branchName, ''}-${self:provider.stage}"
-        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrCompanyMigrator${opt:branchName, ''}-${self:provider.stage}"
-        - "arn:aws:states:${self:provider.region}:#{AWS::AccountId}:stateMachine:HrEmployeeImportStateMachine${opt:branchName, ''}-${self:provider.stage}"
+        - "arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrDatabaseCreator${opt:branchName, ''}-${self:provider.stage}"
+        - "arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrCompanyMigrator${opt:branchName, ''}-${self:provider.stage}"
+        - "arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrEmployeeImportStateMachine${opt:branchName, ''}-${self:provider.stage}"
 
     - Effect: Allow
       Action:
@@ -106,7 +105,7 @@ provider:
     - Effect: Allow
       Action:
         - sns:Publish
-      Resource: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:mojojojo-status-notification
+      Resource: arn:aws:sns:us-east-1:#{AWS::AccountId}:mojojojo-status-notification
 
     - Effect: Allow
       Action:
@@ -499,7 +498,7 @@ stepFunctions:
 
           TenantChecker:
             Type: Task
-            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-checkTenant
+            Resource: arn:aws:lambda:us-east-1:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-checkTenant
             ResultPath: $.tenantCheck
             Next: DbPlacementDeterminant
             Catch:
@@ -510,7 +509,7 @@ stepFunctions:
 
           DbPlacementDeterminant:
             Type: Task
-            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-determinant
+            Resource: arn:aws:lambda:us-east-1:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-determinant
             ResultPath: $.placement
             Next: TenantDbCreator
             Catch:
@@ -521,7 +520,7 @@ stepFunctions:
 
           TenantDbCreator:
             Type: Task
-            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-dbCreator
+            Resource: arn:aws:lambda:us-east-1:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-dbCreator
             ResultPath: $.creator
             Next: GlobalAdminCreator
             Catch:
@@ -532,7 +531,7 @@ stepFunctions:
 
           GlobalAdminCreator:
             Type: Task
-            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-addGlobalAdminAccount
+            Resource: arn:aws:lambda:us-east-1:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-addGlobalAdminAccount
             ResultPath: $.adminAccountCreator
             End: true
             Catch:
@@ -543,7 +542,7 @@ stepFunctions:
 
           ErrorHandler:
             Type: Task
-            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-errorHandler
+            Resource: arn:aws:lambda:us-east-1:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-errorHandler
             End: true
 
      HrCompanyMigrator:
@@ -555,7 +554,7 @@ stepFunctions:
         States:
           DataMigration:
             Type: Task
-            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-createCompanyMigration
+            Resource: arn:aws:lambda:us-east-1:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-createCompanyMigration
             ResultPath: $.DataMigration
             Next: SsoAccountMigration
             Catch:
@@ -566,19 +565,19 @@ stepFunctions:
 
           SsoAccountMigration:
             Type: Task
-            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-migrateSsoAccounts
+            Resource: arn:aws:lambda:us-east-1:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-migrateSsoAccounts
             ResultPath: $.SsoAccountMigration
             Next: HelloSignIntegrationMigration
 
           HelloSignIntegrationMigration:
             Type: Task
-            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-migrateHelloSignIntegration
+            Resource: arn:aws:lambda:us-east-1:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-migrateHelloSignIntegration
             ResultPath: $.HelloSignIntegrationMigration
             End: true
 
           ErrorHandler:
             Type: Task
-            Resource: arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-errorHandler
+            Resource: arn:aws:lambda:us-east-1:#{AWS::AccountId}:function:${self:service}-${self:provider.stage}-errorHandler
             End: true  
 
 resources:
