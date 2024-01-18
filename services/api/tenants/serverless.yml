@@ -8,6 +8,7 @@ provider:
   versionFunctions: false
   memorySize: 1024
   logRetentionInDays: ${file(${self:custom.configFile}):logRetentionInDays}
+  region: us-east-1
 
   environment:  #environment variables
     awsRegion: ${file(${self:custom.configFile}):awsRegion}
