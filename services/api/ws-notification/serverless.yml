@@ -60,20 +60,6 @@ provider:
 
     - Effect: Allow
       Action:
-        - acm:ListCertificates
-        - apigateway:GET
-        - apigateway:DELETE
-        - apigateway:POST
-        - apigateway:PATCH
-        - apigateway:PUT
-        - cloudfront:UpdateDistribution
-        - route53:ListHostedZones
-        - route53:GetHostedZone
-        - route53:ListResourceRecordSets
-      Resource: "*"
-
-    - Effect: Allow
-      Action:
         - "logs:CreateLogStream"
         - "logs:DescribeLogStreams"
         - "logs:GetLogEvents"
@@ -159,12 +145,8 @@ plugins:
   - serverless-webpack
   - serverless-aws-documentation
   - serverless-cloudformation-resource-counter
-  - serverless-domain-manager
-  - serverless-aws-documentation
-  - serverless-cloudformation-resource-counter
   - serverless-pseudo-parameters
   - serverless-offline
-  # - serverless-domain-manager 
 
 custom:
   configFile: ../../${opt:variables, 'local'}.serverless.variables.json
@@ -172,32 +154,3 @@ custom:
     webpackConfig: ./webpack/${file(${self:custom.configFile}):webpackConfigurationFile}
     includeModules: true
     packager: 'npm'
-  # customDomain:
-    # basePath: ws-notification${opt:branchName, ''}
-    # domainName: hr-services.${file(${self:custom.configFile}):domain}
-    # certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
-    # createRoute53Record: false
-    # rest:
-    #   domainName: hr-services.${file(${self:custom.configFile}):domain}
-    #   stage: ${file(${self:custom.configFile}):stage}
-    #   basePath: ws-notification${opt:branchName, ''}
-    #   certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
-    #   createRoute53Record: false
-    #   endpointType: 'regional'
-    #   securityPolicy: tls_1_2
-    # http:
-    #   domainName: hr-services.${file(${self:custom.configFile}):domain}
-    #   stage: ${file(${self:custom.configFile}):stage}
-    #   basePath: ws-notification${opt:branchName, ''}
-    #   certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
-    #   createRoute53Record: false
-    #   endpointType: 'regional'
-    #   securityPolicy: tls_1_2
-    # websocket:
-    #   domainName: hr-services.${file(${self:custom.configFile}):domain}
-    #   stage: ${file(${self:custom.configFile}):stage}
-    #   basePath: ws-notification${opt:branchName, ''}
-    #   certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
-    #   createRoute53Record: false
-    #   securityPolicy: tls_1_2
-    #   endpointType: regional

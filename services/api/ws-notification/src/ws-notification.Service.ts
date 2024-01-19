@@ -254,7 +254,7 @@ export async function validateConnection(connectionId: string): Promise<void> {
 
     const apig = new AWS.ApiGatewayManagementApi({
       apiVersion: "2018-11-29",
-      endpoint: '9klcu9ra85.execute-api.us-east-1.amazonaws.com/development',
+      endpoint: configService.getWebSocketUrl(),
     });
     await apig.deleteConnection({
       ConnectionId: connectionId,
