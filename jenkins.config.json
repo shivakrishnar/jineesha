@@ -59,9 +59,9 @@
       "createDomain": true
     },
     {
-      "name": "websocket-notification",
+      "name": "ws-notification",
       "directory": "services/api/ws-notification",
-      "createDomain": true
+      "createDomain": false
     }
   ]
 }

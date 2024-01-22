@@ -1,5 +1,5 @@
 service:
-  name: websocket-notification
+  name: asure-websocket-notification${opt:branchName, ''}
 
 provider:
   stage: ${file(${self:custom.configFile}):stage}
@@ -57,7 +57,7 @@ provider:
             - '/'
             - - Fn::GetAtt: [WebSocketTokens, Arn]
               - '*'
-    
+
     - Effect: Allow
       Action:
         - "logs:CreateLogStream"
@@ -76,6 +76,7 @@ provider:
   # this selects from your payload what your "routeKey" parameter is
   # from the websocket event types on your function
   websocketApiRouteSelectionExpression: $request.body.action
+
 functions:
   connection:
     handler: src/handler.connection
@@ -139,22 +140,17 @@ resources:
       Properties:
         LogGroupName: HrWebSocket-Logs
         
+        
 plugins:
   - serverless-webpack
   - serverless-aws-documentation
   - serverless-cloudformation-resource-counter
-  - serverless-domain-manager
   - serverless-pseudo-parameters
   - serverless-offline
 
 custom:
-  configFile: ../../development.serverless.variables.json
+  configFile: ../../${opt:variables, 'local'}.serverless.variables.json
   webpack:
     webpackConfig: ./webpack/${file(${self:custom.configFile}):webpackConfigurationFile}
     includeModules: true
     packager: 'npm'
-  customDomain:
-    basePath: websocket-notification${opt:branchName, ''}
-    domainName: hr-services.${file(${self:custom.configFile}):domain}
-    certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
-    createRoute53Record: false
