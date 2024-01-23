@@ -92,6 +92,43 @@ describe('directDepositService.list', () => {
         return Promise.resolve(mockData.listResponseObject);
     });
 
+    test('returns a 400 when an unsupported query parameter(s) supplied', () => {
+        return directDepositService
+            .list(
+                mockData.employeeIdWithCharacter,
+                mockData.tenantId,
+                mockData.unsupportedQueryParam,
+                undefined,
+                undefined,
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual('Unsupported query parameter(s) supplied');
+            });
+    });
+
+    test('returns a 400 when the supplied employeeId is not an integer', () => {
+        return directDepositService
+            .list(
+                mockData.employeeIdWithCharacter,
+                mockData.tenantId,
+                undefined,
+                undefined,
+                undefined,
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.employeeIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
     test('returns direct deposits', () => {
         return directDepositService.list(mockData.employeeId, mockData.tenantId, undefined, undefined, undefined).then((directDeposits) => {
             expect(directDeposits.results.length).toBe(mockData.listResponseObject.recordsets[1].length);
@@ -119,85 +156,130 @@ describe('directDepositService.list', () => {
     });
 });
 
-// describe('directDepositService.create', () => {
-//     test('creates and returns a direct deposit', () => {
-//         (utilService as any).invokeInternalService = jest.fn((serviceName, payload) => {
-//             if (payload.queryName === 'CheckForDuplicateBankAccounts') {
-//                 return Promise.resolve(mockData.emptyResponseObject);
-//             } else if (payload.queryName === 'DirectDepositCreate') {
-//                 return Promise.resolve(mockData.outputResponseObject);
-//             } else {
-//                 return Promise.resolve(mockData.postResponseObject);
-//             }
-//         });
-//         return directDepositService
-//             .create(
-//                 mockData.employeeId,
-//                 mockData.companyId,
-//                 mockData.tenantId,
-//                 mockData.accessToken,
-//                 new DirectDeposit(mockData.postObject),
-//                 mockData.userEmail,
-//             )
-//             .then((directDeposit) => {
-//                 expect(directDeposit).toBeInstanceOf(DirectDeposit);
-//                 expect(directDeposit.bankAccount).toMatchObject(new BankAccount());
-//                 expect(directDeposit).toEqual(mockData.expectedObjects[0]);
-//             });
-//     });
+describe('directDepositService.create', () => {
+    test('returns a 400 when the supplied employeeId is not an integer', () => {
+        return directDepositService
+            .create(
+                mockData.employeeIdWithCharacter,
+                mockData.companyId,
+                mockData.tenantId,
+                mockData.accessToken,
+                new DirectDeposit(mockData.postObject),
+                mockData.userEmail,
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.employeeIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
 
-//     test('returns a 409 error when a record already exists with the same routing or account number', () => {
-//         (utilService as any).invokeInternalService = jest.fn(() => {
-//             return Promise.resolve(mockData.duplicateBankAccountResponseObject);
-//         });
-//         return directDepositService
-//             .create(
-//                 mockData.employeeId,
-//                 mockData.companyId,
-//                 mockData.tenantId,
-//                 mockData.accessToken,
-//                 new DirectDeposit(mockData.postObject),
-//                 mockData.userEmail,
-//             )
-//             .catch((error: any) => {
-//                 expect(error).toBeInstanceOf(ErrorMessage);
-//                 expect(error.statusCode).toEqual(409);
-//                 expect(error.code).toEqual(40);
-//                 expect(error.message).toEqual('Conflict. The provided request object already exists.');
-//                 const developerMessage = 'There are already records in the database with the same provided information.';
-//                 const moreInfo = 'Routing number and account number must be collectively unique.';
-//                 expect(error.developerMessage).toEqual(developerMessage);
-//                 expect(error.moreInfo).toEqual(moreInfo);
-//             });
-//     });
+    test('returns a 400 when the supplied companyId is not an integer', () => {
+        return directDepositService
+            .create(
+                mockData.employeeId,
+                mockData.companyIdWithCharacter,
+                mockData.tenantId,
+                mockData.accessToken,
+                new DirectDeposit(mockData.postObject),
+                mockData.userEmail,
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.companyIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
 
-//     test('returns a 409 error when a record already exists with an amountType of Balance Remainder', () => {
-//         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
-//             if (payload.queryName === 'CheckForDuplicateBankAccounts-union-CheckForDuplicateRemainderOfPay') {
-//                 return Promise.resolve(mockData.duplicateRemainderResponseObject);
-//             } else {
-//                 return Promise.resolve(mockData.postResponseObject);
-//             }
-//         });
-//         return directDepositService
-//             .create(
-//                 mockData.employeeId,
-//                 mockData.companyId,
-//                 mockData.tenantId,
-//                 mockData.accessToken,
-//                 new DirectDeposit(mockData.balanceRemainderPostObject),
-//                 mockData.userEmail,
-//             )
-//             .catch((error: any) => {
-//                 expect(error).toBeInstanceOf(ErrorMessage);                
-//                 expect(error.statusCode).toEqual(409);
-//                 expect(error.code).toEqual(40);
-//                 expect(error.message).toEqual('Conflict. The provided request object already exists.');
-//                 expect(error.developerMessage).toEqual('There are already records in the database with the same provided information.');
-//                 expect(error.moreInfo).toEqual('You can only have one direct deposit with an amountType of Balance Remainder');
-//             });
-//     });
-// });
+    test('returns a 409 error when a record already exists with an amountType of Balance Remainder', () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'CheckForDuplicateBankAccounts-union-CheckForDuplicateRemainderOfPay') {
+                return Promise.resolve(mockData.duplicateRemainderResponseObject);
+            } else {
+                return Promise.resolve(mockData.postResponseObject);
+            }
+        });
+        return directDepositService
+            .create(
+                mockData.employeeId,
+                mockData.companyId,
+                mockData.tenantId,
+                mockData.accessToken,
+                new DirectDeposit(mockData.balanceRemainderPostObject),
+                mockData.userEmail,
+            )
+            .catch((error: any) => {
+                console.log('===>>> error: ', error);
+                expect(error).toBeInstanceOf(ErrorMessage);                
+                expect(error.statusCode).toEqual(409);
+                expect(error.code).toEqual(40);
+                expect(error.message).toEqual('Conflict. The provided request object already exists.');
+                expect(error.developerMessage).toEqual('There are already records in the database with the same provided information.');
+                expect(error.moreInfo).toEqual('You can only have one direct deposit with an amountType of Balance Remainder');
+            });
+    });
+
+    test('creates and returns a direct deposit', () => {
+        (utilService as any).invokeInternalService = jest.fn((serviceName, payload) => {
+            let result: any;
+            if (payload.queryName === 'CheckForDuplicateBankAccounts') {
+                result = Promise.resolve(mockData.emptyResponseObject);
+            } else if (payload.queryName === 'DirectDepositCreate') {
+                result = Promise.resolve(mockData.outputResponseObject);
+            } else if (payload.queryName === 'CheckNachaBetaFlagIsOn') {
+                result = Promise.resolve(mockData.outputResponseObjectForCheckNachaBetaFlag)
+            } else {
+                result = Promise.resolve(mockData.postResponseObject);
+            }
+            return result;
+        });
+        return directDepositService
+            .create(
+                mockData.employeeId,
+                mockData.companyId,
+                mockData.tenantId,
+                mockData.accessToken,
+                new DirectDeposit(mockData.postObject),
+                mockData.userEmail,
+            )
+            .then((directDeposit) => {
+                expect(directDeposit).toBeInstanceOf(DirectDeposit);
+                expect(directDeposit.bankAccount).toMatchObject(new BankAccount());
+                expect(directDeposit).toEqual(mockData.expectedObjects[0]);
+            });
+    });
+
+    test('returns a 409 error when a record already exists with the same routing or account number', () => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
+            return Promise.resolve(mockData.duplicateBankAccountResponseObject);
+        });
+        return directDepositService
+            .create(
+                mockData.employeeId,
+                mockData.companyId,
+                mockData.tenantId,
+                mockData.accessToken,
+                new DirectDeposit(mockData.postObject),
+                mockData.userEmail,
+            )
+            .catch((error: any) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(409);
+                expect(error.code).toEqual(40);
+                expect(error.message).toEqual('Conflict. The provided request object already exists.');
+                const developerMessage = 'There are already records in the database with the same provided information.';
+                const moreInfo = 'Routing number and account number must be collectively unique.';
+                expect(error.developerMessage).toEqual(developerMessage);
+                expect(error.moreInfo).toEqual(moreInfo);
+            });
+    });
+});
 
 describe('directDepositService.update', () => {
     test('updates and returns a direct deposit', () => {
@@ -267,6 +349,27 @@ describe('directDepositService.update', () => {
                 expect(error.code).toEqual(30);
                 expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
                 expect(error.developerMessage).toEqual(`${mockData.employeeIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('returns a 400 when the supplied companyId is not an integer', () => {
+        return directDepositService
+            .update(
+                mockData.employeeId,
+                mockData.tenantId,
+                new DirectDeposit(mockData.putObject),
+                mockData.directDepositId,
+                mockData.accessToken,
+                mockData.userEmail,
+                mockData.companyIdWithCharacter,
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.companyIdWithCharacter} is not a valid number`);
                 expect(error.moreInfo).toEqual('');
             });
     });
@@ -365,6 +468,26 @@ describe('directDepositService.update', () => {
             });
     });
 
+    test('returns a 400 when the supplied companyId is not an integer', () => {
+        return directDepositService
+            .remove(
+                mockData.employeeId,
+                mockData.tenantId,
+                mockData.directDepositId,
+                mockData.accessToken,
+                mockData.userEmail,
+                mockData.companyIdWithCharacter,
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.companyIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
     test('returns a 404 when the requested resource does not exist', () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
             return Promise.resolve(mockData.emptyResponseObject);
@@ -386,5 +509,29 @@ describe('directDepositService.update', () => {
                 expect(error.developerMessage).toEqual(`Resource with id ${mockData.directDepositId} does not exist.`);
                 expect(error.moreInfo).toEqual('');
             });
+    });
+});
+
+describe('directDepositService.listBetaFlags', () => {
+    test('returns beta flags when there are results', () => {
+        return directDepositService.listBetaFlags(mockData.tenantId).then((betaFlags) => {
+            expect(Array.isArray(betaFlags)).toBe(true);
+            if (betaFlags.length > 0) {
+                const expectedProperties: string[] = Object.keys({
+                    id: expect.any(Number),
+                    companyId: expect.any(Number),
+                    isOn: expect.any(Boolean),
+                    code: expect.any(String),
+                });
+                const actualProperties: string[] = Object.keys(betaFlags[0]);
+                expect(actualProperties).toEqual(expect.arrayContaining(expectedProperties));             
+            }
+        });
+    });
+
+    test('returns an empty array when there are no results', () => {
+        return directDepositService.listBetaFlags(mockData.tenantId).then((betaFlags) => {
+            expect(betaFlags).toEqual([]);
+        });
     });
 });
