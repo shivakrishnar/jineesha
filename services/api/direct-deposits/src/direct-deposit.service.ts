@@ -119,19 +119,46 @@ async function getDuplicateBankAccountQuery(
     accountNumber: string,
     employeeId: string,
     tenantId: string,
+    companyId: string,
 ): Promise<ParameterizedQuery> {
     let tokenizedAccountNumber;
-    if (accountNumber[0] == '#') {
-        tokenizedAccountNumber = accountNumber;
-    } else {
-        const tokenizationResponse = await getTokenizedOutput(tenantId, [accountNumber]);
-        tokenizedAccountNumber = tokenizationResponse[0] || accountNumber;
 
-        if (tokenizedAccountNumber[0] !== '#') {
-            throw errorService.getErrorResponse(0).setMoreInfo('Unable to obtain tokenized account number');
+
+    // Checking in the database if the NACHA flag is on
+    const nachaQuery = new ParameterizedQuery('CheckNachaBetaFlagIsOn', Queries.checkNachaBetaFlagIsOn);
+    nachaQuery.setStringParameter('@CompanyID', companyId);
+
+    const nachaPayload = {
+        tenantId,
+        queryName: nachaQuery.name,
+        query: nachaQuery.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
+
+    const nachaResult: any = await utilService.invokeInternalService('queryExecutor', nachaPayload, utilService.InvocationType.RequestResponse);
+
+    if (!nachaResult || !nachaResult.recordset.length || !nachaResult.recordset[0].Result) {
+        throw errorService.getErrorResponse(0).setMoreInfo(`Nacha was not configured on this tenant: ${tenantId}`);
+    }
+    const nachaBetaFlagIsOn: any = nachaResult.recordset[0].Result;
+
+    if (nachaBetaFlagIsOn === 'Y')
+    {
+        if (accountNumber[0] == '#') {
+            tokenizedAccountNumber = accountNumber;
+        } else {
+            const tokenizationResponse = await getTokenizedOutput(tenantId, [accountNumber]);
+            tokenizedAccountNumber = tokenizationResponse[0] || accountNumber;
+    
+            if (tokenizedAccountNumber[0] !== '#') {
+                throw errorService.getErrorResponse(0).setMoreInfo('Unable to obtain tokenized account number');
+            }
         }
     }
-
+    else {
+        tokenizedAccountNumber = accountNumber;
+    }
+    
     const bankAccountsQuery = new ParameterizedQuery('CheckForDuplicateBankAccounts', Queries.checkForDuplicateBankAccounts);
     bankAccountsQuery.setParameter('@routingNumber', routingNumber);
     bankAccountsQuery.setParameter('@accountNumber', accountNumber);
@@ -221,7 +248,7 @@ export async function create(
     }
 
     try {
-        const bankAccountQuery = await getDuplicateBankAccountQuery(routingNumber, accountNumber, employeeId, tenantId);
+        const bankAccountQuery = await getDuplicateBankAccountQuery(routingNumber, accountNumber, employeeId, tenantId, companyId);
         let duplicatesQuery;
         if (amountType === 'Balance Remainder') {
             const remainderOfPayQuery = await getDuplicateRemainderOfPayQuery(employeeId);
