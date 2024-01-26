@@ -37,6 +37,17 @@ export async function listGtlRecordsByEmployee(
 ): Promise<GtlRecord> {
     console.info('gtlService.listGtlRecordsByEmployee');
 
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+    // employeeId value must be integral
+    if (Number.isNaN(Number(employeeId))) {
+        const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
     try {
         const [employee]: any[] = await Promise.all([
             employeeService.getById(tenantId, companyId, employeeId, emailAddress, roles),
@@ -137,6 +148,17 @@ export async function createGtlRecord(
 ): Promise<GtlRecord> {
     console.info('gtlService.createGtlRecord');
 
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+    // employeeId value must be integral
+    if (Number.isNaN(Number(employeeId))) {
+        const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+
     try {
         const [employee]: any[] = await Promise.all([
             employeeService.getById(tenantId, companyId, employeeId, emailAddress, roles),
@@ -230,6 +252,17 @@ export async function updateGtlRecord(
     accessToken: string,
 ): Promise<GtlRecord> {
     console.info('gtlService.updateGtlRecord');
+
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+    // employeeId value must be integral
+    if (Number.isNaN(Number(employeeId))) {
+        const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
 
     try {
         const [employee]: any[] = await Promise.all([
@@ -330,6 +363,17 @@ export async function deleteGtlRecordsByEmployee(
     accessToken: string,
 ) {
     console.info('gtlService.deleteGtlRecordsByEmployee');
+
+    // companyId value must be integral
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
+    // employeeId value must be integral
+    if (Number.isNaN(Number(employeeId))) {
+        const errorMessage = `${employeeId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
 
     try {
         const [employee]: any[] = await Promise.all([
