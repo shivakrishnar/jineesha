@@ -14,6 +14,44 @@ describe('gtl.service.get', () => {
         (utilService as any).validateEmployee = jest.fn();
     });
 
+    test('returns a 400 when the supplied companyId is not an integer', () => {
+        return gtlService
+            .listGtlRecordsByEmployee(
+                mockData.tenantId,
+                mockData.companyIdWithCharacter,
+                mockData.employeeId,
+                mockData.emailAddress,
+                [],
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.companyIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('returns a 400 when the supplied employeeId is not an integer', () => {
+        return gtlService
+            .listGtlRecordsByEmployee(
+                mockData.tenantId,
+                mockData.companyId,
+                mockData.employeeIdWithCharacter,
+                mockData.emailAddress,
+                [],
+            )
+            .catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.employeeIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
     test('fetches a gtl record for an employee', () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'ListGtlRecordsByEmployee') {
