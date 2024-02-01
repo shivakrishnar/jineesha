@@ -1,40 +1,3 @@
-export const devTenantId = 'e5a19feb-0fca-4b61-9b7a-43a2a6dd7414';
-
-export const validId = '72';
-export const CompanyId = '1';
-export const DataImportEventId = '1';
-export const DataImportTypeId = '2';
-export const domainName = 'https://test.evolution-software.com';
-export const path = '/identity/tenants/1234/companies/1/employees/123/direct-deposits';
-
-export const dataImportTypesEmpty = {
-    recordsets: [[]],
-    recordset: [],
-    output: {},
-    rowsAffected: [0],
-};
-
-export const dataImportsEmpty = {
-    recordsets: [[{ totalCount: 0 }], []],
-    recordset: [{ totalCount: 0 }],
-    output: {},
-    rowsAffected: [0, 0, 0],
-};
-
-export const dataImportEventDetailsEmpty = {
-    recordsets: [[{ totalCount: 0 }], []],
-    recordset: [{ totalCount: 0 }],
-    output: {},
-    rowsAffected: [0, 0, 0],
-};
-
-export const queryReturnedEmpty = {
-    recordsets: [[]],
-    recordset: [],
-    output: {},
-    rowsAffected: [0],
-};
-
 export const dataImportTypes = {
     recordsets: [[[Object], [Object]]],
     recordset: [
@@ -283,3 +246,110 @@ export const dataImportEventDetailsResponse = {
         },
     ],
 };
+
+export const queryReturnedDataImportTypeById = {
+    recordsets: [[]],
+    recordset: [
+        {
+        S3TemplatePath: 'TemplateAR.xlsx'
+        }
+    ],
+    output: {},
+    rowsAffected: [1],
+};
+
+export const resultCSVAlternateRate = '"Employee Identifier","Rate Number","Start Date","End Date","Hourly Rate","Job Number","Worker Comp Code","Organization Level 1","Organization Level 2","Organization Level 3","Organization Level 4"\n"999888902","150","2023-10-16","2023-12-31","60","","","","","",""';
+
+export const resultInsertDataImportEvent = {
+    recordsets: [[]],
+    recordset: [
+        {
+            DataImportEventID: 123
+        }
+    ],
+    output: {},
+    rowsAffected: [1],
+}
+
+export const resultDataImportTypeById = {
+    recordsets: [[]],
+    recordset: [
+        {
+            Name: 'Update Compensation'
+        }
+    ],
+    output: {},
+    rowsAffected: [1],
+}
+
+export const resultConnectionsToNotify = {
+    Items: [
+        {
+            ConnectionId: 123
+        },
+        {
+            ConnectionId: 321
+        }
+    ]
+}
+
+export const resultDataImportDetailFailed = {
+    recordsets: [[{ totalCount: 1 }]],
+    recordset: [
+        {
+            CSVRowStatus: 'Failed'
+        }
+    ],
+    output: {},
+    rowsAffected: [1],
+}
+
+export const resultDataImportDetailPartiallyProcessed = {
+    recordsets: [[{ totalCount: 1 }]],
+    recordset: [
+        {
+            CSVRowStatus: 'Failed'
+        },
+        {
+            CSVRowStatus: 'Processed'
+        }
+    ],
+    output: {},
+    rowsAffected: [1],
+}
+
+export const resultUserToNotify = {
+    recordsets: [[{ totalCount: 1 }]],
+    recordset: [
+        {
+            Email: 'test@test.com',
+            CreationDate: '2023-07-15T00:00:00.000Z'
+        }
+    ],
+    output: {},
+    rowsAffected: [1],
+}
+
+export const resultImportTypeAndImportedFilePath = {
+    recordsets: [[{ totalCount: 1 }]],
+    recordset: [
+        {
+            FileName: '16549.csv',
+            CSVHeader: 'Employee Code,Birthdate,Time Clock Number,Email,Home Phone,Work Phone,Cell Phone,Gender,Ethnicity,Education Level,Tobacco User,Disabled,Military Reserve,Veteran,Memo 1,Memo 2,Memo 3,Pay Frequency,Standard Payroll Hours,FLSA Classification,Position,Reports To 1,Reports To 2,Reports To 3,Supervisor (SC),Benefit Class/Eligibility Group,EEO Category,Worker Comp Code,Change Reason,Comment'
+        }
+    ],
+    output: {},
+    rowsAffected: [1],
+}
+
+export const resultCSVRowsAndNotes = {
+    recordsets: [[{ totalCount: 1 }]],
+    recordset: [
+        {
+            CSVRowData: '"501","2/28/85","","minalp@sharklasers.com","705-111-1183","805-111-1134","803-111-1154","M","W","","0","0","Declined to disclose - N/A","Declined to disclose - N/A","","","","Weekly","","","TR02","","","","0","","","8810(NY)","",""',
+            CSVRowNotes: 'Incorrect Employee Identifier\nInvalid Pay Frequency\nInvalid Position\nInvalid Worker Comp Code\n'
+        }
+    ],
+    output: {},
+    rowsAffected: [1],
+}

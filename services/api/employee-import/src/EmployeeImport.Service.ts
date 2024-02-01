@@ -1,6 +1,6 @@
-import * as AWS from 'aws-sdk';
 import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
+import * as helpers from './helpers';
 import * as paginationService from '../../../pagination/pagination.service';
 import * as configService from '../../../config.service';
 import * as payrollService from '../../../remote-services/payroll.service';
@@ -23,11 +23,9 @@ import {
 } from './DataImport';
 import { IWage, IPatchOperation, IEvoPatch } from './Compensation';
 import * as mime from 'mime-types';
-import fetch from 'node-fetch';
 import { IEvolutionKey } from '../../models/IEvolutionKey';
 import * as ssoService from '../../../remote-services/sso.service';
 import * as webSocketNotification from '../../ws-notification/src/ws-notification.Service';
-import { SecurityContextProvider } from '../../../internal-api/authentication/securityContextProvider';
 
 const employeeImportPageSize = '6';
 
@@ -145,7 +143,7 @@ export async function listDataImports(
 
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
 
-        if (result.recordsets[1].length === 0) {
+        if (!result || !result.recordset.length) {
             return undefined;
         }
 
@@ -219,7 +217,7 @@ export async function listDataImportEventDetails(
 
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
 
-        if (result.recordsets[1].length === 0) {
+        if (!result || !result.recordset.length) {
             return undefined;
         }
 
@@ -286,13 +284,17 @@ export async function getTemplate(tenantId: string, dataImportTypeId: string): P
         };
 
         const url = await utilService.getSignedUrlSync('getObject', params);
+        if (!url || url === '') {
+            throw new Error(`File not found`);
+        }
+
         const fileName = key.split('/').reverse()[0];
         const mimeType = mime.contentType(fileName);
 
         return { data: url, mimeType: `.${mimeType}` };
     } catch (error) {
         if (error.message) {
-            if (error.message.includes('Not found')) {
+            if (error.message.includes('File not found')) {
                 throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
             }
         }
@@ -339,11 +341,14 @@ export async function uploadUrl(tenantId: string, companyId: string, fileName: s
         };
 
         const url = await utilService.getSignedUrlSync('putObject', params);
+        if (!url || url === '') {
+            throw new Error(`URL pre-signed not found.`);
+        }
 
         return { url, mimeType };
     } catch (e) {
         if (e.message) {
-            if (e.message.includes('Not found')) {
+            if (e.message.includes('pre-signed not found')) {
                 throw errorService.getErrorResponse(50).setDeveloperMessage(e.message);
             }
         }
@@ -390,8 +395,7 @@ export async function dataImports(
         };
 
         const signedUrl = await utilService.getSignedUrlSync('getObject', params);
-        const response = await fetch(signedUrl);
-        const csvData = await response.text();
+        const csvData = await helpers.getFileFromPreSignedURL(signedUrl);
         const csvLines = csvData.split('\n');
         csvLines.shift();
 
@@ -438,7 +442,6 @@ export async function dataImports(
         }
         const dataImportEventId: number = result.recordset[0].DataImportEventID;
 
-        //
         // Calling the step function to do the validation and update for each row of the csv file...
         // I've leave the line below as a example for local test, please DO NOT remove this line.
         //const stepFunctionArnName = 'arn:aws:states:us-east-1:317299412255:stateMachine:HrEmployeeImportStateMachine-development';
@@ -453,13 +456,8 @@ export async function dataImports(
             userId,
             hrAccessToken,
         };
-        const stepFunctions = new AWS.StepFunctions();
-        const stepFunctionsParams = {
-            stateMachineArn: stepFunctionArnName,
-            input: JSON.stringify(stepFunctionInputs),
-        };
 
-        await stepFunctions.startExecution(stepFunctionsParams).promise();
+        await utilService.StartStateMachineExecution(stepFunctionArnName, stepFunctionInputs);
 
         return stepFunctionInputs;
     } catch (error) {
@@ -560,6 +558,7 @@ export async function updateEmployee(
             validateEmployeeDetailsPayload,
             utilService.InvocationType.RequestResponse,
         );
+
         if (
             !validateEmployeeResult ||
             !validateEmployeeResult.recordset.length ||
@@ -569,12 +568,13 @@ export async function updateEmployee(
             console.error('===> StatusResult was not returned from the validateEmployee script');
             throw new Error(`Status was not returned from the validateEmployee script`);
         }
+        
         const validateEmployeeStatusResult: number = validateEmployeeResult.recordset[0].StatusResult;
         if (validateEmployeeStatusResult === 0) {
             console.info(
                 `===> The employee row was not pass the validation: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`,
             );
-            return undefined;
+            return { isSuccess: false, message: 'The data provided did not pass validation' };
         }
 
         //
@@ -869,7 +869,7 @@ export async function updateEmployee(
             console.error(
                 `===> The employee row was not updated on AHR: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`,
             );
-            return undefined;
+            return { isSuccess: false, message: 'The employee update script was not executed successfully' };
         }
 
         utilService.clearCache(tenantId, hrAccessToken);
@@ -879,7 +879,9 @@ export async function updateEmployee(
         console.info(error);
 
         let msgError = '';
-        if (error.error && error.error.developerMessage) {
+        if (error instanceof ErrorMessage) {
+            msgError = error.message;
+        } else if (error.error && error.error.developerMessage) {
             msgError = error.error.developerMessage;
         } else if (typeof error === 'object') {
             msgError = error.toString();
@@ -910,6 +912,9 @@ export async function updateEmployee(
             utilService.InvocationType.RequestResponse,
         );
         console.info(updateDataImportEventDetailErrorResult);
+        
+        return { isSuccess: false, message: msgError };
+
     }
 }
 
@@ -964,37 +969,8 @@ export async function setFailedDataImportEvent(
         } else {
             const dataImportTypeName = result.recordset[0].Name;
 
-            // authenticate
-            const securityContext = await new SecurityContextProvider().getSecurityContext({
-                event: {
-                    headers: {
-                        Authorization: accessToken,
-                    },
-                },
-            });
-
-            const {
-                principal: { id: userId },
-            } = securityContext;
-
-            const client = new AWS.DynamoDB.DocumentClient({
-                region: configService.getAwsRegion(),
-            });
-
-            const connections = await client
-                .scan({
-                    TableName: 'WebSocketConnections',
-                    FilterExpression: '#UserId = :UserId',
-                    ExpressionAttributeNames: {
-                        '#UserId': 'UserId',
-                    },
-                    ExpressionAttributeValues: {
-                        ':UserId': userId,
-                    },
-                })
-                .promise();
-
-            if (connections.Items.length > 0) {
+            const connections = await utilService.getConnectionsFromDynamoDBUsingAccessToken(accessToken);
+            if (connections && connections.Items && connections.Items.length > 0) {
                 const message: webSocketNotification.Message = {
                     data: `Employee import, type '${dataImportTypeName}' returned error`,
                     types: ['Global'],
@@ -1075,37 +1051,8 @@ export async function setDataImportEventStatusGlobal(
         } else {
             const dataImportTypeName = result.recordset[0].Name;
 
-            // authenticate
-            const securityContext = await new SecurityContextProvider().getSecurityContext({
-                event: {
-                    headers: {
-                        Authorization: accessToken,
-                    },
-                },
-            });
-
-            const {
-                principal: { id: userId },
-            } = securityContext;
-
-            const client = new AWS.DynamoDB.DocumentClient({
-                region: configService.getAwsRegion(),
-            });
-
-            const connections = await client
-                .scan({
-                    TableName: 'WebSocketConnections',
-                    FilterExpression: '#UserId = :UserId',
-                    ExpressionAttributeNames: {
-                        '#UserId': 'UserId',
-                    },
-                    ExpressionAttributeValues: {
-                        ':UserId': userId,
-                    },
-                })
-                .promise();
-
-            if (connections.Items.length > 0) {
+            const connections = await utilService.getConnectionsFromDynamoDBUsingAccessToken(accessToken);
+            if (connections && connections.Items && connections.Items.length > 0) {
                 const message: webSocketNotification.Message = {
                     data: `Employee import, type '${dataImportTypeName}' is ${status.toLowerCase()}`,
                     types: ['Global'],
@@ -1278,7 +1225,7 @@ export async function downloadImportData(
         const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
 
         if (result.recordsets[0].length === 0) {
-            return undefined;
+            throw new Error(`Import type not found`);
         }
 
         if (queryParams && queryParams['status']) {
@@ -1339,10 +1286,10 @@ export async function downloadImportData(
         }
     } catch (error) {
         if (error instanceof ErrorMessage) {
-            throw error;
+            throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);;
         }
         console.error(error);
-        throw errorService.getErrorResponse(0);
+        throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
     }
 }
 
@@ -1370,7 +1317,7 @@ export async function updateCompensation(
     try {
         if (!hrAccessToken || !hrAccessToken.length) {
             console.info('===> hrAccessToken not found and we need him to update the compensation');
-            return undefined;
+            throw new Error(`Token not found`);
         }
 
         //
@@ -1400,7 +1347,7 @@ export async function updateCompensation(
         console.info(resultCSVHeader);
 
         if (resultCSVHeader.recordsets[0].length === 0) {
-            throw new Error(`CSV header not found`);
+            throw new Error(`The CSV header could not be found`);
         }
 
         const csvRowDesiredOrder = resultCSVHeader.recordset[0].CSVHeader.split(',');
@@ -1435,6 +1382,7 @@ export async function updateCompensation(
             validateCompensationPayload,
             utilService.InvocationType.RequestResponse,
         );
+
         if (
             !validateCompensationResult ||
             !validateCompensationResult.recordset.length ||
@@ -1444,12 +1392,13 @@ export async function updateCompensation(
             console.error('===> StatusResult was not returned from the validateCompensation script');
             throw new Error(`Status was not returned from the validateCompensation script`);
         }
+
         const validateCompensationStatusResult: number = validateCompensationResult.recordset[0].StatusResult;
         if (validateCompensationStatusResult === 0) {
             console.info(
                 `===> The compensation row was not pass the validation: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`,
             );
-            return undefined;
+            return { isSuccess: false, message: 'The data provided did not pass validation' };
         }
 
         //
@@ -1493,7 +1442,7 @@ export async function updateCompensation(
             console.info(
                 `===> The compensation row was not inserted on AHR: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`,
             );
-            return undefined;
+            throw new Error(`The compensation row was not inserted on AHR`);
         }
 
         //
@@ -1597,6 +1546,8 @@ export async function updateCompensation(
                         wageId: `${myEvoWage.id}`,
                     };
 
+                    console.log(evoWageKeys);
+                    
                     let executedUpdate = false;
                     getEmployeeCompensationsResult.recordset.forEach((empComp) => {
                         if (empComp.payTypeCode && empComp.payTypeCode === 'H') {
@@ -1615,6 +1566,7 @@ export async function updateCompensation(
                         } else {
                             myEmpPatch = LoadToPatchEmp(myEmpPatch, empComp, myEvoWage.id);
                             myWagePatch = CreateDefaultPatchOperation(myWagePatch, myEvoWage.id, empComp.EffectiveDate, 0);
+
                             UpdateEvoWage(myEvoWage, empComp, evoWageKeys, tenantName, evoAccessToken);
                         }
                     });
@@ -1700,7 +1652,9 @@ export async function updateCompensation(
         console.info(error);
 
         let msgError = '';
-        if (error.error && error.error.developerMessage) {
+        if (error instanceof ErrorMessage) {
+            msgError = error.message;
+        } else if (error.error && error.error.developerMessage) {
             msgError = error.error.developerMessage;
         } else if (typeof error === 'object') {
             msgError = error.toString();
@@ -1731,6 +1685,8 @@ export async function updateCompensation(
             utilService.InvocationType.RequestResponse,
         );
         console.info(updateDataImportEventDetailErrorResult);
+
+        return { isSuccess: false, message: msgError };
     }
 }
 
@@ -1884,6 +1840,7 @@ async function UpdateEvoWage(myEvoWage: IWage, empComp, evoWageKeys: IEvolutionK
     myEvoWage.departmentId = empComp.org3Id;
     myEvoWage.teamId = empComp.org4Id;
     myEvoWage.jobId = empComp.jobId;
+
     myEvoWage.workersCompensation.id = empComp.workerCompensationId;
     myEvoWage.workersCompensation.description = empComp.workerCompDesc;
     myEvoWage.workersCompensation.state.id = empComp.stateId;
@@ -1917,7 +1874,7 @@ export async function updateAlternateRate(
     try {
         if (!hrAccessToken || !hrAccessToken.length) {
             console.info('===> hrAccessToken not found and we need him to update the alternate rate');
-            return undefined;
+            throw new Error(`Token not found`);
         }
 
         //
@@ -1947,7 +1904,7 @@ export async function updateAlternateRate(
         console.info(resultCSVHeader);
 
         if (resultCSVHeader.recordsets[0].length === 0) {
-            throw new Error(`CSV header not found`);
+            throw new Error(`The CSV header could not be found`);
         }
 
         const csvRowDesiredOrder = resultCSVHeader.recordset[0].CSVHeader.split(',');
@@ -1982,21 +1939,23 @@ export async function updateAlternateRate(
             validateAlternateRatePayload,
             utilService.InvocationType.RequestResponse,
         );
+
         if (
             !validateAlternateRateResult ||
             !validateAlternateRateResult.recordset.length ||
             validateAlternateRateResult.recordset[0].StatusResult === undefined ||
             validateAlternateRateResult.recordset[0].StatusResult === null
         ) {
-            console.error('===> StatusResult was not returned from the validateCompensation script');
-            throw new Error(`Status was not returned from the validateCompensation script`);
+            console.error('===> StatusResult was not returned from the validateAlternateRate script');
+            throw new Error(`Status was not returned from the validateAlternateRate script`);
         }
+
         const validateCompensationStatusResult: number = validateAlternateRateResult.recordset[0].StatusResult;
         if (validateCompensationStatusResult === 0) {
             console.info(
                 `===> The alternate rate row was not pass the validation: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`,
             );
-            return undefined;
+            return { isSuccess: false, message: 'The data provided did not pass validation' };
         }
 
         //
@@ -2031,8 +1990,8 @@ export async function updateAlternateRate(
             insertAlternateRateResult.recordset[0].StatusResult === undefined ||
             insertAlternateRateResult.recordset[0].StatusResult === null
         ) {
-            console.error('===> StatusResult was not returned from the insertCompensation script');
-            throw new Error(`StatusResult was not returned from the insertCompensation script`);
+            console.error('===> StatusResult was not returned from the insertAlternateRate script');
+            throw new Error(`StatusResult was not returned from the insertAlternateRate script`);
         }
 
         const insertAlternateRateStatusResult: number = insertAlternateRateResult.recordset[0].StatusResult;
@@ -2040,7 +1999,7 @@ export async function updateAlternateRate(
             console.info(
                 `===> The alternate rate row was not inserted on AHR: TenantId: ${tenantId} | CompanyId: ${companyId} | DataImportEventId: ${dataImportEventId} | CsvRowNumber: ${rowNumber}`,
             );
-            return undefined;
+            throw new Error(`The alternate rate row was not inserted on AHR`);
         }
 
         // Checking if company has integration with EVO
@@ -2137,7 +2096,7 @@ export async function updateAlternateRate(
                     if (evoEmployeeWagesResult.results.length > 0) {
                         evoEmployeeWagesResult.results.forEach((wage) => {
                             if (wage.rate && wage.rate.id) {
-                                if (!myRateNumber_PKList[wage.rate.id]) {
+                                if (wage.rate.id in myRateNumber_PKList) {
                                     if (myRateNumber_PKList[wage.rate.id] !== wage.id) {
                                         console.info('==> bad data');
                                     }
@@ -2309,7 +2268,9 @@ export async function updateAlternateRate(
         console.info(error);
 
         let msgError = '';
-        if (error.error && error.error.developerMessage) {
+        if (error instanceof ErrorMessage) {
+            msgError = error.message;
+        } else if (error.error && error.error.developerMessage) {
             msgError = error.error.developerMessage;
         } else if (typeof error === 'object') {
             msgError = error.toString();
@@ -2340,6 +2301,8 @@ export async function updateAlternateRate(
             utilService.InvocationType.RequestResponse,
         );
         console.info(updateDataImportEventDetailErrorResult);
+
+        return { isSuccess: false, message: msgError };
     }
 }
 

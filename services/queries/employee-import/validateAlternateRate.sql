@@ -19,6 +19,8 @@ select  @cStatus = 2
 declare @cEmployeeCode		nvarchar(50)
 declare @nEmployeeID		bigint
 
+BEGIN TRY 
+
 	  select row_number() over(order by (select 0)) as Row_Num, * 
 		into #CSVtable
 		from string_split(replace(@cCSVRow, '"',''), ',') 
@@ -133,3 +135,12 @@ declare @nEmployeeID		bigint
 				where DataImportEventID = @nDataImportEventId and CSVRowNumber = @nRowNumber
 			select @cStatus as StatusResult
 		end
+
+END TRY  
+BEGIN CATCH  
+	select @cStatus = 0
+	update DataImportEventDetail 
+		set CSVRowStatus = 'Failed', CSVRowNotes = 'Line: ' + CONVERT(varchar(10), ERROR_LINE()) + '. Message: ' + CONVERT(varchar(4000), ERROR_MESSAGE()), LastUserID = 0, LastProgramEvent = 'usp_DataImportEvent_Validate_Compensation', LastUpdatedDate = getdate()
+		where DataImportEventID = @nDataImportEventId and CSVRowNumber = @nRowNumber
+	select @cStatus as StatusResult
+END CATCH;
