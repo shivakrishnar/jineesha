@@ -62,6 +62,11 @@
       "name": "ws-notification",
       "directory": "services/api/ws-notification",
       "createDomain": false
+    },
+    {
+      "name": "applicant-tracking",
+      "directory": "services/api/applicant-tracking",
+      "createDomain": true
     }
   ]
 }

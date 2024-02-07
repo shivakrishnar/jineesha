@@ -1,0 +1,196 @@
+service: asure-applicant-tracking${opt:branchName, ''}
+
+provider:
+  stage: ${file(${self:custom.configFile}):stage}
+  name: aws
+  runtime: nodejs16.x
+  timeout: 900   # AWS API Gateway timeout limit (30s)
+  versionFunctions: false
+  memorySize: 1024
+  logRetentionInDays: ${file(${self:custom.configFile}):logRetentionInDays}
+
+  environment:  #environment variables
+    awsRegion: ${file(${self:custom.configFile}):awsRegion}
+    webSocketUrl: ${file(${self:custom.configFile}):webSocketUrl}
+    secretsAwsEndPoint: ${file(${self:custom.configFile}):secretsAwsEndPoint}
+    apiSecretId: ${file(${self:custom.configFile}):apiSecretId}
+    rdsCredentialsId: ${file(${self:custom.configFile}):rdsCredentialsId}
+    payrollApiCredentialsId: ${file(${self:custom.configFile}):payrollApiCredentialsId}
+    ssoCredentialsId: ${file(${self:custom.configFile}):ssoCredentialsId}
+    asureAdminRoleId: ${file(${self:custom.configFile}):asureAdminRoleId}
+    evoHrGlobalAdmin: ${file(${self:custom.configFile}):evoHrGlobalAdmin}
+    stage: ${file(${self:custom.configFile}):stage}
+    apiDomain: ${file(${self:custom.configFile}):apiDomain}
+    domain: ${file(${self:custom.configFile}):domain}
+    hrServicesDomain: ${file(${self:custom.configFile}):hrServicesDomain}
+    hrDatabaseCreatorStateMachineArn: arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}
+    hrCompanyMigratorStateMachineArn: arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrCompanyMigrator-${self:provider.stage}
+    teamNotificationTopicArn: arn:aws:sns:us-east-1:#{AWS::AccountId}:mojojojo-status-notification
+    scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
+    goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
+    hrApplicationId: ${file(${self:custom.configFile}):hrApplicationId}
+    ssoPublicKey1: ${file(${self:custom.configFile}):ssoPublicKey1}
+    ssoPublicKey2: ${file(${self:custom.configFile}):ssoPublicKey2}
+    pageLimitDefault: 30
+    pageLimitMax: 100
+    AuditLogGroupName: ${file(${self:custom.configFile}):AuditLogGroupName}
+    tenantAdminCredentialsId: ${file(${self:custom.configFile}):tenantAdminCredentialsId}
+    goldilocksTenantId: ${file(${self:custom.configFile}):goldilocksTenantId}
+    integrationId: ${file(${self:custom.configFile}):integrationId}
+    eSignatureApiCredentialsId: ${file(${self:custom.configFile}):eSignatureApiCredentialsId}
+    tlmReadRole: ${file(${self:custom.configFile}):tlmReadRole}
+    tlmWriteRole: ${file(${self:custom.configFile}):tlmWriteRole}
+    fileBucketName: ${file(${self:custom.configFile}):fileBucketName}
+    payrollBaseUrl: ${file(${self:custom.configFile}):payrollBaseUrl}
+    dbBackupBucket: ${file(${self:custom.configFile}):dbBackupBucket}
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action: # Gives permission to create the necessary ENIs for execution in VPC
+        - ec2:CreateNetworkInterface
+        - ec2:DescribeNetworkInterfaces
+        - ec2:DeleteNetworkInterface
+        - ec2:DetachNetworkInterface
+      Resource: "arn:aws:ec2:us-east-1:*:*"
+
+    - Effect: Allow
+      Action:
+        - secretsmanager:*
+        - kms:DescribeKey
+        - kms:ListAliases
+        - kms:ListKeys
+      Resource: "*"
+
+    - Effect: Allow
+      Action:
+        - acm:ListCertificates
+        - apigateway:GET
+        - apigateway:DELETE
+        - apigateway:POST
+        - apigateway:PATCH
+        - apigateway:PUT
+        - cloudfront:UpdateDistribution
+        - route53:ListHostedZones
+        - route53:GetHostedZone
+        - route53:ListResourceRecordSets
+      Resource: "*"
+
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+      Resource: "*"
+
+    - Effect: Allow
+      Action:
+        - rds:DescribeDBInstances
+      Resource: "*"
+
+    - Effect: Allow
+      Action: states:StartExecution
+      Resource:
+        - "arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrDatabaseCreator${opt:branchName, ''}-${self:provider.stage}"
+        - "arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrCompanyMigrator${opt:branchName, ''}-${self:provider.stage}"
+
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+        - s3:GetObjectAcl
+        - s3:GetBucket
+        - s3:ListBucket
+        - s3:PutObject
+        - s3:DeleteObject
+      Resource: "arn:aws:s3:::*"
+
+    - Effect: Allow
+      Action:
+        - sns:Publish
+      Resource: arn:aws:sns:us-east-1:#{AWS::AccountId}:mojojojo-status-notification
+
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:PutItem
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
+      Resource: "arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings"
+      
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+      Resource: arn:aws:dynamodb:us-east-1:*:table/ConnectionStrings/index/*
+
+    - Effect: Allow
+      Action:
+        - "dynamodb:GetItem"
+        - "dynamodb:Query"
+        - "dynamodb:Scan"
+      Resource: arn:aws:dynamodb:us-east-1:*:table/WebSocketConnections
+
+    - Effect: Allow
+      Action:
+        - "execute-api:Invoke"
+        - "execute-api:ManageConnections"
+      Resource: arn:aws:execute-api:us-east-1:*
+    
+  apiGateway:
+    binaryMediaTypes:
+      - '*/*'
+
+functions:
+  getATQuestionTypes:
+    handler: src/handler.getATQuestionTypes
+    events:
+        - http:
+            path: /tenants/{tenantId}/atquestion-types
+            method: get
+            cors:
+              origin: '*'
+
+resources:
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+
+plugins:
+  - serverless-plugin-warmup
+  - serverless-webpack
+  - serverless-aws-documentation
+  - serverless-cloudformation-resource-counter
+  - serverless-domain-manager
+  - serverless-pseudo-parameters
+  - serverless-offline
+
+package:
+  individually: false
+  excludeDevDependencies: true
+
+custom:
+  configFile: ../../${opt:variables, 'local'}.serverless.variables.json
+  warmup:
+    timeout: 60
+    schedule: 'cron(0/5 * * * ? *)'    # Run every 5 minutes
+    default:
+        - production
+        - development
+        - staging
+    concurrency: 3
+  webpack:
+    webpackConfig: ./webpack/${file(${self:custom.configFile}):webpackConfigurationFile}
+    includeModules: true
+    packager: 'npm'
+  customDomain:
+    basePath: applicant-tracking${opt:branchName, ''}
+    domainName: hr-services.${file(${self:custom.configFile}):domain}
+    certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
+    createRoute53Record: false
