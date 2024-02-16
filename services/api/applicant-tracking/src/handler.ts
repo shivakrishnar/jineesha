@@ -1,7 +1,7 @@
 import 'reflect-metadata'; // required by asure.auth dependency
 
 import * as utilService from '../../../util.service';
-
+import * as applicantTrackingService from './ApplicantTracking.Service';
 import * as UUID from '@smallwins/validate/uuid';
 import { IGatewayEventInput } from '../../../util.service';
 import { Role } from '../../models/Role';
@@ -37,5 +37,5 @@ export const getATQuestionTypes = utilService.gatewayEventHandlerV2(async ({ sec
 
     const { tenantId } = event.pathParameters;
 
-    return { "tenantId": tenantId };
+    return await applicantTrackingService.atquestionTypeService.getATQuestionTypes(tenantId);
 });
