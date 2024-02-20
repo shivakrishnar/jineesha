@@ -1458,3 +1458,48 @@ export function validateExtensions(fileName: string, extensions: string[]): void
         }
     });    
 }
+
+export async function StartStateMachineExecution(stepFunctionArnName, stepFunctionInputs) {
+    const stepFunctions = new AWS.StepFunctions();
+    
+    const stepFunctionsParams = {
+        stateMachineArn: stepFunctionArnName,
+        input: JSON.stringify(stepFunctionInputs),
+    };
+
+    return await stepFunctions.startExecution(stepFunctionsParams).promise();
+}
+
+export async function getConnectionsFromDynamoDBUsingAccessToken(accessToken: string) {
+    // authenticate
+    const securityContext = await new SecurityContextProvider().getSecurityContext({
+        event: {
+            headers: {
+                Authorization: accessToken,
+            },
+        },
+    });
+
+    const {
+        principal: { id: userId },
+    } = securityContext;
+
+    const client = new AWS.DynamoDB.DocumentClient({
+        region: configService.getAwsRegion(),
+    });
+
+    const connections = await client
+        .scan({
+            TableName: 'WebSocketConnections',
+            FilterExpression: '#UserId = :UserId',
+            ExpressionAttributeNames: {
+                '#UserId': 'UserId',
+            },
+            ExpressionAttributeValues: {
+                ':UserId': userId,
+            },
+        })
+        .promise();
+
+    return connections;
+}

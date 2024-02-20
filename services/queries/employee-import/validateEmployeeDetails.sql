@@ -17,6 +17,8 @@ select  @cColumnsToUpdate = ''
 declare @cStatus			int
 select  @cStatus = 1
 
+BEGIN TRY 
+
 	  select row_number() over(order by (select 0)) as Row_Num, * 
 		into #CSVtable
 		from string_split(replace(substring(@cCSVRow,2,len(@cCSVRow)-2), '","','~'), '~') 
@@ -269,3 +271,12 @@ select  @cStatus = 1
 				where DataImportEventID = @nDataImportEventId and CSVRowNumber = @nRowNumber
 			select @cStatus as StatusResult
 		end
+
+END TRY  
+BEGIN CATCH  
+	select @cStatus = 0
+	update DataImportEventDetail 
+		set CSVRowStatus = 'Failed', CSVRowNotes = 'Line: ' + CONVERT(varchar(10), ERROR_LINE()) + '. Message: ' + CONVERT(varchar(4000), ERROR_MESSAGE()), LastUserID = 0, LastProgramEvent = 'usp_DataImportEvent_Validate_Compensation', LastUpdatedDate = getdate()
+		where DataImportEventID = @nDataImportEventId and CSVRowNumber = @nRowNumber
+	select @cStatus as StatusResult
+END CATCH;
