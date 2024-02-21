@@ -141,14 +141,32 @@ provider:
       - '*/*'
 
 functions:
-  getATQuestionTypes:
-    handler: src/handler.getATQuestionTypes
+  getQuestionTypesByTenant:
+    handler: src/handler.getQuestionTypesByTenant
     events:
         - http:
-            path: /tenants/{tenantId}/atquestion-types
+            path: /tenants/{tenantId}/question-types
             method: get
             cors:
               origin: '*'
+
+  getQuestionBanksByTenant:
+    handler: src/handler.getQuestionBanksByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/question-banks
+            method: get
+            cors:
+              origin: '*'
+
+  # getATQuestionBanksByCompany:
+  #   handler: src/handler.getATQuestionBanksByCompany
+  #   events:
+  #       - http:
+  #           path: /tenants/{tenantId}/companies/{companyId}/atquestion-banks
+  #           method: get
+  #           cors:
+  #             origin: '*'
 
 resources:
   Resources:

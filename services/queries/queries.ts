@@ -298,5 +298,7 @@ export const Queries = {
     updateAlternateRate: fs.readFileSync(path.join(basePath, 'employee-import/updateAlternateRate.sql')).toString(),
 
     // Aplicant Tracking
-    getATQuestionTypes: fs.readFileSync(path.join(basePath, 'applicant-tracking/getATQuestionTypes.sql')).toString(),
+    getQuestionTypesByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionTypesByTenant.sql')).toString(),
+    getQuestionBanksByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBanksByTenant.sql')).toString(),
+    getQuestionBanksByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBanksByCompany.sql')).toString(),
 };

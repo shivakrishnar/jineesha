@@ -20,22 +20,85 @@ const headerSchema = {
     authorization: { required: true, type: String },
 };
 
-const ATQuestionTypeUriSchema = {
+const pathParametersForTenantId = {
     tenantId: { required: true, type: UUID }
 };
 
+// const pathParametersForTenantIdAndCompanyId = {
+//     tenantId: { required: true, type: UUID },
+//     companyId: { required: true, type: String }
+// };
+
 /**
- * Returns a listing of the employees a user has access to under a tenant.
+ * Returns a list of ATQuestionType by tenant.
  */
-export const getATQuestionTypes = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
-    console.info('ApplicantTracking.handler.getATQuestionTypes');
+export const getQuestionTypesByTenant = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handler.getQuestionTypes');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, headerSchema);
-    utilService.validateAndThrow(event.pathParameters, ATQuestionTypeUriSchema);
-    await utilService.checkAuthorization(securityContext, event, [Role.globalAdmin, Role.serviceBureauAdmin, Role.superAdmin, Role.hrAdmin, Role.hrManager, Role.hrEmployee]);
+    utilService.validateAndThrow(event.pathParameters, pathParametersForTenantId);
+    console.log(event);
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
 
     const { tenantId } = event.pathParameters;
 
-    return await applicantTrackingService.atquestionTypeService.getATQuestionTypes(tenantId);
+    return await applicantTrackingService.questionTypeService.getQuestionTypesByTenant(tenantId, event.queryStringParameters);
 });
+
+/**
+ * Returns a list of ATQuestionBank by tenant.
+ */
+export const getQuestionBanksByTenant = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handler.getQuestionBanksByTenant');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, headerSchema);
+    utilService.validateAndThrow(event.pathParameters, pathParametersForTenantId);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId } = event.pathParameters;
+    const { requestContext: { domainName, path } } = event;
+
+    return await applicantTrackingService.questionBankService.getQuestionBanksByTenant(tenantId, event.queryStringParameters, domainName, path);
+});
+
+// /**
+//  * Returns a list of ATQuestionBank by company.
+//  */
+// export const getQuestionBanksByCompany = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+//     console.info('ApplicantTracking.handler.getQuestionBanksByCompany');
+
+//     utilService.normalizeHeaders(event);
+//     utilService.validateAndThrow(event.headers, headerSchema);
+//     utilService.validateAndThrow(event.pathParameters, pathParametersForTenantIdAndCompanyId);
+
+//     await utilService.checkAuthorization(securityContext, event, [
+//         Role.globalAdmin, 
+//         Role.serviceBureauAdmin, 
+//         Role.superAdmin, 
+//         Role.hrAdmin, 
+//         Role.hrManager, 
+//         Role.hrEmployee
+//     ]);
+
+//     const { tenantId, companyId } = event.pathParameters;
+//     const { requestContext: { domainName, path } } = event;
+
+//     return await applicantTrackingService.atQuestionBankService.getATQuestionBanksByCompany(tenantId, companyId, event.queryStringParameters, domainName, path);
+// });
