@@ -1286,7 +1286,7 @@ export async function downloadImportData(
         }
     } catch (error) {
         if (error instanceof ErrorMessage) {
-            throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);;
+            throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
         }
         console.error(error);
         throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);

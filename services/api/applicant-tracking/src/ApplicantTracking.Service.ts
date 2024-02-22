@@ -1,8 +1,13 @@
-import * as ATQuestionTypeService from './ATQuestionType.Service';
+import * as QuestionTypeService from './QuestionType.Service';
+import * as QuestionBankService from './QuestionBank.Service';
 
 
-const atquestionTypeService = ATQuestionTypeService;
+const questionTypeService = QuestionTypeService;
+const questionBankService = QuestionBankService;
 
 
-export { atquestionTypeService };
+export { 
+    questionTypeService, 
+    questionBankService 
+};
 
