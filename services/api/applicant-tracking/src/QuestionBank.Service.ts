@@ -18,20 +18,11 @@ export async function getQuestionBanksByTenant(
     domainName: string,
     path: string,
 ): Promise<PaginatedResult> {
-    console.info('ATQuestionBank.Service.getQuestionBanksByTenant');
+    console.info('QuestionBank.Service.getQuestionBanksByTenant');
 
     const validQueryStringParameters = ['pageToken', 'searchBy'];
 
-    if (queryParams) {
-        // Check for unsupported query params
-        if (!Object.keys(queryParams).every((param) => validQueryStringParameters.includes(param))) {
-            const error: ErrorMessage = errorService.getErrorResponse(30);
-            error
-                .setDeveloperMessage('Unsupported query parameter(s) supplied')
-                .setMoreInfo(`Available query parameters: ${validQueryStringParameters.join(',')}. See documentation for usage.`);
-            throw error;
-        }
-    }
+    utilService.validateQueryParams(queryParams, validQueryStringParameters);
 
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
@@ -61,49 +52,50 @@ export async function getQuestionBanksByTenant(
     }
 }
 
-// /**
-//  * Returns a list of ATQuestionBank by company.
-//  */
-// export async function getQuestionBanksByCompany(
-//     tenantId: string,
-//     companyId: string,
-//     queryParams: any,
-//     domainName: string,
-//     path: string,
-// ): Promise<PaginatedResult> {
-//     console.info('ATQuestionBank.Service.getQuestionBanksByCompany');
+/**
+ * Returns a list of ATQuestionBank by company.
+ */
+export async function getQuestionBanksByCompany(
+    tenantId: string,
+    companyId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
+    console.info('QuestionBank.Service.getQuestionBanksByCompany');
 
-//     const validQueryStringParameters = ['pageToken', 'searchBy'];
-//     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+    const validQueryStringParameters = ['pageToken', 'searchBy'];
+    utilService.validateQueryParams(queryParams, validQueryStringParameters);
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
-//     if (Number.isNaN(Number(companyId))) {
-//         const errorMessage = `${companyId} is not a valid number`;
-//         throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
-//     }
+    if (Number.isNaN(Number(companyId))) {
+        const errorMessage = `${companyId} is not a valid number`;
+        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+    }
 
-//     try {
-//         const query = new ParameterizedQuery('getQuestionBanksByCompany', Queries.getQuestionBanksByCompany);
-//         query.setParameter('@companyId', companyId);
-//         const searchBy: string = queryParams && queryParams.searchBy ? queryParams.searchBy : '';
-//         query.setStringParameter('@searchBy', searchBy);
+    try {
+        const query = new ParameterizedQuery('getQuestionBanksByCompany', Queries.getQuestionBanksByCompany);
+        query.setParameter('@companyId', companyId);
+        const searchBy: string = queryParams && queryParams.searchBy ? queryParams.searchBy : '';
+        query.setStringParameter('@searchBy', searchBy);
 
-//         const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
-//         const payload = { 
-//             tenantId, 
-//             queryName: paginatedQuery.name, 
-//             query: paginatedQuery.value, 
-//             queryType: QueryType.Simple 
-//         } as DatabaseEvent;
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
+        const payload = { 
+            tenantId, 
+            queryName: paginatedQuery.name, 
+            query: paginatedQuery.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
 
-//         const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-//         const totalCount = dbResults.recordsets[0][0].totalCount;
-//         const results: IATQuestionBankGET[] = dbResults.recordsets[1];
-//         return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page);
-//     } catch (error) {
-//         if (error instanceof ErrorMessage) {
-//             throw error;
-//         }
-//         console.error(JSON.stringify(error));
-//         throw errorService.getErrorResponse(0);
-//     }
-// }
+        const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const totalCount = dbResults.recordsets[0][0].totalCount;
+        const results: IQuestionBankGET[] = dbResults.recordsets[1];
+        return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}

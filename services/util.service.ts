@@ -1305,22 +1305,18 @@ export function parseQueryParamsBoolean(queryParams: any, key: string) {
 /**
  * Validates the keys of the query parameter to an array of keys
  * @param {any} queryParams: The query parameters that were specified by the user
- * @param {string} keys: The keys that are valid in the queryParam
+ * @param {string} allowedQueryParams: The keys that are valid in the queryParam
  */
-export function validateQueryParams(queryParams: any, keys: string[]) {
+export function validateQueryParams(queryParams: any, allowedQueryParams: string[]) {
     console.info('util.service.validateQueryParams');
 
-    const invalidKeyInParam = Object.keys(queryParams).filter((paramKey) => !keys.includes(paramKey));
-    if (invalidKeyInParam.length > 0) {
-        const plural = invalidKeyInParam.length > 1;
-
-        throw errorService
-            .getErrorResponse(60)
-            .setDeveloperMessage(
-                `${"'" + invalidKeyInParam.join("','") + "'"} ${plural ? 'are not' : 'is not a'} valid query parameter${
-                    plural ? 's' : ''
-                }.`,
-            );
+    if (queryParams) {
+        if (!Object.keys(queryParams).every((param) => allowedQueryParams.includes(param))) {
+            throw errorService
+                .getErrorResponse(60)
+                .setDeveloperMessage('Unsupported query parameter(s) supplied')
+                .setMoreInfo(`Available query parameters: ${allowedQueryParams.join(',')}. See documentation for usage.`); 
+        }      
     }
 }
 
