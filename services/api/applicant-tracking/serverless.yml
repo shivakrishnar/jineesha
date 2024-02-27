@@ -159,14 +159,14 @@ functions:
             cors:
               origin: '*'
 
-  # getATQuestionBanksByCompany:
-  #   handler: src/handler.getATQuestionBanksByCompany
-  #   events:
-  #       - http:
-  #           path: /tenants/{tenantId}/companies/{companyId}/atquestion-banks
-  #           method: get
-  #           cors:
-  #             origin: '*'
+  getATQuestionBanksByCompany:
+    handler: src/handler.getQuestionBanksByCompany
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/question-banks
+            method: get
+            cors:
+              origin: '*'
 
 resources:
   Resources:

@@ -1,7 +1,12 @@
+declare @_searchBy nvarchar(50) = @searchBy
+
 select
 	count(*) as totalCount
 from
-	ATQuestionBank
+	ATQuestionBank qb inner join
+	Company comp on qb.CompanyID = comp.ID
+where
+	concat(qb.QuestionTitle, qb.QuestionText, comp.CompanyName) like '%' + @_searchBy + '%'
 
 select
 	qb.ID as id,
@@ -17,7 +22,7 @@ from
 	ATQuestionBank qb inner join
 	Company comp on qb.CompanyID = comp.ID
 where
-	concat(qb.QuestionTitle, qb.QuestionText) like '%' + @searchBy + '%'
+	concat(qb.QuestionTitle, qb.QuestionText, comp.CompanyName) like '%' + @_searchBy + '%'
 order by
 	comp.CompanyName,
 	qb.Sequence,

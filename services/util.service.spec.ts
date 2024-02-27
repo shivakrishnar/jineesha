@@ -313,8 +313,8 @@ describe('utilService.validateQueryParams', () => {
                 statusCode: 400,
                 code: 60,
                 message: 'Invalid url parameter value',
-                developerMessage: "'key2' is not a valid query parameter.",
-                moreInfo: '',
+                developerMessage: "Unsupported query parameter(s) supplied",
+                moreInfo: 'Available query parameters: key1,key3. See documentation for usage.',
             });
         }
 
@@ -326,8 +326,8 @@ describe('utilService.validateQueryParams', () => {
                 statusCode: 400,
                 code: 60,
                 message: 'Invalid url parameter value',
-                developerMessage: "'key2','key4' are not valid query parameters.",
-                moreInfo: '',
+                developerMessage: "Unsupported query parameter(s) supplied",
+                moreInfo: 'Available query parameters: key1,key3. See documentation for usage.',
             });
         }
     });

@@ -62,8 +62,8 @@ describe('list Company benefits Open-Enrollments', () => {
                         statusCode: 400,
                         code: 60,
                         message: 'Invalid url parameter value',
-                        developerMessage: "'abc' is not a valid query parameter.",
-                        moreInfo: '',
+                        developerMessage: "Unsupported query parameter(s) supplied",
+                        moreInfo: 'Available query parameters: pageToken,current. See documentation for usage.',
                     });
                 });
         });

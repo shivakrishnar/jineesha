@@ -13,7 +13,10 @@ export async function getQuestionTypesByTenant(
     tenantId: string, 
     queryParams: any
 ): Promise<IQuestionType[]> {
-    console.info('ATQuestionType.Service.getQuestionTypesByTenant');
+    console.info('QuestionType.Service.getQuestionTypesByTenant');
+
+    const validQueryStringParameters = ['searchBy'];
+    utilService.validateQueryParams(queryParams, validQueryStringParameters);
 
     try {
         const query = new ParameterizedQuery('getQuestionTypesByTenant', Queries.getQuestionTypesByTenant);
@@ -27,8 +30,8 @@ export async function getQuestionTypesByTenant(
             queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);      
-        const results: IQuestionType[] = dbResults.recordset;        
+        const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const results: IQuestionType[] = dbResults.recordset;
         return results;
     } catch (error) {
         if (error instanceof ErrorMessage) {
