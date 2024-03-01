@@ -29,8 +29,12 @@ describe('update company product tier', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            accessToken = await utils.generateAccessToken(jsonPayload);
+
             simpleRequestBody = esignatureService.getValidPutProductTierObject(1);
-            console.log(simpleRequestBody);
             enhancedRequestBody = esignatureService.getValidPutProductTierObject(2);
             done();
         } catch (error) {

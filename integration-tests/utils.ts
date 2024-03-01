@@ -36,7 +36,7 @@ function _generateSsoToken(
     apiKey: string,
     apiSecret: string,
     tenant: { id?: string; name?: string },
-    nbf?: number,
+    nbf?: number
 ): string {
     const claims: any = {
         iat: new Date().getTime(),
@@ -45,7 +45,7 @@ function _generateSsoToken(
         callbackUrl: 'https://adhr-test-1.dev.evolution-software.com/LoginEvoReturn.aspx',
         tenantId: tenant.id,
         tenantName: tenant.name,
-        jti: uuidV4(),
+        jti: uuidV4()
     };
 
     if (nbf) {
@@ -63,6 +63,11 @@ function _getAccessToken(domain: string, tenantId: string, username: string, pas
         .set('Authorization', `Bearer ${ssoToken}`)
         .send(`{ "grant_type": "password", "username": "${username}", "password": "${password}" }`)
         .then((response) => response.body.access_token);
+}
+
+export async function generateAccessToken(payload) {
+    const { apiSecret } = JSON.parse(await getSecret(configs.secretsManager.apiSecretId));
+    return jwt.sign(payload, apiSecret);
 }
 
 export async function getAccessToken(
@@ -222,3 +227,16 @@ export const uriEncodeTestFile = (filePath: string): string => {
     const encoding = base64EncodeFile(filePath);
     return `data:${mimeType};base64,${encoding}`;
 };
+
+export interface iToken {
+    type: string;
+    iss: string;
+    sub: string;
+    applicationId: string;
+    account: object;
+    scope: string[];
+    policy: object;
+    jti: string;
+    iat: string;
+    exp: string;
+}

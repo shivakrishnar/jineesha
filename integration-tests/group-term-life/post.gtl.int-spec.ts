@@ -26,6 +26,11 @@ describe('create a gtl record', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            accessToken = await utils.generateAccessToken(jsonPayload);
+
             done();
         } catch (error) {
             done.fail(error);
@@ -94,7 +99,7 @@ describe('create a gtl record', () => {
     });
 
     test('must return a 422 if a gtl record already exists for this employee', (done) => {
-        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/gtl`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeIdForGTL}/gtl`;
         request(baseUri)
             .post(uri)
             .set('Authorization', `Bearer ${accessToken}`)

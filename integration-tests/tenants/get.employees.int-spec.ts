@@ -29,6 +29,11 @@ describe('list employees by tenant', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            accessToken = await utils.generateAccessToken(jsonPayload);
+
             nonAdminToken = await utils.getAccessToken();
             done();
         } catch (error) {
@@ -126,6 +131,11 @@ describe('list employees by company', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            accessToken = await utils.generateAccessToken(jsonPayload);
+
             done();
         } catch (error) {
             done.fail(error);
@@ -252,7 +262,17 @@ describe('get employee by id', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
-            employeeAccessToken = await utils.getAccessToken(configs.user.username, configs.user.password);
+
+            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            accessToken = await utils.generateAccessToken(jsonPayload);
+
+            employeeAccessToken = await utils.getAccessToken();
+
+            let jsonPayload2 = JSON.parse(Buffer.from(employeeAccessToken.split('.')[1], 'base64').toString())
+            jsonPayload2.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
+            employeeAccessToken = await utils.generateAccessToken(jsonPayload2);
+
             done();
         } catch (error) {
             done.fail(error);
@@ -330,17 +350,18 @@ describe('get employee by id', () => {
             });
     });
 
-    test('must return a 200 if employee tries to access another employee', (done) => {
+    test('must return a 401 if employee tries to access another employee', (done) => {
         const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.unauthorizedEmployeeId}`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${employeeAccessToken}`)
             .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
-            .expect(200)
+            .expect(401)
             .end((error, response) => {
                 utils.testResponse(error, response, done, () => {
                     return undefined;
                 });
             });
     });
+
 });

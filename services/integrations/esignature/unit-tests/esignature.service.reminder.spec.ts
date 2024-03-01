@@ -71,7 +71,6 @@ describe('esignatureService.reminder', () => {
                 done.fail(new Error('Test should not pass.'));
             })
             .catch((error) => {
-                console.log('catch document id undefined error', error);
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(404);
                 expect(error.code).toEqual(50);

@@ -25,6 +25,11 @@ describe('send reminder email', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            accessToken = await utils.generateAccessToken(jsonPayload);
+
             employeeToken = await utils.getAccessToken();
             done();
         } catch (error) {
@@ -130,6 +135,7 @@ describe('send reminder email', () => {
                 });
             });
     });
+
     test('must return a 204 when a request is sent', (done) => {
         const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/documents/${
             configs.esignature.requestId

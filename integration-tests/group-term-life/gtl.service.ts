@@ -1,7 +1,7 @@
 export function getValidFlatCoverageObject(): any {
   return {
     flatCoverage: true,
-    flatAmount: 1000,
+    flatAmount: 50.00,
   };
 }
 

@@ -11,6 +11,7 @@ export function getValidPostEmployeeDocumentObject(): any {
         employeeId: configs.employeeId,
         isPrivate: false,
         category: 'Integration test document',
+        docType: 'png'
     };
 }
 

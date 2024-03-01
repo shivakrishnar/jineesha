@@ -39,8 +39,6 @@ describe('listClassesByEmployeeId Service', () => {
                 mockData.path,
             )
             .then((classes) => {
-                console.log(mockData.upcomingClassesResponse[0]);
-                console.log(classes.results[0]);
                 expect(classes).toBeInstanceOf(PaginatedResult);
                 expect(classes.results.length).toBe(mockData.upcomingClassesResponse.length);
                 expect(classes.results[0]).toEqual(mockData.upcomingClassesResponse[0]);

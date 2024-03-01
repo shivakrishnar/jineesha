@@ -46,7 +46,7 @@
         },
         "classTime": {
             "description": "Scheduled time of the class.",
-            "type": ["string"]
+            "type": ["string", "null"]
         },
         "completionDate": {
             "description": "Date at which class is completed by employee",
@@ -54,7 +54,7 @@
         },
         "expirationDate": {
             "description": "Date at which class enrollment expires",
-            "type": ["string", "null"]
+            "type": ["string", "null", "array"]
         },
         "gradeOrResult": {
             "description": "Grade of the class or result (ex. A- / pass).",

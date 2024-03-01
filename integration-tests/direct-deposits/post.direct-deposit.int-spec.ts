@@ -9,7 +9,7 @@ import * as directDepositService from './direct-deposit.service';
 const configs = utils.getConfig();
 
 const baseUri = configs.apiDomain;
-const testUri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/direct-deposits`;
+const testUri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.directDeposit.employeeId}/direct-deposits`;
 
 let accessToken: string;
 
@@ -26,7 +26,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 describe('post direct deposits', () => {
     beforeAll(async (done) => {
         try {
-            accessToken = await utils.getAccessToken();
+            accessToken = await utils.getAccessToken(configs.directDeposit.username, configs.directDeposit.password);
             directDeposit = directDepositService.getValidDirectDepositObject();
             done();
         } catch (error) {

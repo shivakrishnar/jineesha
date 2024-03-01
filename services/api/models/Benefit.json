@@ -48,7 +48,7 @@
             "description": "Name of the plan carrier",
             "type": ["string", "null"]
         },
-        "carrierURL": {
+        "carrierUrl": {
             "description": "URL to the carrier website",
             "type": ["string", "null"]
         },
@@ -58,7 +58,11 @@
         },
         "elected": {
             "description": "Indicate whether employee elected or waived this plan",
-            "type": "boolean"
+            "type": "number"
+        },
+        "planInformation": {
+            "description": "The collection of items.",
+            "type": ["array"]
         }  
     }
 }

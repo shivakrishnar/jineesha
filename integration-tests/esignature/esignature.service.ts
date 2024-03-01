@@ -5,7 +5,7 @@ const configs = utils.getConfig();
 
 export function getValidTemplateObject(): any {
     return {
-        file: utils.base64EncodeFile('integration-tests/test-files/test.pdf'),
+        file: "data:application/pdf;base64," + utils.base64EncodeFile('integration-tests/test-files/test.pdf'),
         fileName: 'test.pdf',
         signerRoles: ['OnboardingSignatory'],
         category: 'Onboarding',
@@ -21,7 +21,7 @@ export function getValidBulkSignatureRequestObject(): any {
         message: 'This is a test request message',
         signatories: [
             {
-                employeeCode: '445',
+                employeeCode: '149',
                 role: 'OnboardingSignatory',
             },
         ],

@@ -56,17 +56,16 @@ export function getValidDirectDepositObject(): DirectDeposit {
 }
 
 export function getDirectDepositsUri(domain: string): string {
-    return `${domain}/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/direct-deposits`;
+    return `${domain}/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.directDeposit.employeeId}/direct-deposits`;
 }
 
 export function getDirectDepositUri(domain: string, directDepositId: number): string {
-    return `${domain}/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/direct-deposits/${directDepositId}`;
+    return `${domain}/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.directDeposit.employeeId}/direct-deposits/${directDepositId}`;
 }
 
 export async function clearAll(directDepositsUri: string, accessToken: string): Promise<void> {
     try {
         const apiResponse = await request.get(directDepositsUri).set('Authorization', `Bearer ${accessToken}`);
-
         if (apiResponse && apiResponse.body) {
             const directDeposits = apiResponse.body;
             for (const directDeposit of directDeposits.results) {

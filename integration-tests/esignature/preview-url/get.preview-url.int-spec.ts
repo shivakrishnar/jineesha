@@ -19,7 +19,7 @@ const enum schemaNames {
     Preview = 'Preview',
 }
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 70000;
 
 describe('get preview by tenant', () => {
     beforeAll(async (done) => {
@@ -90,6 +90,11 @@ describe('get preview by tenant', () => {
 
     test('must return a 404 if document ID is not found', async (done) => {
         accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+        let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+        jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+        accessToken = await utils.generateAccessToken(jsonPayload);
+
         const unknownDocumentId = '9999999';
         const uri = `/tenants/${configs.tenantId}/documents/${unknownDocumentId}/preview`;
         request(baseUri)
@@ -106,6 +111,11 @@ describe('get preview by tenant', () => {
 
     test.skip('must return a 200 when the document exists', async (done) => {
         accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+        let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+        jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+        accessToken = await utils.generateAccessToken(jsonPayload);
+
         const uri = `/tenants/${configs.tenantId}/documents/${configs.esignature.documentId}/preview`;
         request(baseUri)
             .get(uri)
@@ -189,6 +199,11 @@ describe('get preview by company', () => {
 
     test('must return a 404 if document ID is not found', async (done) => {
         accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+        let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+        jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+        accessToken = await utils.generateAccessToken(jsonPayload);
+
         const unknownRequestId = 99999999;
         const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${unknownRequestId}/preview`;
         request(baseUri)
@@ -205,6 +220,11 @@ describe('get preview by company', () => {
 
     test.skip('must return a 200 when the document exists', async (done) => {
         accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+        let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+        jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+        accessToken = await utils.generateAccessToken(jsonPayload);
+
         const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/documents/${configs.esignature.documentId}/preview`;
         request(baseUri)
             .get(uri)

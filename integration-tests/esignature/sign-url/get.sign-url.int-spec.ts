@@ -69,7 +69,7 @@ describe('get sign url', () => {
     });
 
     test('must return a 404 if request ID is not found', (done) => {
-        const unknownRequestId = 99999999;
+        const unknownRequestId = '9999999999999999999999999999999999999999';
         const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
             configs.employeeId
         }/esignatures/${unknownRequestId}/sign-url`;
