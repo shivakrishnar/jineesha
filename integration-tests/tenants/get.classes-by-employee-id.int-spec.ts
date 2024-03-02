@@ -27,6 +27,11 @@ describe('get classes by employee id as an admin user', () => {
     beforeAll(async (done) => {
         try {
             adminAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+            let jsonPayload = JSON.parse(Buffer.from(adminAccessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            adminAccessToken = await utils.generateAccessToken(jsonPayload);
+
             done();
         } catch (error) {
             done.fail(error);       
@@ -116,7 +121,13 @@ describe('get classes by employee id as an admin user', () => {
 describe('get classes by employee Id as an employee user', () => {
     beforeAll(async (done) => {
         try {
-            employeeAccessToken = await utils.getAccessToken(configs.employeeUser.review.username, configs.employeeUser.review.password);
+            
+            employeeAccessToken = await utils.getAccessToken();
+
+            let jsonPayload = JSON.parse(Buffer.from(employeeAccessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
+            employeeAccessToken = await utils.generateAccessToken(jsonPayload);
+
             done();
         } catch (error) {
             done.fail(error);
@@ -124,7 +135,7 @@ describe('get classes by employee Id as an employee user', () => {
     });
 
     test('must return 401 error if employee level user is not tied to the requested employee', async (done) => {
-        const uri = `/tenants/${configs.classes.tenantId}/companies/${configs.classes.companyId}/employees/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
             configs.classes.userAccessTest.unrightfulEmployee}/classes`
 
         request(baseUri)
@@ -140,7 +151,7 @@ describe('get classes by employee Id as an employee user', () => {
     });
 
     test('must return a 200 if employee level user is tied to the requested employee', async (done) => {
-        const uri = `/tenants/${configs.classes.tenantId}/companies/${configs.classes.companyId}/employees/${
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
             configs.classes.userAccessTest.rightfulEmployee}/classes`;
         request(baseUri)
             .get(uri)
@@ -157,4 +168,3 @@ describe('get classes by employee Id as an employee user', () => {
             });
     });
 });
-

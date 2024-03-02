@@ -22,6 +22,11 @@ describe('update employee license EmailAcknowledged column By Id as an admin use
     beforeAll(async (done) => {
         try {
             adminAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+            let jsonPayload = JSON.parse(Buffer.from(adminAccessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            adminAccessToken = await utils.generateAccessToken(jsonPayload);
+
             done();
         } catch (error) {
             done.fail(error);
@@ -177,7 +182,12 @@ describe('update employee license EmailAcknowledged column By Id as an admin use
 describe('update license by id as an employee user', () => {
     beforeAll(async (done) => {
         try {
-            employeeAccessToken = await utils.getAccessToken(configs.employeeUser.review.username, configs.employeeUser.review.password);
+            employeeAccessToken = await utils.getAccessToken();
+
+            let jsonPayload = JSON.parse(Buffer.from(employeeAccessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
+            employeeAccessToken = await utils.generateAccessToken(jsonPayload);
+
             done();
         } catch (error) {
             done.fail(error);

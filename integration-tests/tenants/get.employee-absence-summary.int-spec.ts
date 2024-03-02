@@ -7,9 +7,10 @@ const baseUri = `${configs.nonProxiedApiDomain}/internal`;
 let accessToken: string;
 
 const errorMessageSchema = JSON.parse(fs.readFileSync('services/api/models/ErrorMessage.json').toString());
-const employeeAbsenceSummary = JSON.parse(fs.readFileSync('services/api/models/EmployeeAbsenseSummaryCategory.json').toString());
+const employeeAbsenceSummary = JSON.parse(fs.readFileSync('services/api/models/EmployeeAbsenceSummary.json').toString());
+const employeeAbsenceSummaryCategory = JSON.parse(fs.readFileSync('services/api/models/EmployeeAbsenseSummaryCategory.json').toString());
 
-const schemas = [errorMessageSchema, employeeAbsenceSummary];
+const schemas = [errorMessageSchema, employeeAbsenceSummary, employeeAbsenceSummaryCategory];
 
 const enum schemaNames {
     ErrorMessage = 'ErrorMessage',
@@ -22,6 +23,11 @@ describe('get employee absence summary by employee id', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            accessToken = await utils.generateAccessToken(jsonPayload);
+
             done();
         } catch (error) {
             done.fail(error);
@@ -101,7 +107,11 @@ describe('get employee absence summary by employee id', () => {
     });
 
     test(`employees should be able to get their own absence summary`, async (done) => {
-        accessToken = await utils.getAccessToken(configs.employeeUser.timeOff.username, configs.employeeUser.timeOff.password);
+        accessToken = await utils.getAccessToken();
+
+        let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+        jsonPayload.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
+        accessToken = await utils.generateAccessToken(jsonPayload);
 
         request(baseUri)
             .get(

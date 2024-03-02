@@ -219,7 +219,6 @@ describe('esignatureService.template.create', () => {
         return await esignatureService
             .createTemplate(mockData.tenantId, mockData.companyId, mockData.templatePostRequest)
             .catch((error) => {
-                console.log(error);
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(500);
                 expect(error.code).toEqual(0);

@@ -230,7 +230,6 @@ describe('esignatureService.employee-document.list', () => {
             if (payload.queryName === 'GetCompanyInfo') {
                 return Promise.resolve(mockData.companyInfo);
             }
-            console.log('empty');
             return Promise.resolve(mockData.emptyPaginatedDBResponse);
         });
 

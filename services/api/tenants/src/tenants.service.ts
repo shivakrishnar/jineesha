@@ -323,10 +323,6 @@ export async function publishMessage(message: any): Promise<void> {
  */
 export async function createRdsTenantDb(rdsEndpoint: string, dbInfo: TenantDatabase): Promise<TenantDatabase> {
     console.info('tenants.service.createRdsTenantDb');
-    console.log('DBInfo: ')
-    console.log(dbInfo)
-    console.log('integrationUserPassword:')
-    console.log(dbInfo.integrationUserPassword)
     
     let pool: ConnectionPool;
 

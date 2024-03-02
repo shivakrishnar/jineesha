@@ -488,7 +488,6 @@ describe('esignatureService.signature-requests.create', () => {
                 mockData.domainName,
             )
             .catch((error) => {
-                console.log(error);
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(422);
                 expect(error.code).toEqual(70);
@@ -522,7 +521,6 @@ describe('esignatureService.signature-requests.create', () => {
                 mockData.domainName,
             )
             .catch((error) => {
-                console.log('here', error);
                 expect(error).toBeInstanceOf(ErrorMessage);
                 expect(error.statusCode).toEqual(422);
                 expect(error.code).toEqual(70);

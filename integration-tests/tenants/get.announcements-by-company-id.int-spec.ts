@@ -9,9 +9,10 @@ let employeeAccessToken: string;
 
 const errorMessageSchema = JSON.parse(fs.readFileSync('services/api/models/ErrorMessage.json').toString());
 const paginatedResultSchema = JSON.parse(fs.readFileSync('services/integrations/models/PaginatedResult.json').toString());
+const announcementSchema = JSON.parse(fs.readFileSync('services/api/models/Announcement.json').toString());
 const announcementsSchema = JSON.parse(fs.readFileSync('services/api/models/Announcements.json').toString());
 
-const schemas = [errorMessageSchema, paginatedResultSchema, announcementsSchema];
+const schemas = [errorMessageSchema, paginatedResultSchema, announcementSchema, announcementsSchema];
 
 const enum schemaNames {
     ErrorMessage = 'ErrorMessage',
@@ -25,6 +26,11 @@ describe('get announcements by company id as an admin user', () => {
     beforeAll(async (done) => {
         try {
             adminAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+            let jsonPayload = JSON.parse(Buffer.from(adminAccessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            adminAccessToken = await utils.generateAccessToken(jsonPayload);
+
             done();
         } catch (error) {
             done.fail(error);
@@ -159,7 +165,12 @@ describe('get announcements by company id as an admin user', () => {
 describe('get announcements by company Id as an employee user', () => {
     beforeAll(async (done) => {
         try {
-            employeeAccessToken = await utils.getAccessToken(configs.employeeUser.username, configs.employeeUser.password);
+            employeeAccessToken = await utils.getAccessToken();
+
+            let jsonPayload = JSON.parse(Buffer.from(employeeAccessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
+            employeeAccessToken = await utils.generateAccessToken(jsonPayload);
+
             done();
         } catch (error) {
             done.fail(error);

@@ -10,7 +10,7 @@ import * as directDepositService from './direct-deposit.service';
 const configs = utils.getConfig();
 
 const baseUri = configs.apiDomain;
-const testUri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/direct-deposits`;
+const testUri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.directDeposit.employeeId}/direct-deposits`;
 
 let accessToken: string;
 
@@ -33,7 +33,12 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
 describe('get direct deposits', () => {
     test('must return a 204 when an employee has no direct deposits', async (done) => {
-        accessToken = await utils.getAccessToken();
+        accessToken = await utils.getAccessToken(configs.directDeposit.username, configs.directDeposit.password);
+        
+        let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+        jsonPayload.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
+        accessToken = await utils.generateAccessToken(jsonPayload);
+
         const directDepositsUri = directDepositService.getDirectDepositsUri(baseUri);
         await directDepositService.clearAll(directDepositsUri, accessToken);
         request(baseUri)
@@ -51,7 +56,12 @@ describe('get direct deposits', () => {
     describe('for an employee with direct deposits', () => {
         beforeAll(async (done) => {
             try {
-                accessToken = await utils.getAccessToken();
+                accessToken = await utils.getAccessToken(configs.directDeposit.username, configs.directDeposit.password);
+
+                let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+                jsonPayload.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
+                accessToken = await utils.generateAccessToken(jsonPayload);
+
                 initialDirectDeposit = await directDepositService.setup(baseUri, accessToken);
                 done();
             } catch (error) {
@@ -92,7 +102,7 @@ describe('get direct deposits', () => {
         test('must return a 404 when the tenant id is non-existent', (done) => {
             const invalidTenantId = uuidV4();
             const unknownTenantUri = `/tenants/${invalidTenantId}/companies/${configs.companyId}/employees/${
-                configs.employeeId
+                configs.directDeposit.employeeId
             }/direct-deposits`;
             request(baseUri)
                 .get(unknownTenantUri)

@@ -28,7 +28,13 @@ describe('list companies by sso account', () => {
     beforeAll(async () => {
         try {
             accessToken = await utils.getAccessToken();
+
             adminToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+            let jsonPayload = JSON.parse(Buffer.from(adminToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            adminToken = await utils.generateAccessToken(jsonPayload);
+
         } catch (error) {
             throw new Error('Error in beforeAll: ' + error);
         }

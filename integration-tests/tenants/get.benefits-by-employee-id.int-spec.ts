@@ -27,8 +27,11 @@ describe('get benefits by employee id as an admin user', () => {
     beforeAll(async (done) => {
         try {
             adminAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
-            console.log(configs.sbAdminUser.username)
-            console.log(configs.sbAdminUser.password)
+            
+            let jsonPayload = JSON.parse(Buffer.from(adminAccessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            adminAccessToken = await utils.generateAccessToken(jsonPayload);
+
             done();
         } catch (error) {
             done.fail(error);       
@@ -36,8 +39,8 @@ describe('get benefits by employee id as an admin user', () => {
     });
 
     test('must return a 401 if a token is not provided', (done) => {
-        const uri = `/tenants/${configs.benefits.tenantId}/companies/${configs.benefits.companyId}/employees/${
-            configs.benefits.employeeId
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
+            configs.employeeId
         }/benefits`;
         request(baseUri)
             .get(uri)
@@ -55,8 +58,8 @@ describe('get benefits by employee id as an admin user', () => {
             test(`must return a 400 if ${Object.keys(endpoint)} is invalid`, (done) => {
                 request(baseUri)
                     .get(
-                        `/tenants/${endpoint.tenantId || configs.benefits.tenantId}/companies/${endpoint.companyId ||
-                            configs.benefits.companyId}/employees/${endpoint.employeeId || configs.benefits.employeeId}/benefits`,
+                        `/tenants/${endpoint.tenantId || configs.tenantId}/companies/${endpoint.companyId ||
+                            configs.companyId}/employees/${endpoint.employeeId || configs.employeeId}/benefits`,
                     )
                     .set('Authorization', `Bearer ${adminAccessToken}`)
                     .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -78,8 +81,8 @@ describe('get benefits by employee id as an admin user', () => {
         test(`must return a 404 if ${Object.keys(endpoint)} is not found`, (done) => {
             request(baseUri)
                 .get(
-                    `/tenants/${endpoint.tenantId || configs.benefits.tenantId}/companies/${endpoint.companyId ||
-                        configs.benefits.companyId}/employees/${endpoint.employeeId || configs.benefits.employeeId}/benefits`,
+                    `/tenants/${endpoint.tenantId || configs.tenantId}/companies/${endpoint.companyId ||
+                        configs.companyId}/employees/${endpoint.employeeId || configs.employeeId}/benefits`,
                 )
                 .set('Authorization', `Bearer ${adminAccessToken}`)
                 .expect(utils.corsAssertions(configs.corsAllowedHeaderList))
@@ -93,9 +96,7 @@ describe('get benefits by employee id as an admin user', () => {
     });
 
     test('must return a 200 if benefits exists', (done) => {
-        const uri = `/tenants/${configs.benefits.tenantId}/companies/${configs.benefits.companyId}/employees/${
-            configs.benefits.employeeId
-        }/benefits`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${configs.employeeId}/benefits`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${adminAccessToken}`)
@@ -118,7 +119,13 @@ describe('get benefits by employee id as an admin user', () => {
 describe('get benefits by employee Id as an employee user', () => {
     beforeAll(async (done) => {
         try {
-            employeeAccessToken = await utils.getAccessToken(configs.employeeUser.review.username, configs.employeeUser.review.password);
+            //employeeAccessToken = await utils.getAccessToken(configs.employeeUser.review.username, configs.employeeUser.review.password);
+            employeeAccessToken = await utils.getAccessToken();
+
+            let jsonPayload = JSON.parse(Buffer.from(employeeAccessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
+            employeeAccessToken = await utils.generateAccessToken(jsonPayload);
+
             done();
         } catch (error) {
             done.fail(error);
@@ -126,8 +133,8 @@ describe('get benefits by employee Id as an employee user', () => {
     });
 
     test('must return 401 error if employee level user is not tied to the requested employee', async (done) => {
-        const uri = `/tenants/${configs.benefits.tenantId}/companies/${configs.benefits.companyId}/employees/${
-            configs.benefits.userAccessTest.unrightfulEmployee}/benefits`
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
+            configs.licenses.userAccessTest.unrightfulEmployee}/benefits`
 
         request(baseUri)
             .get(uri)
@@ -142,8 +149,8 @@ describe('get benefits by employee Id as an employee user', () => {
     });
 
     test('must return a 200 if employee level user is tied to the requested employee', async (done) => {
-        const uri = `/tenants/${configs.benefits.tenantId}/companies/${configs.benefits.companyId}/employees/${
-            configs.benefits.userAccessTest.rightfulEmployee}/benefits`;
+        const uri = `/tenants/${configs.tenantId}/companies/${configs.companyId}/employees/${
+            configs.licenses.userAccessTest.rightfulEmployee}/benefits`;
         request(baseUri)
             .get(uri)
             .set('Authorization', `Bearer ${employeeAccessToken}`)
@@ -159,4 +166,3 @@ describe('get benefits by employee Id as an employee user', () => {
             });
     });
 });
-

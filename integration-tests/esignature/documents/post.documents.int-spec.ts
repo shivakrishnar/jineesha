@@ -30,7 +30,12 @@ describe('create company document', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken();
+            
             deleteAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+            let jsonPayload = JSON.parse(Buffer.from(deleteAccessToken.split('.')[1], 'base64').toString())
+            jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+            deleteAccessToken = await utils.generateAccessToken(jsonPayload);
+
             document = documentsService.getValidPostCompanyDocumentObject();
 
             done();

@@ -1546,8 +1546,6 @@ export async function updateCompensation(
                         wageId: `${myEvoWage.id}`,
                     };
 
-                    console.log(evoWageKeys);
-                    
                     let executedUpdate = false;
                     getEmployeeCompensationsResult.recordset.forEach((empComp) => {
                         if (empComp.payTypeCode && empComp.payTypeCode === 'H') {

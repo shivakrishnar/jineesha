@@ -26,6 +26,11 @@ describe('list document categories', () => {
         beforeAll(async (done) => {
             try {
                 accessToken = await utils.getAccessToken();
+
+                let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+                jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+                accessToken = await utils.generateAccessToken(jsonPayload);
+
                 done();
             } catch (error) {
                 done.fail(error);
@@ -119,10 +124,16 @@ describe('list document categories', () => {
                 });
         });
     });
+
     describe('for employee docs by company', () => {
         beforeAll(async (done) => {
             try {
                 accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+                let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+                jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+                accessToken = await utils.generateAccessToken(jsonPayload);
+
                 done();
             } catch (error) {
                 done.fail(error);
@@ -201,10 +212,16 @@ describe('list document categories', () => {
                 });
         });
     });
+
     describe('for employee documents by employee for manager or above', () => {
         beforeAll(async (done) => {
             try {
                 accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
+
+                let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+                jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
+                accessToken = await utils.generateAccessToken(jsonPayload);
+
                 done();
             } catch (error) {
                 done.fail(error);
@@ -283,6 +300,7 @@ describe('list document categories', () => {
                 });
         });
     });
+    
     describe('for employee documents by employee for employee', () => {
         beforeAll(async (done) => {
             try {

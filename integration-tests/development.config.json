@@ -2,21 +2,27 @@
     "apiDomain": "https://api.dev.evolution-software.com/api",
     "nonProxiedApiDomain": "https://hr-services.dev.evolution-software.com",
     "tokenUrl": "https://api.dev.evolution-software.com",
-    "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
+    "tenantId": "e5a19feb-0fca-4b61-9b7a-43a2a6dd7414",
     "nonExistentTenantId": "d85a31b3-32d7-44d7-9f63-515162441bbd",
     "invalidTenantId": "abc",
-    "ssoAccountId": "d2e01f76-638c-44b8-89b5-44e06535214f",
-    "companyId": 600351,
-    "employeeId": 24666,
-    "unauthorizedEmployeeId": 24811,
+    "ssoAccountId": "93ac0f56-d5bd-457f-84fb-54e7c27ab116",
+    "companyId": 3,
+    "employeeId": 2966,
+    "employeeIdForGTL": 2598,
+    "unauthorizedEmployeeId": 159,
     "nonExistentCompanyId": 999999,
     "nonExistentEmployeeId": 999999,
     "invalidCompanyId": "abc",
     "invalidEmployeeId": "abc",
-    "employeeCode": "41",
+    "employeeCode": "152",    
     "user": {
-        "username": "direct-deposit-tester-dev@sharklasers.com",
+        "username": "BaseAdminNoPayroll@sharklasers.com", 
         "password": "Demo123!"
+    },
+    "directDeposit": {
+        "username": "direct-deposit-tester-dev@sharklasers.com", 
+        "password": "Demo123!",
+        "employeeId": 2877
     },
     "employeeUser": {
         "username": "kento@huh2.com",
@@ -35,12 +41,14 @@
         }
     },
     "sbAdminUser": {
-        "username": "bdyer@sharklasers.com",
-        "password": "demo"
+        "username": "bdyer_tester@sharklasers.com",
+        "password": "Demo123!"
     },
     "managerUser": {
-        "username": "pre-prod-manager@sharklasers.com",
-        "password": "Demo123!"
+        "username": "bcooper@sharklasers.com",
+        "password": "Demo123!",
+        "companyId": 1,
+        "employeeId": 108
     },
     "secretsManager": {
         "region": "us-east-1",
@@ -49,35 +57,35 @@
     },
     "applicationId": "23e69dde-2260-4def-9032-08360435e210",
     "esignature": {
-        "onboardingKey": "b87b65f3-7c27-4eaf-a275-3d1150fbb013",
+        "onboardingKey": "4b3116dd-e940-43e7-8764-ecb407c41289",
         "onboardingWithSimpleSignDocuments": {
-            "employeeCode": "888",
-            "taskListId": 189,
-            "key": "ee13e894-772b-4339-b2eb-e5c8846e384a"
+            "employeeCode": "152",
+            "taskListId": 28,
+            "key": "15e95d6b-39bf-4f67-9afd-bb33adb0cd70"
         },
         "onboardingWithCompanyDocumentsActive": {
-            "key": "ea2a8058-4d10-4a3f-84d6-65929ec671b3",
-            "nonSignableDocument": "29fd6ff7818a4708b8126cb413a048b7",
-            "legacyDocument": "oEKmur",
-            "taskListId": 119
+            "key": "58a80954-9e02-4db6-91b3-8e1832cb624e",
+            "nonSignableDocument": "Jl7Uk",
+            "legacyDocument": "Jl7Uk",
+            "taskListId": 28
         },
         "taskListId": 80,
-        "requestId": "cea9b5d1-3ced-4e8b-97a5-b6f9bc18c099",
+        "requestId": "de0959ff-3b7b-40c7-8863-047c4431d75d",
         "signatureId": "582f1cab06463ca5f8b6e6767ab67673",
-        "templateId": "2b5bb2625e702c7a9f263e377a0c41826056ccca",
+        "templateId": "5e9562168ed50a33c006fe0547484e024750ed34",
         "companyWithNoData": 600373,
-        "companyWithNoDocuments": 600259,
-        "employeeWithNoDocuments": 9097,
+        "companyWithNoDocuments": 64,
+        "employeeWithNoDocuments": 783,
         "documentId": "47fk",
-        "legacyCompanyDocumentId": "oExGcr",
+        "legacyCompanyDocumentId": "oPRfe",
         "nonExistingDocumentId": "v7Xbv3hX",
-        "searchQueryParam": "onboarding",
-        "signableDocument": "7XMVCW",
+        "searchQueryParam": "Company",
+        "signableDocument": "xKqFm",
         "nonExistentSignableDocument": "W6oy6tb",
-        "companyIdForProductTier": 600430
+        "companyIdForProductTier": 96
     },
     "secResource": {
-        "subGroupId": 38,
+        "subGroupId": 9,
         "invalidSubGroupId": "abc",
         "nonExistentSubGroupId": 999999,
         "invalidTenantId": "abc",
@@ -87,14 +95,14 @@
         "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
         "companyId": 600351,
         "employeeId": 35109,
-        "employeeWithExpiringLicenses": "35109",
-        "id": 72,
+        "employeeWithExpiringLicenses": "2966",
+        "id": 17,
         "invalidId": "abc",
         "nonExistentId": 99999,
         "userAccessTest": {
-            "rightfulEmployee": 29355,
-            "unrightfulEmployee": 35109,
-            "rightfulEmployeeLicenseId": 58,
+            "rightfulEmployee": 2966,
+            "unrightfulEmployee": 2598,
+            "rightfulEmployeeLicenseId": 17,
             "unrightfulEmployeeLicenseId": 72
         }
     },
@@ -102,29 +110,29 @@
         "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
         "companyId": 600351,
         "employeeId": 29355,
-        "employeeWithExpiringCertificates": "35109",
-        "id": 143,
+        "employeeWithExpiringCertificates": "2966",
+        "id": 23,
         "invalidId": "abc",
         "nonExistentId": 99999,
         "userAccessTest": {
-            "rightfulEmployee": 29355,
-            "unrightfulEmployee": 35109,
-            "rightfulEmployeeCertificateId": 118,
-            "unrightfulEmployeeCertificateId": 143
+            "rightfulEmployee": 2966,
+            "unrightfulEmployee": 2598,
+            "rightfulEmployeeCertificateId": 23,
+            "unrightfulEmployeeCertificateId": 22
         }
     },
     "reviews": {
         "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
         "companyId": 600351,
         "employeeId": 29355,
-        "employeeWithUpcomingReviews": 29355,
+        "employeeWithUpcomingReviews": 2966,
         "invalidId": "abc",
-        "id": 124,
+        "id": 19,
         "nonExistentId": 99999,
         "userAccessTest": {
-            "rightfulEmployee": 29355,
-            "unrightfulEmployee": 34456,
-            "rightfulEmployeeReviewId": 107,
+            "rightfulEmployee": 2966,
+            "unrightfulEmployee": 163,
+            "rightfulEmployeeReviewId": 19,
             "unrightfulEmployeeReviewId": 106
         }
     },
@@ -132,45 +140,45 @@
         "tenantId": "c807d7f9-b391-4525-ac0e-31dbc0cf202b",
         "companyId": 600351,
         "employeeId": 29355,
-        "employeeWithUpcomingClasses": 29355,
+        "employeeWithUpcomingClasses": 2966,
         "invalidId": "abc",
-        "id": 124,
+        "id": 23,
         "nonExistentId": 99999,
         "userAccessTest": {
-            "rightfulEmployee": 29355,
-            "unrightfulEmployee": 34456,
-            "rightfulEmployeeClassId": 374,
+            "rightfulEmployee": 2966,
+            "unrightfulEmployee": 2598,
+            "rightfulEmployeeClassId": 23,
             "unrightfulEmployeeClassId": 106
         }
     },
     "timeOff": {
         "existingTimeOffs": [
             {
-                "companyId": 600351,
-                "employeeId": 35122
+                "companyId": 3,
+                "employeeId": 2966
             },
             {
-                "companyId": 600351,
-                "employeeId": 34833
+                "companyId": 3,
+                "employeeId": 153
             },
             {
-                "companyId": 600358,
-                "employeeId": 24324
+                "companyId": 1,
+                "employeeId": 230
             },
             {
-                "companyId": 600442,
-                "employeeId": 35073
+                "companyId": 1,
+                "employeeId": 12
             }
         ]
     },
     "announcements": {
-        "companyA": 600351,
-        "companyB": 600395
+        "companyA": 3,
+        "companyB": 1
     },
     "documentsBucket": "development.hr.files",
     "logo": {
         "companyWithNoLogo": 600259,
-        "companyWithLogo": 600012,
-        "ssoAccountId": "b190939d-30a8-40e4-b502-5f642de686b6"
+        "companyWithLogo": 3,
+        "ssoAccountId": "93ac0f56-d5bd-457f-84fb-54e7c27ab116"
     }
 }
