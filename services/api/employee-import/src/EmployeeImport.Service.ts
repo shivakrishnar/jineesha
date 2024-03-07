@@ -1260,7 +1260,7 @@ export async function downloadImportData(
                 '"' +
                 Object.values(csvHeader.split(',')).join('","') +
                 '"' +
-                `,"Error (correct the error indicated and remove this column before re-uploading your file)"\r\n`;
+                `,"Error (correct error indicated, remove this column and save the file as XSLX extension before re-uploading the file)"\r\n`;
             resultDetails.recordsets[0].forEach((row) => {
                 csvOut += `${row.CSVRowData},"${row.CSVRowNotes}"\r\n`;
             });
