@@ -43,8 +43,10 @@ BEGIN TRY
 		select @cErrorMessage = @cErrorMessage + 'Invalid Pay Type\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 4 
-		if cast(@cDataValue as decimal) not between 1 and 2080 or len(trim(@cDataValue)) = 0
-		select @cErrorMessage = @cErrorMessage + 'Invalid Rate\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+		if len(trim(@cDataValue)) = 0
+			select @cErrorMessage = @cErrorMessage + 'Rate is mandatory\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+		else if cast(@cDataValue as decimal) <= 0
+			select @cErrorMessage = @cErrorMessage + 'Invalid Rate\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 5  
 	  if len(trim(@cDataValue)) = 0

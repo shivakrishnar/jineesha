@@ -50,8 +50,12 @@ select @cStatus = 1
 		select @nPositionTypeID = (select top 1 ID from PositionType where companyid = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Title))
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 6
-		select @nWorkerCompTypeID = (select ID from WorkerCompType where Code = (left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1)) and 
-			   CountryStateTypeID = (select ID from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')','')) and CompanyID = @nCompanyId)
+	  if len(trim(@cDataValue)) > 0
+		select @nWorkerCompTypeID = (select ID 
+									 from WorkerCompType 
+									 where Code = (left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1)) and 
+			   							   CountryStateTypeID = (select ID from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')','')) and 
+										   CompanyID = @nCompanyId)
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 7
 		select @nCompensationChangeReasonID = (select ID from CompensationChangeReason where companyid = @nCompanyId and (@cDataValue = str(ID,3) or @cDataValue = Code or @cDataValue = Description))
