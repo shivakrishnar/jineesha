@@ -78,7 +78,10 @@ BEGIN TRY
 		   @cDataValue not like '[0-9][0-9][0-9].[0-9][0-9][0-9].[0-9][0-9][0-9][0-9]' --or
 		  select @cErrorMessage = @cErrorMessage + 'Invalid Cell Phone\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 
-	  select @cDataValue = value from #CSVtable where Row_Num = 8 
+	  select @cDataValue = value from #CSVtable where Row_Num = 8
+	  if len(trim(@cDataValue)) = 0
+		select @cColumnsToUpdate = @cColumnsToUpdate + 'N'
+	  else	 
 		if @cDataValue not in (select Code from GenderType) or len(trim(@cDataValue)) = 0
 			select @cErrorMessage = @cErrorMessage + 'Invalid Gender\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 

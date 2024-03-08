@@ -296,6 +296,7 @@ export const Queries = {
     isEVOIntegratedCompany: fs.readFileSync(path.join(basePath, 'employee-import/isEVOIntegratedCompany.sql')).toString(),
     getAlternateRatesByEmployee: fs.readFileSync(path.join(basePath, 'employee-import/getAlternateRatesByEmployee.sql')).toString(),
     updateAlternateRate: fs.readFileSync(path.join(basePath, 'employee-import/updateAlternateRate.sql')).toString(),
+    getAllFieldsForUpdateEmployee: fs.readFileSync(path.join(basePath, 'employee-import/getAllFieldsForUpdateEmployee.sql')).toString(),
 
     // Aplicant Tracking
     getQuestionTypesByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionTypesByTenant.sql')).toString(),

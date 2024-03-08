@@ -3,7 +3,7 @@ import {
 } from './../../src/DataImport';
 
 export const jsonCsvRow: EmployeeUpdateCsvRowType = {
-    "Employee Code": '999888902',
+    "Employee Identifier": '999888902',
     Birthdate: '2023-10-16',
     "Time Clock Number": '',
     Email: 'eshotten@sharklasers.com',

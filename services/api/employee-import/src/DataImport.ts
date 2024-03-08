@@ -35,7 +35,7 @@ export interface IDataImportEventDetail  {
 }
 
 export type EmployeeUpdateCsvRowType = {
-    "Employee Code": string;
+    "Employee Identifier": string;
     "Birthdate": string;
     "Time Clock Number": string;
     "Email": string;
