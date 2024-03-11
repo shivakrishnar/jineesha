@@ -168,6 +168,24 @@ functions:
             cors:
               origin: '*'
 
+  getQuestionBankById:
+    handler: src/handler.getQuestionBankById
+    events:
+        - http:
+            path: /tenants/{tenantId}/question-banks/{id}
+            method: get
+            cors:
+              origin: '*'              
+
+  createQuestionBank:
+    handler: src/handler.createQuestionBank
+    events:
+        - http:
+            path: /tenants/{tenantId}/question-bank
+            method: post
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

@@ -11,7 +11,7 @@ insert into dbo.HRnextAuditDetail (
 ) values (
     @auditId,
     @companyId,
-    '@affectedEmployee',
+    @affectedEmployee,
     '@actionType',
     '@fieldChanged',
     '@oldValue',

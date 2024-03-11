@@ -1499,3 +1499,14 @@ export async function getConnectionsFromDynamoDBUsingAccessToken(accessToken: st
 
     return connections;
 }
+
+/**
+ * Sanitize a string for a sql command
+ * @param {string} value: The text value to be sanitized.
+ */
+export function sanitizeStringForSql(value: string): string {
+    if (value && typeof value === 'string'){
+        value = value.replace(/'/g, "''");
+    }
+    return value;
+}

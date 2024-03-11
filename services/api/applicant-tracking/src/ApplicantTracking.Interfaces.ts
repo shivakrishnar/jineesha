@@ -6,15 +6,27 @@ export interface IQuestionType {
     active: boolean;
 }
 
-export interface IQuestionBank {
-    id: number,
+export interface IQuestionBankPOST {
     companyId: number,
+    employeeId?: number,
     atQuestionTypeId: number,
     questionTitle: string,
     questionText?: string,
     active: boolean,
     sequence: number,
-    isRequired: boolean
+    isRequired: boolean,
+}
+
+export interface IQuestionBankPUT {
+    id: number,
+    companyId: number,
+    employeeId?: number,
+    atQuestionTypeId: number,
+    questionTitle: string,
+    questionText?: string,
+    active: boolean,
+    sequence: number,
+    isRequired: boolean,
 }
 
 export interface IQuestionBankGET {
@@ -26,6 +38,6 @@ export interface IQuestionBankGET {
     questionText?: string,
     active: boolean,
     sequence: number,
-    isRequired: boolean
+    isRequired: boolean,
 }
 
