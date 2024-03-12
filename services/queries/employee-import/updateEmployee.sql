@@ -139,6 +139,7 @@ select @cStatus = 1
 	  end
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 25
+	  if len(trim(@cDataValue)) > 0
 		update EmployeePositionOrganization set AlternateSupervisor = @cDataValue where EmployeeID = @nEmployeeID and EffectiveDate = @dMaxDate
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 26

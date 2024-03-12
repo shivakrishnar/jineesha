@@ -469,6 +469,156 @@ export async function dataImports(
     }
 }
 
+export function mapAHRExcelUpdateEmployee(jsonCsvRowReordered, ahrEmployee) {
+    console.info('EmployeeImport.Service.mapAHRExcelUpdateEmployee');
+
+    if ((!jsonCsvRowReordered['Birthdate'] || jsonCsvRowReordered['Birthdate'] == '') &&
+        ahrEmployee.BirthDate && ahrEmployee.BirthDate != '') {
+        jsonCsvRowReordered['Birthdate'] = ahrEmployee.BirthDate;
+    }
+
+    if ((!jsonCsvRowReordered['Time Clock Number'] || jsonCsvRowReordered['Time Clock Number'] == '') &&
+        ahrEmployee.ClockNumber && ahrEmployee.ClockNumber != '') {
+        jsonCsvRowReordered['Time Clock Number'] = ahrEmployee.ClockNumber;
+    }
+
+    if ((!jsonCsvRowReordered['Email'] || jsonCsvRowReordered['Email'] == '') &&
+         ahrEmployee.Email && ahrEmployee.Email != '') {
+        jsonCsvRowReordered['Email'] = ahrEmployee.Email;
+    }
+
+    if ((!jsonCsvRowReordered['Home Phone'] || jsonCsvRowReordered['Home Phone'] == '') &&
+         ahrEmployee.PhoneHome && ahrEmployee.PhoneHome != '') {
+        jsonCsvRowReordered['Home Phone'] = ahrEmployee.PhoneHome;
+    }
+
+    if ((!jsonCsvRowReordered['Work Phone'] || jsonCsvRowReordered['Work Phone'] == '') &&
+         ahrEmployee.PhoneWork && ahrEmployee.PhoneWork != '') {
+        jsonCsvRowReordered['Work Phone'] = ahrEmployee.PhoneWork;
+    }
+
+    if ((!jsonCsvRowReordered['Cell Phone'] || jsonCsvRowReordered['Cell Phone'] == '') &&
+         ahrEmployee.PhoneCell && ahrEmployee.PhoneCell != '') {
+        jsonCsvRowReordered['Cell Phone'] = ahrEmployee.PhoneCell;
+    }
+
+    if ((!jsonCsvRowReordered['Gender'] || jsonCsvRowReordered['Gender'] == '') &&
+         ahrEmployee.Gender && ahrEmployee.Gender != '') {
+        jsonCsvRowReordered['Gender'] = ahrEmployee.Gender;
+    }
+
+    if ((!jsonCsvRowReordered['Ethnicity'] || jsonCsvRowReordered['Ethnicity'] == '') &&
+         ahrEmployee.Ethnicity && ahrEmployee.Ethnicity != '') {
+        jsonCsvRowReordered['Ethnicity'] = ahrEmployee.Ethnicity;
+    }
+
+    if ((!jsonCsvRowReordered['Education Level'] || jsonCsvRowReordered['Education Level'] == '') &&
+         ahrEmployee.Education && ahrEmployee.Education != '') {
+        jsonCsvRowReordered['Education Level'] = ahrEmployee.Education;
+    }
+
+    if ((!jsonCsvRowReordered['Tobacco User'] || jsonCsvRowReordered['Tobacco User'] == '') &&
+         ahrEmployee.TobaccoUser && ahrEmployee.TobaccoUser != '') {
+        jsonCsvRowReordered['Tobacco User'] = ahrEmployee.TobaccoUser;
+    }
+
+    if ((!jsonCsvRowReordered['Disabled'] || jsonCsvRowReordered['Disabled'] == '') &&
+         ahrEmployee.IsDisabled && ahrEmployee.IsDisabled != '') {
+        jsonCsvRowReordered['Disabled'] = ahrEmployee.IsDisabled;
+    }
+
+    if ((!jsonCsvRowReordered['Military Reserve'] || jsonCsvRowReordered['Military Reserve'] == '') &&
+         ahrEmployee.MilitaryReserve && ahrEmployee.MilitaryReserve != '') {
+        jsonCsvRowReordered['Military Reserve'] = ahrEmployee.MilitaryReserve;
+    }
+
+    if ((!jsonCsvRowReordered['Veteran'] || jsonCsvRowReordered['Veteran'] == '') &&
+         ahrEmployee.Veteran && ahrEmployee.Veteran != '') {
+        jsonCsvRowReordered['Veteran'] = ahrEmployee.Veteran;
+    }
+
+    if ((!jsonCsvRowReordered['Memo 1'] || jsonCsvRowReordered['Memo 1'] == '') &&
+         ahrEmployee.Memo1 && ahrEmployee.Memo1 != '') {
+        jsonCsvRowReordered['Memo 1'] = ahrEmployee.Memo1;
+    }
+
+    if ((!jsonCsvRowReordered['Memo 2'] || jsonCsvRowReordered['Memo 2'] == '') &&
+         ahrEmployee.Memo2 && ahrEmployee.Memo2 != '') {
+        jsonCsvRowReordered['Memo 2'] = ahrEmployee.Memo2;
+    }
+
+    if ((!jsonCsvRowReordered['Memo 3'] || jsonCsvRowReordered['Memo 3'] == '') &&
+         ahrEmployee.Memo3 && ahrEmployee.Memo3 != '') {
+        jsonCsvRowReordered['Memo 3'] = ahrEmployee.Memo3;
+    }
+
+    if ((!jsonCsvRowReordered['Pay Frequency'] || jsonCsvRowReordered['Pay Frequency'] == '') &&
+         ahrEmployee.PayFrequency && ahrEmployee.PayFrequency != '') {
+        jsonCsvRowReordered['Pay Frequency'] = ahrEmployee.PayFrequency;
+    }
+
+    if ((!jsonCsvRowReordered['Standard Payroll Hours'] || jsonCsvRowReordered['Standard Payroll Hours'] == '') &&
+         ahrEmployee.StandardPayrollHours && ahrEmployee.StandardPayrollHours != '') {
+        jsonCsvRowReordered['Standard Payroll Hours'] = ahrEmployee.StandardPayrollHours;
+    }
+
+    if ((!jsonCsvRowReordered['FLSA Classification'] || jsonCsvRowReordered['FLSA Classification'] == '') &&
+         ahrEmployee.FLSAClassification && ahrEmployee.FLSAClassification != '') {
+        jsonCsvRowReordered['FLSA Classification'] = ahrEmployee.FLSAClassification;
+    }
+
+    if ((!jsonCsvRowReordered['Position'] || jsonCsvRowReordered['Position'] == '') &&
+         ahrEmployee.Position && ahrEmployee.Position != '') {
+        jsonCsvRowReordered['Position'] = ahrEmployee.Position;
+    }
+
+    if ((!jsonCsvRowReordered['Reports To 1'] || jsonCsvRowReordered['Reports To 1'] == '') &&
+         ahrEmployee.ReportsTo1 && ahrEmployee.ReportsTo1 != '') {
+        jsonCsvRowReordered['Reports To 1'] = ahrEmployee.ReportsTo1;
+    }
+
+    if ((!jsonCsvRowReordered['Reports To 2'] || jsonCsvRowReordered['Reports To 2'] == '') &&
+         ahrEmployee.ReportsTo2 && ahrEmployee.ReportsTo2 != '') {
+        jsonCsvRowReordered['Reports To 2'] = ahrEmployee.ReportsTo2;
+    }
+
+    if ((!jsonCsvRowReordered['Reports To 3'] || jsonCsvRowReordered['Reports To 3'] == '') &&
+         ahrEmployee.ReportsTo3 && ahrEmployee.ReportsTo3 != '') {
+        jsonCsvRowReordered['Reports To 3'] = ahrEmployee.ReportsTo3;
+    }
+
+    if ((!jsonCsvRowReordered['Supervisor (SC)'] || jsonCsvRowReordered['Supervisor (SC)'] == '') &&
+         ahrEmployee.SupervisorSC && ahrEmployee.SupervisorSC != '') {
+        jsonCsvRowReordered['Supervisor (SC)'] = ahrEmployee.SupervisorSC;
+    }   
+
+    if ((!jsonCsvRowReordered['Benefit Class/Eligibility Group'] || jsonCsvRowReordered['Benefit Class/Eligibility Group'] == '') &&
+         ahrEmployee.BenefitClass && ahrEmployee.BenefitClass != '') {
+        jsonCsvRowReordered['Benefit Class/Eligibility Group'] = ahrEmployee.BenefitClass;
+    }
+
+    if ((!jsonCsvRowReordered['EEO Category'] || jsonCsvRowReordered['EEO Category'] == '') &&
+         ahrEmployee.EEOCategory && ahrEmployee.EEOCategory != '') {
+        jsonCsvRowReordered['EEO Category'] = ahrEmployee.EEOCategory;
+    }
+
+    if ((!jsonCsvRowReordered['Worker Comp Code'] || jsonCsvRowReordered['Worker Comp Code'] == '') &&
+         ahrEmployee.WorkerCompCode && ahrEmployee.WorkerCompCode != '') {
+        jsonCsvRowReordered['Worker Comp Code'] = ahrEmployee.WorkerCompCode;
+    }
+
+    if ((!jsonCsvRowReordered['Change Reason'] || jsonCsvRowReordered['Change Reason'] == '') &&
+         ahrEmployee.ChangeReason && ahrEmployee.ChangeReason != '') {
+        jsonCsvRowReordered['Change Reason'] = ahrEmployee.ChangeReason;
+    }
+
+    if ((!jsonCsvRowReordered['Comment'] || jsonCsvRowReordered['Comment'] == '') &&
+         ahrEmployee.Comment && ahrEmployee.Comment != '') {
+        jsonCsvRowReordered['Comment'] = ahrEmployee.Comment;
+    }
+
+}
+
 /**
  * @param {EmployeeUpdateCsvRowType} jsonCsvRow: The csv row with employee data
  * @param {number} rowNumber: Current row number of the csv row
@@ -532,6 +682,7 @@ export async function updateEmployee(
             jsonCsvRowReordered[key] = jsonCsvRow[key];
         });
         const stringCsvRow = '"' + Object.values(jsonCsvRowReordered).join('","') + '"';
+        console.info(jsonCsvRowReordered);
 
         //
         // Validating employee details...
@@ -588,7 +739,7 @@ export async function updateEmployee(
             Queries.getEmployeeByEmployeeCode,
         );
         getEmployeeByEmployeeCodeDataEventQuery.setParameter('@CompanyID', companyId);
-        getEmployeeByEmployeeCodeDataEventQuery.setStringParameter('@EmployeeCode', jsonCsvRowReordered['Employee Code']);
+        getEmployeeByEmployeeCodeDataEventQuery.setStringParameter('@EmployeeCode', jsonCsvRowReordered['Employee Identifier']);
 
         const getEmployeeByEmployeeCodePayload = {
             tenantId,
@@ -623,6 +774,42 @@ export async function updateEmployee(
             companyId: hrEmployee.EvoCompanyId,
             employeeId: hrEmployee.EvoEmployeeId,
         };
+
+        console.info('===> Getting for current employee data');
+
+        const getAllFieldsForUpdateEmployeeQuery = new ParameterizedQuery(
+            'getAllFieldsForUpdateEmployee',
+            Queries.getAllFieldsForUpdateEmployee,
+        );
+
+        getAllFieldsForUpdateEmployeeQuery.setParameter('@CompanyID', companyId);
+        getAllFieldsForUpdateEmployeeQuery.setStringParameter('@EmployeeCode', jsonCsvRowReordered['Employee Identifier']);
+
+        const getAllFieldsForUpdateEmployeePayload = {
+            tenantId,
+            queryName: getAllFieldsForUpdateEmployeeQuery.name,
+            query: getAllFieldsForUpdateEmployeeQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const getAllFieldsForUpdateEmployeeResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            getAllFieldsForUpdateEmployeePayload,
+            utilService.InvocationType.RequestResponse,
+        );
+
+        if (!getAllFieldsForUpdateEmployeeResult ||!getAllFieldsForUpdateEmployeeResult.recordset.length) {
+            console.error('===> getAllFieldsForUpdateEmployeeResult not found anything in AHR database');
+            throw new Error(`Employee not found in AHR database`);
+        }
+
+        console.info('===> employee data result');
+        console.info(getAllFieldsForUpdateEmployeeResult);
+
+        console.info('===> Mapping between AHR and Excel data');
+        mapAHRExcelUpdateEmployee(jsonCsvRowReordered, getAllFieldsForUpdateEmployeeResult.recordset[0])
+
+        console.log(jsonCsvRowReordered);
 
         console.info('===> Configuring EVO object information before API call');
 
@@ -696,7 +883,7 @@ export async function updateEmployee(
 
         console.info('===> Configuring the others fields of the EVO object');
 
-        evoEmployee.employeeNumber = jsonCsvRowReordered['Employee Code'];
+        evoEmployee.employeeNumber = jsonCsvRowReordered['Employee Identifier'];
         evoEmployee.email = jsonCsvRowReordered['Email'] || null;
         evoEmployee.standardHours = jsonCsvRowReordered['Standard Payroll Hours'] || null;
         evoEmployee.timeClockNumber = jsonCsvRowReordered['Time Clock Number'] || null;
