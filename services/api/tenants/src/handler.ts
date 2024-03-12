@@ -872,7 +872,7 @@ export const listCompanyMigrations = utilService.gatewayEventHandlerV2(async ({ 
 /*
  * Deletes a tenant's database
  */
-export async function deleteTenantDatabase(event: any, context: Context, callback: ProxyCallback): Promise<void> {
+export async function deleteTenantDatabase(event: any): Promise<void> {
     console.info('tenants.handler.deleteTenantDatabase');
 
     console.log(JSON.stringify(event.Records[0]));

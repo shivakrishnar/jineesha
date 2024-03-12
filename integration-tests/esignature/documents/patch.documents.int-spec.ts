@@ -32,7 +32,7 @@ describe('update company document', () => {
             accessToken = await utils.getAccessToken();
             
             deleteAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
-            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
             jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
             deleteAccessToken = await utils.generateAccessToken(jsonPayload);
 
@@ -353,12 +353,12 @@ describe('update employee document', () => {
     beforeAll(async (done) => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
-            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
             jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
             accessToken = await utils.generateAccessToken(jsonPayload);
 
             deleteAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
-            let jsonPayload2 = JSON.parse(Buffer.from(deleteAccessToken.split('.')[1], 'base64').toString())
+            const jsonPayload2 = JSON.parse(Buffer.from(deleteAccessToken.split('.')[1], 'base64').toString())
             jsonPayload2.scope.push("https://www.asuresoftware.com/iam/global.admin");
             deleteAccessToken = await utils.generateAccessToken(jsonPayload2);
 

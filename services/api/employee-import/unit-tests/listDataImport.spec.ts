@@ -4,17 +4,13 @@ import * as helpers from '../src/helpers';
 import * as employeeImportService from '../src/EmployeeImport.Service';
 import * as mockData from './mock-data';
 import * as mockDataCommon from './mock-data/mock-data-common';
-import { setup } from '../../../unit-test-mocks/mock';
+
 import { PaginatedResult } from '../../../pagination/paginatedResult';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import * as webSocketNotification from '../../ws-notification/src/ws-notification.Service';
 import * as configService from '../../../config.service';
 
 describe('employeeImport.service.listDataImportTypes', () => {
-    beforeEach(() => {
-        setup();
-    });
-
     test('returns the list of all data import types', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'listDataImportTypes') {
@@ -41,10 +37,6 @@ describe('employeeImport.service.listDataImportTypes', () => {
 });
 
 describe('employeeImport.service.listDataImports', () => {
-    beforeEach(() => {
-        setup();
-    });
-
     test('returns the list of data imports', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'listDataImportByCompany') {
@@ -103,10 +95,6 @@ describe('employeeImport.service.listDataImports', () => {
 });
 
 describe('employeeImport.service.listDataImportEventDetails', () => {
-    beforeEach(() => {
-        setup();
-    });
-
     test('returns the list of data import event details', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'listDataImportEventDetail') {
@@ -153,10 +141,6 @@ describe('employeeImport.service.listDataImportEventDetails', () => {
 });
 
 describe('employeeImport.Service.getTemplate', () => {
-    beforeEach(() => {
-        setup();
-    });
-
     test('returns undefined if data import type is wrong', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'getDataImportTypeById') {
@@ -176,7 +160,7 @@ describe('employeeImport.Service.getTemplate', () => {
             }
         });
 
-        (utilService as any).getSignedUrlSync = jest.fn((transaction, params) => {
+        (utilService as any).getSignedUrlSync = jest.fn(() => {
             return Promise.resolve('https://server/TemplateAR.xlsx');
         });
 
@@ -193,7 +177,7 @@ describe('employeeImport.Service.getTemplate', () => {
             }
         });
 
-        (utilService as any).getSignedUrlSync = jest.fn((transaction, params) => {
+        (utilService as any).getSignedUrlSync = jest.fn(() => {
             return Promise.resolve('');
         });
 
@@ -205,10 +189,6 @@ describe('employeeImport.Service.getTemplate', () => {
 });
 
 describe('employeeImport.Service.uploadUrl', () => {
-    beforeEach(() => {
-        setup();
-    });
-
     test('should return error cause filename is empty', async () => {
         await employeeImportService.uploadUrl(mockDataCommon.tenantId, mockDataCommon.companyId, '').catch((error) => {
             expect(error).toBeInstanceOf(ErrorMessage);
@@ -217,7 +197,7 @@ describe('employeeImport.Service.uploadUrl', () => {
     });
 
     test('returns URL Presigned', async () => {
-        (utilService as any).getSignedUrlSync = jest.fn((transaction, params) => {
+        (utilService as any).getSignedUrlSync = jest.fn(() => {
             return Promise.resolve('https://server/TemplateAR.xlsx');
         });
 
@@ -228,7 +208,7 @@ describe('employeeImport.Service.uploadUrl', () => {
     });
 
     test('returns error when not found the URL pre-signed', async () => {
-        (utilService as any).getSignedUrlSync = jest.fn((transaction, params) => {
+        (utilService as any).getSignedUrlSync = jest.fn(() => {
             return Promise.resolve('');
         });
 
@@ -241,17 +221,12 @@ describe('employeeImport.Service.uploadUrl', () => {
 });
 
 describe('employeeImport.Service.dataImports', () => {
-
-    beforeEach(() => {
-        setup();
-    }); 
-
     test('should return undefined when did not find the file uploaded', async () => {
-        (utilService as any).getSignedUrlSync = jest.fn((transaction, params) => {
+        (utilService as any).getSignedUrlSync = jest.fn(() => {
             return Promise.resolve('https://server/import-ee.xlsx');
         });
 
-        (helpers as any).getFileFromPreSignedURL = jest.fn((transaction, params) => {
+        (helpers as any).getFileFromPreSignedURL = jest.fn(() => {
             return Promise.resolve('');
         });
 
@@ -266,11 +241,11 @@ describe('employeeImport.Service.dataImports', () => {
     });
 
     test('should return undefined when did not find DataImportEventID after insert script', async () => {
-        (utilService as any).getSignedUrlSync = jest.fn((transaction, params) => {
+        (utilService as any).getSignedUrlSync = jest.fn(() => {
             return Promise.resolve('https://server/import-ee.xlsx');
         });
 
-        (helpers as any).getFileFromPreSignedURL = jest.fn((transaction, params) => {
+        (helpers as any).getFileFromPreSignedURL = jest.fn(() => {
             return Promise.resolve(mockData.resultCSVAlternateRate);
         });
 
@@ -294,11 +269,11 @@ describe('employeeImport.Service.dataImports', () => {
     });
 
     test('should returns the inputs of the call to step function', async () => {
-        (utilService as any).getSignedUrlSync = jest.fn((transaction, params) => {
+        (utilService as any).getSignedUrlSync = jest.fn(() => {
             return Promise.resolve('https://server/import-ee.xlsx');
         });
 
-        (helpers as any).getFileFromPreSignedURL = jest.fn((transaction, params) => {
+        (helpers as any).getFileFromPreSignedURL = jest.fn(() => {
             return Promise.resolve(mockData.resultCSVAlternateRate);
         });
 
@@ -311,7 +286,7 @@ describe('employeeImport.Service.dataImports', () => {
             }
         });
 
-        (utilService as any).StartStateMachineExecution = jest.fn((transaction, params) => {
+        (utilService as any).StartStateMachineExecution = jest.fn(() => {
             return Promise.resolve({});
         });
 
@@ -336,10 +311,6 @@ describe('employeeImport.Service.dataImports', () => {
 });
 
 describe('employeeImport.Service.setFailedDataImportEvent', () => {
-    beforeEach(() => {
-        setup();
-    });
-
     test('returns error when tenantId is null', async () => {
         await employeeImportService
             .setFailedDataImportEvent(
@@ -388,7 +359,7 @@ describe('employeeImport.Service.setFailedDataImportEvent', () => {
             }            
         });
 
-        (utilService as any).getConnectionsFromDynamoDBUsingAccessToken = jest.fn((transaction, payload) => {
+        (utilService as any).getConnectionsFromDynamoDBUsingAccessToken = jest.fn(() => {
             return Promise.resolve(mockDataCommon.queryReturnedEmpty);                        
         });
 
@@ -415,11 +386,11 @@ describe('employeeImport.Service.setFailedDataImportEvent', () => {
             }            
         });
 
-        (utilService as any).getConnectionsFromDynamoDBUsingAccessToken = jest.fn((transaction, payload) => {
+        (utilService as any).getConnectionsFromDynamoDBUsingAccessToken = jest.fn(() => {
             return Promise.resolve(mockData.resultConnectionsToNotify);                        
         });
 
-        (webSocketNotification as any).notifyClient = jest.fn((transaction, payload) => {
+        (webSocketNotification as any).notifyClient = jest.fn(() => {
             return Promise.resolve(undefined);                        
         });
 
@@ -439,10 +410,6 @@ describe('employeeImport.Service.setFailedDataImportEvent', () => {
 });
 
 describe('employeeImport.Service.setDataImportEventStatusGlobal', () => {
-    beforeEach(() => {
-        setup();
-    });
-
     test('returns error when tenantId is null', async () => {
         await employeeImportService
             .setDataImportEventStatusGlobal(
@@ -493,7 +460,7 @@ describe('employeeImport.Service.setDataImportEventStatusGlobal', () => {
             }            
         });
 
-        (utilService as any).getConnectionsFromDynamoDBUsingAccessToken = jest.fn((transaction, payload) => {
+        (utilService as any).getConnectionsFromDynamoDBUsingAccessToken = jest.fn(() => {
             return Promise.resolve(mockDataCommon.queryReturnedEmpty);                        
         });
 
@@ -521,11 +488,11 @@ describe('employeeImport.Service.setDataImportEventStatusGlobal', () => {
             }
         });
 
-        (utilService as any).getConnectionsFromDynamoDBUsingAccessToken = jest.fn((transaction, payload) => {
+        (utilService as any).getConnectionsFromDynamoDBUsingAccessToken = jest.fn(() => {
             return Promise.resolve(mockData.resultConnectionsToNotify);
         });
 
-        (webSocketNotification as any).notifyClient = jest.fn((transaction, payload) => {
+        (webSocketNotification as any).notifyClient = jest.fn(() => {
             return Promise.resolve(undefined);
         });
 
@@ -545,10 +512,6 @@ describe('employeeImport.Service.setDataImportEventStatusGlobal', () => {
 });
 
 describe('employeeImport.Service.processFinalStatusAndNotify', () => {
-    beforeEach(() => {
-        setup();
-    });
-
     test('returns error when tenantId is null', async () => {
         await employeeImportService
             .processFinalStatusAndNotify(
@@ -626,7 +589,7 @@ describe('employeeImport.Service.processFinalStatusAndNotify', () => {
             }
         });
 
-        (utilService as any).sendEventNotification = jest.fn((transaction, payload) => {
+        (utilService as any).sendEventNotification = jest.fn(() => {
             return Promise.resolve(undefined);
         });
 
@@ -645,10 +608,6 @@ describe('employeeImport.Service.processFinalStatusAndNotify', () => {
 });
 
 describe('employeeImport.Service.downloadImportData', () => {
-    beforeEach(() => {
-        setup();
-    });
-
     test('returns error when path not found', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'getImportTypeAndImportedFilePathByImportEventID') {
@@ -664,9 +623,7 @@ describe('employeeImport.Service.downloadImportData', () => {
                 mockDataCommon.tenantId,
                 mockDataCommon.companyId,
                 '123',
-                fixQueryParams,
-                '',
-                ''
+                fixQueryParams
             )
             .catch((error) => {
                 expect(error).toHaveProperty('developerMessage');
@@ -681,11 +638,11 @@ describe('employeeImport.Service.downloadImportData', () => {
             }
         });
 
-        (configService as any).getEmployeeImportBucketName = jest.fn((transaction, payload) => {
+        (configService as any).getEmployeeImportBucketName = jest.fn(() => {
             return Promise.resolve('bucketname');
         });
 
-        (utilService as any).getSignedUrlSync = jest.fn((transaction, payload) => {
+        (utilService as any).getSignedUrlSync = jest.fn(() => {
             return Promise.resolve('https://pre/signed/url');
         });
 
@@ -698,8 +655,6 @@ describe('employeeImport.Service.downloadImportData', () => {
                 mockDataCommon.companyId,
                 '123',
                 fixQueryParams,
-                '',
-                ''
             )
             .then((response) => {
                 expect(response).toHaveProperty('data');
@@ -719,7 +674,7 @@ describe('employeeImport.Service.downloadImportData', () => {
             }
         });
 
-        (utilService as any).validateQueryParams = jest.fn((transaction, payload) => {
+        (utilService as any).validateQueryParams = jest.fn(() => {
             return Promise.resolve(undefined);
         });
 
@@ -733,8 +688,6 @@ describe('employeeImport.Service.downloadImportData', () => {
                 mockDataCommon.companyId,
                 '123',
                 fixQueryParams,
-                '',
-                ''
             )
             .then((response) => {
                 expect(response).toBe(undefined);
@@ -751,7 +704,7 @@ describe('employeeImport.Service.downloadImportData', () => {
             }
         });
 
-        (utilService as any).validateQueryParams = jest.fn((transaction, payload) => {
+        (utilService as any).validateQueryParams = jest.fn(() => {
             return Promise.resolve(undefined);
         });
 
@@ -765,8 +718,6 @@ describe('employeeImport.Service.downloadImportData', () => {
                 mockDataCommon.companyId,
                 '123',
                 fixQueryParams,
-                '',
-                ''
             )
             .then((response) => {
                 expect(response).toHaveProperty('data');

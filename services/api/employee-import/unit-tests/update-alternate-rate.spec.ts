@@ -211,7 +211,7 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             }
         });
 
-        (payrollService as any).getWagesFromEvoEmployee = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getWagesFromEvoEmployee = jest.fn(() => {
             return Promise.resolve(undefined);
         });
 
@@ -255,19 +255,19 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             }
         });
 
-        (payrollService as any).getWagesFromEvoEmployee = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getWagesFromEvoEmployee = jest.fn(() => {
             return Promise.resolve(mockData.resultAlternatesRatesFromEVO);
         });
 
-        (payrollService as any).postWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).postWageInEvo = jest.fn(() => {
             return Promise.resolve(mockData.resultPostAlternateRate);
         });
 
-        (payrollService as any).updateWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).updateWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
-        (payrollService as any).patchWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).patchWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
@@ -314,19 +314,19 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             }
         });
 
-        (payrollService as any).getWagesFromEvoEmployee = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getWagesFromEvoEmployee = jest.fn(() => {
             return Promise.resolve(mockData.resultAlternatesRatesFromEVO);
         });
 
-        (payrollService as any).postWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).postWageInEvo = jest.fn(() => {
             return Promise.resolve(mockData.resultPostAlternateRate);
         });
 
-        (payrollService as any).updateWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).updateWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
-        (payrollService as any).patchWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).patchWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
@@ -373,19 +373,19 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             }
         });
 
-        (payrollService as any).getWagesFromEvoEmployee = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getWagesFromEvoEmployee = jest.fn(() => {
             return Promise.resolve(mockData.resultExistAlternateRatesFromEVO);
         });
 
-        (payrollService as any).postWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).postWageInEvo = jest.fn(() => {
             return Promise.resolve(mockData.resultPostAlternateRate);
         });
 
-        (payrollService as any).updateWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).updateWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
-        (payrollService as any).patchWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).patchWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 

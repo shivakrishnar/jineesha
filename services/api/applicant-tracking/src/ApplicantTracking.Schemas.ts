@@ -34,7 +34,7 @@ export const createQuestionBankValidationSchema = Yup.object().shape({
 
 export const createQuestionBankCheckPropertiesSchema = {
     companyId: { required: true, type: Number },
-    employeeId: { required: false, type: Number},
+    employeeId: { required: false, type: Number },
     atQuestionTypeId: { required: true, type: Number },
     questionTitle: { required: true, type: String },
     questionText: { required: false, type: String },

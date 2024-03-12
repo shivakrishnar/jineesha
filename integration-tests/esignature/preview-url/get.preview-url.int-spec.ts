@@ -91,7 +91,7 @@ describe('get preview by tenant', () => {
     test('must return a 404 if document ID is not found', async (done) => {
         accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
 
-        let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+        const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
         jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
         accessToken = await utils.generateAccessToken(jsonPayload);
 
@@ -112,7 +112,7 @@ describe('get preview by tenant', () => {
     test.skip('must return a 200 when the document exists', async (done) => {
         accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
 
-        let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+        const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
         jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
         accessToken = await utils.generateAccessToken(jsonPayload);
 
@@ -200,7 +200,7 @@ describe('get preview by company', () => {
     test('must return a 404 if document ID is not found', async (done) => {
         accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
 
-        let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+        const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
         jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
         accessToken = await utils.generateAccessToken(jsonPayload);
 
@@ -221,7 +221,7 @@ describe('get preview by company', () => {
     test.skip('must return a 200 when the document exists', async (done) => {
         accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
 
-        let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+        const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
         jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
         accessToken = await utils.generateAccessToken(jsonPayload);
 

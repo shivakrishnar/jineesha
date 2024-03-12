@@ -286,7 +286,7 @@ export const remove = utilService.gatewayEventHandlerV2(async ({ securityContext
 /**
  * Returns a listing of beta flags for tenant.
  */
-export const listBetaFlags = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+export const listBetaFlags = utilService.gatewayEventHandlerV2(async ({ event }: IGatewayEventInput) => {
     console.info('directDeposits.handler.listBetaFlags');
 
     const { tenantId } = event.pathParameters;

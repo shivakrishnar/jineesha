@@ -342,7 +342,7 @@ export const updateEmployee = async (event: any, context: Context, callback: Pro
 /**
  * Get the original CSV file or get the CSV row from database and return in CSV format
  */
-export const downloadImportData = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+export const downloadImportData = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
     console.info('employee-import.handler.downloadImportData');
 
     utilService.normalizeHeaders(event);
@@ -358,11 +358,10 @@ export const downloadImportData = utilService.gatewayEventHandlerV2(async ({ sec
 
     const { tenantId, companyId, dataImportId } = event.pathParameters;
     const {
-        requestContext: { domainName, path },
         queryStringParameters,
     } = event;
 
-    return await employeeImportService.downloadImportData(tenantId, companyId, dataImportId, queryStringParameters, domainName, path);
+    return await employeeImportService.downloadImportData(tenantId, companyId, dataImportId, queryStringParameters);
 });
 
 /**
