@@ -39,4 +39,14 @@ export class ParameterizedQuery extends Query {
         }
         this.setParameter(name, value);
     }
+
+    /**
+     * Sets a SQL parameter to a boolean representation
+     * @param {any} name The identifier of the parameter
+     * @param {boolean} value The parameter's value
+     */
+    public setBooleanParameter(name: any, value: boolean): void {
+        const valueResult = value ? '1' : '0';
+        this._query = this._query.replace(name, valueResult);
+    }
 }

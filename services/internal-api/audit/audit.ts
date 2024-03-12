@@ -22,4 +22,5 @@ export enum AuditAreaOfChange {
     EmployeeDirectDeposit = 'EE Direct Deposit',
     Company = 'Company',
     Documents = 'Documents',
+    ApplicantTracking = 'ApplicantTracking',
 }
