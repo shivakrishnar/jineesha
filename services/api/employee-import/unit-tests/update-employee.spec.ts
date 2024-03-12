@@ -128,6 +128,49 @@ describe('employeeImport.Service.updateEmployee', () => {
             });
     });
 
+    test('Employee data not found in AHR database', async () => {
+        (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
+            if (payload.queryName === 'getImportTypeAndImportedFilePathByImportEventID') {
+                return Promise.resolve(mockData.resultCSVHeader);
+            }
+            else if (payload.queryName === 'validateEmployeeDetails') {
+                return Promise.resolve(mockData.resultSuccessValidationEmployee);
+            }
+            else if (payload.queryName === 'getEmployeeByEmployeeCode') {
+                return Promise.resolve(mockData.resultInfoEmployeeAHREVO);
+            }
+            else if (payload.queryName === 'getAllFieldsForUpdateEmployee') {
+                return Promise.resolve(mockDataCommon.queryReturnedEmpty);
+            }
+        });
+
+        (utilService as any).getEvoTokenWithHrToken = jest.fn((transaction, accessToken) => {
+            return Promise.resolve(mockDataCommon.accessToken);
+        });
+
+        (ssoService as any).getTenantById = jest.fn((transaction, accessToken) => {
+            return Promise.resolve(mockDataCommon.tenantId);
+        });
+
+        (payrollService as any).getEmployeeFromEvo = jest.fn((transaction, accessToken) => {
+            return Promise.resolve(undefined);
+        });
+
+        await employeeImportService.updateEmployee(
+            mockData.jsonCsvRow,
+            1,
+            mockDataCommon.tenantId,
+            mockDataCommon.companyId, 
+            mockDataCommon.dataImportTypeId,
+            mockDataCommon.dataImportEventId,
+            mockDataCommon.accessToken).then((response) => {
+                expect(response).toHaveProperty('isSuccess');      
+                expect(response).toHaveProperty('message');
+                expect(response.isSuccess).toBe(false);
+                expect(response.message).toContain('Employee not found in AHR database');
+            });
+    });
+
     test('Employee not found in EVO', async () => {
         (utilService as any).invokeInternalService = jest.fn((transaction, payload) => {
             if (payload.queryName === 'getImportTypeAndImportedFilePathByImportEventID') {
@@ -138,6 +181,9 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
             else if (payload.queryName === 'getEmployeeByEmployeeCode') {
                 return Promise.resolve(mockData.resultInfoEmployeeAHREVO);
+            }
+            else if (payload.queryName === 'getAllFieldsForUpdateEmployee') {
+                return Promise.resolve(mockData.resultAllFieldsForUpdateEmployee);
             }
         });
 
@@ -178,6 +224,9 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
             else if (payload.queryName === 'getEmployeeByEmployeeCode') {
                 return Promise.resolve(mockData.resultInfoEmployeeAHREVO);
+            }
+            else if (payload.queryName === 'getAllFieldsForUpdateEmployee') {
+                return Promise.resolve(mockData.resultAllFieldsForUpdateEmployee);
             }
             else if (payload.queryName === 'getPositionTypeEvoIdByCode') {
                 return Promise.resolve(mockData.resultPositionType);
@@ -232,6 +281,9 @@ describe('employeeImport.Service.updateEmployee', () => {
             else if (payload.queryName === 'getEmployeeByEmployeeCode') {
                 return Promise.resolve(mockData.resultInfoEmployeeAHREVO);
             }
+            else if (payload.queryName === 'getAllFieldsForUpdateEmployee') {
+                return Promise.resolve(mockData.resultAllFieldsForUpdateEmployee);
+            }
             else if (payload.queryName === 'getPositionTypeEvoIdByCode') {
                 return Promise.resolve(mockData.resultPositionType);
             }
@@ -284,6 +336,9 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
             else if (payload.queryName === 'getEmployeeByEmployeeCode') {
                 return Promise.resolve(mockData.resultInfoEmployeeAHREVO);
+            }
+            else if (payload.queryName === 'getAllFieldsForUpdateEmployee') {
+                return Promise.resolve(mockData.resultAllFieldsForUpdateEmployee);
             }
             else if (payload.queryName === 'getPositionTypeEvoIdByCode') {
                 return Promise.resolve(mockData.resultPositionType);

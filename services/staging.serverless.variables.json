@@ -1,6 +1,6 @@
 {
     "awsRegion": "us-east-1",
-    "webSocketUrl": "",
+    "webSocketUrl": "64sygbls64.execute-api.us-east-1.amazonaws.com/staging",
     "lambdaExecutionSecurityGroup": "sg-06353e91f48f6dbca",
     "privateSubnetId1": "subnet-06993466f5a014fd2",
     "privateSubnetId2": "subnet-0926f569bd54e580b",
@@ -26,8 +26,8 @@
     "domain": "staging.evolution-software.com",
     "domainCertificateArn": "arn:aws:acm:us-east-1:049280833483:certificate/ddf05210-51ba-4689-9327-3ea683d9eb4a",
     "apiDomain": "https://api.staging.evolution-software.com",
-    "fromEmail": "email_test+staging@asuresoftware.com",
-    "billingNotificationFromEmail": "email_test+staging@asuresoftware.com",
+    "fromEmail": "AdvancedHR@evolutionadvancedhr.com",
+    "billingNotificationFromEmail": "AdvancedHR@asuresoftware.com",
     "ssoCredentialsId": "ssoCredentials",
     "integrationId": "8077ac79-faac-47cb-a240-a15cd5791915",
     "goldilocksApplicationId": "8f8a2b63-985b-4c59-9a9b-e25572068601",
