@@ -1163,7 +1163,7 @@ export const updateSignatureRequestStatus = utilService.gatewayEventHandlerV2(as
  * Deletes a signature request
  */
 export const deleteSignatureRequestStatus = utilService.gatewayEventHandlerV2(
-    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    async ({ securityContext, event }: IGatewayEventInput) => {
         console.info('esignature.handler.deleteSignatureRequest');
 
         const isAuthorized: boolean = securityContext.roleMemberships.some((role) => {

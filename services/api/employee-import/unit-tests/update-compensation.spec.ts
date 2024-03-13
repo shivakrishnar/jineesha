@@ -144,12 +144,12 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
         });
 
-        (utilService as any).getEvoTokenWithHrToken = jest.fn((transaction, payload) => {
+        (utilService as any).getEvoTokenWithHrToken = jest.fn(() => {
             return Promise.resolve('123');
         });
 
-        (ssoService as any).getTenantById = jest.fn((transaction, accessToken) => {
-            return Promise.resolve({ subdomain: '123'});
+        (ssoService as any).getTenantById = jest.fn(() => {
+            return Promise.resolve({ subdomain: '123' });
         });
 
         await employeeImportService.updateCompensation(
@@ -183,15 +183,15 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
         });
 
-        (utilService as any).getEvoTokenWithHrToken = jest.fn((transaction, payload) => {
+        (utilService as any).getEvoTokenWithHrToken = jest.fn(() => {
             return Promise.resolve('123');
         });
 
-        (ssoService as any).getTenantById = jest.fn((transaction, accessToken) => {
-            return Promise.resolve({ subdomain: '123'});
+        (ssoService as any).getTenantById = jest.fn(() => {
+            return Promise.resolve({ subdomain: '123' });
         });
 
-        (payrollService as any).getWagesFromEvoEmployee = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getWagesFromEvoEmployee = jest.fn(() => {
             return Promise.resolve(undefined);
         });
 
@@ -229,19 +229,19 @@ describe('employeeImport.Service.updateEmployee', () => {
             }            
         });
 
-        (utilService as any).getEvoTokenWithHrToken = jest.fn((transaction, payload) => {
+        (utilService as any).getEvoTokenWithHrToken = jest.fn(() => {
             return Promise.resolve('123');
         });
 
-        (ssoService as any).getTenantById = jest.fn((transaction, accessToken) => {
-            return Promise.resolve({ subdomain: '123'});
+        (ssoService as any).getTenantById = jest.fn(() => {
+            return Promise.resolve({ subdomain: '123' });
         });
 
-        (payrollService as any).getWagesFromEvoEmployee = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getWagesFromEvoEmployee = jest.fn(() => {
             return Promise.resolve(mockData.resultAlternatesRatesFromEVO);
         });
 
-        (payrollService as any).postWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).postWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
@@ -282,31 +282,31 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
         });
 
-        (utilService as any).getEvoTokenWithHrToken = jest.fn((transaction, payload) => {
+        (utilService as any).getEvoTokenWithHrToken = jest.fn(() => {
             return Promise.resolve('123');
         });
 
-        (ssoService as any).getTenantById = jest.fn((transaction, accessToken) => {
-            return Promise.resolve({ subdomain: '123'});
+        (ssoService as any).getTenantById = jest.fn(() => {
+            return Promise.resolve({ subdomain: '123' });
         });
 
-        (payrollService as any).getWagesFromEvoEmployee = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getWagesFromEvoEmployee = jest.fn(() => {
             return Promise.resolve(mockData.resultAlternatesRatesFromEVO);
         });
 
-        (payrollService as any).postWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).postWageInEvo = jest.fn(() => {
             return mockData.resultInsertCompensationEVO;
         });
 
-        (payrollService as any).updateWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).updateWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
-        (payrollService as any).patchWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).patchWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
-        (payrollService as any).patchEmployeeInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).patchEmployeeInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
@@ -347,31 +347,31 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
         });
 
-        (utilService as any).getEvoTokenWithHrToken = jest.fn((transaction, payload) => {
+        (utilService as any).getEvoTokenWithHrToken = jest.fn(() => {
             return Promise.resolve('123');
         });
 
-        (ssoService as any).getTenantById = jest.fn((transaction, accessToken) => {
-            return Promise.resolve({ subdomain: '123'});
+        (ssoService as any).getTenantById = jest.fn(() => {
+            return Promise.resolve({ subdomain: '123' });
         });
 
-        (payrollService as any).getWagesFromEvoEmployee = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getWagesFromEvoEmployee = jest.fn(() => {
             return Promise.resolve(mockData.resultAlternatesRatesFromEVO);
         });
 
-        (payrollService as any).postWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).postWageInEvo = jest.fn(() => {
             return mockData.resultInsertCompensationEVO;
         });
 
-        (payrollService as any).updateWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).updateWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
-        (payrollService as any).patchWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).patchWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
-        (payrollService as any).patchEmployeeInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).patchEmployeeInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
@@ -412,31 +412,31 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
         });
 
-        (utilService as any).getEvoTokenWithHrToken = jest.fn((transaction, payload) => {
+        (utilService as any).getEvoTokenWithHrToken = jest.fn(() => {
             return Promise.resolve('123');
         });
 
-        (ssoService as any).getTenantById = jest.fn((transaction, accessToken) => {
-            return Promise.resolve({ subdomain: '123'});
+        (ssoService as any).getTenantById = jest.fn(() => {
+            return Promise.resolve({ subdomain: '123' });
         });
 
-        (payrollService as any).getWagesFromEvoEmployee = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getWagesFromEvoEmployee = jest.fn(() => {
             return Promise.resolve(mockData.resultAlternatesRatesFromEVO);
         });
 
-        (payrollService as any).postWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).postWageInEvo = jest.fn(() => {
             return mockData.resultInsertCompensationEVO;
         });
 
-        (payrollService as any).updateWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).updateWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
-        (payrollService as any).patchWageInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).patchWageInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
-        (payrollService as any).patchEmployeeInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).patchEmployeeInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 

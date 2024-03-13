@@ -144,15 +144,15 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
         });
 
-        (utilService as any).getEvoTokenWithHrToken = jest.fn((transaction, accessToken) => {
+        (utilService as any).getEvoTokenWithHrToken = jest.fn(() => {
             return Promise.resolve(mockDataCommon.accessToken);
         });
 
-        (ssoService as any).getTenantById = jest.fn((transaction, accessToken) => {
+        (ssoService as any).getTenantById = jest.fn(() => {
             return Promise.resolve(mockDataCommon.tenantId);
         });
 
-        (payrollService as any).getEmployeeFromEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getEmployeeFromEvo = jest.fn(() => {
             return Promise.resolve(undefined);
         });
 
@@ -187,15 +187,15 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
         });
 
-        (utilService as any).getEvoTokenWithHrToken = jest.fn((transaction, accessToken) => {
+        (utilService as any).getEvoTokenWithHrToken = jest.fn(() => {
             return Promise.resolve(mockDataCommon.accessToken);
         });
 
-        (ssoService as any).getTenantById = jest.fn((transaction, accessToken) => {
+        (ssoService as any).getTenantById = jest.fn(() => {
             return Promise.resolve(mockDataCommon.tenantId);
         });
 
-        (payrollService as any).getEmployeeFromEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getEmployeeFromEvo = jest.fn(() => {
             return Promise.resolve(undefined);
         });
 
@@ -239,19 +239,19 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
         });
 
-        (utilService as any).getEvoTokenWithHrToken = jest.fn((transaction, accessToken) => {
+        (utilService as any).getEvoTokenWithHrToken = jest.fn(() => {
             return Promise.resolve(mockDataCommon.accessToken);
         });
 
-        (ssoService as any).getTenantById = jest.fn((transaction, accessToken) => {
+        (ssoService as any).getTenantById = jest.fn(() => {
             return Promise.resolve(mockDataCommon.tenantId);
         });
 
-        (payrollService as any).getEmployeeFromEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getEmployeeFromEvo = jest.fn(() => {
             return Promise.resolve(mockData.resultEmployeeEVO);
         });
 
-        (payrollService as any).updateEmployeeInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).updateEmployeeInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
@@ -295,19 +295,19 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
         });
 
-        (utilService as any).getEvoTokenWithHrToken = jest.fn((transaction, accessToken) => {
+        (utilService as any).getEvoTokenWithHrToken = jest.fn(() => {
             return Promise.resolve(mockDataCommon.accessToken);
         });
 
-        (ssoService as any).getTenantById = jest.fn((transaction, accessToken) => {
+        (ssoService as any).getTenantById = jest.fn(() => {
             return Promise.resolve(mockDataCommon.tenantId);
         });
 
-        (payrollService as any).getEmployeeFromEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getEmployeeFromEvo = jest.fn(() => {
             return Promise.resolve(mockData.resultEmployeeEVO);
         });
 
-        (payrollService as any).updateEmployeeInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).updateEmployeeInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 
@@ -351,19 +351,19 @@ describe('employeeImport.Service.updateEmployee', () => {
             }
         });
 
-        (utilService as any).getEvoTokenWithHrToken = jest.fn((transaction, accessToken) => {
+        (utilService as any).getEvoTokenWithHrToken = jest.fn(() => {
             return Promise.resolve(mockDataCommon.accessToken);
         });
 
-        (ssoService as any).getTenantById = jest.fn((transaction, accessToken) => {
+        (ssoService as any).getTenantById = jest.fn(() => {
             return Promise.resolve(mockDataCommon.tenantId);
         });
 
-        (payrollService as any).getEmployeeFromEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).getEmployeeFromEvo = jest.fn(() => {
             return Promise.resolve(mockData.resultEmployeeEVO);
         });
 
-        (payrollService as any).updateEmployeeInEvo = jest.fn((transaction, accessToken) => {
+        (payrollService as any).updateEmployeeInEvo = jest.fn(() => {
             return Promise.resolve({});
         });
 

@@ -27,7 +27,7 @@ describe('get announcements by company id as an admin user', () => {
         try {
             adminAccessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
 
-            let jsonPayload = JSON.parse(Buffer.from(adminAccessToken.split('.')[1], 'base64').toString())
+            const jsonPayload = JSON.parse(Buffer.from(adminAccessToken.split('.')[1], 'base64').toString())
             jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
             adminAccessToken = await utils.generateAccessToken(jsonPayload);
 
@@ -167,7 +167,7 @@ describe('get announcements by company Id as an employee user', () => {
         try {
             employeeAccessToken = await utils.getAccessToken();
 
-            let jsonPayload = JSON.parse(Buffer.from(employeeAccessToken.split('.')[1], 'base64').toString())
+            const jsonPayload = JSON.parse(Buffer.from(employeeAccessToken.split('.')[1], 'base64').toString())
             jsonPayload.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
             employeeAccessToken = await utils.generateAccessToken(jsonPayload);
 

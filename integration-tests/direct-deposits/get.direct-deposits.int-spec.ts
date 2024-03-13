@@ -35,7 +35,7 @@ describe('get direct deposits', () => {
     test('must return a 204 when an employee has no direct deposits', async (done) => {
         accessToken = await utils.getAccessToken(configs.directDeposit.username, configs.directDeposit.password);
         
-        let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+        const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
         jsonPayload.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
         accessToken = await utils.generateAccessToken(jsonPayload);
 
@@ -58,7 +58,7 @@ describe('get direct deposits', () => {
             try {
                 accessToken = await utils.getAccessToken(configs.directDeposit.username, configs.directDeposit.password);
 
-                let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+                const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
                 jsonPayload.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
                 accessToken = await utils.generateAccessToken(jsonPayload);
 

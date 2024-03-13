@@ -26,7 +26,7 @@ describe('delete direct deposit', () => {
         try {
             accessToken = await utils.getAccessToken(configs.directDeposit.username, configs.directDeposit.password);
 
-            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
             jsonPayload.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
             accessToken = await utils.generateAccessToken(jsonPayload);
 

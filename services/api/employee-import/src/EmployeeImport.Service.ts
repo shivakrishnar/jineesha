@@ -1388,8 +1388,6 @@ export async function downloadImportData(
     companyId: string,
     dataImportId: string,
     queryParams: any,
-    domainName: string,
-    path: string,
 ): Promise<any> {
     console.info('EmployeeImport.Service.downloadImportData');
 
@@ -1478,6 +1476,166 @@ export async function downloadImportData(
         console.error(error);
         throw errorService.getErrorResponse(50).setDeveloperMessage(error.message);
     }
+}
+
+function InsertEvoWage(evoKeys: IEvolutionKey, tenantName, evoAccessToken): IWage {
+    console.info('EmployeeImport.service.InsertEvoWage');
+
+    const myEvoWage: IWage = {
+        employeeId: Number(evoKeys.employeeId),
+        rate: {
+            id: 1,
+            isDefault: true,
+            amount: 0,
+        },
+    };
+
+    const postEvoWageResult: any = payrollService.postWageInEvo(tenantName, evoKeys, evoAccessToken, myEvoWage);
+    console.info('===> postEvoWageResult');
+    console.info(postEvoWageResult);
+
+    return postEvoWageResult;
+}
+
+function LoadToPatchEmp(myPatch: IEvoPatch, empComp, wageId: number): IEvoPatch {
+    console.info('EmployeeImport.service.LoadToPatchEmp');
+
+    const patchOperation: IPatchOperation = {
+        type: 'Replace',
+        effectiveDate: empComp.EffectiveDate,
+        pathGroup: [
+            {
+                path: '/salary',
+                value: empComp.Rate,
+            },
+        ],
+    };
+
+    if (myPatch && myPatch.patchOperations) {
+        myPatch.patchOperations.push(patchOperation);
+    } else {
+        myPatch = {
+            id: wageId,
+            patchOperations: [patchOperation],
+        };
+    }
+
+    return myPatch;
+}
+
+function LoadToPatchWage(myPatch: IEvoPatch, empComp, wageId: number): IEvoPatch {
+    console.info('EmployeeImport.service.LoadToPatchWage');
+
+    const patchOperation: IPatchOperation = {
+        type: 'Replace',
+        effectiveDate: empComp.EffectiveDate,
+        pathGroup: [
+            {
+                path: '/rate/id',
+                value: 1,
+            },
+            {
+                path: '/rate/amount',
+                value: empComp.Rate,
+            },
+            {
+                path: '/rate/isDefault',
+                value: true,
+            },
+            {
+                path: '/jobId',
+                value: empComp.jobId,
+            },
+            {
+                path: '/workerCompId',
+                value: empComp.workerCompensationId,
+            },
+            {
+                path: '/divisionId',
+                value: empComp.org1Id,
+            },
+            {
+                path: '/branchId',
+                value: empComp.org2Id,
+            },
+            {
+                path: '/departmentId',
+                value: empComp.org3Id,
+            },
+            {
+                path: '/teamId',
+                value: empComp.org4Id,
+            },
+        ],
+    };
+
+    if (myPatch && myPatch.patchOperations) {
+        myPatch.patchOperations.push(patchOperation);
+    } else {
+        myPatch = {
+            id: wageId,
+            patchOperations: [patchOperation],
+        };
+    }
+
+    return myPatch;
+}
+
+function CreateDefaultPatchOperation(myPatch: IEvoPatch, wageId: number, effectiveDate: string, amount: any): IEvoPatch {
+    console.info('EmployeeImport.service.CreateDefaultPatchOperation');
+
+    const patchOperation: IPatchOperation = {
+        type: 'Replace',
+        effectiveDate: effectiveDate,
+        pathGroup: [
+            {
+                path: '/rate/id',
+                value: 1,
+            },
+            {
+                path: '/rate/amount',
+                value: amount,
+            },
+            {
+                path: '/rate/isDefault',
+                value: true,
+            },
+            {
+                path: '/rate/isDefault',
+                value: true,
+            },
+        ],
+    };
+
+    if (myPatch && myPatch.patchOperations) {
+        myPatch.patchOperations.push(patchOperation);
+    } else {
+        myPatch = {
+            id: wageId,
+            patchOperations: [patchOperation],
+        };
+    }
+
+    return myPatch;
+}
+
+async function UpdateEvoWage(myEvoWage: IWage, empComp, evoWageKeys: IEvolutionKey, tenantName, evoAccessToken) {
+    console.info('EmployeeImport.Service.UpdateEvoWage');
+
+    myEvoWage.employeeId = Number(evoWageKeys.employeeId);
+    myEvoWage.divisionId = empComp.org1Id;
+    myEvoWage.branchId = empComp.org2Id;
+    myEvoWage.departmentId = empComp.org3Id;
+    myEvoWage.teamId = empComp.org4Id;
+    myEvoWage.jobId = empComp.jobId;
+
+    myEvoWage.workersCompensation.id = empComp.workerCompensationId;
+    myEvoWage.workersCompensation.description = empComp.workerCompDesc;
+    myEvoWage.workersCompensation.state.id = empComp.stateId;
+
+    const evoUpdateWageResult: any = await payrollService.updateWageInEvo(tenantName, evoWageKeys, evoAccessToken, myEvoWage);
+    console.info('===> evoUpdateWageResult');
+    console.info(evoUpdateWageResult);
 }
 
 /**
@@ -1875,93 +2033,68 @@ export async function updateCompensation(
     }
 }
 
-function InsertEvoWage(evoKeys: IEvolutionKey, tenantName, evoAccessToken): IWage {
-    console.info('EmployeeImport.service.InsertEvoWage');
+async function GetAlternateRatesByEmployee(tenantId, employeeID, myRateNumber) {
+    const getAlternateRatesByEmployeeQuery = new ParameterizedQuery('getAlternateRatesByEmployee', Queries.getAlternateRatesByEmployee);
+    getAlternateRatesByEmployeeQuery.setParameter('@EmployeeID', employeeID);
+    getAlternateRatesByEmployeeQuery.setParameter('@RateNumber_EVO', myRateNumber);
 
-    const myEvoWage: IWage = {
-        employeeId: Number(evoKeys.employeeId),
-        rate: {
-            id: 1,
-            isDefault: true,
-            amount: 0,
-        },
-    };
+    const getAlternateRatesByEmployeePayload = {
+        tenantId,
+        queryName: getAlternateRatesByEmployeeQuery.name,
+        query: getAlternateRatesByEmployeeQuery.value,
+        queryType: QueryType.Simple,
+    } as DatabaseEvent;
 
-    const postEvoWageResult: any = payrollService.postWageInEvo(tenantName, evoKeys, evoAccessToken, myEvoWage);
-    console.info('===> postEvoWageResult');
-    console.info(postEvoWageResult);
-
-    return postEvoWageResult;
+    const getAlternateRatesByEmployeeResult: any = await utilService.invokeInternalService(
+        'queryExecutor',
+        getAlternateRatesByEmployeePayload,
+        utilService.InvocationType.RequestResponse,
+    );
+    return getAlternateRatesByEmployeeResult.recordset;
 }
 
-function LoadToPatchEmp(myPatch: IEvoPatch, empComp, wageId: number): IEvoPatch {
-    console.info('EmployeeImport.service.LoadToPatchEmp');
-
-    const patchOperation: IPatchOperation = {
-        type: 'Replace',
-        effectiveDate: empComp.EffectiveDate,
-        pathGroup: [
-            {
-                path: '/salary',
-                value: empComp.Rate,
-            },
-        ],
-    };
-
-    if (myPatch && myPatch.patchOperations) {
-        myPatch.patchOperations.push(patchOperation);
-    } else {
-        myPatch = {
-            id: wageId,
-            patchOperations: [patchOperation],
-        };
-    }
-
-    return myPatch;
-}
-
-function LoadToPatchWage(myPatch: IEvoPatch, empComp, wageId: number): IEvoPatch {
+function LoadToPatchWageAlternateRate(myPatch: IEvoPatch, altRate, wageId: number): IEvoPatch {
     console.info('EmployeeImport.service.LoadToPatchWage');
 
     const patchOperation: IPatchOperation = {
         type: 'Replace',
-        effectiveDate: empComp.EffectiveDate,
+        effectiveDate: altRate.StartDate,
         pathGroup: [
             {
                 path: '/rate/id',
-                value: 1,
+                value: altRate.RateNumber_EVO,
             },
             {
                 path: '/rate/amount',
-                value: empComp.Rate,
+                value: altRate.HourlyRate,
             },
             {
                 path: '/rate/isDefault',
-                value: true,
+                value: false,
             },
             {
                 path: '/jobId',
-                value: empComp.jobId,
+                value: null,
             },
             {
-                path: '/workerCompId',
-                value: empComp.workerCompensationId,
+                path: '/workersCompensation/id',
+                value: altRate.workerCompensationId,
             },
             {
                 path: '/divisionId',
-                value: empComp.org1Id,
+                value: altRate.org1Id,
             },
             {
                 path: '/branchId',
-                value: empComp.org2Id,
+                value: altRate.org2Id,
             },
             {
                 path: '/departmentId',
-                value: empComp.org3Id,
+                value: altRate.org3Id,
             },
             {
                 path: '/teamId',
-                value: empComp.org4Id,
+                value: altRate.org4Id,
             },
         ],
     };
@@ -1978,61 +2111,28 @@ function LoadToPatchWage(myPatch: IEvoPatch, empComp, wageId: number): IEvoPatch
     return myPatch;
 }
 
-function CreateDefaultPatchOperation(myPatch: IEvoPatch, wageId: number, effectiveDate: string, amount: any): IEvoPatch {
-    console.info('EmployeeImport.service.CreateDefaultPatchOperation');
+async function UpdateAltRate(tenantName, evoWageKeys: IEvolutionKey, evoAccessToken, myEvoWage: IWage, myPatch: IEvoPatch) {
+    console.info('EmployeeImport.service.UpdateAltRate');
 
-    const patchOperation: IPatchOperation = {
-        type: 'Replace',
-        effectiveDate: effectiveDate,
-        pathGroup: [
-            {
-                path: '/rate/id',
-                value: 1,
-            },
-            {
-                path: '/rate/amount',
-                value: amount,
-            },
-            {
-                path: '/rate/isDefault',
-                value: true,
-            },
-            {
-                path: '/rate/isDefault',
-                value: true,
-            },
-        ],
-    };
+    evoWageKeys.wageId = myPatch.id.toString();
 
-    if (myPatch && myPatch.patchOperations) {
-        myPatch.patchOperations.push(patchOperation);
-    } else {
-        myPatch = {
-            id: wageId,
-            patchOperations: [patchOperation],
+    if (!myEvoWage) {
+        myEvoWage = {
+            id: myPatch.id,
         };
     }
-
-    return myPatch;
-}
-
-async function UpdateEvoWage(myEvoWage: IWage, empComp, evoWageKeys: IEvolutionKey, tenantName, evoAccessToken) {
-    console.info('EmployeeImport.Service.UpdateEvoWage');
 
     myEvoWage.employeeId = Number(evoWageKeys.employeeId);
-    myEvoWage.divisionId = empComp.org1Id;
-    myEvoWage.branchId = empComp.org2Id;
-    myEvoWage.departmentId = empComp.org3Id;
-    myEvoWage.teamId = empComp.org4Id;
-    myEvoWage.jobId = empComp.jobId;
-
-    myEvoWage.workersCompensation.id = empComp.workerCompensationId;
-    myEvoWage.workersCompensation.description = empComp.workerCompDesc;
-    myEvoWage.workersCompensation.state.id = empComp.stateId;
 
     const evoUpdateWageResult: any = await payrollService.updateWageInEvo(tenantName, evoWageKeys, evoAccessToken, myEvoWage);
     console.info('===> evoUpdateWageResult');
     console.info(evoUpdateWageResult);
+
+    const evoPatchWageResult: any = await payrollService.patchWageInEvo(tenantName, evoWageKeys, evoAccessToken, myPatch);
+    console.info('===> evoPatchWageResult');
+    console.info(evoPatchWageResult);
+
+    return evoPatchWageResult;
 }
 
 /**
@@ -2489,106 +2589,4 @@ export async function updateAlternateRate(
 
         return { isSuccess: false, message: msgError };
     }
-}
-
-async function GetAlternateRatesByEmployee(tenantId, employeeID, myRateNumber) {
-    const getAlternateRatesByEmployeeQuery = new ParameterizedQuery('getAlternateRatesByEmployee', Queries.getAlternateRatesByEmployee);
-    getAlternateRatesByEmployeeQuery.setParameter('@EmployeeID', employeeID);
-    getAlternateRatesByEmployeeQuery.setParameter('@RateNumber_EVO', myRateNumber);
-
-    const getAlternateRatesByEmployeePayload = {
-        tenantId,
-        queryName: getAlternateRatesByEmployeeQuery.name,
-        query: getAlternateRatesByEmployeeQuery.value,
-        queryType: QueryType.Simple,
-    } as DatabaseEvent;
-
-    const getAlternateRatesByEmployeeResult: any = await utilService.invokeInternalService(
-        'queryExecutor',
-        getAlternateRatesByEmployeePayload,
-        utilService.InvocationType.RequestResponse,
-    );
-    return getAlternateRatesByEmployeeResult.recordset;
-}
-
-function LoadToPatchWageAlternateRate(myPatch: IEvoPatch, altRate, wageId: number): IEvoPatch {
-    console.info('EmployeeImport.service.LoadToPatchWage');
-
-    const patchOperation: IPatchOperation = {
-        type: 'Replace',
-        effectiveDate: altRate.StartDate,
-        pathGroup: [
-            {
-                path: '/rate/id',
-                value: altRate.RateNumber_EVO,
-            },
-            {
-                path: '/rate/amount',
-                value: altRate.HourlyRate,
-            },
-            {
-                path: '/rate/isDefault',
-                value: false,
-            },
-            {
-                path: '/jobId',
-                value: null,
-            },
-            {
-                path: '/workersCompensation/id',
-                value: altRate.workerCompensationId,
-            },
-            {
-                path: '/divisionId',
-                value: altRate.org1Id,
-            },
-            {
-                path: '/branchId',
-                value: altRate.org2Id,
-            },
-            {
-                path: '/departmentId',
-                value: altRate.org3Id,
-            },
-            {
-                path: '/teamId',
-                value: altRate.org4Id,
-            },
-        ],
-    };
-
-    if (myPatch && myPatch.patchOperations) {
-        myPatch.patchOperations.push(patchOperation);
-    } else {
-        myPatch = {
-            id: wageId,
-            patchOperations: [patchOperation],
-        };
-    }
-
-    return myPatch;
-}
-
-async function UpdateAltRate(tenantName, evoWageKeys: IEvolutionKey, evoAccessToken, myEvoWage: IWage, myPatch: IEvoPatch) {
-    console.info('EmployeeImport.service.UpdateAltRate');
-
-    evoWageKeys.wageId = myPatch.id.toString();
-
-    if (!myEvoWage) {
-        myEvoWage = {
-            id: myPatch.id,
-        };
-    }
-
-    myEvoWage.employeeId = Number(evoWageKeys.employeeId);
-
-    const evoUpdateWageResult: any = await payrollService.updateWageInEvo(tenantName, evoWageKeys, evoAccessToken, myEvoWage);
-    console.info('===> evoUpdateWageResult');
-    console.info(evoUpdateWageResult);
-
-    const evoPatchWageResult: any = await payrollService.patchWageInEvo(tenantName, evoWageKeys, evoAccessToken, myPatch);
-    console.info('===> evoPatchWageResult');
-    console.info(evoPatchWageResult);
-
-    return evoPatchWageResult;
 }

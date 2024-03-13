@@ -29,7 +29,7 @@ describe('delete company document', () => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
 
-            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
             jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
             accessToken = await utils.generateAccessToken(jsonPayload);
 
@@ -148,7 +148,7 @@ describe('delete employee document', () => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
 
-            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
             jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
             accessToken = await utils.generateAccessToken(jsonPayload);
 

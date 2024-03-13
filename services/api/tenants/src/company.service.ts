@@ -2,7 +2,7 @@ import * as AWS from 'aws-sdk';
 import { Queries, basePath } from '../../../queries/queries';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
-import * as path from 'path';
+import * as pathGlobal from 'path';
 
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
@@ -1175,7 +1175,7 @@ export async function createCompanyMigration(
         } as DatabaseEvent;
 
         //getting the list of premigration scripts into in array
-        const scripts = fs.readdirSync(path.join(basePath, 'companyMigrationScripts'));
+        const scripts = fs.readdirSync(pathGlobal.join(basePath, 'companyMigrationScripts'));
 
         //rearranging the scripts array to execute 'usp_EIN_Cons_Dynamic_V1.sql' first
         const tmp = scripts[scripts.indexOf('usp_EIN_Cons_Dynamic_V1.sql')];
@@ -1319,7 +1319,8 @@ export async function runCompanyMigration(donorTenantId, donorCompanyId, recipie
         }
 
         payload.tenantId = recipientTenantId;
-        (payload.queryName = recipientCompanyNameQuery.name), (payload.query = recipientCompanyNameQuery.value);
+        payload.queryName = recipientCompanyNameQuery.name;
+        payload.query = recipientCompanyNameQuery.value;
 
         const recipientCompanyName: any = await utilService.invokeInternalService(
             'queryExecutor',

@@ -30,7 +30,7 @@ describe('list employees by tenant', () => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
 
-            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
             jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
             accessToken = await utils.generateAccessToken(jsonPayload);
 
@@ -132,7 +132,7 @@ describe('list employees by company', () => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
 
-            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
             jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
             accessToken = await utils.generateAccessToken(jsonPayload);
 
@@ -263,13 +263,13 @@ describe('get employee by id', () => {
         try {
             accessToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
 
-            let jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
+            const jsonPayload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString())
             jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
             accessToken = await utils.generateAccessToken(jsonPayload);
 
             employeeAccessToken = await utils.getAccessToken();
 
-            let jsonPayload2 = JSON.parse(Buffer.from(employeeAccessToken.split('.')[1], 'base64').toString())
+            const jsonPayload2 = JSON.parse(Buffer.from(employeeAccessToken.split('.')[1], 'base64').toString())
             jsonPayload2.scope.push("https://www.asuresoftware.com/iam/hr.persona.user");
             employeeAccessToken = await utils.generateAccessToken(jsonPayload2);
 

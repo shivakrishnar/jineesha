@@ -5,6 +5,36 @@ import * as configService from '../config.service';
 import * as utilService from '../util.service';
 import { ErrorMessage } from '../errors/errorMessage';
 
+async function getAccessTokenForTokenization(): Promise<string> {
+    console.info('tokenization.service.getAccessTokenForTokenization');
+
+    try {
+        const credentials = JSON.parse(await utilService.getSecret(configService.getTokenizationServiceCredentialsId()));
+        const authUrl = configService.getTokenizationAuthUrl();
+
+        const result = await request.post({
+            url: authUrl,
+            json: true,
+            headers: {
+                Authorization: `Basic ${Buffer.from(`${credentials.ClientId}:${credentials.ClientSecret}`).toString('base64')}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            form: {
+                'grant_type': 'client_credentials',
+            }
+        });
+
+        if (!result || !result.access_token) {
+            throw errorService.getErrorResponse(0).setDeveloperMessage('Unable to obtain tokenization access token');
+        }
+
+        return result.access_token;
+    } catch (error) {
+        console.log(error);
+        throw errorService.getErrorResponse(0).setDeveloperMessage('An error occurred while retrieving tokenization access token');
+    }
+}
+
 /**
 * Tokenize employee bank account numbers
  * @param {string} tenantId: Tenant id of the employee's company 
@@ -49,33 +79,3 @@ export async function getTokenizedOutput(tenantId: string, values: string[]): Pr
         throw errorService.getErrorResponse(0).setDeveloperMessage('Unable to obtain tokenization response');
     }
  }    
-
-async function getAccessTokenForTokenization(): Promise<string> {
-    console.info('tokenization.service.getAccessTokenForTokenization');
-
-    try {
-        const credentials = JSON.parse(await utilService.getSecret(configService.getTokenizationServiceCredentialsId()));
-        const authUrl = configService.getTokenizationAuthUrl();
-
-        const result = await request.post({
-            url: authUrl,
-            json: true,
-            headers: {
-                Authorization: `Basic ${Buffer.from(`${credentials.ClientId}:${credentials.ClientSecret}`).toString('base64')}`,
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            form: {
-                'grant_type': 'client_credentials',
-            }
-        });
-
-        if (!result || !result.access_token) {
-            throw errorService.getErrorResponse(0).setDeveloperMessage('Unable to obtain tokenization access token');
-        }
-
-        return result.access_token;
-    } catch (error) {
-        console.log(error);
-        throw errorService.getErrorResponse(0).setDeveloperMessage('An error occurred while retrieving tokenization access token');
-    }
-}

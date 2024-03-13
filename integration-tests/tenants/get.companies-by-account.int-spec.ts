@@ -31,7 +31,7 @@ describe('list companies by sso account', () => {
 
             adminToken = await utils.getAccessToken(configs.sbAdminUser.username, configs.sbAdminUser.password);
 
-            let jsonPayload = JSON.parse(Buffer.from(adminToken.split('.')[1], 'base64').toString())
+            const jsonPayload = JSON.parse(Buffer.from(adminToken.split('.')[1], 'base64').toString())
             jsonPayload.scope.push("https://www.asuresoftware.com/iam/global.admin");
             adminToken = await utils.generateAccessToken(jsonPayload);
 
