@@ -8,7 +8,6 @@ export interface IQuestionType {
 
 export interface IQuestionBankPOST {
     companyId: number,
-    employeeId?: number,
     atQuestionTypeId: number,
     questionTitle: string,
     questionText?: string,
@@ -20,7 +19,6 @@ export interface IQuestionBankPOST {
 export interface IQuestionBankPUT {
     id: number,
     companyId: number,
-    employeeId?: number,
     atQuestionTypeId: number,
     questionTitle: string,
     questionText?: string,

@@ -47,6 +47,19 @@ export class ParameterizedQuery extends Query {
      */
     public setBooleanParameter(name: any, value: boolean): void {
         const valueResult = value ? '1' : '0';
-        this._query = this._query.replace(name, valueResult);
+        this.setParameter(name, valueResult);
+    }
+
+    /**
+     * Sets an SQL parameter to a desired value after sanitizing the string
+     * @param {any} name The identifier of the parameter
+     * @param {string} value The parameter's value
+     */
+    public setStringOrNullParameter(name: any, value: string): void {
+        if (!value || value.toUpperCase() === 'NULL') {
+            this.setParameter(name, 'NULL');
+        } else {
+            this.setStringParameter(name, value);
+        }
     }
 }
