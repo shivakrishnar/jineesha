@@ -1450,7 +1450,7 @@ export async function downloadImportData(
                 csvOut += `${row.CSVRowData},"${row.CSVRowNotes}"\r\n`;
             });
 
-            return { data: csvOut, mimeType: `.text/csv; charset=utf-8` };
+            return { data: encodeURIComponent(csvOut), mimeType: `.text/csv; charset=utf-8` };
         } else {
             console.info('downloading the original file');
 
