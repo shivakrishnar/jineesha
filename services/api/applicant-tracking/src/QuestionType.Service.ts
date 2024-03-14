@@ -1,6 +1,6 @@
 import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
-import { IQuestionType } from './ApplicantTracking.Interfaces';
+import * as atInterfaces from './ApplicantTracking.Interfaces';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
@@ -12,7 +12,7 @@ import { DatabaseEvent, QueryType } from '../../../internal-api/database/events'
 export async function getQuestionTypesByTenant(
     tenantId: string, 
     queryParams: any
-): Promise<IQuestionType[]> {
+): Promise<atInterfaces.IQuestionType[]> {
     console.info('QuestionType.Service.getQuestionTypesByTenant');
 
     const validQueryStringParameters = ['searchBy'];
@@ -31,7 +31,7 @@ export async function getQuestionTypesByTenant(
         } as DatabaseEvent;
 
         const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-        const results: IQuestionType[] = dbResults.recordset;
+        const results: atInterfaces.IQuestionType[] = dbResults.recordset;
         return results;
     } catch (error) {
         if (error instanceof ErrorMessage) {

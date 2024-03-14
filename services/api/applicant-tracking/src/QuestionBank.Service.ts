@@ -1,7 +1,7 @@
 import * as errorService from '../../../errors/error.service';
 import * as utilService from '../../../util.service';
 import * as paginationService from '../../../pagination/pagination.service';
-import { IQuestionBankPOST, IQuestionBankGET } from './ApplicantTracking.Interfaces';
+import * as atInterfaces from './ApplicantTracking.Interfaces';
 import { ErrorMessage } from '../../../errors/errorMessage';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
@@ -42,7 +42,7 @@ export async function getQuestionBanksByTenant(
 
         const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
         const totalCount = dbResults.recordsets[0][0].totalCount;
-        const results: IQuestionBankGET[] = dbResults.recordsets[1];
+        const results: atInterfaces.IQuestionBankGET[] = dbResults.recordsets[1];
         return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page);
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -90,7 +90,7 @@ export async function getQuestionBanksByCompany(
 
         const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
         const totalCount = dbResults.recordsets[0][0].totalCount;
-        const results: IQuestionBankGET[] = dbResults.recordsets[1];
+        const results: atInterfaces.IQuestionBankGET[] = dbResults.recordsets[1];
         return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page);
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -107,7 +107,7 @@ export async function getQuestionBanksByCompany(
 export async function getQuestionBankById(
     tenantId: string,
     id: string
-): Promise<IQuestionBankGET> {
+): Promise<atInterfaces.IQuestionBankGET> {
     console.info('QuestionBank.Service.getQuestionBankById');
 
     if (Number.isNaN(Number(id))) {
@@ -127,7 +127,7 @@ export async function getQuestionBankById(
         } as DatabaseEvent;
 
         const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-        const result: IQuestionBankGET = dbResults.recordset[0];
+        const result: atInterfaces.IQuestionBankGET = dbResults.recordset[0];
         return result;
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -144,32 +144,32 @@ export async function getQuestionBankById(
 export async function createQuestionBank(
     tenantId: string,
     userEmail: string,
-    requestBody: IQuestionBankPOST
-): Promise<IQuestionBankGET> {
+    requestBody: atInterfaces.IQuestionBankPOST
+): Promise<atInterfaces.IQuestionBankGET> {
     console.info('QuestionBank.Service.createQuestionBank');
 
     try {
         //
         // inserting data
         //
-        const createQuery = new ParameterizedQuery('createQuestionBank', Queries.createQuestionBank);
-        createQuery.setParameter('@CompanyID', requestBody.companyId);
-        createQuery.setParameter('@ATQuestionTypeID', requestBody.atQuestionTypeId);
-        createQuery.setStringParameter('@QuestionTitle', requestBody.questionTitle);
-        createQuery.setStringParameter('@QuestionText', requestBody.questionText ? requestBody.questionText : '');
-        createQuery.setBooleanParameter('@Active', requestBody.active);
-        createQuery.setParameter('@Sequence', requestBody.sequence);
-        createQuery.setBooleanParameter('@IsRequired', requestBody.isRequired);
+        const query = new ParameterizedQuery('createQuestionBank', Queries.createQuestionBank);
+        query.setParameter('@CompanyID', requestBody.companyId);
+        query.setParameter('@ATQuestionTypeID', requestBody.atQuestionTypeId);
+        query.setStringOrNullParameter('@QuestionTitle', requestBody.questionTitle);
+        query.setStringOrNullParameter('@QuestionText', requestBody.questionText);
+        query.setBooleanParameter('@Active', requestBody.active);
+        query.setParameter('@Sequence', requestBody.sequence);
+        query.setBooleanParameter('@IsRequired', requestBody.isRequired);
 
-        const createPayload = { 
+        const payload = { 
             tenantId, 
-            queryName: createQuery.name, 
-            query: createQuery.value, 
+            queryName: query.name, 
+            query: query.value, 
             queryType: QueryType.Simple 
         } as DatabaseEvent;
 
-        const createQueryResult: any = await utilService.invokeInternalService('queryExecutor', createPayload, utilService.InvocationType.RequestResponse);
-        const id: any = createQueryResult.recordset[0].ID;
+        const queryResult: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const id: any = queryResult.recordset[0].ID;
         if (id) {
             //
             // getting data
@@ -191,7 +191,6 @@ export async function createQuestionBank(
                 companyId: requestBody.companyId.toString(),
                 areaOfChange: AuditAreaOfChange.ApplicantTracking,
                 tenantId,
-                employeeId: requestBody.employeeId?.toString(),
             } as IAudit);
 
             //
@@ -201,6 +200,83 @@ export async function createQuestionBank(
         } else {
             throw errorService.getErrorResponse(74).setDeveloperMessage('Was not possible to create the resource');
         }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Update ATQuestionBank.
+ */
+export async function updateQuestionBank(
+    tenantId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IQuestionBankPUT
+): Promise<Boolean> {
+    console.info('QuestionBank.Service.updateQuestionBank');
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getQuestionBankById(tenantId, requestBody.id.toString());     
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+
+        if (oldValues.companyId != requestBody.companyId) {
+            throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+        }
+
+        //
+        // updating data
+        //
+        const query = new ParameterizedQuery('updateQuestionBank', Queries.updateQuestionBank);
+        query.setParameter('@ID', requestBody.id);
+        query.setParameter('@ATQuestionTypeID', requestBody.atQuestionTypeId);
+        query.setStringOrNullParameter('@QuestionTitle', requestBody.questionTitle);
+        query.setStringOrNullParameter('@QuestionText', requestBody.questionText);
+        query.setBooleanParameter('@Active', requestBody.active);
+        query.setParameter('@Sequence', requestBody.sequence);
+        query.setBooleanParameter('@IsRequired', requestBody.isRequired);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        const logResult = { ...requestBody };
+        logResult.questionTitle = utilService.sanitizeStringForSql(logResult.questionTitle);
+        logResult.questionText = utilService.sanitizeStringForSql(logResult.questionText);
+        oldValues.questionTitle = utilService.sanitizeStringForSql(oldValues.questionTitle);
+        oldValues.questionText = utilService.sanitizeStringForSql(oldValues.questionText);
+        delete oldValues.companyName;
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            newFields: logResult,
+            type: AuditActionType.Update,
+            companyId: requestBody.companyId.toString(),
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

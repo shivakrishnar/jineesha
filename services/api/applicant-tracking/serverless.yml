@@ -186,6 +186,15 @@ functions:
             cors:
               origin: '*'
 
+  updateQuestionBank:
+    handler: src/handler.updateQuestionBank
+    events:
+        - http:
+            path: /tenants/{tenantId}/question-bank
+            method: put
+            cors:
+              origin: '*'              
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

@@ -138,13 +138,40 @@ export const createQuestionBank = utilService.gatewayEventHandlerV2(async ({ sec
     const { tenantId } = event.pathParameters;
     const userEmail = securityContext.principal.email;
 
-    // can't use this coz the employeeId is not mandatory here
-    //await securityContext.checkSecurityRoles(tenantId, employeeId, userEmail, 'ATQuestionBankList', 'CanCreate');
-
     await utilService.validateRequestBody(schemas.createQuestionBankValidationSchema, requestBody);
     utilService.checkAdditionalProperties(schemas.createQuestionBankCheckPropertiesSchema, requestBody, 'QuestionBank');
 
     const apiResult = await applicantTrackingService.questionBankService.createQuestionBank(tenantId, userEmail, requestBody);
 
     return { statusCode: 201, body: apiResult }
+});
+
+/**
+ * Update ATQuestionBank.
+ */
+export const updateQuestionBank = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handler.updateQuestionBank');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    await utilService.validateRequestBody(schemas.updateQuestionBankValidationSchema, requestBody);
+    utilService.checkAdditionalProperties(schemas.updateQuestionBankCheckPropertiesSchema, requestBody, 'QuestionBank');
+
+    const apiResult = await applicantTrackingService.questionBankService.updateQuestionBank(tenantId, userEmail, requestBody);
+
+    return { statusCode: 200, body: apiResult }
 });

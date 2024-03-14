@@ -135,11 +135,7 @@ async function createAuditDetailEntries(tenantId: string, auditId: number, audit
         const fieldQuery = new ParameterizedQuery(`CreateAuditDetailFor${fieldKeys[i]}`, Queries.createAuditDetailEntry);
         fieldQuery.setParameter('@auditId', auditId);
         fieldQuery.setParameter('@companyId', companyId);
-        if (employeeDisplayName) {
-            fieldQuery.setStringParameter('@affectedEmployee', employeeDisplayName);
-        } else {
-            fieldQuery.setParameter('@affectedEmployee', 'NULL');
-        }
+        fieldQuery.setStringOrNullParameter('@affectedEmployee', employeeDisplayName);
         fieldQuery.setParameter('@actionType', type);
         fieldQuery.setParameter('@fieldChanged', fieldKeys[i]);
         fieldQuery.setParameter('@oldValue', [undefined, null, 'null'].includes(oldValues[i]) ? '[Blank]' : oldValues[i]);
