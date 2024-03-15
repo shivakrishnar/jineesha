@@ -39,3 +39,10 @@ export interface IQuestionBankGET {
     isRequired: boolean,
 }
 
+export interface IHardStatusType {
+    id: number;
+    code: string;
+    description: string;
+    priority: number;
+    active: boolean;
+}
