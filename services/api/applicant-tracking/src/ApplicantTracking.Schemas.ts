@@ -14,8 +14,9 @@ export const pathParametersForTenantIdAndCompanyIdSchema = {
     companyId: { required: true, type: String }
 };
 
-export const pathParametersForTenantIdAndIdSchema = {
+export const pathParametersForTenantIdAndCompanyIdAndIdSchema = {
     tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
     id: { required: true, type: String }
 };
 

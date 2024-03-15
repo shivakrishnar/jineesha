@@ -106,13 +106,19 @@ export async function getQuestionBanksByCompany(
  */
 export async function getQuestionBankById(
     tenantId: string,
+    companyId: string,
     id: string
 ): Promise<atInterfaces.IQuestionBankGET> {
     console.info('QuestionBank.Service.getQuestionBankById');
 
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
     if (Number.isNaN(Number(id))) {
-        const errorMessage = `${id} is not a valid number`;
-        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid number`);
     }
 
     try {
@@ -128,6 +134,11 @@ export async function getQuestionBankById(
 
         const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
         const result: atInterfaces.IQuestionBankGET = dbResults.recordset[0];
+
+        if (result && result.companyId.toString() != companyId){
+            throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+        }
+
         return result;
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -143,10 +154,21 @@ export async function getQuestionBankById(
  */
 export async function createQuestionBank(
     tenantId: string,
+    companyId: string,
     userEmail: string,
     requestBody: atInterfaces.IQuestionBankPOST
 ): Promise<atInterfaces.IQuestionBankGET> {
     console.info('QuestionBank.Service.createQuestionBank');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (companyId != requestBody.companyId.toString()) {
+        throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+    }
 
     try {
         //
@@ -174,7 +196,7 @@ export async function createQuestionBank(
             //
             // getting data
             //
-            const apiresult = await getQuestionBankById(tenantId, id);
+            const apiresult = await getQuestionBankById(tenantId, companyId, id);
 
             //
             // auditing log
@@ -214,20 +236,30 @@ export async function createQuestionBank(
  */
 export async function updateQuestionBank(
     tenantId: string,
+    companyId: string,
     userEmail: string,
     requestBody: atInterfaces.IQuestionBankPUT
 ): Promise<Boolean> {
     console.info('QuestionBank.Service.updateQuestionBank');
 
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (companyId != requestBody.companyId.toString()) {
+        throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+    }
+
     try {
         //
         // getting the old values for audit log
         //
-        const oldValues = await getQuestionBankById(tenantId, requestBody.id.toString());     
+        const oldValues = await getQuestionBankById(tenantId, companyId, requestBody.id.toString());     
         if (!oldValues) {
             throw errorService.getErrorResponse(50);
         }
-
         if (oldValues.companyId != requestBody.companyId) {
             throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
         }
@@ -269,6 +301,83 @@ export async function updateQuestionBank(
             newFields: logResult,
             type: AuditActionType.Update,
             companyId: requestBody.companyId.toString(),
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Delete ATQuestionBank.
+ */
+export async function deleteQuestionBank(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    id: string
+): Promise<boolean> {
+    console.info('QuestionBank.Service.deleteQuestionBank');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (Number.isNaN(Number(id))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getQuestionBankById(tenantId, companyId, id);     
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+        if (oldValues.companyId.toString() != companyId) {
+            throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+        }
+
+        //
+        // deleting data
+        //
+        const query = new ParameterizedQuery('deleteQuestionBank', Queries.deleteQuestionBank);
+        query.setParameter('@ID', id);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        oldValues.questionTitle = utilService.sanitizeStringForSql(oldValues.questionTitle);
+        oldValues.questionText = utilService.sanitizeStringForSql(oldValues.questionText);
+        delete oldValues.companyName;
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            type: AuditActionType.Delete,
+            companyId: companyId,
             areaOfChange: AuditAreaOfChange.ApplicantTracking,
             tenantId,
         } as IAudit);
