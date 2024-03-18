@@ -142,7 +142,7 @@ provider:
 
 functions:
   getQuestionTypesByTenant:
-    handler: src/handler.getQuestionTypesByTenant
+    handler: src/handlerQuestionType.getQuestionTypesByTenant
     events:
         - http:
             path: /tenants/{tenantId}/question-types
@@ -151,7 +151,7 @@ functions:
               origin: '*'
 
   getQuestionBanksByTenant:
-    handler: src/handler.getQuestionBanksByTenant
+    handler: src/handlerQuestionBank.getQuestionBanksByTenant
     events:
         - http:
             path: /tenants/{tenantId}/question-banks
@@ -160,7 +160,7 @@ functions:
               origin: '*'
 
   getATQuestionBanksByCompany:
-    handler: src/handler.getQuestionBanksByCompany
+    handler: src/handlerQuestionBank.getQuestionBanksByCompany
     events:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/question-banks
@@ -169,31 +169,40 @@ functions:
               origin: '*'
 
   getQuestionBankById:
-    handler: src/handler.getQuestionBankById
+    handler: src/handlerQuestionBank.getQuestionBankById
     events:
         - http:
-            path: /tenants/{tenantId}/question-banks/{id}
+            path: /tenants/{tenantId}/companies/{companyId}/question-banks/{id}
             method: get
             cors:
               origin: '*'              
 
   createQuestionBank:
-    handler: src/handler.createQuestionBank
+    handler: src/handlerQuestionBank.createQuestionBank
     events:
         - http:
-            path: /tenants/{tenantId}/question-bank
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank
             method: post
             cors:
               origin: '*'
 
   updateQuestionBank:
-    handler: src/handler.updateQuestionBank
+    handler: src/handlerQuestionBank.updateQuestionBank
     events:
         - http:
-            path: /tenants/{tenantId}/question-bank
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank
             method: put
             cors:
-              origin: '*'              
+              origin: '*'
+
+  deleteQuestionBank:
+    handler: src/handlerQuestionBank.deleteQuestionBank
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank/{id}
+            method: delete
+            cors:
+              origin: '*'
 
 resources:
   Resources:
