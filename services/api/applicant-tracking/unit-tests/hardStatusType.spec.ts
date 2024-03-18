@@ -6,7 +6,7 @@ import * as mockData from './mock-data/hardStatusType-mock-data';
 import * as sharedMockData from './mock-data/shared-mock-data';
 import { ErrorMessage } from '../../../errors/errorMessage';
 
-describe('getQuestionTypesByTenant', () => {
+describe('getHardStatusTypesByTenant', () => {
 
     test('returns a 400 when an unsupported query parameter(s) supplied', () => {
         return hardStatusTypesService.getHardStatusTypesByTenant(

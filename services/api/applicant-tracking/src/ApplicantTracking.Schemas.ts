@@ -20,6 +20,17 @@ export const pathParametersForTenantIdAndCompanyIdAndIdSchema = {
     id: { required: true, type: String }
 };
 
+export const pathParametersForTenantIdAndCompanyIdAndHardStatusTypeIdSchema = {
+    tenantId: { required: true, type: UUID },
+    companyId: { required: true, type: String },
+    hardStatusTypeId: { required: true, type: String }
+};
+
+export const pathParametersForTenantIdAndHardStatusTypeIdSchema = {
+    tenantId: { required: true, type: UUID },
+    hardStatusTypeId: { required: true, type: String }
+};
+
 export const createQuestionBankValidationSchema = Yup.object().shape({
     companyId: Yup.number().required('companyId is required'),
     atQuestionTypeId: Yup.number().required('atQuestionTypeId is required'),

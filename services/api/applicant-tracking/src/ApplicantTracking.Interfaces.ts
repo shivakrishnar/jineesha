@@ -46,3 +46,13 @@ export interface IHardStatusType {
     priority: number;
     active: boolean;
 }
+
+export interface ISoftStatusType {
+    id: number;
+    companyId: number,
+    companyName: string,
+    atHardStatusTypeId: number,
+    title: string;
+    description: string;
+    sequence: number;
+}
