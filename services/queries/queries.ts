@@ -306,4 +306,5 @@ export const Queries = {
     createQuestionBank: fs.readFileSync(path.join(basePath, 'applicant-tracking/createQuestionBank.sql')).toString(),
     updateQuestionBank: fs.readFileSync(path.join(basePath, 'applicant-tracking/updateQuestionBank.sql')).toString(),
     deleteQuestionBank: fs.readFileSync(path.join(basePath, 'applicant-tracking/deleteQuestionBank.sql')).toString(),
+    getHardStatusTypeByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getHardStatusTypeByTenant.sql')).toString(),
 };

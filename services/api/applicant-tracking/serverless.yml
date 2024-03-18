@@ -204,6 +204,15 @@ functions:
             cors:
               origin: '*'
 
+  getHardStatusTypesByTenant:
+    handler: src/handlerHardStatusType.getHardStatusTypesByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/hardstatus-types
+            method: get
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
