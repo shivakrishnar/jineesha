@@ -235,12 +235,15 @@ BEGIN TRY
 	  if len(trim(@cDataValue)) = 0
 		select @cColumnsToUpdate = @cColumnsToUpdate + 'N'
 	  else
-		if (select count(ID) from WorkerCompType 
-			where 
-				Code = (left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1)) and 
-				CountryStateTypeID = (select ID from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')','')) and 
-				CompanyID = @nCompanyId) <> 1
-		  select @cErrorMessage = @cErrorMessage + 'Invalid Worker Comp Code\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+	  	if @cDataValue not like '%(%)%'
+			select @cErrorMessage = @cErrorMessage + 'Invalid Worker Comp Code\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+		else 
+			if (select count(ID) from WorkerCompType 
+				where 
+					Code = (left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1)) and 
+					CountryStateTypeID = (select ID from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')','')) and 
+					CompanyID = @nCompanyId) <> 1
+			select @cErrorMessage = @cErrorMessage + 'Invalid Worker Comp Code\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 29
 	  if len(trim(@cDataValue)) = 0

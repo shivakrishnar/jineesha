@@ -65,59 +65,74 @@ BEGIN TRY
 	  if len(trim(@cDataValue)) = 0
 		select @cColumnsToUpdate = @cColumnsToUpdate + 'N'
 	  else
-		if (select count(ID) from WorkerCompType where 
-			Code = (left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1)) and 
-			CountryStateTypeID = (select ID from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')','')) and 
-			CompanyID = @nCompanyId) <> 1
-		select @cErrorMessage = @cErrorMessage + 'Invalid Worker Comp Code\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+	  	if @cDataValue not like '%(%)%'
+			select @cErrorMessage = @cErrorMessage + 'Invalid Worker Comp Code\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+		else 
+			if (select count(ID) from WorkerCompType where 
+				Code = (left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1)) and 
+				CountryStateTypeID = (select ID from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')','')) and 
+				CompanyID = @nCompanyId) <> 1
+			select @cErrorMessage = @cErrorMessage + 'Invalid Worker Comp Code\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 8
 	  if len(trim(@cDataValue)) = 0
 		select @cColumnsToUpdate = @cColumnsToUpdate + 'N'
 	  else
-		if (select Count(OT.ID)
-			from OrganizationType OT 
-					join OrganizationStructure OS on OS.ID = OT.OrganizationStructureID
-			where OS.CompanyID = @nCompanyId and OrgLevel = 1 and 
-				OT.Code = left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1) and
-				OT.HomeStateID = (select id from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')',''))) < 1
-		select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 1\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+	  	if @cDataValue not like '%(%)%'
+			select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 1\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+		else 
+			if (select Count(OT.ID)
+				from OrganizationType OT 
+						join OrganizationStructure OS on OS.ID = OT.OrganizationStructureID
+				where OS.CompanyID = @nCompanyId and OrgLevel = 1 and 
+					OT.Code = left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1) and
+					OT.HomeStateID = (select id from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')',''))) < 1
+			select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 1\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 9
 	  if len(trim(@cDataValue)) = 0
 		select @cColumnsToUpdate = @cColumnsToUpdate + 'N'
 	  else
-		if (select Count(OT.ID)
-			from OrganizationType OT 
-					join OrganizationStructure OS on OS.ID = OT.OrganizationStructureID
-			where OS.CompanyID = @nCompanyId and OrgLevel = 2 and 
-				OT.Code = left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1) and
-				OT.HomeStateID = (select id from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')',''))) < 1
-		select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 2\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+	  	if @cDataValue not like '%(%)%'
+			select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 2\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+		else 
+			if (select Count(OT.ID)
+				from OrganizationType OT 
+						join OrganizationStructure OS on OS.ID = OT.OrganizationStructureID
+				where OS.CompanyID = @nCompanyId and OrgLevel = 2 and 
+					OT.Code = left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1) and
+					OT.HomeStateID = (select id from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')',''))) < 1
+			select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 2\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 10
 	  if len(trim(@cDataValue)) = 0
 		select @cColumnsToUpdate = @cColumnsToUpdate + 'N'
 	  else
-		if (select Count(OT.ID)
-			from OrganizationType OT 
-					join OrganizationStructure OS on OS.ID = OT.OrganizationStructureID
-			where OS.CompanyID = @nCompanyId and OrgLevel = 3 and 
-				OT.Code = left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1) and
-				OT.HomeStateID = (select id from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')',''))) < 1
-		select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 3\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+	  	if @cDataValue not like '%(%)%'
+			select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 3\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+		else 
+			if (select Count(OT.ID)
+				from OrganizationType OT 
+						join OrganizationStructure OS on OS.ID = OT.OrganizationStructureID
+				where OS.CompanyID = @nCompanyId and OrgLevel = 3 and 
+					OT.Code = left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1) and
+					OT.HomeStateID = (select id from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')',''))) < 1
+			select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 3\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 11
 	  if len(trim(@cDataValue)) = 0
 		select @cColumnsToUpdate = @cColumnsToUpdate + 'N'
 	  else
-		if (select Count(OT.ID)
-			from OrganizationType OT 
-					join OrganizationStructure OS on OS.ID = OT.OrganizationStructureID
-			where OS.CompanyID = @nCompanyId and OrgLevel = 4 and 
-				OT.Code = left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1) and
-				OT.HomeStateID = (select id from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')',''))) < 1
-		select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 4\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+	  	if @cDataValue not like '%(%)%'
+			select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 4\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+		else 
+			if (select Count(OT.ID)
+				from OrganizationType OT 
+						join OrganizationStructure OS on OS.ID = OT.OrganizationStructureID
+				where OS.CompanyID = @nCompanyId and OrgLevel = 4 and 
+					OT.Code = left(@cDataValue, charindex('(', @cDataValue, charindex('(',@cDataValue))-1) and
+					OT.HomeStateID = (select id from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')',''))) < 1
+			select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 4\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 
 	if @nGlobalError_Nbr > 0
 		begin
