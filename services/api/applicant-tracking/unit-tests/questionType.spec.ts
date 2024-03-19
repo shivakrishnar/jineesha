@@ -23,19 +23,19 @@ describe('getQuestionTypesByTenant', () => {
 
     test('getting all data', async () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
-            const result: any = Promise.resolve(mockData.questionTypeResponse);
+            const result: any = Promise.resolve(mockData.getQuestionTypesByTenantDBResponse);
             return result;
         });
 
         const response = await questionTypeService.getQuestionTypesByTenant(sharedMockData.tenantId, sharedMockData.undefinedValue);
         if (response.length > 0) {
-            expect(response).toEqual(mockData.questionTypeResponse.recordset);
+            expect(response).toEqual(mockData.getQuestionTypesByTenantAPIResponse);
         }
     });
 
     test('getting empty data', async () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
-            const result: any = Promise.resolve(mockData.questionTypeResponseEmpty);
+            const result: any = Promise.resolve(mockData.getQuestionTypesByTenantDBResponseEmpty);
             return result;
         });
 

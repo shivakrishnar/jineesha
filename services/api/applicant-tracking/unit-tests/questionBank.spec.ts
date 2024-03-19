@@ -26,7 +26,7 @@ describe('getQuestionBanksByTenant', () => {
 
     test('getting all data', async () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
-            const result: any = Promise.resolve(mockData.questionBankResponse);
+            const result: any = Promise.resolve(mockData.getQuestionBanksByTenantDBResponse);
             return result;
         });
 
@@ -38,13 +38,13 @@ describe('getQuestionBanksByTenant', () => {
         );
         if (response) {
             expect(response).toBeInstanceOf(PaginatedResult);
-            expect(response.results).toEqual(mockData.questionBankResponse.recordsets[1]);
+            expect(response.results).toEqual(mockData.getQuestionBanksByTenantAPIResponse);
         }
     });
 
     test('getting empty data', async () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
-            const result: any = Promise.resolve(mockData.questionBankResponseEmpty);
+            const result: any = Promise.resolve(mockData.getQuestionBanksByTenantDBResponseEmpty);
             return result;
         });
 
@@ -98,7 +98,7 @@ describe('getQuestionBanksByCompany', () => {
 
     test('getting all data', async () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
-            const result: any = Promise.resolve(mockData.questionBankResponse);
+            const result: any = Promise.resolve(mockData.getQuestionBanksByCompanyDBResponse);
             return result;
         });
 
@@ -111,13 +111,13 @@ describe('getQuestionBanksByCompany', () => {
         );
         if (response) {
             expect(response).toBeInstanceOf(PaginatedResult);
-            expect(response.results).toEqual(mockData.questionBankResponse.recordsets[1]);
+            expect(response.results).toEqual(mockData.getQuestionBanksByCompanyAPIResponse);
         }
     });
 
     test('getting empty data', async () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
-            const result: any = Promise.resolve(mockData.questionBankResponseEmpty);
+            const result: any = Promise.resolve(mockData.getQuestionBanksByCompanyDBResponseEmpty);
             return result;
         });
 
@@ -134,3 +134,70 @@ describe('getQuestionBanksByCompany', () => {
     });
 
 });
+
+describe('createQuestionBank', () => {
+
+    test('companyId must be an integer', () => {
+        return questionBankService.createQuestionBank(
+            sharedMockData.tenantId, 
+            sharedMockData.companyIdWithCharacter,
+            sharedMockData.userEmail,
+            mockData.createQuestionBankRequestBody,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${sharedMockData.companyIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('URL companyId must be the same as the request body companyId', () => {
+        const requestBody = { ...mockData.createQuestionBankRequestBody };
+        requestBody.companyId = 444;
+        return questionBankService.createQuestionBank(
+            sharedMockData.tenantId, 
+            sharedMockData.companyId,
+            sharedMockData.userEmail,
+            requestBody,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual('');
+                expect(error.moreInfo).toEqual('this record does not belong to this company');
+            });
+    });
+
+    test('creates and returns a QuestionBank', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'createQuestionBank'){
+                const result = await Promise.resolve(mockData.createQuestionBankDBResponse);
+                return result;
+            } else if (payload.queryName === 'getQuestionBankById') {
+                const result = await Promise.resolve(mockData.getQuestionBankByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await questionBankService
+            .createQuestionBank(
+                sharedMockData.tenantId,
+                sharedMockData.companyId,
+                sharedMockData.userEmail,
+                mockData.createQuestionBankRequestBody,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.createQuestionBankAPIResponse);
+            });
+    });
+});
+

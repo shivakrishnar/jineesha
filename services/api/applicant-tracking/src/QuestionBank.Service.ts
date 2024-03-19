@@ -121,6 +121,9 @@ export async function getQuestionBankById(
         throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid number`);
     }
 
+    //
+    // getting data
+    //
     try {
         const query = new ParameterizedQuery('getQuestionBankById', Queries.getQuestionBankById);
         query.setParameter('@Id', id);
@@ -210,7 +213,7 @@ export async function createQuestionBank(
                 userEmail,
                 newFields: logResult,
                 type: AuditActionType.Insert,
-                companyId: requestBody.companyId.toString(),
+                companyId: companyId,
                 areaOfChange: AuditAreaOfChange.ApplicantTracking,
                 tenantId,
             } as IAudit);
