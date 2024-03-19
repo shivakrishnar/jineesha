@@ -139,6 +139,7 @@ export const getQuestionBankByIdDBResponse = {
   recordset: [{
     id: 33,
     companyId: 3,
+    companyName: 'Artsy Tartsy Bakery',
     atQuestionTypeId: 2,
     questionTitle: "What's is your name - from postman",
     questionText: "Please tell me your name! - from postman's",
@@ -151,6 +152,7 @@ export const getQuestionBankByIdDBResponse = {
 export const getQuestionBankByIdAPIResponse = {
   id: 33,
   companyId: 3,
+  companyName: 'Artsy Tartsy Bakery',
   atQuestionTypeId: 2,
   questionTitle: "What's is your name - from postman",
   questionText: "Please tell me your name! - from postman's",
@@ -179,6 +181,7 @@ export const createQuestionBankDBResponse = {
 export const createQuestionBankAPIResponse = {
   id: 33,
   companyId: 3,
+  companyName: 'Artsy Tartsy Bakery',
   atQuestionTypeId: 2,
   questionTitle: "What's is your name - from postman",
   questionText: "Please tell me your name! - from postman's",
@@ -186,3 +189,19 @@ export const createQuestionBankAPIResponse = {
   sequence: 1,
   isRequired: true
 };
+
+//
+// updateQuestionBank
+//
+export const updateQuestionBankRequestBody = {
+  id: 33,
+  companyId: 3,
+  atQuestionTypeId: 2,
+  questionTitle: "What's is your name - from postman",
+  questionText: "Please tell me your name! - from postman's",
+  active: true,
+  sequence: 1,
+  isRequired: true
+};
+
+export const updateQuestionBankAPIResponse = true;
