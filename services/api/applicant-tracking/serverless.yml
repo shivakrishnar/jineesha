@@ -258,6 +258,33 @@ functions:
             cors:
               origin: '*'
 
+  ApplicationVersionByTenant:
+    handler: src/handlerApplicationVersion.getApplicationVersionByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/application-versions
+            method: get
+            cors:
+              origin: '*'
+
+  ApplicationVersionByCompany:
+    handler: src/handlerApplicationVersion.getApplicationVersionByCompany
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-versions
+            method: get
+            cors:
+              origin: '*'
+
+  ApplicationVersionById:
+    handler: src/handlerApplicationVersion.getApplicationVersionById
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-versions/{id}
+            method: get
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
