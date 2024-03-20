@@ -76,3 +76,37 @@ export const updateQuestionBankCheckPropertiesSchema = {
     sequence: { required: true, type: Number },
     isRequired: { required: true, type: Boolean },
 };
+
+export const createApplicationVersionValidationSchema = Yup.object().shape({
+    companyId: Yup.number().required('companyId is required'),
+    title: Yup.string()
+        .required('questionTitle is required')
+        .max(100, 'questionTitle must be a maximum of 100 characters.'),
+    description: Yup.string().nullable(),
+    keywordList: Yup.string().nullable(),
+    aTApplicationVersionDate: Yup.date().required('aTApplicationVersionDate is required'),
+	isSectionOnEmploymentHistory: Yup.boolean().required('isSectionOnEmploymentHistory is required'),
+	isSectionOnEducationHistory: Yup.boolean().required('isSectionOnEmploymentHistory is required'),
+	isSectionOnWorkConditions: Yup.boolean().required('isSectionOnEmploymentHistory is required'),
+	isSectionOnKeywords: Yup.boolean().required('isSectionOnEmploymentHistory is required'),
+	isSectionOnDocuments: Yup.boolean().required('isSectionOnEmploymentHistory is required'),
+	isSectionOnCertification: Yup.boolean().required('isSectionOnEmploymentHistory is required'),
+	isSectionOnPayHistory: Yup.boolean().required('isSectionOnEmploymentHistory is required'),
+	jazzHrPositionOpeningID: Yup.number().nullable()
+});
+
+export const createApplicationVersionCheckPropertiesSchema = {
+    companyId: { required: true, type: Number },
+    title: { required: true, type: String },
+    description: { required: false, type: String },
+    keywordList: { required: false, type: String },
+    aTApplicationVersionDate: { required: true, type: Date },
+    isSectionOnEmploymentHistory: { required: true, type: Boolean },
+    isSectionOnEducationHistory: { required: true, type: Number },
+    isSectionOnWorkConditions: { required: true, type: Boolean },
+    isSectionOnKeywords: { required: true, type: Boolean },
+    isSectionOnDocuments: { required: true, type: Boolean },
+    isSectionOnCertification: { required: true, type: Boolean },
+    isSectionOnPayHistory: { required: true, type: Boolean },
+    jazzHrPositionOpeningID: { required: false, type: Number },
+};

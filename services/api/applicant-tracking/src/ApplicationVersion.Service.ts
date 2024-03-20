@@ -5,6 +5,7 @@ import { ErrorMessage } from '../../../errors/errorMessage';
 import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
+import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
 
 /**
  * Returns a list of ATApplicationVersion by tenant.
@@ -12,7 +13,7 @@ import { DatabaseEvent, QueryType } from '../../../internal-api/database/events'
 export async function getApplicationVersionByTenant(
     tenantId: string,
     queryParams: any
-): Promise<atInterfaces.IApplicationVersion[]> {
+): Promise<atInterfaces.IApplicationVersionGET[]> {
     console.info('ApplicationVersion.Service.getApplicationVersionByTenant');
 
     const validQueryStringParameters = [];
@@ -29,7 +30,7 @@ export async function getApplicationVersionByTenant(
         } as DatabaseEvent;
 
         const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-        const results: atInterfaces.IApplicationVersion[] = dbResults.recordset;
+        const results: atInterfaces.IApplicationVersionGET[] = dbResults.recordset;
         return results;
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -47,7 +48,7 @@ export async function getApplicationVersionByCompany(
     tenantId: string,
     companyId: string,
     queryParams: any
-): Promise<atInterfaces.IApplicationVersion[]> {
+): Promise<atInterfaces.IApplicationVersionGET[]> {
     console.info('ApplicationVersion.Service.getApplicationVersionByCompany');
 
     //
@@ -72,7 +73,7 @@ export async function getApplicationVersionByCompany(
         } as DatabaseEvent;
 
         const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-        const results: atInterfaces.IApplicationVersion[] = dbResults.recordset;
+        const results: atInterfaces.IApplicationVersionGET[] = dbResults.recordset;
         return results;
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -91,7 +92,7 @@ export async function getApplicationVersionById(
     companyId: string,
     id: string,
     queryParams: any
-): Promise<atInterfaces.IApplicationVersion> {
+): Promise<atInterfaces.IApplicationVersionGET> {
     console.info('ApplicationVersion.Service.getApplicationVersionById');
 
     //
@@ -119,7 +120,7 @@ export async function getApplicationVersionById(
         } as DatabaseEvent;
 
         const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
-        const result: atInterfaces.IApplicationVersion = dbResults.recordset[0];
+        const result: atInterfaces.IApplicationVersionGET = dbResults.recordset[0];
 
         if (result && result.companyId.toString() != companyId){
             throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
@@ -131,6 +132,95 @@ export async function getApplicationVersionById(
             throw error;
         }
         console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Create ATApplicationVersion.
+ */
+export async function createApplicationVersion(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IApplicationVersionPOST
+): Promise<atInterfaces.IApplicationVersionGET> {
+    console.info('ApplicationVersion.Service.createApplicationVersion');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (companyId != requestBody.companyId.toString()) {
+        throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+    }
+
+    try {
+        //
+        // inserting data
+        //
+        const query = new ParameterizedQuery('createApplicationVersion', Queries.createApplicationVersion);
+        query.setParameter('@CompanyID', requestBody.companyId);
+        query.setStringOrNullParameter('@Title', requestBody.title);
+        query.setStringOrNullParameter('@Description', requestBody.description);
+        query.setStringOrNullParameter('@KeywordList', requestBody.keywordList);
+        query.setStringOrNullParameter('@ATApplicationVersionDate', requestBody.aTApplicationVersionDate.toString());
+        query.setBooleanParameter('@IsSectionOnEmploymentHistory', requestBody.isSectionOnEmploymentHistory);
+        query.setBooleanParameter('@IsSectionOnEducationHistory', requestBody.isSectionOnEducationHistory);
+        query.setBooleanParameter('@IsSectionOnWorkConditions', requestBody.isSectionOnWorkConditions);
+        query.setBooleanParameter('@IsSectionOnDocuments', requestBody.isSectionOnDocuments);
+        query.setBooleanParameter('@IsSectionOnCertification', requestBody.isSectionOnCertification);
+        query.setBooleanParameter('@IsSectionOnPayHistory', requestBody.isSectionOnPayHistory);
+        query.setParameter('@JazzHrPositionOpeningID', requestBody.jazzHrPositionOpeningID);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        const queryResult: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        const id: any = queryResult.recordset[0].ID;
+        if (id) {
+            //
+            // getting data
+            //
+            const apiresult = await getApplicationVersionById(tenantId, companyId, id, undefined);
+
+            //
+            // auditing log
+            //
+            const logResult = { ...apiresult };
+            logResult.title = utilService.sanitizeStringForSql(logResult.title);
+            logResult.description = utilService.sanitizeStringForSql(logResult.description);
+            logResult.keywordList = utilService.sanitizeStringForSql(logResult.keywordList);
+            delete logResult.companyName;
+
+            utilService.logToAuditTrail({
+                userEmail,
+                newFields: logResult,
+                type: AuditActionType.Insert,
+                companyId: companyId,
+                areaOfChange: AuditAreaOfChange.ApplicantTracking,
+                tenantId,
+            } as IAudit);
+
+            //
+            // api response
+            //
+            return apiresult;
+        } else {
+            throw errorService.getErrorResponse(74).setDeveloperMessage('Was not possible to create the resource');
+        }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
         throw errorService.getErrorResponse(0);
     }
 }

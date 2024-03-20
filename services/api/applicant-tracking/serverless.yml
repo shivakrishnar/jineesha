@@ -285,6 +285,15 @@ functions:
             cors:
               origin: '*'
 
+  createApplicationVersion:
+    handler: src/handlerApplicationVersion.createApplicationVersion
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-version
+            method: post
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
