@@ -56,3 +56,21 @@ export interface ISoftStatusType {
     description: string;
     sequence: number;
 }
+
+export interface IApplicationVersion {
+    id: number;
+	companyId: number;
+    companyName: string;
+	title: string;
+	description: string;
+	keywordList: string;
+	aTApplicationVersionDate: Date;
+	isSectionOnEmploymentHistory: boolean,
+	isSectionOnEducationHistory: boolean;
+	isSectionOnWorkConditions: boolean;
+	isSectionOnKeywords: boolean;
+	isSectionOnDocuments: boolean;
+	isSectionOnCertification: boolean;
+	isSectionOnPayHistory: boolean;
+	jazzHrPositionOpeningID: boolean;
+}

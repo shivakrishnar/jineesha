@@ -306,10 +306,16 @@ export const Queries = {
     createQuestionBank: fs.readFileSync(path.join(basePath, 'applicant-tracking/createQuestionBank.sql')).toString(),
     updateQuestionBank: fs.readFileSync(path.join(basePath, 'applicant-tracking/updateQuestionBank.sql')).toString(),
     deleteQuestionBank: fs.readFileSync(path.join(basePath, 'applicant-tracking/deleteQuestionBank.sql')).toString(),
+    
     getHardStatusTypeByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getHardStatusTypeByTenant.sql')).toString(),    
+    
     getSoftStatusTypeByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getSoftStatusTypeByTenant.sql')).toString(),
     getSoftStatusTypeByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getSoftStatusTypeByCompany.sql')).toString(),
     getSoftStatusTypeById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getSoftStatusTypeById.sql')).toString(),
     getSoftStatusTypesByCompanyAndHardStatusType: fs.readFileSync(path.join(basePath, 'applicant-tracking/getSoftStatusTypesByCompanyAndHardStatusType.sql')).toString(),
     getSoftStatusTypeByHardStatusType: fs.readFileSync(path.join(basePath, 'applicant-tracking/getSoftStatusTypeByHardStatusType.sql')).toString(),
+
+    getApplicationVersionByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationVersionByTenant.sql')).toString(),
+    getApplicationVersionByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationVersionByCompany.sql')).toString(),
+    getApplicationVersionById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationVersionById.sql')).toString(),
 };
