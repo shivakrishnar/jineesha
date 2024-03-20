@@ -149,6 +149,10 @@ export const getQuestionBankByIdDBResponse = {
   }]
 };
 
+export const getQuestionBankByIdDBResponseEmpty = {
+  recordset: {}
+};
+
 export const getQuestionBankByIdAPIResponse = {
   id: 33,
   companyId: 3,
@@ -205,3 +209,11 @@ export const updateQuestionBankRequestBody = {
 };
 
 export const updateQuestionBankAPIResponse = true;
+
+//
+// deleteQuestionBank
+//
+export const questionBankToDeleteId = '33';
+export const questionBankToDeleteAnotherId = '4444';
+export const questionBankToDeleteIdWithCharacter = '33abc';
+export const deleteQuestionBankAPIResponse = true;

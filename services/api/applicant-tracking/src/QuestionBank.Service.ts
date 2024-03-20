@@ -141,7 +141,7 @@ export async function getQuestionBankById(
         if (result && result.companyId.toString() != companyId){
             throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
         }
-
+        
         return result;
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -346,7 +346,7 @@ export async function deleteQuestionBank(
         //
         // getting the old values for audit log
         //
-        const oldValues = await getQuestionBankById(tenantId, companyId, id);     
+        const oldValues = await getQuestionBankById(tenantId, companyId, id);
         if (!oldValues) {
             throw errorService.getErrorResponse(50);
         }
