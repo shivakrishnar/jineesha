@@ -1,5 +1,5 @@
 {
-    "name": "hr.services.api.applicant.tracking",
+    "name": "hr.services.api.ats",
     "version": "1.1.3",
     "description": "Builds RESTful services for handling creation of new applicant tracking",
     "engine": {
@@ -7,7 +7,7 @@
     },
     "main": "./dist/index.js",
     "scripts": {
-        "start": "./node_modules/.bin/sls offline start --variables development --port 4100 --prefix applicant-tracking",
+        "start": "./node_modules/.bin/sls offline start --variables development --port 4100 --prefix ats",
         "test:local": "cd ../../.. && INTEGRATION_TEST_CONFIG_FILENAME=local.config.json npm run test:base -- --watch --testPathPattern=/applicant-tracking/"
     },
     "dependencies": {

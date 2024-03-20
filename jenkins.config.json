@@ -64,7 +64,7 @@
       "createDomain": false
     },
     {
-      "name": "applicant-tracking",
+      "name": "ats",
       "directory": "services/api/applicant-tracking",
       "createDomain": true
     }

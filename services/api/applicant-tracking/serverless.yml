@@ -1,4 +1,4 @@
-service: asure-applicant-tracking${opt:branchName, ''}
+service: asure-ats${opt:branchName, ''}
 
 provider:
   stage: ${file(${self:custom.configFile}):stage}
@@ -213,6 +213,51 @@ functions:
             cors:
               origin: '*'
 
+  SoftStatusByTenant:
+    handler: src/handlerSoftStatusType.getSoftStatusTypesByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/softstatus-types
+            method: get
+            cors:
+              origin: '*'
+
+  SoftStatusByCompany:
+    handler: src/handlerSoftStatusType.getSoftStatusTypesByCompany
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/softstatus-types
+            method: get
+            cors:
+              origin: '*'
+
+  SoftStatusTypesById:
+    handler: src/handlerSoftStatusType.getSoftStatusTypesById
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/softstatus-types/{id}
+            method: get
+            cors:
+              origin: '*'
+
+  SoftStatusByCompAndHardStatus:
+    handler: src/handlerSoftStatusType.getSoftStatusTypesByCompanyAndHardStatusType
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/hardstatus-types/{hardStatusTypeId}/softstatus-types
+            method: get
+            cors:
+              origin: '*'
+
+  SoftStatusByHardStatus:
+    handler: src/handlerSoftStatusType.getSoftStatusTypesByHardStatusType
+    events:
+        - http:
+            path: /tenants/{tenantId}/hardstatus-types/{hardStatusTypeId}/softstatus-types
+            method: get
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
@@ -253,7 +298,7 @@ custom:
     includeModules: true
     packager: 'npm'
   customDomain:
-    basePath: applicant-tracking${opt:branchName, ''}
+    basePath: ats${opt:branchName, ''}
     domainName: hr-services.${file(${self:custom.configFile}):domain}
     certificateArn: '*.${file(${self:custom.configFile}):domainCertificateArn}'
     createRoute53Record: false
