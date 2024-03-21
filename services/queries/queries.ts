@@ -318,4 +318,6 @@ export const Queries = {
     getApplicationVersionByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationVersionByTenant.sql')).toString(),
     getApplicationVersionByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationVersionByCompany.sql')).toString(),
     getApplicationVersionById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationVersionById.sql')).toString(),
+
+    createApplicationVersion: fs.readFileSync(path.join(basePath, 'applicant-tracking/createApplicationVersion.sql')).toString(),
 };

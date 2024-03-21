@@ -77,3 +77,34 @@ export const getApplicationVersionById = utilService.gatewayEventHandlerV2(async
 
     return await applicantTrackingService.applicationVersionService.getApplicationVersionById(tenantId, companyId, id, event.queryStringParameters);
 });
+
+
+/**
+ * Create ATApplicationVersion
+ */
+export const createApplicationVersion = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerApplicationVersion.createApplicationVersion');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId, companyId } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    await utilService.validateRequestBody(schemas.createApplicationVersionValidationSchema, requestBody);
+    utilService.checkAdditionalProperties(schemas.createApplicationVersionCheckPropertiesSchema, requestBody, 'ApplicationVersion');
+
+    const apiResult = await applicantTrackingService.applicationVersionService.createApplicationVersion(tenantId, companyId, userEmail, requestBody);
+
+    return { statusCode: 201, body: apiResult }
+});
