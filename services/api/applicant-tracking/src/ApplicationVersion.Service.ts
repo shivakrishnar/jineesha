@@ -170,6 +170,7 @@ export async function createApplicationVersion(
         query.setBooleanParameter('@IsSectionOnEmploymentHistory', requestBody.isSectionOnEmploymentHistory);
         query.setBooleanParameter('@IsSectionOnEducationHistory', requestBody.isSectionOnEducationHistory);
         query.setBooleanParameter('@IsSectionOnWorkConditions', requestBody.isSectionOnWorkConditions);
+        query.setBooleanParameter('@IsSectionOnKeywords', requestBody.isSectionOnKeywords);
         query.setBooleanParameter('@IsSectionOnDocuments', requestBody.isSectionOnDocuments);
         query.setBooleanParameter('@IsSectionOnCertification', requestBody.isSectionOnCertification);
         query.setBooleanParameter('@IsSectionOnPayHistory', requestBody.isSectionOnPayHistory);
@@ -216,6 +217,98 @@ export async function createApplicationVersion(
         } else {
             throw errorService.getErrorResponse(74).setDeveloperMessage('Was not possible to create the resource');
         }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Update ATApplicationVersion.
+ */
+export async function updateApplicationVersion(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IApplicationVersionPUT
+): Promise<Boolean> {
+    console.info('ApplicationVersion.Service.updateApplicationVersion');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (companyId != requestBody.companyId.toString()) {
+        throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getApplicationVersionById(tenantId, companyId, requestBody.id.toString(), undefined);     
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+        if (oldValues.companyId != requestBody.companyId) {
+            throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+        }
+
+        //
+        // updating data
+        //
+        const query = new ParameterizedQuery('updateApplicationVersion', Queries.updateApplicationVersion);
+        query.setParameter('@ID', requestBody.id);
+        query.setStringOrNullParameter('@Title', requestBody.title);
+        query.setStringOrNullParameter('@Description', requestBody.description);
+        query.setStringOrNullParameter('@KeywordList', requestBody.keywordList);
+        query.setStringOrNullParameter('@ATApplicationVersionDate', requestBody.aTApplicationVersionDate.toString());
+        query.setBooleanParameter('@IsSectionOnEmploymentHistory', requestBody.isSectionOnEmploymentHistory);
+        query.setBooleanParameter('@IsSectionOnEducationHistory', requestBody.isSectionOnEducationHistory);
+        query.setBooleanParameter('@IsSectionOnWorkConditions', requestBody.isSectionOnWorkConditions);
+        query.setBooleanParameter('@IsSectionOnKeywords', requestBody.isSectionOnKeywords);    
+        query.setBooleanParameter('@IsSectionOnDocuments', requestBody.isSectionOnDocuments);
+        query.setBooleanParameter('@IsSectionOnCertification', requestBody.isSectionOnCertification);
+        query.setBooleanParameter('@IsSectionOnPayHistory', requestBody.isSectionOnPayHistory);
+        query.setParameter('@JazzHrPositionOpeningID', requestBody.jazzHrPositionOpeningID);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        const logResult = { ...requestBody };
+        logResult.title = utilService.sanitizeStringForSql(logResult.title);
+        logResult.description = utilService.sanitizeStringForSql(logResult.description);
+        oldValues.keywordList = utilService.sanitizeStringForSql(oldValues.keywordList);
+        delete oldValues.companyName;
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            newFields: logResult,
+            type: AuditActionType.Update,
+            companyId: requestBody.companyId.toString(),
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
