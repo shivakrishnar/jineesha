@@ -135,14 +135,17 @@ export const getQuestionBanksByCompanyAPIResponse = [
 //
 // getQuestionBankById
 //
+export const questionBankToGetById = '33';
+export const questionBankToGetByIdWithCharacter = '33abc';
+
 export const getQuestionBankByIdDBResponse = {
   recordset: [{
     id: 33,
     companyId: 3,
     companyName: 'Artsy Tartsy Bakery',
     atQuestionTypeId: 2,
-    questionTitle: "What's is your name - from postman",
-    questionText: "Please tell me your name! - from postman's",
+    questionTitle: "What is your name",
+    questionText: "My name is Tom",
     active: true,
     sequence: 1,
     isRequired: true
@@ -158,8 +161,8 @@ export const getQuestionBankByIdAPIResponse = {
   companyId: 3,
   companyName: 'Artsy Tartsy Bakery',
   atQuestionTypeId: 2,
-  questionTitle: "What's is your name - from postman",
-  questionText: "Please tell me your name! - from postman's",
+  questionTitle: "What is your name",
+  questionText: "My name is Tom",
   active: true,
   sequence: 1,
   isRequired: true
@@ -171,8 +174,8 @@ export const getQuestionBankByIdAPIResponse = {
 export const createQuestionBankRequestBody = {
   companyId: 3,
   atQuestionTypeId: 2,
-  questionTitle: "What's is your name - from postman",
-  questionText: "Please tell me your name! - from postman's",
+  questionTitle: "What is your name",
+  questionText: "My name is Tom",
   active: true,
   sequence: 1,
   isRequired: true
@@ -187,8 +190,8 @@ export const createQuestionBankAPIResponse = {
   companyId: 3,
   companyName: 'Artsy Tartsy Bakery',
   atQuestionTypeId: 2,
-  questionTitle: "What's is your name - from postman",
-  questionText: "Please tell me your name! - from postman's",
+  questionTitle: "What is your name",
+  questionText: "My name is Tom",
   active: true,
   sequence: 1,
   isRequired: true
@@ -201,8 +204,8 @@ export const updateQuestionBankRequestBody = {
   id: 33,
   companyId: 3,
   atQuestionTypeId: 2,
-  questionTitle: "What's is your name - from postman",
-  questionText: "Please tell me your name! - from postman's",
+  questionTitle: "What is your name",
+  questionText: "My name is Tom",
   active: true,
   sequence: 1,
   isRequired: true
