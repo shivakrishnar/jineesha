@@ -135,6 +135,84 @@ describe('getQuestionBanksByCompany', () => {
 
 });
 
+describe('getQuestionBankById', () => {
+
+    test('companyId must be an integer', () => {
+        return questionBankService.getQuestionBankById(
+            sharedMockData.tenantId, 
+            sharedMockData.companyIdWithCharacter,
+            mockData.questionBankToGetById,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${sharedMockData.companyIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('id must be an integer', () => {
+        return questionBankService.getQuestionBankById(
+            sharedMockData.tenantId, 
+            sharedMockData.companyId,
+            mockData.questionBankToGetByIdWithCharacter,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.questionBankToGetByIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('URL companyId must be the same as the requested resource companyId', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'getQuestionBankById') {
+                const result = await Promise.resolve(mockData.getQuestionBankByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        return questionBankService.getQuestionBankById(
+            sharedMockData.tenantId, 
+            sharedMockData.anotherCompanyId,
+            mockData.questionBankToGetById,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual('');
+                expect(error.moreInfo).toEqual('this record does not belong to this company');
+            });
+    });
+
+    test('returns a QuestionBank', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'getQuestionBankById') {
+                const result = await Promise.resolve(mockData.getQuestionBankByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        return await questionBankService
+            .getQuestionBankById(
+                sharedMockData.tenantId,
+                sharedMockData.companyId,
+                mockData.questionBankToGetById,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.getQuestionBankByIdAPIResponse);
+            });
+    });
+});
+
 describe('createQuestionBank', () => {
 
     test('companyId must be an integer', () => {
@@ -287,7 +365,7 @@ describe('deleteQuestionBank', () => {
     test('id must be an integer', () => {
         return questionBankService.deleteQuestionBank(
             sharedMockData.tenantId, 
-            sharedMockData.companyIdWithCharacter,
+            sharedMockData.companyId,
             sharedMockData.userEmail,
             mockData.questionBankToDeleteIdWithCharacter,
             ).catch((error) => {
@@ -295,7 +373,7 @@ describe('deleteQuestionBank', () => {
                 expect(error.statusCode).toEqual(400);
                 expect(error.code).toEqual(30);
                 expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
-                expect(error.developerMessage).toEqual(`${sharedMockData.companyIdWithCharacter} is not a valid number`);
+                expect(error.developerMessage).toEqual(`${mockData.questionBankToDeleteIdWithCharacter} is not a valid number`);
                 expect(error.moreInfo).toEqual('');
             });
     });

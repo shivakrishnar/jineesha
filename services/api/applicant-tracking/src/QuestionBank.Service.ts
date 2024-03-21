@@ -141,7 +141,7 @@ export async function getQuestionBankById(
         if (result && result.companyId.toString() != companyId){
             throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
         }
-        
+
         return result;
     } catch (error) {
         if (error instanceof ErrorMessage) {
@@ -339,7 +339,7 @@ export async function deleteQuestionBank(
         throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
     }
     if (Number.isNaN(Number(id))) {
-        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid number`);
     }
 
     try {
