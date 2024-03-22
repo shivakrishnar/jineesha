@@ -107,3 +107,8 @@ export interface IApplicationVersionPUT {
 	isSectionOnPayHistory: boolean;
 	jazzHrPositionOpeningID?: number;
 }
+
+export interface IApplicationVersionCustomQuestion {
+    aTApplicationVersionId: number;
+	aTQuestionBankId: number;
+}
