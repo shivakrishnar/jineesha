@@ -90,3 +90,20 @@ export interface IApplicationVersionGET {
 	isSectionOnPayHistory: boolean;
 	jazzHrPositionOpeningID?: number;
 }
+
+export interface IApplicationVersionPUT {
+    id: number;
+    companyId: number;
+	title: string;
+	description: string;
+	keywordList: string;
+	aTApplicationVersionDate: Date;
+	isSectionOnEmploymentHistory: boolean,
+	isSectionOnEducationHistory: boolean;
+	isSectionOnWorkConditions: boolean;
+	isSectionOnKeywords: boolean;
+	isSectionOnDocuments: boolean;
+	isSectionOnCertification: boolean;
+	isSectionOnPayHistory: boolean;
+	jazzHrPositionOpeningID?: number;
+}

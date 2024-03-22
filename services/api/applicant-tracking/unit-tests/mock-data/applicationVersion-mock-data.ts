@@ -135,3 +135,26 @@ export const createApplicationVersionAPIResponse = {
   isSectionOnPayHistory: true,
   jazzHrPositionOpeningID: null
 };
+
+//
+// updateApplicationVersion
+//
+export const updateApplicationVersionRequestBody = {
+  id: 1,
+  companyId: 3,
+  companyName: 'Artsy',
+  title: 'Admin Officer',
+  description: 'Admin Officer',
+  keywordList: 'Good Skill',
+  aTApplicationVersionDate: new Date('2023-11-01'),
+  isSectionOnEmploymentHistory: true,
+  isSectionOnEducationHistory: true,
+  isSectionOnWorkConditions: true,
+  isSectionOnKeywords: true,
+  isSectionOnDocuments: true,
+  isSectionOnCertification: true,
+  isSectionOnPayHistory: true,
+  jazzHrPositionOpeningID: null
+};
+
+export const updateApplicationVersionAPIResponse = true;

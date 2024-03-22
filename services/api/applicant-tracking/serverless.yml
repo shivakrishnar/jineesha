@@ -294,6 +294,15 @@ functions:
             cors:
               origin: '*'
 
+  updateApplicationVersion:
+    handler: src/handlerApplicationVersion.updateApplicationVersion
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-version
+            method: put
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
