@@ -10,10 +10,7 @@ import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-ap
 /**
  * Returns a list of ATApplicationVersion by tenant.
  */
-export async function getApplicationVersionByTenant(
-    tenantId: string,
-    queryParams: any
-): Promise<atInterfaces.IApplicationVersionGET[]> {
+export async function getApplicationVersionByTenant(tenantId: string, queryParams: any): Promise<atInterfaces.IApplicationVersionGET[]> {
     console.info('ApplicationVersion.Service.getApplicationVersionByTenant');
 
     const validQueryStringParameters = [];
@@ -29,7 +26,11 @@ export async function getApplicationVersionByTenant(
             queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const dbResults: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payload,
+            utilService.InvocationType.RequestResponse,
+        );
         const results: atInterfaces.IApplicationVersionGET[] = dbResults.recordset;
         return results;
     } catch (error) {
@@ -47,7 +48,7 @@ export async function getApplicationVersionByTenant(
 export async function getApplicationVersionByCompany(
     tenantId: string,
     companyId: string,
-    queryParams: any
+    queryParams: any,
 ): Promise<atInterfaces.IApplicationVersionGET[]> {
     console.info('ApplicationVersion.Service.getApplicationVersionByCompany');
 
@@ -72,7 +73,11 @@ export async function getApplicationVersionByCompany(
             queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const dbResults: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payload,
+            utilService.InvocationType.RequestResponse,
+        );
         const results: atInterfaces.IApplicationVersionGET[] = dbResults.recordset;
         return results;
     } catch (error) {
@@ -91,7 +96,7 @@ export async function getApplicationVersionById(
     tenantId: string,
     companyId: string,
     id: string,
-    queryParams: any
+    queryParams: any,
 ): Promise<atInterfaces.IApplicationVersionGET> {
     console.info('ApplicationVersion.Service.getApplicationVersionById');
 
@@ -119,10 +124,14 @@ export async function getApplicationVersionById(
             queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const dbResults: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payload,
+            utilService.InvocationType.RequestResponse,
+        );
         const result: atInterfaces.IApplicationVersionGET = dbResults.recordset[0];
 
-        if (result && result.companyId.toString() != companyId){
+        if (result && result.companyId.toString() != companyId) {
             throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
         }
 
@@ -143,7 +152,7 @@ export async function createApplicationVersion(
     tenantId: string,
     companyId: string,
     userEmail: string,
-    requestBody: atInterfaces.IApplicationVersionPOST
+    requestBody: atInterfaces.IApplicationVersionPOST,
 ): Promise<atInterfaces.IApplicationVersionGET> {
     console.info('ApplicationVersion.Service.createApplicationVersion');
 
@@ -176,14 +185,18 @@ export async function createApplicationVersion(
         query.setBooleanParameter('@IsSectionOnPayHistory', requestBody.isSectionOnPayHistory);
         query.setParameter('@JazzHrPositionOpeningID', requestBody.jazzHrPositionOpeningID);
 
-        const payload = { 
-            tenantId, 
-            queryName: query.name, 
-            query: query.value, 
-            queryType: QueryType.Simple 
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
         } as DatabaseEvent;
 
-        const queryResult: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const queryResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payload,
+            utilService.InvocationType.RequestResponse,
+        );
 
         const id: any = queryResult.recordset[0].ID;
         if (id) {
@@ -233,7 +246,7 @@ export async function updateApplicationVersion(
     tenantId: string,
     companyId: string,
     userEmail: string,
-    requestBody: atInterfaces.IApplicationVersionPUT
+    requestBody: atInterfaces.IApplicationVersionPUT,
 ): Promise<Boolean> {
     console.info('ApplicationVersion.Service.updateApplicationVersion');
 
@@ -251,7 +264,7 @@ export async function updateApplicationVersion(
         //
         // getting the old values for audit log
         //
-        const oldValues = await getApplicationVersionById(tenantId, companyId, requestBody.id.toString(), undefined);     
+        const oldValues = await getApplicationVersionById(tenantId, companyId, requestBody.id.toString(), undefined);
         if (!oldValues) {
             throw errorService.getErrorResponse(50);
         }
@@ -271,17 +284,17 @@ export async function updateApplicationVersion(
         query.setBooleanParameter('@IsSectionOnEmploymentHistory', requestBody.isSectionOnEmploymentHistory);
         query.setBooleanParameter('@IsSectionOnEducationHistory', requestBody.isSectionOnEducationHistory);
         query.setBooleanParameter('@IsSectionOnWorkConditions', requestBody.isSectionOnWorkConditions);
-        query.setBooleanParameter('@IsSectionOnKeywords', requestBody.isSectionOnKeywords);    
+        query.setBooleanParameter('@IsSectionOnKeywords', requestBody.isSectionOnKeywords);
         query.setBooleanParameter('@IsSectionOnDocuments', requestBody.isSectionOnDocuments);
         query.setBooleanParameter('@IsSectionOnCertification', requestBody.isSectionOnCertification);
         query.setBooleanParameter('@IsSectionOnPayHistory', requestBody.isSectionOnPayHistory);
         query.setParameter('@JazzHrPositionOpeningID', requestBody.jazzHrPositionOpeningID);
 
-        const payload = { 
-            tenantId, 
-            queryName: query.name, 
-            query: query.value, 
-            queryType: QueryType.Simple 
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
         } as DatabaseEvent;
 
         await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
@@ -301,6 +314,79 @@ export async function updateApplicationVersion(
             newFields: logResult,
             type: AuditActionType.Update,
             companyId: requestBody.companyId.toString(),
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Delete ATApplicationVersion.
+ */
+export async function deleteApplicationVersion(tenantId: string, companyId: string, userEmail: string, id: string): Promise<boolean> {
+    console.info('ApplicationVersion.Service.deleteApplicationVersion');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (Number.isNaN(Number(id))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid number`);
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getApplicationVersionById(tenantId, companyId, id, undefined);
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+        if (oldValues.companyId.toString() != companyId) {
+            throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+        }
+
+        //
+        // deleting data
+        //
+        const query = new ParameterizedQuery('deleteApplicationVersion', Queries.deleteApplicationVersion);
+        query.setParameter('@ID', id);
+
+        const payload = {
+            tenantId,
+            queryName: query.name,
+            query: query.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        oldValues.title = utilService.sanitizeStringForSql(oldValues.title);
+        oldValues.description = utilService.sanitizeStringForSql(oldValues.description);
+        oldValues.keywordList = utilService.sanitizeStringForSql(oldValues.keywordList);
+        delete oldValues.companyName;
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            type: AuditActionType.Delete,
+            companyId: companyId,
             areaOfChange: AuditAreaOfChange.ApplicantTracking,
             tenantId,
         } as IAudit);
