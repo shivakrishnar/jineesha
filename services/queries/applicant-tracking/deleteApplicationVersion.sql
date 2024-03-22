@@ -1,0 +1,1 @@
+delete from ATApplicationVersion where ID = @ID

@@ -17,12 +17,12 @@ export const getApplicationVersionByTenant = utilService.gatewayEventHandlerV2(a
     utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdSchema);
 
     await utilService.checkAuthorization(securityContext, event, [
-        Role.globalAdmin, 
-        Role.serviceBureauAdmin, 
-        Role.superAdmin, 
-        Role.hrAdmin, 
-        Role.hrManager, 
-        Role.hrEmployee
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+        Role.hrManager,
+        Role.hrEmployee,
     ]);
 
     const { tenantId } = event.pathParameters;
@@ -41,17 +41,21 @@ export const getApplicationVersionByCompany = utilService.gatewayEventHandlerV2(
     utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdSchema);
 
     await utilService.checkAuthorization(securityContext, event, [
-        Role.globalAdmin, 
-        Role.serviceBureauAdmin, 
-        Role.superAdmin, 
-        Role.hrAdmin, 
-        Role.hrManager, 
-        Role.hrEmployee
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+        Role.hrManager,
+        Role.hrEmployee,
     ]);
 
     const { tenantId, companyId } = event.pathParameters;
 
-    return await applicantTrackingService.applicationVersionService.getApplicationVersionByCompany(tenantId, companyId, event.queryStringParameters);
+    return await applicantTrackingService.applicationVersionService.getApplicationVersionByCompany(
+        tenantId,
+        companyId,
+        event.queryStringParameters,
+    );
 });
 
 /**
@@ -65,75 +69,121 @@ export const getApplicationVersionById = utilService.gatewayEventHandlerV2(async
     utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdAndIdSchema);
 
     await utilService.checkAuthorization(securityContext, event, [
-        Role.globalAdmin, 
-        Role.serviceBureauAdmin, 
-        Role.superAdmin, 
-        Role.hrAdmin, 
-        Role.hrManager, 
-        Role.hrEmployee
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+        Role.hrManager,
+        Role.hrEmployee,
     ]);
 
     const { tenantId, companyId, id } = event.pathParameters;
 
-    return await applicantTrackingService.applicationVersionService.getApplicationVersionById(tenantId, companyId, id, event.queryStringParameters);
+    return await applicantTrackingService.applicationVersionService.getApplicationVersionById(
+        tenantId,
+        companyId,
+        id,
+        event.queryStringParameters,
+    );
 });
 
 /**
  * Create ATApplicationVersion
  */
-export const createApplicationVersion = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-    console.info('ApplicantTracking.handlerApplicationVersion.createApplicationVersion');
+export const createApplicationVersion = utilService.gatewayEventHandlerV2(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('ApplicantTracking.handlerApplicationVersion.createApplicationVersion');
 
-    utilService.normalizeHeaders(event);
-    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
-    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdSchema);
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+        utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdSchema);
 
-    await utilService.checkAuthorization(securityContext, event, [
-        Role.globalAdmin, 
-        Role.serviceBureauAdmin, 
-        Role.superAdmin, 
-        Role.hrAdmin, 
-        Role.hrManager, 
-        Role.hrEmployee
-    ]);
+        await utilService.checkAuthorization(securityContext, event, [
+            Role.globalAdmin,
+            Role.serviceBureauAdmin,
+            Role.superAdmin,
+            Role.hrAdmin,
+            Role.hrManager,
+            Role.hrEmployee,
+        ]);
 
-    const { tenantId, companyId } = event.pathParameters;
-    const userEmail = securityContext.principal.email;
+        const { tenantId, companyId } = event.pathParameters;
+        const userEmail = securityContext.principal.email;
 
-    await utilService.validateRequestBody(schemas.createApplicationVersionValidationSchema, requestBody);
-    utilService.checkAdditionalProperties(schemas.createApplicationVersionCheckPropertiesSchema, requestBody, 'ApplicationVersion');
+        await utilService.validateRequestBody(schemas.createApplicationVersionValidationSchema, requestBody);
+        utilService.checkAdditionalProperties(schemas.createApplicationVersionCheckPropertiesSchema, requestBody, 'ApplicationVersion');
 
-    const apiResult = await applicantTrackingService.applicationVersionService.createApplicationVersion(tenantId, companyId, userEmail, requestBody);
+        const apiResult = await applicantTrackingService.applicationVersionService.createApplicationVersion(
+            tenantId,
+            companyId,
+            userEmail,
+            requestBody,
+        );
 
-    return { statusCode: 201, body: apiResult }
-});
+        return { statusCode: 201, body: apiResult };
+    },
+);
 
 /**
  * Update ATApplicationVersion.
  */
-export const updateApplicationVersion = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-    console.info('ApplicantTracking.handlerApplicationVersion.updateApplicationVersion');
+export const updateApplicationVersion = utilService.gatewayEventHandlerV2(
+    async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+        console.info('ApplicantTracking.handlerApplicationVersion.updateApplicationVersion');
+
+        utilService.normalizeHeaders(event);
+        utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+        utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdSchema);
+
+        await utilService.checkAuthorization(securityContext, event, [
+            Role.globalAdmin,
+            Role.serviceBureauAdmin,
+            Role.superAdmin,
+            Role.hrAdmin,
+            Role.hrManager,
+            Role.hrEmployee,
+        ]);
+
+        const { tenantId, companyId } = event.pathParameters;
+        const userEmail = securityContext.principal.email;
+
+        await utilService.validateRequestBody(schemas.updateApplicationVersionValidationSchema, requestBody);
+        utilService.checkAdditionalProperties(schemas.updateApplicationVersionCheckPropertiesSchema, requestBody, 'ApplicationVersion');
+
+        const apiResult = await applicantTrackingService.applicationVersionService.updateApplicationVersion(
+            tenantId,
+            companyId,
+            userEmail,
+            requestBody,
+        );
+
+        return { statusCode: 200, body: apiResult };
+    },
+);
+
+/**
+ * Delete ATApplicationVersion.
+ */
+export const deleteApplicationVersion = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerApplicationVersion.deleteApplicationVersion');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
-    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdAndIdSchema);
 
     await utilService.checkAuthorization(securityContext, event, [
-        Role.globalAdmin, 
-        Role.serviceBureauAdmin, 
-        Role.superAdmin, 
-        Role.hrAdmin, 
-        Role.hrManager, 
-        Role.hrEmployee
+        Role.globalAdmin,
+        Role.serviceBureauAdmin,
+        Role.superAdmin,
+        Role.hrAdmin,
+        Role.hrManager,
+        Role.hrEmployee,
     ]);
 
-    const { tenantId, companyId } = event.pathParameters;
+    const { tenantId, companyId, id } = event.pathParameters;
     const userEmail = securityContext.principal.email;
 
-    await utilService.validateRequestBody(schemas.updateApplicationVersionValidationSchema, requestBody);
-    utilService.checkAdditionalProperties(schemas.updateApplicationVersionCheckPropertiesSchema, requestBody, 'ApplicationVersion');
+    const apiResult = await applicantTrackingService.applicationVersionService.deleteApplicationVersion(tenantId, companyId, userEmail, id);
 
-    const apiResult = await applicantTrackingService.applicationVersionService.updateApplicationVersion(tenantId, companyId, userEmail, requestBody);
-
-    return { statusCode: 200, body: apiResult }
+    return { statusCode: 200, body: apiResult };
 });
