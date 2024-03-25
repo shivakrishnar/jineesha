@@ -146,3 +146,13 @@ export const updateApplicationVersionCheckPropertiesSchema = {
     isSectionOnPayHistory: { required: true, type: Boolean },
     jazzHrPositionOpeningID: { required: false, type: Number },
 };
+
+export const createApplicationVersionQuestionBankValidationSchema = Yup.object().shape({
+    aTApplicationVersionId: Yup.number().required('aTApplicationVersionId is required'),
+    aTQuestionBankId: Yup.number().required('aTQuestionBankId is required')
+});
+
+export const createApplicationVersionQuestionBankCheckPropertiesSchema = {
+    aTApplicationVersionId: { required: true, type: Number },
+    aTQuestionBankId: { required: true, type: Number }
+};

@@ -312,6 +312,15 @@ functions:
             cors:
               origin: '*'
 
+  createApplicationVersionCustomQuestion:
+    handler: src/handlerApplicationVersionCustomQuestion.createApplicationVersionCustomQuestion
+    events:
+        - http:
+            path: /tenants/{tenantId}/application-version-custom-question
+            method: post
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
