@@ -1,7 +1,7 @@
 //
-// getQuestionBanksByTenant
+// getQuestionBankByTenant
 //
-export const getQuestionBanksByTenantDBResponse = {
+export const getQuestionBankByTenantDBResponse = {
     limit: 30,
 		count: 2,
     recordsets: [ 
@@ -44,14 +44,14 @@ export const getQuestionBanksByTenantDBResponse = {
     rowsAffected: [ 1, 1, 1, 2 ],
 };
 
-export const getQuestionBanksByTenantDBResponseEmpty = {
+export const getQuestionBankByTenantDBResponseEmpty = {
   recordsets: [[{ totalCount: 0 }], []],
   recordset: [{ totalCount: 0 }],
   output: {},
   rowsAffected: [1, 1, 1, 0],
 };
 
-export const getQuestionBanksByTenantAPIResponse = [
+export const getQuestionBankByTenantAPIResponse = [
   {
     id: 33,
     companyId: 3,
@@ -77,9 +77,9 @@ export const getQuestionBanksByTenantAPIResponse = [
 ];
 
 //
-// getQuestionBanksByCompany
+// getQuestionBankByCompany
 //
-export const getQuestionBanksByCompanyDBResponse = {
+export const getQuestionBankByCompanyDBResponse = {
   limit: 30,
   count: 1,
   recordsets: [ 
@@ -111,14 +111,14 @@ export const getQuestionBanksByCompanyDBResponse = {
   rowsAffected: [ 1, 1, 1, 1 ],
 };
 
-export const getQuestionBanksByCompanyDBResponseEmpty = {
+export const getQuestionBankByCompanyDBResponseEmpty = {
   recordsets: [[{ totalCount: 0 }], []],
   recordset: [{ totalCount: 0 }],
   output: {},
   rowsAffected: [1, 1, 1, 0],
 };
 
-export const getQuestionBanksByCompanyAPIResponse = [
+export const getQuestionBankByCompanyAPIResponse = [
   {
     id: 33,
     companyId: 3,

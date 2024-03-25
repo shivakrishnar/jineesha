@@ -12,4 +12,4 @@ from
 	ATQuestionBank qb inner join
 	Company comp on qb.CompanyID = comp.ID
 where
-	qb.ID = @Id
+	qb.ID = @id

@@ -299,10 +299,11 @@ export const Queries = {
     getAllFieldsForUpdateEmployee: fs.readFileSync(path.join(basePath, 'employee-import/getAllFieldsForUpdateEmployee.sql')).toString(),
 
     // Aplicant Tracking
-    getQuestionTypesByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionTypesByTenant.sql')).toString(),
-    getQuestionBanksByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBanksByTenant.sql')).toString(),
-    getQuestionBanksByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBanksByCompany.sql')).toString(),
+    getQuestionTypeByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionTypeByTenant.sql')).toString(),
+
     getQuestionBankById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBankById.sql')).toString(),
+    getQuestionBankByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBankByTenant.sql')).toString(),
+    getQuestionBankByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBankByCompany.sql')).toString(),
     createQuestionBank: fs.readFileSync(path.join(basePath, 'applicant-tracking/createQuestionBank.sql')).toString(),
     updateQuestionBank: fs.readFileSync(path.join(basePath, 'applicant-tracking/updateQuestionBank.sql')).toString(),
     deleteQuestionBank: fs.readFileSync(path.join(basePath, 'applicant-tracking/deleteQuestionBank.sql')).toString(),
@@ -318,7 +319,6 @@ export const Queries = {
     getApplicationVersionByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationVersionByTenant.sql')).toString(),
     getApplicationVersionByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationVersionByCompany.sql')).toString(),
     getApplicationVersionById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationVersionById.sql')).toString(),
-
     createApplicationVersion: fs.readFileSync(path.join(basePath, 'applicant-tracking/createApplicationVersion.sql')).toString(),
     updateApplicationVersion: fs.readFileSync(path.join(basePath, 'applicant-tracking/updateApplicationVersion.sql')).toString(),
     deleteApplicationVersion: fs.readFileSync(path.join(basePath, 'applicant-tracking/deleteApplicationVersion.sql')).toString(),
@@ -326,4 +326,8 @@ export const Queries = {
     getAppVersionCustomQuestionByAppVersionQuestionBank: fs.readFileSync(path.join(basePath, 'applicant-tracking/getAppVersionCustomQuestionByAppVersionQuestionBank.sql')).toString(),
     createApplicationVersionCustomQuestion: fs.readFileSync(path.join(basePath, 'applicant-tracking/createApplicationVersionCustomQuestion.sql')).toString(),
     deleteApplicationVersionCustomQuestion: fs.readFileSync(path.join(basePath, 'applicant-tracking/deleteApplicationVersionCustomQuestion.sql')).toString(),
+
+    getQuestionBankMultipleChoiceAnswersById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBankMultipleChoiceAnswersById.sql')).toString(),
+    getQuestionBankMultipleChoiceAnswersByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBankMultipleChoiceAnswersByTenant.sql')).toString(),
+    getQuestionBankMultipleChoiceAnswersByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBankMultipleChoiceAnswersByCompany.sql')).toString(),
 };

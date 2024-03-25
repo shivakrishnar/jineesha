@@ -9,8 +9,8 @@ import { Role } from '../../models/Role';
 /**
  * Returns a list of ATQuestionType by tenant.
  */
-export const getQuestionTypesByTenant = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
-    console.info('ApplicantTracking.QuestionTypeHandler.getQuestionTypes');
+export const getQuestionTypeByTenant = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.QuestionTypeHandler.getQuestionTypeByTenant');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
@@ -27,5 +27,5 @@ export const getQuestionTypesByTenant = utilService.gatewayEventHandlerV2(async 
 
     const { tenantId } = event.pathParameters;
 
-    return await applicantTrackingService.questionTypeService.getQuestionTypesByTenant(tenantId, event.queryStringParameters);
+    return await applicantTrackingService.questionTypeService.getQuestionTypeByTenant(tenantId, event.queryStringParameters);
 });

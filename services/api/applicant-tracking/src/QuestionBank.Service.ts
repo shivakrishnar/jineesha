@@ -13,13 +13,13 @@ import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-ap
 /**
  * Returns a list of ATQuestionBank by tenant.
  */
-export async function getQuestionBanksByTenant(
+export async function getQuestionBankByTenant(
     tenantId: string,
     queryParams: any,
     domainName: string,
     path: string,
 ): Promise<PaginatedResult> {
-    console.info('QuestionBank.Service.getQuestionBanksByTenant');
+    console.info('QuestionBank.Service.getQuestionBankByTenant');
 
     const validQueryStringParameters = ['pageToken', 'searchBy'];
 
@@ -28,7 +28,7 @@ export async function getQuestionBanksByTenant(
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
     try {
-        const query = new ParameterizedQuery('getQuestionBanksByTenant', Queries.getQuestionBanksByTenant);
+        const query = new ParameterizedQuery('getQuestionBankByTenant', Queries.getQuestionBankByTenant);
         const searchBy: string = queryParams && queryParams.searchBy ? queryParams.searchBy : '';
         query.setStringParameter('@searchBy', searchBy);
 
@@ -56,14 +56,14 @@ export async function getQuestionBanksByTenant(
 /**
  * Returns a list of ATQuestionBank by company.
  */
-export async function getQuestionBanksByCompany(
+export async function getQuestionBankByCompany(
     tenantId: string,
     companyId: string,
     queryParams: any,
     domainName: string,
     path: string,
 ): Promise<PaginatedResult> {
-    console.info('QuestionBank.Service.getQuestionBanksByCompany');
+    console.info('QuestionBank.Service.getQuestionBankByCompany');
 
     const validQueryStringParameters = ['pageToken', 'searchBy'];
     utilService.validateQueryParams(queryParams, validQueryStringParameters);
@@ -75,7 +75,7 @@ export async function getQuestionBanksByCompany(
     }
 
     try {
-        const query = new ParameterizedQuery('getQuestionBanksByCompany', Queries.getQuestionBanksByCompany);
+        const query = new ParameterizedQuery('getQuestionBankByCompany', Queries.getQuestionBankByCompany);
         query.setParameter('@companyId', companyId);
         const searchBy: string = queryParams && queryParams.searchBy ? queryParams.searchBy : '';
         query.setStringParameter('@searchBy', searchBy);
@@ -126,7 +126,7 @@ export async function getQuestionBankById(
     //
     try {
         const query = new ParameterizedQuery('getQuestionBankById', Queries.getQuestionBankById);
-        query.setParameter('@Id', id);
+        query.setParameter('@id', id);
 
         const payload = { 
             tenantId, 
