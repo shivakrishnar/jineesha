@@ -325,4 +325,5 @@ export const Queries = {
 
     getAppVersionCustomQuestionByAppVersionQuestionBank: fs.readFileSync(path.join(basePath, 'applicant-tracking/getAppVersionCustomQuestionByAppVersionQuestionBank.sql')).toString(),
     createApplicationVersionCustomQuestion: fs.readFileSync(path.join(basePath, 'applicant-tracking/createApplicationVersionCustomQuestion.sql')).toString(),
+    deleteApplicationVersionCustomQuestion: fs.readFileSync(path.join(basePath, 'applicant-tracking/deleteApplicationVersionCustomQuestion.sql')).toString(),
 };

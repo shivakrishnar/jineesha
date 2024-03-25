@@ -321,6 +321,15 @@ functions:
             cors:
               origin: '*'
 
+  deleteApplicationVersionCustomQuestion:
+    handler: src/handlerApplicationVersionCustomQuestion.deleteApplicationVersionCustomQuestion
+    events:
+        - http:
+            path: /tenants/{tenantId}/application-versions/{applicationVersionId}/question-banks/{questionBankId}/application-version-custom-question
+            method: delete
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

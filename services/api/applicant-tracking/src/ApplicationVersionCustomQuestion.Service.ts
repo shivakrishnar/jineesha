@@ -15,7 +15,7 @@ export async function getAppVersionCustomQuestionByAppVersionQuestionBank(
     aTApplicationVersionId: string,
     aTQuestionBankId: string): 
 Promise<atInterfaces.IApplicationVersionCustomQuestion> {
-    console.info('ApplicationVersion.Service.getAppVersionCustomQuestionByAppVersionQuestionBank');
+    console.info('ApplicationVersionCustomQuestion.Service.getAppVersionCustomQuestionByAppVersionQuestionBank');
 
     //
     // validation
@@ -64,7 +64,7 @@ export async function createApplicationVersionCustomQuestion(
     userEmail: string,
     requestBody: atInterfaces.IApplicationVersionCustomQuestion,
 ): Promise<atInterfaces.IApplicationVersionCustomQuestion> {
-    console.info('ApplicationVersion.Service.createApplicationVersionCustomQuestion');
+    console.info('ApplicationVersionCustomQuestion.Service.createApplicationVersionCustomQuestion');
 
     try {
         //
@@ -116,6 +116,77 @@ export async function createApplicationVersionCustomQuestion(
             throw errorService.getErrorResponse(74).setDeveloperMessage('Was not possible to create the resource');
         }
         
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Delete ATApplicationVersionCustomQuestion.
+ */
+export async function deleteApplicationVersionCustomQuestion(
+    tenantId: string,
+    aTApplicationVersionId: string,
+    aTQuestionBankId: string,
+    userEmail: string
+): Promise<boolean> {
+    console.info('ApplicationVersionCustomQuestion.Service.deleteApplicationVersionCustomQuestion');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(aTApplicationVersionId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${aTApplicationVersionId} is not a valid number`);
+    }
+    if (Number.isNaN(Number(aTQuestionBankId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${aTQuestionBankId} is not a valid number`);
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getAppVersionCustomQuestionByAppVersionQuestionBank(tenantId, aTApplicationVersionId, aTQuestionBankId);
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+
+        //
+        // deleting data
+        //
+        const query = new ParameterizedQuery('deleteApplicationVersionCustomQuestion', Queries.deleteApplicationVersionCustomQuestion);
+        query.setParameter('@ATApplicationVersionID', aTApplicationVersionId);
+        query.setParameter('@ATQuestionBankID', aTQuestionBankId);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            type: AuditActionType.Delete,
+            companyId: null,
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
