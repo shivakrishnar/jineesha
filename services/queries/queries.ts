@@ -330,4 +330,8 @@ export const Queries = {
     getQuestionBankMultipleChoiceAnswersById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBankMultipleChoiceAnswersById.sql')).toString(),
     getQuestionBankMultipleChoiceAnswersByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBankMultipleChoiceAnswersByTenant.sql')).toString(),
     getQuestionBankMultipleChoiceAnswersByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBankMultipleChoiceAnswersByCompany.sql')).toString(),
+
+    getJobPostingByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getJobPostingByTenant.sql')).toString(),
+    getJobPostingByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getJobPostingByCompany.sql')).toString(),
+    getJobPostingById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getJobPostingById.sql')).toString(),
 };

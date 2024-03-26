@@ -5,6 +5,7 @@ import * as SoftStatusTypeService from './SoftStatusType.Service';
 import * as ApplicationVersionService from './ApplicationVersion.Service';
 import * as ApplicationVersionCustomQuestionService from './ApplicationVersionCustomQuestion.Service';
 import * as QuestionBankMultipleChoiceAnswersService from './QuestionBankMultipleChoiceAnswers.Service';
+import * as JobPostingService from './JobPosting.Service';
 
 const questionTypeService = QuestionTypeService;
 const questionBankService = QuestionBankService;
@@ -13,13 +14,15 @@ const softStatusTypeService = SoftStatusTypeService;
 const applicationVersionService = ApplicationVersionService;
 const applicationVersionCustomQuestionService = ApplicationVersionCustomQuestionService;
 const questionBankMultipleChoiceAnswersService = QuestionBankMultipleChoiceAnswersService;
+const jobPostingService = JobPostingService;
 
 export { 
-    questionTypeService, 
+    questionTypeService,
     questionBankService,
     hardStatusTypeService,
     softStatusTypeService,
     applicationVersionService,
     applicationVersionCustomQuestionService,
     questionBankMultipleChoiceAnswersService,
+    jobPostingService,
 };

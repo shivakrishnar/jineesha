@@ -120,3 +120,20 @@ export interface IQuestionBankMultipleChoiceAnswersGET {
     questionTitle: string,
     answer: string,
 }
+
+export interface IJobPostingGET {
+    id: number,
+    companyId: number,
+    companyName: string,
+    positionTypeId?: number,
+    organizationType1Id?: number,
+    organizationType2Id?: number,
+    organizationType3Id?: number,
+    organizationType4Id?: number,
+    workerCompTypeId?: number,
+    title: string,
+    description: string,
+    linkKey: string,
+    isOpen: boolean,
+    jazzHrPositionOpeningId?: number
+}
