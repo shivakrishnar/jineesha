@@ -9,8 +9,8 @@ import { Role } from '../../models/Role';
 /**
  * Returns a list of ATQuestionBank by tenant.
  */
-export const getQuestionBanksByTenant = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
-    console.info('ApplicantTracking.QuestionBankHandler.getQuestionBanksByTenant');
+export const getQuestionBankByTenant = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerQuestionBank.getQuestionBankByTenant');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
@@ -28,14 +28,14 @@ export const getQuestionBanksByTenant = utilService.gatewayEventHandlerV2(async 
     const { tenantId } = event.pathParameters;
     const { requestContext: { domainName, path } } = event;
 
-    return await applicantTrackingService.questionBankService.getQuestionBanksByTenant(tenantId, event.queryStringParameters, domainName, path);
+    return await applicantTrackingService.questionBankService.getQuestionBankByTenant(tenantId, event.queryStringParameters, domainName, path);
 });
 
 /**
  * Returns a list of ATQuestionBank by company.
  */
-export const getQuestionBanksByCompany = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
-    console.info('ApplicantTracking.QuestionBankHandler.getQuestionBanksByCompany');
+export const getQuestionBankByCompany = utilService.gatewayEventHandlerV2(async ({ event, securityContext }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerQuestionBank.getQuestionBankByCompany');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
@@ -53,14 +53,14 @@ export const getQuestionBanksByCompany = utilService.gatewayEventHandlerV2(async
     const { tenantId, companyId } = event.pathParameters;
     const { requestContext: { domainName, path } } = event;
 
-    return await applicantTrackingService.questionBankService.getQuestionBanksByCompany(tenantId, companyId, event.queryStringParameters, domainName, path);
+    return await applicantTrackingService.questionBankService.getQuestionBankByCompany(tenantId, companyId, event.queryStringParameters, domainName, path);
 });
 
 /**
  * Returns a list of ATQuestionBank by id.
  */
 export const getQuestionBankById = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
-    console.info('ApplicantTracking.QuestionBankHandler.getQuestionBankById');
+    console.info('ApplicantTracking.handlerQuestionBank.getQuestionBankById');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
@@ -84,7 +84,7 @@ export const getQuestionBankById = utilService.gatewayEventHandlerV2(async ({ se
  * Create ATQuestionBank.
  */
 export const createQuestionBank = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-    console.info('ApplicantTracking.QuestionBankHandler.createQuestionBank');
+    console.info('ApplicantTracking.handlerQuestionBank.createQuestionBank');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
@@ -114,7 +114,7 @@ export const createQuestionBank = utilService.gatewayEventHandlerV2(async ({ sec
  * Update ATQuestionBank.
  */
 export const updateQuestionBank = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
-    console.info('ApplicantTracking.QuestionBankHandler.updateQuestionBank');
+    console.info('ApplicantTracking.handlerQuestionBank.updateQuestionBank');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
@@ -144,7 +144,7 @@ export const updateQuestionBank = utilService.gatewayEventHandlerV2(async ({ sec
  * Delete ATQuestionBank.
  */
 export const deleteQuestionBank = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
-    console.info('ApplicantTracking.QuestionBankHandler.deleteQuestionBank');
+    console.info('ApplicantTracking.handlerQuestionBank.deleteQuestionBank');
 
     utilService.normalizeHeaders(event);
     utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);

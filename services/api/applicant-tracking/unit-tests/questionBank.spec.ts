@@ -7,10 +7,10 @@ import * as sharedMockData from './mock-data/shared-mock-data';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
 import { ErrorMessage } from '../../../errors/errorMessage';
 
-describe('getQuestionBanksByTenant', () => {
+describe('getQuestionBankByTenant', () => {
 
     test('returns a 400 when an unsupported query parameter(s) supplied', () => {
-        return questionBankService.getQuestionBanksByTenant(
+        return questionBankService.getQuestionBankByTenant(
             sharedMockData.tenantId, 
             sharedMockData.unsupportedQueryParam, 
             sharedMockData.domainName, 
@@ -26,11 +26,11 @@ describe('getQuestionBanksByTenant', () => {
 
     test('getting all data', async () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
-            const result: any = Promise.resolve(mockData.getQuestionBanksByTenantDBResponse);
+            const result: any = Promise.resolve(mockData.getQuestionBankByTenantDBResponse);
             return result;
         });
 
-        const response = await questionBankService.getQuestionBanksByTenant(
+        const response = await questionBankService.getQuestionBankByTenant(
             sharedMockData.tenantId, 
             sharedMockData.undefinedValue, 
             sharedMockData.domainName, 
@@ -38,17 +38,17 @@ describe('getQuestionBanksByTenant', () => {
         );
         if (response) {
             expect(response).toBeInstanceOf(PaginatedResult);
-            expect(response.results).toEqual(mockData.getQuestionBanksByTenantAPIResponse);
+            expect(response.results).toEqual(mockData.getQuestionBankByTenantAPIResponse);
         }
     });
 
     test('getting empty data', async () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
-            const result: any = Promise.resolve(mockData.getQuestionBanksByTenantDBResponseEmpty);
+            const result: any = Promise.resolve(mockData.getQuestionBankByTenantDBResponseEmpty);
             return result;
         });
 
-        const response = await questionBankService.getQuestionBanksByTenant(
+        const response = await questionBankService.getQuestionBankByTenant(
             sharedMockData.tenantId, 
             sharedMockData.undefinedValue, 
             sharedMockData.domainName, 
@@ -61,10 +61,10 @@ describe('getQuestionBanksByTenant', () => {
 
 });
 
-describe('getQuestionBanksByCompany', () => {
+describe('getQuestionBankByCompany', () => {
 
     test('companyId must be an integer', () => {
-        return questionBankService.getQuestionBanksByCompany(
+        return questionBankService.getQuestionBankByCompany(
             sharedMockData.tenantId, 
             sharedMockData.companyIdWithCharacter, 
             sharedMockData.undefinedValue, 
@@ -81,7 +81,7 @@ describe('getQuestionBanksByCompany', () => {
     });
 
     test('returns a 400 when an unsupported query parameter(s) supplied', () => {
-        return questionBankService.getQuestionBanksByCompany(
+        return questionBankService.getQuestionBankByCompany(
             sharedMockData.tenantId, 
             sharedMockData.companyId, 
             sharedMockData.unsupportedQueryParam, 
@@ -98,11 +98,11 @@ describe('getQuestionBanksByCompany', () => {
 
     test('getting all data', async () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
-            const result: any = Promise.resolve(mockData.getQuestionBanksByCompanyDBResponse);
+            const result: any = Promise.resolve(mockData.getQuestionBankByCompanyDBResponse);
             return result;
         });
 
-        const response = await questionBankService.getQuestionBanksByCompany(
+        const response = await questionBankService.getQuestionBankByCompany(
             sharedMockData.tenantId, 
             sharedMockData.companyId, 
             sharedMockData.undefinedValue, 
@@ -111,17 +111,17 @@ describe('getQuestionBanksByCompany', () => {
         );
         if (response) {
             expect(response).toBeInstanceOf(PaginatedResult);
-            expect(response.results).toEqual(mockData.getQuestionBanksByCompanyAPIResponse);
+            expect(response.results).toEqual(mockData.getQuestionBankByCompanyAPIResponse);
         }
     });
 
     test('getting empty data', async () => {
         (utilService as any).invokeInternalService = jest.fn(() => {
-            const result: any = Promise.resolve(mockData.getQuestionBanksByCompanyDBResponseEmpty);
+            const result: any = Promise.resolve(mockData.getQuestionBankByCompanyDBResponseEmpty);
             return result;
         });
 
-        const response = await questionBankService.getQuestionBanksByCompany(
+        const response = await questionBankService.getQuestionBankByCompany(
             sharedMockData.tenantId, 
             sharedMockData.companyId, 
             sharedMockData.undefinedValue, 

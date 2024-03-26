@@ -141,29 +141,29 @@ provider:
       - '*/*'
 
 functions:
-  getQuestionTypesByTenant:
-    handler: src/handlerQuestionType.getQuestionTypesByTenant
+  getQuestionTypeByTenant:
+    handler: src/handlerQuestionType.getQuestionTypeByTenant
     events:
         - http:
-            path: /tenants/{tenantId}/question-types
+            path: /tenants/{tenantId}/question-type
             method: get
             cors:
               origin: '*'
 
-  getQuestionBanksByTenant:
-    handler: src/handlerQuestionBank.getQuestionBanksByTenant
+  getQuestionBankByTenant:
+    handler: src/handlerQuestionBank.getQuestionBankByTenant
     events:
         - http:
-            path: /tenants/{tenantId}/question-banks
+            path: /tenants/{tenantId}/question-bank
             method: get
             cors:
               origin: '*'
 
-  getATQuestionBanksByCompany:
-    handler: src/handlerQuestionBank.getQuestionBanksByCompany
+  getQuestionBankByCompany:
+    handler: src/handlerQuestionBank.getQuestionBankByCompany
     events:
         - http:
-            path: /tenants/{tenantId}/companies/{companyId}/question-banks
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank
             method: get
             cors:
               origin: '*'
@@ -172,7 +172,7 @@ functions:
     handler: src/handlerQuestionBank.getQuestionBankById
     events:
         - http:
-            path: /tenants/{tenantId}/companies/{companyId}/question-banks/{id}
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank/{id}
             method: get
             cors:
               origin: '*'              
@@ -293,6 +293,33 @@ functions:
             method: post
             cors:
               origin: '*'
+
+  getQuestBankMultChoiceAnswersById:
+    handler: src/handlerQuestionBankMultipleChoiceAnswers.getQuestionBankMultipleChoiceAnswersById
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank-multiple-choice-answers/{id}
+            method: get
+            cors:
+              origin: '*'
+              
+  getQuestBankMultChoiceAnswersByTenant:
+    handler: src/handlerQuestionBankMultipleChoiceAnswers.getQuestionBankMultipleChoiceAnswersByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/question-bank-multiple-choice-answers
+            method: get
+            cors:
+              origin: '*'
+
+  getQuestBankMultChoiceAnswersByCompany:
+    handler: src/handlerQuestionBankMultipleChoiceAnswers.getQuestionBankMultipleChoiceAnswersByCompany
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank-multiple-choice-answers
+            method: get
+            cors:
+              origin: '*'                             
 
   updateApplicationVersion:
     handler: src/handlerApplicationVersion.updateApplicationVersion

@@ -9,17 +9,17 @@ import { DatabaseEvent, QueryType } from '../../../internal-api/database/events'
 /**
  * Returns a list of ATQuestionType by tenant.
  */
-export async function getQuestionTypesByTenant(
+export async function getQuestionTypeByTenant(
     tenantId: string, 
     queryParams: any
 ): Promise<atInterfaces.IQuestionType[]> {
-    console.info('QuestionType.Service.getQuestionTypesByTenant');
+    console.info('QuestionType.Service.getQuestionTypeByTenant');
 
     const validQueryStringParameters = ['searchBy'];
     utilService.validateQueryParams(queryParams, validQueryStringParameters);
 
     try {
-        const query = new ParameterizedQuery('getQuestionTypesByTenant', Queries.getQuestionTypesByTenant);
+        const query = new ParameterizedQuery('getQuestionTypeByTenant', Queries.getQuestionTypeByTenant);
         const searchBy: string = queryParams && queryParams.searchBy ? queryParams.searchBy : '';
         query.setStringParameter('@searchBy', searchBy);
 

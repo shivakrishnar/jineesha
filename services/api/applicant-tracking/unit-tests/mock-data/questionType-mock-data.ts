@@ -1,7 +1,7 @@
 //
-// getQuestionTypesByTenant
+// getQuestionTypeByTenant
 //
-export const getQuestionTypesByTenantDBResponse = {
+export const getQuestionTypeByTenantDBResponse = {
   recordsets: [ [ [Object], [Object], [Object], [Object] ] ],
   recordset: [
     {
@@ -37,14 +37,14 @@ export const getQuestionTypesByTenantDBResponse = {
   rowsAffected: [ 4 ],
 };
 
-export const getQuestionTypesByTenantDBResponseEmpty = {
+export const getQuestionTypeByTenantDBResponseEmpty = {
   recordsets: [ [ ] ],
   recordset: [ ],
   output: {},
   rowsAffected: [ ],
 };
 
-export const getQuestionTypesByTenantAPIResponse = [
+export const getQuestionTypeByTenantAPIResponse = [
   {
     id: '1',
     code: '1',
