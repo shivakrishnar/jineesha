@@ -357,6 +357,33 @@ functions:
             cors:
               origin: '*'
 
+  getJobPostingByTenant:
+    handler: src/handlerJobPosting.getJobPostingByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/job-posting
+            method: get
+            cors:
+              origin: '*'
+
+  getJobPostingByCompany:
+    handler: src/handlerJobPosting.getJobPostingByCompany
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/job-posting
+            method: get
+            cors:
+              origin: '*'
+
+  getJobPostingById:
+    handler: src/handlerJobPosting.getJobPostingById
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/job-posting/{id}
+            method: get
+            cors:
+              origin: '*'  
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
