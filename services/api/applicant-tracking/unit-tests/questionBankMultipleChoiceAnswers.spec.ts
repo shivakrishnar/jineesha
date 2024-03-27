@@ -212,3 +212,81 @@ describe('getQuestionBankMultipleChoiceAnswersById', () => {
             });
     });
 });
+
+describe('createQuestionBankMultipleChoiceAnswers', () => {
+
+    test('companyId must be an integer', () => {
+        return QuestionBankMultipleChoiceAnswersService.createQuestionBankMultipleChoiceAnswers(
+            sharedMockData.tenantId, 
+            sharedMockData.companyIdWithCharacter,
+            sharedMockData.userEmail,
+            mockData.createQuestionBankMultipleChoiceAnswersRequestBody,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${sharedMockData.companyIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('URL companyId must be the same as the request body companyId', () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'getQuestionBankById') {
+                const result = await Promise.resolve(mockData.getQuestionBankByIdDBResponseFromAnotherCompany);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        const requestBody = { ...mockData.createQuestionBankMultipleChoiceAnswersRequestBody };
+        requestBody.atQuestionBankId = mockData.QuestionBankMultipleChoiceAnswersToPostWithWrongQuestionBankId;
+        return QuestionBankMultipleChoiceAnswersService.createQuestionBankMultipleChoiceAnswers(
+            sharedMockData.tenantId, 
+            sharedMockData.companyId,
+            sharedMockData.userEmail,
+            requestBody,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual('');
+                expect(error.moreInfo).toEqual('this record does not belong to this company');
+            });
+    });
+
+    test('creates and returns a QuestionBankMultipleChoiceAnswers', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'createQuestionBankMultipleChoiceAnswers'){
+                const result = await Promise.resolve(mockData.createQuestionBankMultipleChoiceAnswersDBResponse);
+                return result;
+            } else if (payload.queryName === 'getQuestionBankMultipleChoiceAnswersById') {
+                const result = await Promise.resolve(mockData.getQuestionBankMultipleChoiceAnswersByIdDBResponse);
+                return result;
+            } else if (payload.queryName === 'getQuestionBankById') {
+                const result = await Promise.resolve(mockData.getQuestionBankByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await QuestionBankMultipleChoiceAnswersService
+            .createQuestionBankMultipleChoiceAnswers(
+                sharedMockData.tenantId,
+                sharedMockData.companyId,
+                sharedMockData.userEmail,
+                mockData.createQuestionBankMultipleChoiceAnswersRequestBody,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.createQuestionBankMultipleChoiceAnswersAPIResponse);
+            });
+    });
+});

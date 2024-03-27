@@ -175,3 +175,54 @@ export const getQuestionBankMultipleChoiceAnswersByIdAPIResponse = {
   questionTitle: 'Question 6',
   answer: 'Yes'
 };
+
+//
+// createQuestionBankMultipleChoiceAnswers
+//
+export const QuestionBankMultipleChoiceAnswersToPostWithWrongQuestionBankId = 9999;
+
+export const createQuestionBankMultipleChoiceAnswersRequestBody = {
+  atQuestionBankId: 2,
+  answer: "Yes"
+};
+
+export const createQuestionBankMultipleChoiceAnswersDBResponse = {
+  recordset: [{ ID: 1 }],
+};
+
+export const createQuestionBankMultipleChoiceAnswersAPIResponse = {
+  id: 1,
+  companyId: 3,
+  companyName: 'Artsy Tartsy Bakery',
+  atQuestionBankId: 2,
+  questionTitle: 'Question 6',
+  answer: 'Yes'
+};
+
+export const getQuestionBankByIdDBResponseFromAnotherCompany = {
+  recordset: [{
+    id: 9999,
+    companyId: 44,
+    companyName: 'Artsy Tartsy Bakery',
+    atQuestionTypeId: 2,
+    questionTitle: "What is your name",
+    questionText: "My name is Tom",
+    active: true,
+    sequence: 1,
+    isRequired: true
+  }]
+};
+
+export const getQuestionBankByIdDBResponse = {
+  recordset: [{
+    id: 25,
+    companyId: 3,
+    companyName: 'Artsy Tartsy Bakery',
+    atQuestionTypeId: 2,
+    questionTitle: "What is your name",
+    questionText: "My name is Tom",
+    active: true,
+    sequence: 1,
+    isRequired: true
+  }]
+};

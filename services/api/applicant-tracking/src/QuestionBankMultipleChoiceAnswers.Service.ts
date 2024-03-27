@@ -7,7 +7,8 @@ import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
-//import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
+import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
+import { getQuestionBankById } from './QuestionBank.Service';
 
 /**
  * Returns a list of ATQuestionBankMultipleChoiceAnswers by id.
@@ -142,6 +143,85 @@ export async function getQuestionBankMultipleChoiceAnswersByCompany(
         const totalCount = dbResults.recordsets[0][0].totalCount;
         const results: atInterfaces.IQuestionBankMultipleChoiceAnswersGET[] = dbResults.recordsets[1];
         return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Create ATQuestionBankMultipleChoiceAnswers.
+ */
+export async function createQuestionBankMultipleChoiceAnswers(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IQuestionBankMultipleChoiceAnswersPOST
+): Promise<atInterfaces.IQuestionBankMultipleChoiceAnswersGET> {
+    console.info('QuestionBankMultipleChoiceAnswers.Service.createQuestionBankMultipleChoiceAnswers');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    const questionBank = await getQuestionBankById(tenantId, companyId, requestBody.atQuestionBankId.toString());
+    if (!questionBank || companyId != questionBank.companyId.toString()) {
+        throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+    }
+
+    try {
+        //
+        // inserting data
+        //
+        const query = new ParameterizedQuery('createQuestionBankMultipleChoiceAnswers', Queries.createQuestionBankMultipleChoiceAnswers);
+        query.setParameter('@ATQuestionBankID', requestBody.atQuestionBankId);
+        query.setStringOrNullParameter('@Answer', requestBody.answer);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        const queryResult: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const id: any = queryResult.recordset[0].ID;
+        if (id) {
+            //
+            // getting data
+            //
+            const apiresult = await getQuestionBankMultipleChoiceAnswersById(tenantId, companyId, id);
+
+            //
+            // auditing log
+            //
+            const logResult = { ...apiresult };
+            logResult.answer = utilService.sanitizeStringForSql(logResult.answer);
+            delete logResult.companyId;
+            delete logResult.companyName;
+            delete logResult.questionTitle;
+
+            utilService.logToAuditTrail({
+                userEmail,
+                newFields: logResult,
+                type: AuditActionType.Insert,
+                companyId: companyId,
+                areaOfChange: AuditAreaOfChange.ApplicantTracking,
+                tenantId,
+            } as IAudit);
+
+            //
+            // api response
+            //
+            return apiresult;
+        } else {
+            throw errorService.getErrorResponse(74).setDeveloperMessage('Was not possible to create the resource');
+        }
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
