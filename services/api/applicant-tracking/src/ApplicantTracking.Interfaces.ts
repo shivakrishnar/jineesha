@@ -112,12 +112,18 @@ export interface IApplicationVersionCustomQuestion {
     aTApplicationVersionId: number;
 	aTQuestionBankId: number;
 }
+
 export interface IQuestionBankMultipleChoiceAnswersGET {
     id: number,
     companyId: number,
     companyName: string,
     atQuestionBankId: number,
     questionTitle: string,
+    answer: string,
+}
+
+export interface IQuestionBankMultipleChoiceAnswersPOST {
+    atQuestionBankId: number,
     answer: string,
 }
 
