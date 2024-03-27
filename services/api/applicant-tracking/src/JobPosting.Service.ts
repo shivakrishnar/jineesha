@@ -7,8 +7,7 @@ import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
-//import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
-
+import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
 
 /**
  * Returns a list of ATJobPosting by tenant.
@@ -144,6 +143,96 @@ export async function getJobPostingById(
         }
 
         return result;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Create ATJobPosting.
+ */
+export async function createJobPosting(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IJobPostingPOST
+): Promise<atInterfaces.IJobPostingGET> {
+    console.info('JobPosting.Service.createJobPosting');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (companyId != requestBody.companyId.toString()) {
+        throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+    }
+
+    try {
+        //
+        // inserting data
+        //
+        const query = new ParameterizedQuery('createJobPosting', Queries.createJobPosting);
+        query.setParameter('@CompanyID', requestBody.companyId);
+        query.setParameter('@ATApplicationVersionID', requestBody.aTApplicationVersionId);
+        query.setParameter('@PositionTypeID', requestBody.positionTypeId);
+        query.setParameter('@OrganizationType1ID', requestBody.organizationType1Id);
+        query.setParameter('@OrganizationType2ID', requestBody.organizationType2Id);
+        query.setParameter('@OrganizationType3ID', requestBody.organizationType3Id);
+        query.setParameter('@OrganizationType4ID', requestBody.organizationType4Id);
+        query.setParameter('@WorkerCompTypeID', requestBody.workerCompTypeId);
+        query.setStringParameter('@Title', requestBody.title);
+        query.setStringParameter('@Description', requestBody.description);
+        query.setStringParameter('@LinkKey', requestBody.linkKey);
+        query.setBooleanParameter('@IsOpen', requestBody.isOpen);
+        query.setParameter('@JazzHrPositionOpeningID', requestBody.jazzHrPositionOpeningId);
+        
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        console.log(payload);
+
+        const queryResult: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const id: any = queryResult.recordset[0].ID;
+        if (id) {
+            //
+            // getting data
+            //
+            const apiresult = await getJobPostingById(tenantId, companyId, id);
+
+            //
+            // auditing log
+            //
+            const logResult = { ...apiresult };
+            logResult.title = utilService.sanitizeStringForSql(logResult.title);
+            logResult.description = utilService.sanitizeStringForSql(logResult.description);
+            delete logResult.companyName;
+
+            utilService.logToAuditTrail({
+                userEmail,
+                newFields: logResult,
+                type: AuditActionType.Insert,
+                companyId: companyId,
+                areaOfChange: AuditAreaOfChange.ApplicantTracking,
+                tenantId,
+            } as IAudit);
+
+            //
+            // api response
+            //
+            return apiresult;
+        } else {
+            throw errorService.getErrorResponse(74).setDeveloperMessage('Was not possible to create the resource');
+        }
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

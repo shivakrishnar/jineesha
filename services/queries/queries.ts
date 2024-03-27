@@ -334,4 +334,5 @@ export const Queries = {
     getJobPostingByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getJobPostingByTenant.sql')).toString(),
     getJobPostingByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getJobPostingByCompany.sql')).toString(),
     getJobPostingById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getJobPostingById.sql')).toString(),
+    createJobPosting: fs.readFileSync(path.join(basePath, 'applicant-tracking/createJobPosting.sql')).toString(),
 };
