@@ -127,6 +127,12 @@ export interface IQuestionBankMultipleChoiceAnswersPOST {
     answer: string,
 }
 
+export interface IQuestionBankMultipleChoiceAnswersPUT {
+    id: number,
+    atQuestionBankId: number,
+    answer: string,
+}
+
 export interface IJobPostingGET {
     id: number,
     companyId: number,

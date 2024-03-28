@@ -230,3 +230,87 @@ export async function createQuestionBankMultipleChoiceAnswers(
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * Update ATQuestionBankMultipleChoiceAnswers.
+ */
+export async function updateQuestionBankMultipleChoiceAnswers(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IQuestionBankMultipleChoiceAnswersPUT
+): Promise<Boolean> {
+    console.info('QuestionBankMultipleChoiceAnswers.Service.updateQuestionBankMultipleChoiceAnswers');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    const questionBank = await getQuestionBankById(tenantId, companyId, requestBody.atQuestionBankId.toString());
+    if (!questionBank || companyId != questionBank.companyId.toString()) {
+        throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getQuestionBankMultipleChoiceAnswersById(tenantId, companyId, requestBody.id.toString());     
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+        if (oldValues.companyId != questionBank.companyId) {
+            throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+        }
+
+        //
+        // updating data
+        //
+        const query = new ParameterizedQuery('updateQuestionBankMultipleChoiceAnswers', Queries.updateQuestionBankMultipleChoiceAnswers);
+        query.setParameter('@ID', requestBody.id);
+        query.setParameter('@ATQuestionBankID', requestBody.atQuestionBankId);
+        query.setStringOrNullParameter('@Answer', requestBody.answer);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        const logResult = { ...requestBody };
+        logResult.answer = utilService.sanitizeStringForSql(logResult.answer);
+        oldValues.answer = utilService.sanitizeStringForSql(oldValues.answer);
+        delete oldValues.companyId;
+        delete oldValues.companyName;
+        delete oldValues.questionTitle;
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            newFields: logResult,
+            type: AuditActionType.Update,
+            companyId: companyId,
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}

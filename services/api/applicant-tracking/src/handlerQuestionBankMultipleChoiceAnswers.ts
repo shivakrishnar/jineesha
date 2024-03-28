@@ -109,3 +109,33 @@ export const createQuestionBankMultipleChoiceAnswers = utilService.gatewayEventH
 
     return { statusCode: 201, body: apiResult }
 });
+
+/**
+ * Update ATQuestionBankMultipleChoiceAnswers.
+ */
+export const updateQuestionBankMultipleChoiceAnswers = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerQuestionBankMultipleChoiceAnswers.updateQuestionBankMultipleChoiceAnswers');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId, companyId } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    await utilService.validateRequestBody(schemas.updateQuestionBankMultipleChoiceAnswersValidationSchema, requestBody);
+    utilService.checkAdditionalProperties(schemas.updateQuestionBankMultipleChoiceAnswersCheckPropertiesSchema, requestBody, 'QuestionBankMultipleChoiceAnswers');
+
+    const apiResult = await applicantTrackingService.questionBankMultipleChoiceAnswersService.updateQuestionBankMultipleChoiceAnswers(tenantId, companyId, userEmail, requestBody);
+
+    return { statusCode: 200, body: apiResult }
+});
