@@ -137,6 +137,7 @@ export interface IJobPostingGET {
     organizationType2Id?: number,
     organizationType3Id?: number,
     organizationType4Id?: number,
+    organizationType5Id?: number,
     workerCompTypeId?: number,
     title: string,
     description: string,
@@ -153,6 +154,25 @@ export interface IJobPostingPOST {
     organizationType2Id?: number,
     organizationType3Id?: number,
     organizationType4Id?: number,
+    organizationType5Id?: number,
+    workerCompTypeId?: number,
+    title: string,
+    description: string,
+    linkKey: string,
+    isOpen: boolean,
+    jazzHrPositionOpeningId?: number
+}
+
+export interface IJobPostingPUT {
+    id: number;
+    companyId: number;
+    aTApplicationVersionId: number,
+	positionTypeId?: number,
+    organizationType1Id?: number,
+    organizationType2Id?: number,
+    organizationType3Id?: number,
+    organizationType4Id?: number,
+    organizationType5Id?: number,
     workerCompTypeId?: number,
     title: string,
     description: string,

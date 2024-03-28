@@ -256,3 +256,26 @@ export const createJobPostingAPIResponse = {
   isOpen: 1,
   jazzHrPositionOpeningId: null
 };
+
+//
+// updateJobPosting
+//
+export const updateJobPostingRequestBody = {
+  id: 33,
+  companyId: 3,
+  aTApplicationVersionId: 1,
+  companyName: 'Artsy Tartsy Bakery',
+  positionTypeId: null,
+  organizationType1Id: null,
+  organizationType2Id: null,
+  organizationType3Id: null,
+  organizationType4Id: null,
+  workerCompTypeId: null,
+  title: 'test',
+  description: 'desc test',
+  linkKey: 'DA8C5B82-B895-4D5F-9CC4-8195A083311D',
+  isOpen: true,
+  jazzHrPositionOpeningId: null
+};
+
+export const updateJobPostingAPIResponse = true;

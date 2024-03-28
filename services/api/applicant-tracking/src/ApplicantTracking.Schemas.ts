@@ -183,6 +183,7 @@ export const createJobPostingValidationSchema = Yup.object().shape({
     organizationType2Id: Yup.number().nullable(),
     organizationType3Id: Yup.number().nullable(),
     organizationType4Id: Yup.number().nullable(),
+    organizationType5Id: Yup.number().nullable(),
     workerCompTypeId: Yup.number().nullable(),
     title: Yup.string()
         .max(100, 'title must be a maximum of 200 characters.')
@@ -201,6 +202,45 @@ export const createJobPostingCheckPropertiesSchema = {
     organizationType2Id: { required: false, type: Number },
     organizationType3Id: { required: false, type: Number },
     organizationType4Id: { required: false, type: Number },
+    organizationType5Id: { required: false, type: Number },
+    workerCompTypeId: { required: false, type: Number },
+    title: { required: false, type: String },
+    description: { required: false, type: String },
+    linkKey: { required: false, type: String },
+    isOpen: { required: false, type: Boolean },
+    jazzHrPositionOpeningId: { required: false, type: Number }
+};
+
+export const updateJobPostingValidationSchema = Yup.object().shape({
+    id: Yup.number().required('id is required'),
+    companyId: Yup.number().required('companyId is required'),
+    aTApplicationVersionId: Yup.number().required('aTApplicationVersionId is required'),
+    positionTypeId: Yup.number().nullable(),
+    organizationType1Id: Yup.number().nullable(),
+    organizationType2Id: Yup.number().nullable(),
+    organizationType3Id: Yup.number().nullable(),
+    organizationType4Id: Yup.number().nullable(),
+    organizationType5Id: Yup.number().nullable(),
+    workerCompTypeId: Yup.number().nullable(),
+    title: Yup.string()
+        .max(100, 'title must be a maximum of 200 characters.')
+        .nullable(),
+    description: Yup.string().nullable(),
+    linkKey: Yup.string().nullable(),
+    isOpen: Yup.boolean().nullable(),
+    jazzHrPositionOpeningId: Yup.number().nullable()
+});
+
+export const updateJobPostingCheckPropertiesSchema = {
+    id: { required: true, type: Number },
+    companyId: { required: true, type: Number },
+    aTApplicationVersionId: { required: true, type: Number },
+    positionTypeId: { required: false, type: Number },
+    organizationType1Id: { required: false, type: Number },
+    organizationType2Id: { required: false, type: Number },
+    organizationType3Id: { required: false, type: Number },
+    organizationType4Id: { required: false, type: Number },
+    organizationType5Id: { required: false, type: Number },
     workerCompTypeId: { required: false, type: Number },
     title: { required: false, type: String },
     description: { required: false, type: String },

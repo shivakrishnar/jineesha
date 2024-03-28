@@ -402,6 +402,15 @@ functions:
             cors:
               origin: '*'
 
+  updateJobPosting:
+    handler: src/handlerJobPosting.updateJobPosting
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/job-posting
+            method: put
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
