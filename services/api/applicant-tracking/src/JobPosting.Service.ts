@@ -185,6 +185,7 @@ export async function createJobPosting(
         query.setParameter('@OrganizationType2ID', requestBody.organizationType2Id);
         query.setParameter('@OrganizationType3ID', requestBody.organizationType3Id);
         query.setParameter('@OrganizationType4ID', requestBody.organizationType4Id);
+        query.setParameter('@OrganizationType5ID', requestBody.organizationType4Id);
         query.setParameter('@WorkerCompTypeID', requestBody.workerCompTypeId);
         query.setStringParameter('@Title', requestBody.title);
         query.setStringParameter('@Description', requestBody.description);
@@ -318,6 +319,83 @@ export async function updateJobPosting(
             newFields: logResult,
             type: AuditActionType.Update,
             companyId: requestBody.companyId.toString(),
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Delete ATJobPosting.
+ */
+export async function deleteJobPosting(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    id: string
+): Promise<boolean> {
+    console.info('JobPosting.Service.deleteJobPosting');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (Number.isNaN(Number(id))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid number`);
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getJobPostingById(tenantId, companyId, id);
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+        if (oldValues.companyId.toString() != companyId) {
+            throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+        }
+
+        //
+        // deleting data
+        //
+        const query = new ParameterizedQuery('deleteJobPosting', Queries.deleteJobPosting);
+        query.setParameter('@ID', id);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        oldValues.title = utilService.sanitizeStringForSql(oldValues.title);
+        oldValues.description = utilService.sanitizeStringForSql(oldValues.description);
+        delete oldValues.companyName;
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            type: AuditActionType.Delete,
+            companyId: companyId,
             areaOfChange: AuditAreaOfChange.ApplicantTracking,
             tenantId,
         } as IAudit);

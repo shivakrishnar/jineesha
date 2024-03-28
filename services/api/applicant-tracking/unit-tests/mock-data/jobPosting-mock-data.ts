@@ -279,3 +279,11 @@ export const updateJobPostingRequestBody = {
 };
 
 export const updateJobPostingAPIResponse = true;
+
+//
+// deleteJobPosting
+//
+export const jobPostingToDeleteId = '33';
+export const jobPostingToDeleteAnotherId = '4444';
+export const jobPostingToDeleteIdWithCharacter = '33abc';
+export const deleteJobPostingAPIResponse = true;
