@@ -241,3 +241,96 @@ export async function createJobPosting(
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * Update ATJobPosting.
+ */
+export async function updateJobPosting(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IJobPostingPUT
+): Promise<Boolean> {
+    console.info('JobPosting.Service.updateJobPosting');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (companyId != requestBody.companyId.toString()) {
+        throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getJobPostingById(tenantId, companyId, requestBody.id.toString());     
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+        if (oldValues.companyId != requestBody.companyId) {
+            throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+        }
+
+        //
+        // updating data
+        //
+        const query = new ParameterizedQuery('updateJobPosting', Queries.updateJobPosting);
+        query.setParameter('@ID', requestBody.id);
+        query.setParameter('@CompanyID', requestBody.companyId);
+        query.setParameter('@ATApplicationVersionID', requestBody.aTApplicationVersionId);
+        query.setParameter('@PositionTypeID', requestBody.positionTypeId);
+        query.setParameter('@OrganizationType1ID', requestBody.organizationType1Id);
+        query.setParameter('@OrganizationType2ID', requestBody.organizationType2Id);
+        query.setParameter('@OrganizationType3ID', requestBody.organizationType3Id);
+        query.setParameter('@OrganizationType4ID', requestBody.organizationType4Id);
+        query.setParameter('@OrganizationType5ID', requestBody.organizationType5Id);
+        query.setParameter('@WorkerCompTypeID', requestBody.workerCompTypeId);
+        query.setStringParameter('@Title', requestBody.title);
+        query.setStringParameter('@Description', requestBody.description);
+        query.setStringParameter('@LinkKey', requestBody.linkKey);
+        query.setBooleanParameter('@IsOpen', requestBody.isOpen);
+        query.setParameter('@JazzHrPositionOpeningID', requestBody.jazzHrPositionOpeningId);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        const logResult = { ...requestBody };
+        logResult.title = utilService.sanitizeStringForSql(logResult.title);
+        logResult.description = utilService.sanitizeStringForSql(logResult.description);
+        delete oldValues.companyName;
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            newFields: logResult,
+            type: AuditActionType.Update,
+            companyId: requestBody.companyId.toString(),
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}

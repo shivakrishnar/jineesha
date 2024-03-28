@@ -10,6 +10,7 @@ select jp.ID as id,
 	   jp.OrganizationType2ID as organizationType2Id,
 	   jp.OrganizationType3ID as organizationType3Id,
 	   jp.OrganizationType4ID as organizationType4Id,
+	   jp.OrganizationType5ID as organizationType5Id,
 	   jp.WorkerCompTypeID as workerCompTypeId,
 	   jp.Title as title,
 	   jp.Description as description,
@@ -19,4 +20,4 @@ select jp.ID as id,
 
 from ATJobPosting jp
 		inner join Company c on c.id = jp.CompanyID
-order by jp.Title		
+order by jp.Title
