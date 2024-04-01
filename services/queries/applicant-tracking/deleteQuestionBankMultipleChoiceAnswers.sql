@@ -1,0 +1,1 @@
+delete from ATQuestionBankMultipleChoiceAnswers where ID = @ID
