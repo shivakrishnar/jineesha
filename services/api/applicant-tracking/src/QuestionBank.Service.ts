@@ -303,7 +303,7 @@ export async function updateQuestionBank(
             oldFields: oldValues,
             newFields: logResult,
             type: AuditActionType.Update,
-            companyId: requestBody.companyId.toString(),
+            companyId: companyId,
             areaOfChange: AuditAreaOfChange.ApplicantTracking,
             tenantId,
         } as IAudit);

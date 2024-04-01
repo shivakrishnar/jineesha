@@ -328,7 +328,16 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/question-bank-multiple-choice-answers
             method: post
             cors:
-              origin: '*'                                         
+              origin: '*'
+
+  updateQuestBankMultChoiceAnswers:
+    handler: src/handlerQuestionBankMultipleChoiceAnswers.updateQuestionBankMultipleChoiceAnswers
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank-multiple-choice-answers
+            method: put
+            cors:
+              origin: '*'                                                       
 
   updateApplicationVersion:
     handler: src/handlerApplicationVersion.updateApplicationVersion

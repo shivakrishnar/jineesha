@@ -175,6 +175,20 @@ export const createQuestionBankMultipleChoiceAnswersCheckPropertiesSchema = {
     answer: { required: true, type: String },
 };
 
+export const updateQuestionBankMultipleChoiceAnswersValidationSchema = Yup.object().shape({
+    id: Yup.number().required('id is required'),
+    atQuestionBankId: Yup.number().required('atQuestionBankId is required'),
+    answer: Yup.string()
+        .required('questionTitle is required')
+        .max(100, 'questionTitle must be a maximum of 100 characters.')
+});
+
+export const updateQuestionBankMultipleChoiceAnswersCheckPropertiesSchema = {
+    id: { required: true, type: Number },
+    atQuestionBankId: { required: true, type: Number },
+    answer: { required: true, type: String },
+};
+
 export const createJobPostingValidationSchema = Yup.object().shape({
     companyId: Yup.number().required('companyId is required'),
     aTApplicationVersionId: Yup.number().required('aTApplicationVersionId is required'),

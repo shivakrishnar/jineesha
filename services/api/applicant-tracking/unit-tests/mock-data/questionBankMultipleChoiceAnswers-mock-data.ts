@@ -177,28 +177,8 @@ export const getQuestionBankMultipleChoiceAnswersByIdAPIResponse = {
 };
 
 //
-// createQuestionBankMultipleChoiceAnswers
+// getQuestionBank
 //
-export const QuestionBankMultipleChoiceAnswersToPostWithWrongQuestionBankId = 9999;
-
-export const createQuestionBankMultipleChoiceAnswersRequestBody = {
-  atQuestionBankId: 2,
-  answer: "Yes"
-};
-
-export const createQuestionBankMultipleChoiceAnswersDBResponse = {
-  recordset: [{ ID: 1 }],
-};
-
-export const createQuestionBankMultipleChoiceAnswersAPIResponse = {
-  id: 1,
-  companyId: 3,
-  companyName: 'Artsy Tartsy Bakery',
-  atQuestionBankId: 2,
-  questionTitle: 'Question 6',
-  answer: 'Yes'
-};
-
 export const getQuestionBankByIdDBResponseFromAnotherCompany = {
   recordset: [{
     id: 9999,
@@ -226,3 +206,37 @@ export const getQuestionBankByIdDBResponse = {
     isRequired: true
   }]
 };
+
+//
+// createQuestionBankMultipleChoiceAnswers
+//
+export const QuestionBankMultipleChoiceAnswersToPostWithWrongQuestionBankId = 9999;
+
+export const createQuestionBankMultipleChoiceAnswersRequestBody = {
+  atQuestionBankId: 2,
+  answer: "Yes"
+};
+
+export const createQuestionBankMultipleChoiceAnswersDBResponse = {
+  recordset: [{ ID: 1 }],
+};
+
+export const createQuestionBankMultipleChoiceAnswersAPIResponse = {
+  id: 1,
+  companyId: 3,
+  companyName: 'Artsy Tartsy Bakery',
+  atQuestionBankId: 2,
+  questionTitle: 'Question 6',
+  answer: 'Yes'
+};
+
+//
+// updateQuestionBankMultipleChoiceAnswers
+//
+export const updateQuestionBankMultipleChoiceAnswersRequestBody = {
+  id: 1,
+  atQuestionBankId: 14,
+  answer: "Test 3 updated"
+};
+
+export const updateQuestionBankMultipleChoiceAnswersAPIResponse = true;
