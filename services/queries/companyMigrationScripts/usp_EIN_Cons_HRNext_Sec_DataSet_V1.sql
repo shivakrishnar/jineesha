@@ -577,7 +577,7 @@ GO
 
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%D%'
 		begin
-			select @cmdInsert = 'insert into'+trim(@cRecipientTablePath)+'HRnextAudit (D1.TransactionName, D1.UserName, D1.AuditDate)
+			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'HRnextAudit (D1.TransactionName, D1.UserName, D1.AuditDate)
 			select distinct D1.TransactionName, D1.UserName, D1.AuditDate
 			from '+trim(@cDonorTablePath)+'HRnextAudit D1
 			join '+trim(@cDonorTablePath)+'HRnextAuditDetail D4 on D4.HRnextAuditID = D1.ID
@@ -596,7 +596,7 @@ GO
 
 		if @cTableToRun = 'ZZZ' or @cTableToRun like '%E%'
 		begin
-			select @cmdInsert = 'insert into'+trim(@cRecipientTablePath)+'HRnextAuditDetail (HRnextAuditID, CompanyID, AffectedEmployee, ActionType, FieldChanged, OldValue, NewValue, AreaOfChange, KeyDetails)
+			select @cmdInsert = 'insert into '+trim(@cRecipientTablePath)+'HRnextAuditDetail (HRnextAuditID, CompanyID, AffectedEmployee, ActionType, FieldChanged, OldValue, NewValue, AreaOfChange, KeyDetails)
 			select R1.ID, '+@cRecipientCompany_ID+' as CompanyID, D1.AffectedEmployee, D1.ActionType, D1.FieldChanged, D1.OldValue, D1.NewValue, D1.AreaOfChange, D1.KeyDetails
 			from '+trim(@cDonorTablePath)+'HRnextAuditDetail D1
 			join '+trim(@cDonorTablePath)+'HRnextAudit D2 on D2.ID = D1.HRNextAuditID
