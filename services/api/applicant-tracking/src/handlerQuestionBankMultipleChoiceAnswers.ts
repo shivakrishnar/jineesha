@@ -139,3 +139,30 @@ export const updateQuestionBankMultipleChoiceAnswers = utilService.gatewayEventH
 
     return { statusCode: 200, body: apiResult }
 });
+
+/**
+ * Delete ATQuestionBankMultipleChoiceAnswers.
+ */
+export const deleteQuestionBankMultipleChoiceAnswers = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerQuestionBankMultipleChoiceAnswers.deleteQuestionBankMultipleChoiceAnswers');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdAndIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId, companyId, id } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    const apiResult = await applicantTrackingService.questionBankMultipleChoiceAnswersService.deleteQuestionBankMultipleChoiceAnswers(tenantId, companyId, userEmail, id);
+
+    return { statusCode: 200, body: apiResult }
+});

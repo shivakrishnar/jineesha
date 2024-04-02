@@ -337,7 +337,16 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/question-bank-multiple-choice-answers
             method: put
             cors:
-              origin: '*'                                                       
+              origin: '*' 
+
+  deleteQuestBankMultChoiceAnswers:
+    handler: src/handlerQuestionBankMultipleChoiceAnswers.deleteQuestionBankMultipleChoiceAnswers
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank-multiple-choice-answers/{id}
+            method: delete
+            cors:
+              origin: '*'                                                      
 
   updateApplicationVersion:
     handler: src/handlerApplicationVersion.updateApplicationVersion

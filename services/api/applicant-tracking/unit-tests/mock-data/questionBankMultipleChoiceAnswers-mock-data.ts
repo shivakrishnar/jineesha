@@ -163,6 +163,17 @@ export const getQuestionBankMultipleChoiceAnswersByIdDBResponse = {
   }]
 };
 
+export const getQuestionBankMultipleChoiceAnswersByIdDBResponseFromAnotherCompany = {
+  recordset: [{
+    id: 1,
+    companyId: 444,
+    companyName: 'Another Company',
+    atQuestionBankId: 2,
+    questionTitle: 'Question 6',
+    answer: 'Yes'
+  }]
+};
+
 export const getQuestionBankMultipleChoiceAnswersByIdDBResponseEmpty = {
   recordset: {}
 };
@@ -240,3 +251,11 @@ export const updateQuestionBankMultipleChoiceAnswersRequestBody = {
 };
 
 export const updateQuestionBankMultipleChoiceAnswersAPIResponse = true;
+
+//
+// deleteQuestionBankMultipleChoiceAnswers
+//
+export const QuestionBankMultipleChoiceAnswersToDeleteId = '1';
+export const QuestionBankMultipleChoiceAnswersToDeleteAnotherId = '4444';
+export const QuestionBankMultipleChoiceAnswersToDeleteIdWithCharacter = '1abc';
+export const deleteQuestionBankMultipleChoiceAnswersAPIResponse = true;
