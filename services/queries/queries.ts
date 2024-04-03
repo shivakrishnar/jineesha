@@ -340,4 +340,7 @@ export const Queries = {
     createJobPosting: fs.readFileSync(path.join(basePath, 'applicant-tracking/createJobPosting.sql')).toString(),
     updateJobPosting: fs.readFileSync(path.join(basePath, 'applicant-tracking/updateJobPosting.sql')).toString(),
     deleteJobPosting: fs.readFileSync(path.join(basePath, 'applicant-tracking/deleteJobPosting.sql')).toString(),
+    
+    getJobPostingResponsibleUserByJobPostingAndUser: fs.readFileSync(path.join(basePath, 'applicant-tracking/getJobPostingResponsibleUserByJobPostingAndUser.sql')).toString(),
+    createJobPostingResponsibleUser: fs.readFileSync(path.join(basePath, 'applicant-tracking/createJobPostingResponsibleUser.sql')).toString(),
 };

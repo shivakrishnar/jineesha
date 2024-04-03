@@ -6,6 +6,7 @@ import * as ApplicationVersionService from './ApplicationVersion.Service';
 import * as ApplicationVersionCustomQuestionService from './ApplicationVersionCustomQuestion.Service';
 import * as QuestionBankMultipleChoiceAnswersService from './QuestionBankMultipleChoiceAnswers.Service';
 import * as JobPostingService from './JobPosting.Service';
+import * as JobPostingResponsibleUserService from './JobPostingResponsibleUser.Service';
 
 const questionTypeService = QuestionTypeService;
 const questionBankService = QuestionBankService;
@@ -15,6 +16,7 @@ const applicationVersionService = ApplicationVersionService;
 const applicationVersionCustomQuestionService = ApplicationVersionCustomQuestionService;
 const questionBankMultipleChoiceAnswersService = QuestionBankMultipleChoiceAnswersService;
 const jobPostingService = JobPostingService;
+const jobPostingResponsibleUserService = JobPostingResponsibleUserService;
 
 export { 
     questionTypeService,
@@ -25,4 +27,5 @@ export {
     applicationVersionCustomQuestionService,
     questionBankMultipleChoiceAnswersService,
     jobPostingService,
+    jobPostingResponsibleUserService,
 };

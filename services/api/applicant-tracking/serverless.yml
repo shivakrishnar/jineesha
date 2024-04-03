@@ -438,6 +438,15 @@ functions:
             cors:
               origin: '*'
 
+  createJobPostingResponsibleUser:
+    handler: src/handlerJobPostingResponsibleUser.createJobPostingResponsibleUser
+    events:
+        - http:
+            path: /tenants/{tenantId}/job-posting-responsible-user
+            method: post
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
