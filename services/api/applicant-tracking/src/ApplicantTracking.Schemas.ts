@@ -262,3 +262,13 @@ export const updateJobPostingCheckPropertiesSchema = {
     isOpen: { required: false, type: Boolean },
     jazzHrPositionOpeningId: { required: false, type: Number }
 };
+
+export const createJobPostingResponsibleUserValidationSchema = Yup.object().shape({
+    aTJobPostingId: Yup.number().required('aTJobPostingId is required'),
+    hrNextUserId: Yup.number().required('hrNextUserId is required')
+});
+
+export const createJobPostingResponsibleUserCheckPropertiesSchema = {
+    aTJobPostingId: { required: true, type: Number },
+    hrNextUserId: { required: true, type: Number }
+};

@@ -186,3 +186,8 @@ export interface IJobPostingPUT {
     isOpen: boolean,
     jazzHrPositionOpeningId?: number
 }
+
+export interface IJobPostingResponsibleUser {
+    aTJobPostingId: number;
+	hrNextUserId: number;
+}
