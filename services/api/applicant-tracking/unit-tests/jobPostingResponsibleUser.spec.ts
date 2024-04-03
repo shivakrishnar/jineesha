@@ -56,3 +56,90 @@ describe('createJobPostingResponsibleUser', () => {
             });
     });
 });
+
+describe('deleteJobPostingResponsibleUser', () => {
+
+    test('jobPostingId must be an integer', () => {
+        return jobPostingResponsibleUserService.deleteJobPostingResponsibleUser(
+            sharedMockData.tenantId, 
+            mockData.jobPostingIdWithCharacter,
+            mockData.hrNextUserId,
+            sharedMockData.userEmail
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.jobPostingIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('hrNextUserId must be an integer', () => {
+        return jobPostingResponsibleUserService.deleteJobPostingResponsibleUser(
+            sharedMockData.tenantId, 
+            mockData.jobPostingId,
+            mockData.hrNextUserIdWithCharacter,
+            sharedMockData.userEmail
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.hrNextUserIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('The requested resource must exist', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async() => {
+            return await Promise.resolve(mockData.jobPostingResponsibleUserResponseEmpty);
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return jobPostingResponsibleUserService.deleteJobPostingResponsibleUser(
+            sharedMockData.tenantId, 
+            mockData.jobPostingId,
+            mockData.hrNextUserId,
+            sharedMockData.userEmail
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toEqual('');
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('deletes JobPostingResponsibleUser', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'deleteJobPostingResponsibleUser'){
+                return true;
+            } else if (payload.queryName === 'getJobPostingResponsibleUserByJobPostingAndUser') {
+                const result = await Promise.resolve(mockData.getJobPostingResponsibleUserDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await jobPostingResponsibleUserService
+            .deleteJobPostingResponsibleUser(
+                sharedMockData.tenantId,
+                mockData.jobPostingId,
+                mockData.hrNextUserId,
+                sharedMockData.userEmail,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.deleteJobPostingResponsibleUserResponse);
+            });
+    });
+});

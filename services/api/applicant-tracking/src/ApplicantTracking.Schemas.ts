@@ -37,6 +37,12 @@ export const pathParametersForTenantIdAndApplicationVersionIdAndQuestionBankIdSc
     questionBankId: { required: true, type: String }
 };
 
+export const pathParametersForTenantIdAndJobPostingIdAndHRnextUserIdSchema = {
+    tenantId: { required: true, type: UUID },
+    atJobPostingId: { required: true, type: String },
+    hrNextUserId: { required: true, type: String }
+};
+
 export const createQuestionBankValidationSchema = Yup.object().shape({
     companyId: Yup.number().required('companyId is required'),
     atQuestionTypeId: Yup.number().required('atQuestionTypeId is required'),
@@ -264,11 +270,11 @@ export const updateJobPostingCheckPropertiesSchema = {
 };
 
 export const createJobPostingResponsibleUserValidationSchema = Yup.object().shape({
-    aTJobPostingId: Yup.number().required('aTJobPostingId is required'),
+    atJobPostingId: Yup.number().required('aTJobPostingId is required'),
     hrNextUserId: Yup.number().required('hrNextUserId is required')
 });
 
 export const createJobPostingResponsibleUserCheckPropertiesSchema = {
-    aTJobPostingId: { required: true, type: Number },
+    atJobPostingId: { required: true, type: Number },
     hrNextUserId: { required: true, type: Number }
 };

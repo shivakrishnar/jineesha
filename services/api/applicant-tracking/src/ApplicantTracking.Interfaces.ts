@@ -188,6 +188,6 @@ export interface IJobPostingPUT {
 }
 
 export interface IJobPostingResponsibleUser {
-    aTJobPostingId: number;
+    atJobPostingId: number;
 	hrNextUserId: number;
 }
