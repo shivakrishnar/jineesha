@@ -2,7 +2,7 @@
 // createJobPostingResponsibleUser
 //
 export const createJobPostingResponsibleUserRequestBody = {
-    aTJobPostingId: 11,
+    atJobPostingId: 11,
     hrNextUserId: 33,
 };
 
@@ -16,7 +16,26 @@ export const createJobPostingResponsibleUserDBResponseEmpty = {
 
 export const getJobPostingResponsibleUserDBResponse = {
     recordset: [{ 
-        aTJobPostingId: 11,
+        atJobPostingId: 11,
         hrNextUserId: 33
     }],
 };
+
+//
+// deleteJobPostingResponsibleUser
+//
+
+export const jobPostingIdWithCharacter = '1abc';
+export const hrNextUserIdWithCharacter = '1abc';
+
+export const jobPostingId = '11';
+export const hrNextUserId = '33';
+
+export const jobPostingResponsibleUserResponseEmpty = {
+    recordsets: [[]],
+    recordset: [],
+    output: {},
+    rowsAffected: [],
+};
+
+export const deleteJobPostingResponsibleUserResponse = true;

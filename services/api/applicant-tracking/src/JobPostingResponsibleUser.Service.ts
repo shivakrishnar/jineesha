@@ -12,7 +12,7 @@ import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-ap
  */
 export async function getJobPostingResponsibleUserByJobPostingAndUser(
     tenantId: string,
-    aTJobPostingId: string,
+    atJobPostingId: string,
     hrNextUserId: string): 
 Promise<atInterfaces.IJobPostingResponsibleUser> {
     console.info('jobPostingResponsibleUser.Service.getJobPostingResponsibleUserByJobPostingAndUser');
@@ -20,8 +20,8 @@ Promise<atInterfaces.IJobPostingResponsibleUser> {
     //
     // validation
     //
-    if (Number.isNaN(Number(aTJobPostingId))) {
-        throw errorService.getErrorResponse(30).setDeveloperMessage(`${aTJobPostingId} is not a valid number`);
+    if (Number.isNaN(Number(atJobPostingId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${atJobPostingId} is not a valid number`);
     }
     if (Number.isNaN(Number(hrNextUserId))) {
         throw errorService.getErrorResponse(30).setDeveloperMessage(`${hrNextUserId} is not a valid number`);
@@ -29,7 +29,7 @@ Promise<atInterfaces.IJobPostingResponsibleUser> {
     
     try {
         const query = new ParameterizedQuery('getJobPostingResponsibleUserByJobPostingAndUser', Queries.getJobPostingResponsibleUserByJobPostingAndUser);
-        query.setParameter('@ATJobPostingID', aTJobPostingId);
+        query.setParameter('@ATJobPostingID', atJobPostingId);
         query.setParameter('@HRnextUserID', hrNextUserId);
 
         const payload = {
@@ -71,7 +71,7 @@ export async function createJobPostingResponsibleUser(
         // inserting data
         //
         const query = new ParameterizedQuery('createJobPostingResponsibleUser', Queries.createJobPostingResponsibleUser);
-        query.setParameter('@ATJobPostingID', requestBody.aTJobPostingId);
+        query.setParameter('@ATJobPostingID', requestBody.atJobPostingId);
         query.setParameter('@HRnextUserID', requestBody.hrNextUserId);
 
         const payload = {
@@ -94,7 +94,7 @@ export async function createJobPostingResponsibleUser(
             // getting data
             //
             const apiresult = await getJobPostingResponsibleUserByJobPostingAndUser(
-                tenantId, requestBody.aTJobPostingId.toString(), requestBody.hrNextUserId.toString());
+                tenantId, requestBody.atJobPostingId.toString(), requestBody.hrNextUserId.toString());
 
             //
             // auditing log
@@ -116,6 +116,77 @@ export async function createJobPostingResponsibleUser(
             throw errorService.getErrorResponse(74).setDeveloperMessage('Was not possible to create the resource');
         }
         
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Delete ATJobPostingResponsibleUser.
+ */
+export async function deleteJobPostingResponsibleUser(
+    tenantId: string,
+    atJobPostingId: string,
+    hrNextUserId: string,
+    userEmail: string
+): Promise<boolean> {
+    console.info('jobPostingResponsibleUser.Service.deleteJobPostingResponsibleUser');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(atJobPostingId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${atJobPostingId} is not a valid number`);
+    }
+    if (Number.isNaN(Number(hrNextUserId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${hrNextUserId} is not a valid number`);
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getJobPostingResponsibleUserByJobPostingAndUser(tenantId, atJobPostingId, hrNextUserId);
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+
+        //
+        // deleting data
+        //
+        const query = new ParameterizedQuery('deleteJobPostingResponsibleUser', Queries.deleteJobPostingResponsibleUser);
+        query.setParameter('@ATJobPostingID', atJobPostingId);
+        query.setParameter('@HRnextUserID', hrNextUserId);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            type: AuditActionType.Delete,
+            companyId: null,
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

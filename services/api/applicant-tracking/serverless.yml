@@ -447,6 +447,15 @@ functions:
             cors:
               origin: '*'
 
+  deleteJobPostingResponsibleUser:
+    handler: src/handlerJobPostingResponsibleUser.deleteJobPostingResponsibleUser
+    events:
+        - http:
+            path: /tenants/{tenantId}/job-postings/{atJobPostingId}/hr-next-users/{hrNextUserId}/job-posting-responsible-user
+            method: delete
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

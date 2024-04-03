@@ -35,3 +35,31 @@ export const createJobPostingResponsibleUser = utilService.gatewayEventHandlerV2
 
     return { statusCode: 201, body: apiResult }
 });
+
+/**
+ * Delete ATJobPostingResponsibleUser.
+ */
+export const deleteJobPostingResponsibleUser = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.JobPostingResponsibleUserHandler.deleteJobPostingResponsibleUser');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndJobPostingIdAndHRnextUserIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId, atJobPostingId, hrNextUserId } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    const apiResult = await applicantTrackingService.jobPostingResponsibleUserService
+        .deleteJobPostingResponsibleUser(tenantId, atJobPostingId, hrNextUserId, userEmail);
+
+    return { statusCode: 200, body: apiResult }
+});
