@@ -7,6 +7,7 @@ import * as ApplicationVersionCustomQuestionService from './ApplicationVersionCu
 import * as QuestionBankMultipleChoiceAnswersService from './QuestionBankMultipleChoiceAnswers.Service';
 import * as JobPostingService from './JobPosting.Service';
 import * as JobPostingResponsibleUserService from './JobPostingResponsibleUser.Service';
+import * as ApplicationService from './Application.Service';
 
 const questionTypeService = QuestionTypeService;
 const questionBankService = QuestionBankService;
@@ -17,6 +18,7 @@ const applicationVersionCustomQuestionService = ApplicationVersionCustomQuestion
 const questionBankMultipleChoiceAnswersService = QuestionBankMultipleChoiceAnswersService;
 const jobPostingService = JobPostingService;
 const jobPostingResponsibleUserService = JobPostingResponsibleUserService;
+const applicationService = ApplicationService;
 
 export { 
     questionTypeService,
@@ -28,4 +30,5 @@ export {
     questionBankMultipleChoiceAnswersService,
     jobPostingService,
     jobPostingResponsibleUserService,
+    applicationService,
 };
