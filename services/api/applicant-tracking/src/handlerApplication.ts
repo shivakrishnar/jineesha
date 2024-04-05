@@ -30,3 +30,27 @@ export const getApplicationByCompany = utilService.gatewayEventHandlerV2(async (
 
     return await applicantTrackingService.applicationService.getApplicationByCompany(tenantId, companyId, event.queryStringParameters, domainName, path);
 });
+
+/**
+ * Returns a list of ATApplication by Key.
+ */
+export const getApplicationByKey = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerApplication.getApplicationByKey');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndApplicationKey);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId, applicationKey } = event.pathParameters;
+
+    return await applicantTrackingService.applicationService.getApplicationByKey(tenantId, applicationKey);
+});

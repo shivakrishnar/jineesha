@@ -492,6 +492,15 @@ functions:
             cors:
               origin: '*'              
 
+  getApplicationByKey:
+    handler: src/handlerApplication.getApplicationByKey
+    events:
+        - http:
+            path: /tenants/{tenantId}/applications/{applicationKey}
+            method: get
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

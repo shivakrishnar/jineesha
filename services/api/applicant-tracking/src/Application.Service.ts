@@ -53,3 +53,44 @@ export async function getApplicationByCompany(
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * Returns a list of ATApplication by Key.
+ */
+export async function getApplicationByKey(
+    tenantId: string,
+    applicationKey: string
+): Promise<atInterfaces.IApplicationGET> {
+    console.info('Application.Service.getApplicationByKey');
+
+    //
+    // getting data
+    //
+    try {
+        const query = new ParameterizedQuery('getApplicationByKey', Queries.getApplicationByKey);
+        query.setStringParameter('@ATApplicationKey', applicationKey);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        if (dbResults && dbResults.recordset && dbResults.recordset.length == 1) {
+            const result: atInterfaces.IApplicationGET = dbResults.recordset[0];
+            return result;
+        }
+        else {
+            return dbResults.recordset;
+        }
+        
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
