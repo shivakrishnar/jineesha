@@ -320,3 +320,16 @@ export interface IApplicationGET {
 	previousEmployer2Title?: string,
 	previousEmployer3Title?: string
 }
+
+export interface IApplicationQuestionBankAnswerGET {
+    id: number,
+    companyId: number,
+	companyName: string,
+    applicationId: number,
+    originalATQuestionTypeId?: number,
+    originalQuestionText: string,
+    answerDate?: Date,
+    answerYesNo?: boolean,
+    answerFreeForm: string,
+    answerMultipleChoice: string
+}
