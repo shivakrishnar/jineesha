@@ -465,6 +465,33 @@ functions:
             cors:
               origin: '*'
 
+  getAppQuestBankAnswerById:
+    handler: src/handlerApplicationQuestionBankAnswer.getApplicationQuestionBankAnswerById
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-question-bank-answer/{id}
+            method: get
+            cors:
+              origin: '*'
+
+  getAppQuestBankAnswerByTenant:
+    handler: src/handlerApplicationQuestionBankAnswer.getApplicationQuestionBankAnswerByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/application-question-bank-answer
+            method: get
+            cors:
+              origin: '*'
+
+  getAppQuestBankAnswerByCompany:
+    handler: src/handlerApplicationQuestionBankAnswer.getApplicationQuestionBankAnswerByCompany
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-question-bank-answer
+            method: get
+            cors:
+              origin: '*'              
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
