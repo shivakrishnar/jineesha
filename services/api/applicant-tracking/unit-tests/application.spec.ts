@@ -80,3 +80,42 @@ describe('getApplicationByCompany', () => {
     });
 
 });
+
+describe('getApplicationById', () => {
+
+    test('returns an Application', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'getApplicationByKey') {
+                const result = await Promise.resolve(mockData.getApplicationByKeyDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        return await applicationService
+            .getApplicationByKey(
+                sharedMockData.tenantId,
+                mockData.applicationToGetByKey,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.getApplicationByKeyAPIResponse);
+            });
+    });
+
+    test('getting empty data', async () => {
+        (utilService as any).invokeInternalService = jest.fn(() => {
+            const result: any = Promise.resolve(mockData.getApplicationByKeyDBResponseEmpty);
+            return result;
+        });
+
+        return await applicationService
+            .getApplicationByKey(
+                sharedMockData.tenantId,
+                mockData.applicationToGetByKey,
+            )
+            .then((result) => {
+                expect(result).toEqual([]);
+            });
+    });
+});

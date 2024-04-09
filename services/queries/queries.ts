@@ -346,6 +346,7 @@ export const Queries = {
     deleteJobPostingResponsibleUser: fs.readFileSync(path.join(basePath, 'applicant-tracking/deleteJobPostingResponsibleUser.sql')).toString(),
 
     getApplicationByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationByCompany.sql')).toString(),
+    getApplicationByKey: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationByKey.sql')).toString(),
 
     getApplicationQuestionBankAnswerById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationQuestionBankAnswerById.sql')).toString(),
     getApplicationQuestionBankAnswerByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationQuestionBankAnswerByTenant.sql')).toString(),
