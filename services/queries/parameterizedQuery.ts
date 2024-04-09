@@ -62,4 +62,17 @@ export class ParameterizedQuery extends Query {
             this.setStringParameter(name, value);
         }
     }
+
+    /**
+     * Sets an SQL parameter to a desired value after sanitizing the string
+     * @param {any} name The identifier of the parameter
+     * @param {string} value The parameter's value
+     */
+    public setIntegerOrNullParameter(name: any, value: number): void {
+        if (!value || Number.isNaN(value)) {
+            this.setParameter(name, 'NULL');
+        } else {
+            this.setParameter(name, value);
+        }
+    }
 }

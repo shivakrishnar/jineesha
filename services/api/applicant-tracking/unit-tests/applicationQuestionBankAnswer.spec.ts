@@ -213,3 +213,51 @@ describe('getApplicationQuestionBankAnswerByCompany', () => {
     });
 
 });
+
+describe('createApplicationQuestionBankAnswer', () => {
+
+    test('companyId must be an integer', () => {
+        return ApplicationQuestionBankAnswerService.createApplicationQuestionBankAnswer(
+            sharedMockData.tenantId, 
+            sharedMockData.companyIdWithCharacter,
+            sharedMockData.userEmail,
+            mockData.createApplicationQuestionBankAnswerRequestBody,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${sharedMockData.companyIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('creates and returns a ApplicationQuestionBankAnswer', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'createApplicationQuestionBankAnswer'){
+                const result = await Promise.resolve(mockData.createApplicationQuestionBankAnswerDBResponse);
+                return result;
+            } else if (payload.queryName === 'getApplicationQuestionBankAnswerById') {
+                const result = await Promise.resolve(mockData.getApplicationQuestionBankAnswerByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await ApplicationQuestionBankAnswerService
+            .createApplicationQuestionBankAnswer(
+                sharedMockData.tenantId,
+                sharedMockData.companyId,
+                sharedMockData.userEmail,
+                mockData.createApplicationQuestionBankAnswerRequestBody,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.createApplicationQuestionBankAnswerAPIResponse);
+            });
+    });
+});
