@@ -465,6 +465,24 @@ functions:
             cors:
               origin: '*'
 
+  getApplicationByKey:
+    handler: src/handlerApplication.getApplicationByKey
+    events:
+        - http:
+            path: /tenants/{tenantId}/applications/{applicationKey}
+            method: get
+            cors:
+              origin: '*'
+
+  createApplication:
+    handler: src/handlerApplication.createApplication
+    events:
+        - http:
+            path: /tenants/{tenantId}/application
+            method: post
+            cors:
+              origin: '*'
+
   getAppQuestBankAnswerById:
     handler: src/handlerApplicationQuestionBankAnswer.getApplicationQuestionBankAnswerById
     events:
@@ -501,14 +519,7 @@ functions:
             cors:
               origin: '*'             
 
-  getApplicationByKey:
-    handler: src/handlerApplication.getApplicationByKey
-    events:
-        - http:
-            path: /tenants/{tenantId}/applications/{applicationKey}
-            method: get
-            cors:
-              origin: '*'
+
 
 resources:
   Resources:
