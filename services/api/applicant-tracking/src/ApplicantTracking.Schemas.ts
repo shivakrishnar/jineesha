@@ -283,3 +283,23 @@ export const createJobPostingResponsibleUserCheckPropertiesSchema = {
     atJobPostingId: { required: true, type: Number },
     hrNextUserId: { required: true, type: Number }
 };
+
+export const createApplicationQuestionBankAnswerValidationSchema = Yup.object().shape({
+    atApplicationId: Yup.number().required('atApplicationId is required'),
+    originalATQuestionTypeId: Yup.number().nullable(),
+    originalQuestionText: Yup.string().required('originalQuestionText is required'),
+    answerDate: Yup.date().nullable(),
+    answerYesNo: Yup.boolean().nullable(),
+    answerFreeForm: Yup.string().required('answerFreeForm is required'),
+    answerMultipleChoice: Yup.string().required('answerMultipleChoice is required')
+});
+
+export const createApplicationQuestionBankAnswerCheckPropertiesSchema = {
+    atApplicationId: { required: true, type: Number },
+    originalATQuestionTypeId: { required: false, type: Number },
+    originalQuestionText: { required: true, type: String },
+    answerDate: { required: false, type: Date },
+    answerYesNo: { required: false, type: Boolean },
+    answerFreeForm: { required: true, type: String },
+    answerMultipleChoice: { required: true, type: String }
+};

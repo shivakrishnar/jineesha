@@ -490,7 +490,16 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/application-question-bank-answer
             method: get
             cors:
-              origin: '*'              
+              origin: '*'
+
+  createAppQuestBankAnswer:
+    handler: src/handlerApplicationQuestionBankAnswer.createApplicationQuestionBankAnswer
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-question-bank-answer
+            method: post
+            cors:
+              origin: '*'             
 
   getApplicationByKey:
     handler: src/handlerApplication.getApplicationByKey

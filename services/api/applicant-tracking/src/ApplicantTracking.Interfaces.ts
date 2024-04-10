@@ -333,3 +333,13 @@ export interface IApplicationQuestionBankAnswerGET {
     answerFreeForm: string,
     answerMultipleChoice: string
 }
+
+export interface IApplicationQuestionBankAnswerPOST {
+    atApplicationId: number,
+    originalATQuestionTypeId?: number,
+    originalQuestionText: string,
+    answerDate?: Date,
+    answerYesNo?: boolean,
+    answerFreeForm: string,
+    answerMultipleChoice: string
+}

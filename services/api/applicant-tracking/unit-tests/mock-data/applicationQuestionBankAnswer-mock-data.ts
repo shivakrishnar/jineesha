@@ -9,13 +9,13 @@ export const getApplicationQuestionBankAnswerByIdDBResponse = {
     id: 14,
     companyId: 3,
     companyName: 'Artsy Tartsy Bakery',
-    applicationId: 3,
+    atApplicationId: 3,
     originalATQuestionTypeId: 2,
-    originalQuestionText: 'some text for question 4 - seq 4',
-    answerDate: null,
-    answerYesNo: null,
-    answerFreeForm: null,
-    answerMultipleChoice: null
+    originalQuestionText: 'Testing question text',
+    answerDate: '2024-04-08',
+    answerYesNo: false,
+    answerFreeForm: 'Testing free form',
+    answerMultipleChoice: 'Testing multiple choice'
   }]
 };
 
@@ -24,16 +24,16 @@ export const getApplicationQuestionBankAnswerByIdDBResponseEmpty = {
 };
 
 export const getApplicationQuestionBankAnswerByIdAPIResponse = {
-    id: 14,
-    companyId: 3,
-    companyName: 'Artsy Tartsy Bakery',
-    applicationId: 3,
-    originalATQuestionTypeId: 2,
-    originalQuestionText: 'some text for question 4 - seq 4',
-    answerDate: null,
-    answerYesNo: null,
-    answerFreeForm: null,
-    answerMultipleChoice: null
+  id: 14,
+  companyId: 3,
+  companyName: 'Artsy Tartsy Bakery',
+  atApplicationId: 3,
+  originalATQuestionTypeId: 2,
+  originalQuestionText: 'Testing question text',
+  answerDate: '2024-04-08',
+  answerYesNo: false,
+  answerFreeForm: 'Testing free form',
+  answerMultipleChoice: 'Testing multiple choice'
 };
 
 //
@@ -50,28 +50,28 @@ export const getApplicationQuestionBankAnswerByTenantDBResponse = {
       ],
       [
         {
-            id: 14,
-            companyId: 3,
-            companyName: 'Artsy Tartsy Bakery',
-            applicationId: 3,
-            originalATQuestionTypeId: 2,
-            originalQuestionText: 'some text for question 4 - seq 4',
-            answerDate: null,
-            answerYesNo: null,
-            answerFreeForm: null,
-            answerMultipleChoice: null
+          id: 14,
+          companyId: 3,
+          companyName: 'Artsy Tartsy Bakery',
+          atApplicationId: 3,
+          originalATQuestionTypeId: 2,
+          originalQuestionText: 'Testing question text',
+          answerDate: '2024-04-08',
+          answerYesNo: false,
+          answerFreeForm: 'Testing free form',
+          answerMultipleChoice: 'Testing multiple choice'
         },
         {
-            id: 15,
-            companyId: 4,
-            companyName: 'Another Company',
-            applicationId: 3,
-            originalATQuestionTypeId: 2,
-            originalQuestionText: 'some text for question 5 - seq 5',
-            answerDate: null,
-            answerYesNo: null,
-            answerFreeForm: null,
-            answerMultipleChoice: null
+          id: 15,
+          companyId: 4,
+          companyName: 'Another Company',
+          atApplicationId: 3,
+          originalATQuestionTypeId: 2,
+          originalQuestionText: 'some text for question 5 - seq 5',
+          answerDate: null,
+          answerYesNo: null,
+          answerFreeForm: null,
+          answerMultipleChoice: null
         }
       ]
     ],
@@ -92,30 +92,30 @@ export const getApplicationQuestionBankAnswerByTenantDBResponseEmpty = {
 };
 
 export const getApplicationQuestionBankAnswerByTenantAPIResponse = [
-    {
-        id: 14,
-        companyId: 3,
-        companyName: 'Artsy Tartsy Bakery',
-        applicationId: 3,
-        originalATQuestionTypeId: 2,
-        originalQuestionText: 'some text for question 4 - seq 4',
-        answerDate: null,
-        answerYesNo: null,
-        answerFreeForm: null,
-        answerMultipleChoice: null
-    },
-    {
-        id: 15,
-        companyId: 4,
-        companyName: 'Another Company',
-        applicationId: 3,
-        originalATQuestionTypeId: 2,
-        originalQuestionText: 'some text for question 5 - seq 5',
-        answerDate: null,
-        answerYesNo: null,
-        answerFreeForm: null,
-        answerMultipleChoice: null
-    }
+  {
+    id: 14,
+    companyId: 3,
+    companyName: 'Artsy Tartsy Bakery',
+    atApplicationId: 3,
+    originalATQuestionTypeId: 2,
+    originalQuestionText: 'Testing question text',
+    answerDate: '2024-04-08',
+    answerYesNo: false,
+    answerFreeForm: 'Testing free form',
+    answerMultipleChoice: 'Testing multiple choice'
+  },
+  {
+    id: 15,
+    companyId: 4,
+    companyName: 'Another Company',
+    atApplicationId: 3,
+    originalATQuestionTypeId: 2,
+    originalQuestionText: 'some text for question 5 - seq 5',
+    answerDate: null,
+    answerYesNo: null,
+    answerFreeForm: null,
+    answerMultipleChoice: null
+  }
 ];
 
 //
@@ -135,13 +135,13 @@ export const getApplicationQuestionBankAnswerByCompanyDBResponse = {
         id: 14,
         companyId: 3,
         companyName: 'Artsy Tartsy Bakery',
-        applicationId: 3,
+        atApplicationId: 3,
         originalATQuestionTypeId: 2,
-        originalQuestionText: 'some text for question 4 - seq 4',
-        answerDate: null,
-        answerYesNo: null,
-        answerFreeForm: null,
-        answerMultipleChoice: null
+        originalQuestionText: 'Testing question text',
+        answerDate: '2024-04-08',
+        answerYesNo: false,
+        answerFreeForm: 'Testing free form',
+        answerMultipleChoice: 'Testing multiple choice'
       }
     ]
   ],
@@ -166,12 +166,42 @@ export const getApplicationQuestionBankAnswerByCompanyAPIResponse = [
     id: 14,
     companyId: 3,
     companyName: 'Artsy Tartsy Bakery',
-    applicationId: 3,
+    atApplicationId: 3,
     originalATQuestionTypeId: 2,
-    originalQuestionText: 'some text for question 4 - seq 4',
-    answerDate: null,
-    answerYesNo: null,
-    answerFreeForm: null,
-    answerMultipleChoice: null
+    originalQuestionText: 'Testing question text',
+    answerDate: '2024-04-08',
+    answerYesNo: false,
+    answerFreeForm: 'Testing free form',
+    answerMultipleChoice: 'Testing multiple choice'
   }
 ];
+
+//
+// createApplicationQuestionBankAnswer
+//
+export const createApplicationQuestionBankAnswerRequestBody = {
+  atApplicationId: 3,
+  originalATQuestionTypeId: 2,
+  originalQuestionText: 'Testing question text',
+  answerDate: new Date('2024-04-08'),
+  answerYesNo: false,
+  answerFreeForm: 'Testing free form',
+  answerMultipleChoice: 'Testing multiple choice'
+};
+
+export const createApplicationQuestionBankAnswerDBResponse = {
+  recordset: [{ ID: 15 }],
+};
+
+export const createApplicationQuestionBankAnswerAPIResponse = {
+  id: 14,
+  companyId: 3,
+  companyName: 'Artsy Tartsy Bakery',
+  atApplicationId: 3,
+  originalATQuestionTypeId: 2,
+  originalQuestionText: 'Testing question text',
+  answerDate: '2024-04-08',
+  answerYesNo: false,
+  answerFreeForm: 'Testing free form',
+  answerMultipleChoice: 'Testing multiple choice'
+};

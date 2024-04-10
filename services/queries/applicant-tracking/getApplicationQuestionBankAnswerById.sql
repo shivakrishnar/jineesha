@@ -2,7 +2,7 @@ select
 	aqba.ID as id,
 	jp.CompanyID as companyId,
 	comp.CompanyName as companyName,
-	aqba.ATApplicationID as applicationId,
+	aqba.ATApplicationID as atApplicationId,
 	aqba.OriginalATQuestionTypeID as originalATQuestionTypeId,
 	aqba.OriginalQuestionText as originalQuestionText,
 	aqba.AnswerDate as answerDate,

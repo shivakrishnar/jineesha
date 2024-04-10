@@ -7,7 +7,7 @@ import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
-//import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
+import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
 
 
 /**
@@ -143,6 +143,90 @@ export async function getApplicationQuestionBankAnswerByCompany(
         const totalCount = dbResults.recordsets[0][0].totalCount;
         const results: atInterfaces.IApplicationQuestionBankAnswerGET[] = dbResults.recordsets[1];
         return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Create ATApplicationQuestionBankAnswer.
+ */
+export async function createApplicationQuestionBankAnswer(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IApplicationQuestionBankAnswerPOST
+): Promise<atInterfaces.IApplicationQuestionBankAnswerGET> {
+    console.info('ApplicationQuestionBankAnswer.Service.createApplicationQuestionBankAnswer');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (requestBody.answerDate && Number.isNaN(Date.parse(requestBody.answerDate.toString()))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${requestBody.answerDate} is not a valid date`);
+    }
+
+    try {
+        //
+        // inserting data
+        //
+        const query = new ParameterizedQuery('createApplicationQuestionBankAnswer', Queries.createApplicationQuestionBankAnswer);
+        query.setParameter('@OriginalATQuestionTypeID', requestBody.originalATQuestionTypeId);
+        query.setIntegerOrNullParameter('@ATApplicationID', requestBody.atApplicationId);
+        query.setStringParameter('@OriginalQuestionText', requestBody.originalQuestionText);
+        query.setStringOrNullParameter('@AnswerDate', requestBody.answerDate?.toString());
+        query.setBooleanParameter('@AnswerYesNo', requestBody.answerYesNo);
+        query.setStringParameter('@AnswerFreeForm', requestBody.answerFreeForm);
+        query.setStringParameter('@AnswerMultipleChoice', requestBody.answerMultipleChoice);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        const queryResult: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const id: any = queryResult.recordset[0].ID;
+        if (id) {
+            //
+            // getting data
+            //
+            const apiresult = await getApplicationQuestionBankAnswerById(tenantId, companyId, id);
+
+            //
+            // auditing log
+            //
+            const logResult = { ...apiresult };
+            logResult.originalQuestionText = utilService.sanitizeStringForSql(logResult.originalQuestionText);
+            logResult.answerFreeForm = utilService.sanitizeStringForSql(logResult.answerFreeForm);
+            logResult.answerMultipleChoice = utilService.sanitizeStringForSql(logResult.answerMultipleChoice);
+            delete logResult.companyId;
+            delete logResult.companyName;
+
+            utilService.logToAuditTrail({
+                userEmail,
+                newFields: logResult,
+                type: AuditActionType.Insert,
+                companyId: companyId,
+                areaOfChange: AuditAreaOfChange.ApplicantTracking,
+                tenantId,
+            } as IAudit);
+
+            //
+            // api response
+            //
+            return apiresult;
+        } else {
+            throw errorService.getErrorResponse(74).setDeveloperMessage('Was not possible to create the resource');
+        }
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
