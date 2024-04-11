@@ -119,3 +119,34 @@ describe('getApplicationById', () => {
             });
     });
 });
+
+describe('createApplication', () => {
+
+    test('creates and returns a Application', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'createApplication'){
+                const result = await Promise.resolve(mockData.createApplicationDBResponse);
+                return result;
+            } else if (payload.queryName === 'getApplicationByKey') {
+                const result = await Promise.resolve(mockData.getApplicationByKeyDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await applicationService
+            .createApplication(
+                sharedMockData.tenantId,
+                sharedMockData.userEmail,
+                mockData.createApplicationRequestBody,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.createApplicationAPIResponse);
+            });
+    });
+});
