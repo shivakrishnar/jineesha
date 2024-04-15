@@ -700,3 +700,27 @@ export const createApplicationAPIResponse = {
   previousEmployer2Title: null,
   previousEmployer3Title: null
 };
+
+//
+// updateApplication
+//
+export const updateApplicationRequestBody = {
+  atApplicationKey: '83F7C6F5-B1E9-4B44-B4D1-1974D371C5E4',
+  firstName: 'Jason',
+  lastName: 'Momoa',
+  address1: 'Street One',
+  city: 'Burlington',
+  zip: '12345-1234',
+  countryStateTypeId: 24,
+  emailAddress: 'jason@gmail.com',
+  previousEmployer1MayWeContact: false,
+  previousEmployer2MayWeContact: false,
+  previousEmployer3MayWeContact: false,
+  atJobPostingId: 13,
+  esignName: 'John1 John1',
+  isVetStatus_AFServiceMedal: false,
+  vetStatus_MilitaryReserve: 'Declined to disclose - N/A',
+  vetStatus_Veteran: 'Declined to disclose - N/A'
+};
+
+export const updateApplicationAPIResponse = true;
