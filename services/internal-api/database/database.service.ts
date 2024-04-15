@@ -163,7 +163,15 @@ export async function findConnectionString(tenantId: string): Promise<Connection
 
     try {
         const response = await rdsClient.describeDBInstances().promise();
-        const rdsInstances: string[] = response.DBInstances.map((instance: DBInstance) => {
+        console.info('RDS instances: ', response.DBInstances);
+
+        //filter out RDS instances that are not in 'available' status (e.g. 'creating', 'deleting', etc.)
+        const availableInstances: DBInstance[] = response.DBInstances.filter((instance: DBInstance) => {
+            return instance.DBInstanceStatus === 'available';
+        });
+        console.info('RDS instances in available status: ', availableInstances);
+
+        const rdsInstances: string[] = availableInstances.map((instance: DBInstance) => {
             return instance.Endpoint.Address;
         });
 
