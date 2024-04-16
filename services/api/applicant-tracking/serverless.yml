@@ -483,6 +483,15 @@ functions:
             cors:
               origin: '*'
 
+  updateApplication:
+    handler: src/handlerApplication.updateApplication
+    events:
+        - http:
+            path: /tenants/{tenantId}/application
+            method: put
+            cors:
+              origin: '*'
+
   getAppQuestBankAnswerById:
     handler: src/handlerApplicationQuestionBankAnswer.getApplicationQuestionBankAnswerById
     events:

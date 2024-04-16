@@ -83,3 +83,33 @@ export const createApplication = utilService.gatewayEventHandlerV2(async ({ secu
     const apiResult = await applicantTrackingService.applicationService.createApplication(tenantId, userEmail, requestBody);
     return { statusCode: 201, body: apiResult }
 });
+
+/**
+ * Update ATApplication.
+ */
+export const updateApplication = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerApplication.ATApplication');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    await utilService.validateRequestBody(schemas.updateApplicationValidationSchema, requestBody);
+    utilService.checkAdditionalProperties(schemas.updateApplicationCheckPropertiesSchema, requestBody, 'Application');
+
+    const apiResult = await applicantTrackingService.applicationService.updateApplication(tenantId, userEmail, requestBody);
+
+    return { statusCode: 200, body: apiResult }
+});

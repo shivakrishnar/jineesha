@@ -150,3 +150,33 @@ describe('createApplication', () => {
             });
     });
 });
+
+describe('updateApplication', () => {
+
+    test('updates Application', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'updateApplication'){
+                return true;
+            } else if (payload.queryName === 'getApplicationByKey') {
+                const result = await Promise.resolve(mockData.getApplicationByKeyDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await applicationService
+            .updateApplication(
+                sharedMockData.tenantId,
+                sharedMockData.userEmail,
+                mockData.updateApplicationRequestBody,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.updateApplicationAPIResponse);
+            });
+    });
+});

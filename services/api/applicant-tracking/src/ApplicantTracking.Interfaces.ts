@@ -474,8 +474,9 @@ export interface IApplicationPOST {
 	previousEmployer3Title?: string
 }
 
-export interface IApplicationPOST {
+export interface IApplicationPUT {
 	atSoftStatusTypeId?: number,
+	atApplicationKey: string,
 	receivedDate?: Date,
 	firstName?: string,
 	middleName?: string,
