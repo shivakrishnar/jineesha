@@ -110,3 +110,33 @@ export const createApplicationQuestionBankAnswer = utilService.gatewayEventHandl
 
     return { statusCode: 201, body: apiResult }
 });
+
+/**
+ * Update ATApplicationQuestionBankAnswer.
+ */
+export const updateApplicationQuestionBankAnswer = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerApplicationQuestionBankAnswer.updateApplicationQuestionBankAnswer');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId, companyId } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    await utilService.validateRequestBody(schemas.updateApplicationQuestionBankAnswerValidationSchema, requestBody);
+    utilService.checkAdditionalProperties(schemas.updateApplicationQuestionBankAnswerCheckPropertiesSchema, requestBody, 'ApplicationQuestionBankAnswer');
+
+    const apiResult = await applicantTrackingService.applicationQuestionBankAnswerService.updateApplicationQuestionBankAnswer(tenantId, companyId, userEmail, requestBody);
+
+    return { statusCode: 200, body: apiResult }
+});
