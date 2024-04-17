@@ -30,3 +30,27 @@ export const getApplicationNoteByApplicationId = utilService.gatewayEventHandler
 
     return await applicantTrackingService.applicationNoteService.getApplicationNoteByApplicationId(tenantId, applicationId, event.queryStringParameters, domainName, path);
 });
+
+/**
+ * Returns a list of ATApplicationNote by id.
+ */
+export const getApplicationNoteById = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerApplicationNote.getApplicationNoteById');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId, id } = event.pathParameters;
+
+    return await applicantTrackingService.applicationNoteService.getApplicationNoteById(tenantId, id);
+});

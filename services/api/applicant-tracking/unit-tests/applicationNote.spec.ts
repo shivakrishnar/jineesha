@@ -81,3 +81,63 @@ describe('getApplicationNoteByApplicationId', () => {
     });
 
 });
+
+describe('getApplicationNoteById', () => {
+
+    test('id must be an integer', () => {
+        return applicationNoteService.getApplicationNoteById(
+            sharedMockData.tenantId, 
+            mockData.applicationNoteToGetByIdWithCharacter,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.applicationNoteToGetByIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('URL companyId must be the same as the requested resource companyId', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'getApplicationNoteById') {
+                const result = await Promise.resolve(mockData.getApplicationNoteByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        return applicationNoteService.getApplicationNoteById(
+            sharedMockData.tenantId, 
+            mockData.applicationNoteToGetById,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual('');
+                expect(error.moreInfo).toEqual('this record does not belong to this company');
+            });
+    });
+
+    test('returns an ApplicationNote', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'getApplicationNoteById') {
+                const result = await Promise.resolve(mockData.getApplicationNoteByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        return await applicationNoteService
+            .getApplicationNoteById(
+                sharedMockData.tenantId,
+                mockData.applicationNoteToGetById,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.getApplicationNoteByIdAPIResponse);
+            });
+    });
+});

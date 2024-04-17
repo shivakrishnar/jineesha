@@ -537,6 +537,15 @@ functions:
             cors:
               origin: '*'
 
+  getApplicationNoteById:
+    handler: src/handlerApplicationNote.getApplicationNoteById
+    events:
+        - http:
+            path: /tenants/{tenantId}/application-note/{id}
+            method: get
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
