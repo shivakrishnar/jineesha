@@ -469,7 +469,7 @@ functions:
     handler: src/handlerApplication.getApplicationByKey
     events:
         - http:
-            path: /tenants/{tenantId}/applications/{applicationKey}
+            path: /tenants/{tenantId}/applications/key/{applicationKey}
             method: get
             cors:
               origin: '*'
@@ -528,7 +528,14 @@ functions:
             cors:
               origin: '*'             
 
-
+  getApplicationNoteByApplicationId:
+    handler: src/handlerApplicationNote.getApplicationNoteByApplicationId
+    events:
+        - http:
+            path: /tenants/{tenantId}/applications/{applicationId}/application-notes
+            method: get
+            cors:
+              origin: '*'
 
 resources:
   Resources:

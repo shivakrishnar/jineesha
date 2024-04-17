@@ -604,3 +604,11 @@ export interface IApplicationPUT {
 	previousEmployer2Title?: string,
 	previousEmployer3Title?: string
 }
+
+export interface IApplicationNoteGET {
+    id: number,
+    aTApplicationId: number,
+    noteEntryDate?: Date,
+    noteEnteredByUserName?: string,
+	note?: string
+}

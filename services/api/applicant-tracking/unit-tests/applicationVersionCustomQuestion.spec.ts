@@ -9,7 +9,7 @@ import { ErrorMessage } from '../../../errors/errorMessage';
 describe('createApplicationVersionCustomQuestion', () => {
     test('returns error if the combination alread exists', () => {
 
-        (utilService as any).invokeInternalService = jest.fn(async (transaction, payload) => {
+        (utilService as any).invokeInternalService = jest.fn(async () => {
             return await Promise.resolve(mockData.createAppVersionCustomQuestionDBResponseEmpty);
         });
 
