@@ -274,7 +274,7 @@ export async function createApplication(
             //
             const logResult = { ...apiresult };
 
-            for (var key  in logResult) {
+            for (const key  in logResult) {
                 if (typeof logResult[key] === 'string') {
                     logResult[key] = utilService.sanitizeStringForSql(logResult[key]);
                 }
@@ -484,7 +484,7 @@ export async function updateApplication(
         //
         const logResult = { ...requestBody };
 
-        for (var key  in logResult) {
+        for (const key  in logResult) {
             if (typeof logResult[key] === 'string') {
                 logResult[key] = utilService.sanitizeStringForSql(logResult[key]);
             }

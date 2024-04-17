@@ -9,6 +9,7 @@ import * as JobPostingService from './JobPosting.Service';
 import * as JobPostingResponsibleUserService from './JobPostingResponsibleUser.Service';
 import * as ApplicationService from './Application.Service';
 import * as ApplicationQuestionBankAnswerService from './ApplicationQuestionBankAnswer.Service';
+import * as ApplicationNoteService from './ApplicationNote.Service';
 
 const questionTypeService = QuestionTypeService;
 const questionBankService = QuestionBankService;
@@ -21,6 +22,7 @@ const jobPostingService = JobPostingService;
 const jobPostingResponsibleUserService = JobPostingResponsibleUserService;
 const applicationService = ApplicationService;
 const applicationQuestionBankAnswerService = ApplicationQuestionBankAnswerService;
+const applicationNoteService = ApplicationNoteService;
 
 export { 
     questionTypeService,
@@ -34,4 +36,5 @@ export {
     jobPostingResponsibleUserService,
     applicationService,
     applicationQuestionBankAnswerService,
+    applicationNoteService
 };
