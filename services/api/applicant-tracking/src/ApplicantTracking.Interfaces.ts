@@ -631,3 +631,10 @@ export interface IApplicationNotePUT {
     noteEnteredByUsername?: string,
 	note?: string
 }
+
+export interface IApplicationNotePOST {
+    atApplicationId: number,
+    noteEntryDate?: Date,
+    noteEnteredByUsername?: string,
+	note?: string
+}

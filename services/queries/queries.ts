@@ -360,4 +360,5 @@ export const Queries = {
     getApplicationNoteByApplicationId: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationNoteByApplicationId.sql')).toString(),
     getApplicationNoteById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationNoteById.sql')).toString(),
     updateApplicationNote: fs.readFileSync(path.join(basePath, 'applicant-tracking/updateApplicationNote.sql')).toString(),
+    createApplicationNote: fs.readFileSync(path.join(basePath, 'applicant-tracking/createApplicationNote.sql')).toString(),
 };
