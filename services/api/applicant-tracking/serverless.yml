@@ -526,7 +526,16 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/application-question-bank-answer
             method: post
             cors:
-              origin: '*'             
+              origin: '*'
+
+  updateAppQuestBankAnswer:
+    handler: src/handlerApplicationQuestionBankAnswer.updateApplicationQuestionBankAnswer
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-question-bank-answer
+            method: put
+            cors:
+              origin: '*'           
 
   getApplicationNoteByApplicationId:
     handler: src/handlerApplicationNote.getApplicationNoteByApplicationId

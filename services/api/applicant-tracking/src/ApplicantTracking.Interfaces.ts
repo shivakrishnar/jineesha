@@ -344,6 +344,17 @@ export interface IApplicationQuestionBankAnswerPOST {
     answerMultipleChoice: string
 }
 
+export interface IApplicationQuestionBankAnswerPUT {
+	id: number,
+    atApplicationId: number,
+    originalATQuestionTypeId?: number,
+    originalQuestionText: string,
+    answerDate?: Date,
+    answerYesNo?: boolean,
+    answerFreeForm: string,
+    answerMultipleChoice: string
+}
+
 export interface IApplicationPOST {
 	atSoftStatusTypeId?: number,
 	receivedDate?: Date,

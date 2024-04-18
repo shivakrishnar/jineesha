@@ -235,3 +235,94 @@ export async function createApplicationQuestionBankAnswer(
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * Update ATApplicationQuestionBankAnswer.
+ */
+export async function updateApplicationQuestionBankAnswer(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IApplicationQuestionBankAnswerPUT
+): Promise<Boolean> {
+    console.info('ApplicationQuestionBankAnswer.Service.updateApplicationQuestionBankAnswer');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (requestBody.answerDate && Number.isNaN(Date.parse(requestBody.answerDate.toString()))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${requestBody.answerDate} is not a valid date`);
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getApplicationQuestionBankAnswerById(tenantId, companyId, requestBody.id.toString());     
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+        if (oldValues.companyId.toString() != companyId) {
+            throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+        }
+
+        //
+        // updating data
+        //
+        const query = new ParameterizedQuery('updateApplicationQuestionBankAnswer', Queries.updateApplicationQuestionBankAnswer);
+        query.setParameter('@ID', requestBody.id);
+        query.setParameter('@OriginalATQuestionTypeID', requestBody.originalATQuestionTypeId);
+        query.setIntegerOrNullParameter('@ATApplicationID', requestBody.atApplicationId);
+        query.setStringParameter('@OriginalQuestionText', requestBody.originalQuestionText);
+        query.setStringOrNullParameter('@AnswerDate', requestBody.answerDate?.toString());
+        query.setBooleanParameter('@AnswerYesNo', requestBody.answerYesNo);
+        query.setStringParameter('@AnswerFreeForm', requestBody.answerFreeForm);
+        query.setStringParameter('@AnswerMultipleChoice', requestBody.answerMultipleChoice);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        const logResult = { ...requestBody };
+        logResult.originalQuestionText = utilService.sanitizeStringForSql(logResult.originalQuestionText);
+        logResult.answerFreeForm = utilService.sanitizeStringForSql(logResult.answerFreeForm);
+        logResult.answerMultipleChoice = utilService.sanitizeStringForSql(logResult.answerMultipleChoice);
+        oldValues.originalQuestionText = utilService.sanitizeStringForSql(oldValues.originalQuestionText);
+        oldValues.answerFreeForm = utilService.sanitizeStringForSql(oldValues.answerFreeForm);
+        oldValues.answerMultipleChoice = utilService.sanitizeStringForSql(oldValues.answerMultipleChoice);
+        delete oldValues.companyId;
+        delete oldValues.companyName;
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            newFields: logResult,
+            type: AuditActionType.Update,
+            companyId: companyId,
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}

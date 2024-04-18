@@ -205,3 +205,19 @@ export const createApplicationQuestionBankAnswerAPIResponse = {
   answerFreeForm: 'Testing free form',
   answerMultipleChoice: 'Testing multiple choice'
 };
+
+//
+// updateApplicationQuestionBankAnswer
+//
+export const updateApplicationQuestionBankAnswerRequestBody = {
+  id: 14,
+  atApplicationId: 3,
+  originalATQuestionTypeId: 2,
+  originalQuestionText: 'Testing question text',
+  answerDate: new Date('2024-04-08'),
+  answerYesNo: false,
+  answerFreeForm: 'Testing free form',
+  answerMultipleChoice: 'Testing multiple choice'
+};
+
+export const updateApplicationQuestionBankAnswerAPIResponse = true;
