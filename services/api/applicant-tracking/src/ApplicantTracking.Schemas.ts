@@ -887,3 +887,21 @@ export const updateApplicationCheckPropertiesSchema = {
 	previousEmployer2Title: { required: false, type: String },
 	previousEmployer3Title: { required: false, type: String }
 };
+
+export const updateApplicationNoteValidationSchema = Yup.object().shape({
+    id: Yup.number().required('id is required'),
+    atApplicationId: Yup.number().required('atApplicationId is required'),
+	noteEntryDate: Yup.date().nullable(),
+    noteEnteredByUsername: Yup.string()
+        .max(50, 'noteEnteredByUsername must be a maximum of 200 characters.')
+        .nullable(),    
+    note: Yup.string().nullable()
+});
+
+export const updateApplicationNoteCheckPropertiesSchema = {
+    id: { required: true, type: Number },
+    atApplicationId: { required: true, type: Number },
+    noteEntryDate: { required: false, type: Date },
+    noteEnteredByUsername: { required: false, type: String },
+    note: { required: false, type: String }
+};
