@@ -141,3 +141,32 @@ describe('getApplicationNoteById', () => {
             });
     });
 });
+
+describe('updateApplicationNote', () => {
+
+    test('updates ApplicationNote', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'updateApplicationNote'){
+                return true;
+            } else if (payload.queryName === 'getApplicationNoteById') {
+                return await Promise.resolve(mockData.getApplicationNoteByIdDBResponse);
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await applicationNoteService
+            .updateApplicationNote(
+                sharedMockData.tenantId,
+                sharedMockData.userEmail,
+                mockData.updateApplicationNoteRequestBody,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.updateApplicationNoteAPIResponse);
+            });
+    });
+});

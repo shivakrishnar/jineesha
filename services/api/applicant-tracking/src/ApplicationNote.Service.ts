@@ -7,6 +7,7 @@ import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
+import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
 
 /**
  * Returns a list of ATApplicationNote by applicationId.
@@ -88,6 +89,74 @@ export async function getApplicationNoteById(
         const result: atInterfaces.IApplicationNoteGET = dbResults.recordset[0];
 
         return result;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Update ATApplicationNote.
+ */
+export async function updateApplicationNote(
+    tenantId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IApplicationNotePUT
+): Promise<Boolean> {
+    console.info('ApplicationNote.Service.updateJobPosting');
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getApplicationNoteById(tenantId, requestBody.id.toString());     
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+        
+        //
+        // updating data
+        //
+        const query = new ParameterizedQuery('updateApplicationNote', Queries.updateApplicationNote);
+        query.setParameter('@ID', requestBody.id);
+        query.setParameter('@ATApplicationID', requestBody.atApplicationId);
+        query.setDateOrNullParameter('@NoteEntryDate', requestBody.noteEntryDate);
+        query.setStringOrNullParameter('@NoteEnteredByUsername', requestBody.noteEnteredByUsername);
+        query.setStringOrNullParameter('@Note', requestBody.note);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        const logResult = { ...requestBody };
+        logResult.noteEnteredByUsername = utilService.sanitizeStringForSql(logResult.noteEnteredByUsername);
+        logResult.note = utilService.sanitizeStringForSql(logResult.note);
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            newFields: logResult,
+            type: AuditActionType.Update,
+            companyId: '',
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

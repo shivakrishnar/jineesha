@@ -88,4 +88,23 @@ export class ParameterizedQuery extends Query {
             this.setParameter(name, value);
         }
     }
+
+    /**
+     * Sets an SQL parameter to a desired value after sanitizing the string
+     * @param {any} name The identifier of the parameter
+     * @param {string} value The parameter's value
+     */
+    public setDateOrNullParameter(name: any, value: any): void {
+        if (!value) {
+            this.setParameter(name, 'NULL');
+        } else {
+            var trueTypeOf = (obj) => Object.prototype.toString.call(obj).slice(8, -1).toLowerCase()
+            if (trueTypeOf(value) === 'date') {
+                this.setStringParameter(name, value.toString());
+            }
+            else {
+                this.setStringParameter(name, value);
+            }            
+        }
+    }
 }

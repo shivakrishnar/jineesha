@@ -19,7 +19,7 @@ export const getApplicationNoteByApplicationIdDBResponse = {
             id: "1",
             atApplicationId: "10",
             noteEntryDate: "2024-04-17T00:00:00.000Z",
-            noteEnteredByUserName: "bdyer@sharklaser.com",
+            noteEnteredByUsername: "bdyer@sharklaser.com",
             note: "Test 1"
           }
       ]
@@ -45,7 +45,7 @@ export const getApplicationNoteByApplicationIdAPIResponse = [
       id: "1",
       atApplicationId: "10",
       noteEntryDate: "2024-04-17T00:00:00.000Z",
-      noteEnteredByUserName: "bdyer@sharklaser.com",
+      noteEnteredByUsername: "bdyer@sharklaser.com",
       note: "Test 1"
     }
 ];
@@ -61,7 +61,7 @@ export const getApplicationNoteByIdDBResponse = {
     id: "1",
       atApplicationId: "10",
       noteEntryDate: "2024-04-17T00:00:00.000Z",
-      noteEnteredByUserName: "bdyer@sharklaser.com",
+      noteEnteredByUsername: "bdyer@sharklaser.com",
       note: "Test 1"
   }]
 };
@@ -74,6 +74,19 @@ export const getApplicationNoteByIdAPIResponse = {
   id: "1",
   atApplicationId: "10",
   noteEntryDate: "2024-04-17T00:00:00.000Z",
-  noteEnteredByUserName: "bdyer@sharklaser.com",
+  noteEnteredByUsername: "bdyer@sharklaser.com",
   note: "Test 1"
 };
+
+//
+// updateApplicationNote
+//
+export const updateApplicationNoteRequestBody = {
+  id: 1,
+  atApplicationId: 10,
+  noteEntryDate: new Date(),
+  noteEnteredByUsername: "bdyer@sharklaser.com",
+  note: "Test 1"
+};
+
+export const updateApplicationNoteAPIResponse = true;
