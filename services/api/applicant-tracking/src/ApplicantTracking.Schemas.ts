@@ -19,6 +19,11 @@ export const pathParametersForTenantIdAndApplicationIdSchema = {
     applicationId: { required: true, type: String }
 };
 
+export const pathParametersForTenantIdAndIdSchema = {
+    tenantId: { required: true, type: UUID },   
+    id: { required: true, type: String }
+};
+
 export const pathParametersForTenantIdAndCompanyIdAndIdSchema = {
     tenantId: { required: true, type: UUID },
     companyId: { required: true, type: String },

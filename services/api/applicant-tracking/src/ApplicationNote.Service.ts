@@ -53,3 +53,46 @@ export async function getApplicationNoteByApplicationId(
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * Returns an ATApplicationNote by id.
+ */
+export async function getApplicationNoteById(
+    tenantId: string,
+    id: string
+): Promise<atInterfaces.IApplicationNoteGET> {
+    console.info('ApplicationNote.Service.getApplicationNoteById');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(id))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid number`);
+    }
+
+    //
+    // getting data
+    //
+    try {
+        const query = new ParameterizedQuery('getApplicationNoteById', Queries.getApplicationNoteById);
+        query.setParameter('@ID', id);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const result: atInterfaces.IApplicationNoteGET = dbResults.recordset[0];
+
+        return result;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
