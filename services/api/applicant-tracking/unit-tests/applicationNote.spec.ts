@@ -201,3 +201,76 @@ describe('updateApplicationNote', () => {
             });
     });
 });
+
+describe('deleteApplicationNote', () => {
+
+    test('id must be an integer', () => {
+        return applicationNoteService.deleteApplicationNote(
+            sharedMockData.tenantId, 
+            sharedMockData.userEmail,
+            mockData.applicationNoteToDeleteIdWithCharacter,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.applicationNoteToDeleteIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('The requested resource must exist', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'getApplicationNoteById') {
+                const result = await Promise.resolve(mockData.getApplicationNoteByIdDBResponseEmpty);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return applicationNoteService.deleteApplicationNote(
+            sharedMockData.tenantId, 
+            sharedMockData.userEmail,
+            mockData.applicationNoteToDeleteId,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toEqual('');
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('deletes ApplicationNote', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'deleteApplicationNote'){
+                return true;
+            } else if (payload.queryName === 'getApplicationNoteById') {
+                const result = await Promise.resolve(mockData.getApplicationNoteByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await applicationNoteService
+            .deleteApplicationNote(
+                sharedMockData.tenantId,
+                sharedMockData.userEmail,
+                mockData.applicationNoteToDeleteId,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.deleteApplicationNoteAPIResponse);
+            });
+    });
+});

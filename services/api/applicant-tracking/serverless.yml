@@ -564,6 +564,15 @@ functions:
             cors:
               origin: '*'
 
+  createApplicationNote:
+    handler: src/handlerApplicationNote.createApplicationNote
+    events:
+        - http:
+            path: /tenants/{tenantId}/application-note
+            method: post
+            cors:
+              origin: '*'
+
   updateApplicationNote:
     handler: src/handlerApplicationNote.updateApplicationNote
     events:
@@ -573,12 +582,12 @@ functions:
             cors:
               origin: '*'
 
-  createApplicationNote:
-    handler: src/handlerApplicationNote.createApplicationNote
+  deleteApplicationNote:
+    handler: src/handlerApplicationNote.deleteApplicationNote
     events:
         - http:
-            path: /tenants/{tenantId}/application-note
-            method: post
+            path: /tenants/{tenantId}/application-note/{id}
+            method: delete
             cors:
               origin: '*'
 
