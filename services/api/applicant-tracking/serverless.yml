@@ -535,6 +535,15 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/application-question-bank-answer
             method: put
             cors:
+              origin: '*'
+
+  deletetAppQuestBankAnswer:
+    handler: src/handlerApplicationQuestionBankAnswer.deleteApplicationQuestionBankAnswer
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-question-bank-answer/{id}
+            method: delete
+            cors:
               origin: '*'           
 
   getApplicationNoteByApplicationId:

@@ -326,3 +326,82 @@ export async function updateApplicationQuestionBankAnswer(
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * Delete ATApplicationQuestionBankAnswer.
+ */
+export async function deleteApplicationQuestionBankAnswer(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    id: string
+): Promise<boolean> {
+    console.info('ApplicationQuestionBankAnswer.Service.deleteApplicationQuestionBankAnswer');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (Number.isNaN(Number(id))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid number`);
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getApplicationQuestionBankAnswerById(tenantId, companyId, id);
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+        if (oldValues.companyId.toString() != companyId) {
+            throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+        }
+
+        //
+        // deleting data
+        //
+        const query = new ParameterizedQuery('deleteApplicationQuestionBankAnswer', Queries.deleteApplicationQuestionBankAnswer);
+        query.setParameter('@ID', id);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        oldValues.originalQuestionText = utilService.sanitizeStringForSql(oldValues.originalQuestionText);
+        oldValues.answerFreeForm = utilService.sanitizeStringForSql(oldValues.answerFreeForm);
+        oldValues.answerMultipleChoice = utilService.sanitizeStringForSql(oldValues.answerMultipleChoice);
+        delete oldValues.companyId;
+        delete oldValues.companyName;
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            type: AuditActionType.Delete,
+            companyId: companyId,
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
