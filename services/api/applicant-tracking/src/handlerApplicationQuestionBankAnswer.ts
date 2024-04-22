@@ -140,3 +140,30 @@ export const updateApplicationQuestionBankAnswer = utilService.gatewayEventHandl
 
     return { statusCode: 200, body: apiResult }
 });
+
+/**
+ * Delete ATApplicationQuestionBankAnswer.
+ */
+export const deleteApplicationQuestionBankAnswer = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerApplicationQuestionBankAnswer.deleteApplicationQuestionBankAnswer');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdAndIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId, companyId, id } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    const apiResult = await applicantTrackingService.applicationQuestionBankAnswerService.deleteApplicationQuestionBankAnswer(tenantId, companyId, userEmail, id);
+
+    return { statusCode: 200, body: apiResult }
+});

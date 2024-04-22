@@ -221,3 +221,11 @@ export const updateApplicationQuestionBankAnswerRequestBody = {
 };
 
 export const updateApplicationQuestionBankAnswerAPIResponse = true;
+
+//
+// deleteApplicationQuestionBankAnswer
+//
+export const ApplicationQuestionBankAnswerToDeleteId = '14';
+export const ApplicationQuestionBankAnswerToDeleteAnotherId = '4444';
+export const ApplicationQuestionBankAnswerToDeleteIdWithCharacter = '14abc';
+export const deleteApplicationQuestionBankAnswerAPIResponse = true;

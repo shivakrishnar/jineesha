@@ -355,6 +355,7 @@ export const Queries = {
     getApplicationQuestionBankAnswerByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationQuestionBankAnswerByCompany.sql')).toString(),
     createApplicationQuestionBankAnswer: fs.readFileSync(path.join(basePath, 'applicant-tracking/createApplicationQuestionBankAnswer.sql')).toString(),
     updateApplicationQuestionBankAnswer: fs.readFileSync(path.join(basePath, 'applicant-tracking/updateApplicationQuestionBankAnswer.sql')).toString(),
+    deleteApplicationQuestionBankAnswer: fs.readFileSync(path.join(basePath, 'applicant-tracking/deleteApplicationQuestionBankAnswer.sql')).toString(),
 
     getApplicationNoteByApplicationId: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationNoteByApplicationId.sql')).toString(),
     getApplicationNoteById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationNoteById.sql')).toString(),
