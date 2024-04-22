@@ -142,6 +142,37 @@ describe('getApplicationNoteById', () => {
     });
 });
 
+describe('createApplicationNote', () => {
+
+    test('creates and returns a ApplicationNote', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'createApplicationNote'){
+                const result = await Promise.resolve(mockData.createApplicationNoteDBResponse);
+                return result;
+            } else if (payload.queryName === 'getApplicationNoteById') {
+                const result = await Promise.resolve(mockData.getApplicationNoteByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await applicationNoteService
+            .createApplicationNote(
+                sharedMockData.tenantId,
+                sharedMockData.userEmail,
+                mockData.createApplicationNoteRequestBody,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.createApplicationNoteAPIResponse);
+            });
+    });
+});
+
 describe('updateApplicationNote', () => {
 
     test('updates ApplicationNote', async () => {

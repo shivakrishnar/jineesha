@@ -200,8 +200,6 @@ export async function createJobPosting(
             queryType: QueryType.Simple 
         } as DatabaseEvent;
 
-        console.log(payload);
-
         const queryResult: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
         const id: any = queryResult.recordset[0].ID;
         if (id) {

@@ -55,6 +55,36 @@ export const getApplicationNoteById = utilService.gatewayEventHandlerV2(async ({
 });
 
 /**
+ * Create ATApplicationNote.
+ */
+export const createApplicationNote = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerApplicationNote.createApplicationNote');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    await utilService.validateRequestBody(schemas.createApplicationNoteValidationSchema, requestBody);
+    utilService.checkAdditionalProperties(schemas.createApplicationNoteCheckPropertiesSchema, requestBody, 'ApplicationNote');
+
+    const apiResult = await applicantTrackingService.applicationNoteService.createApplicationNote(tenantId, userEmail, requestBody);
+
+    return { statusCode: 201, body: apiResult }
+});
+
+/**
  * Update ATApplicationNote.
  */
 export const updateApplicationNote = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {

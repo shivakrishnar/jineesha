@@ -60,7 +60,7 @@ export const getApplicationNoteByIdDBResponse = {
   recordset: [{
     id: "1",
       atApplicationId: "10",
-      noteEntryDate: "2024-04-17T00:00:00.000Z",
+      noteEntryDate: null,
       noteEnteredByUsername: "bdyer@sharklaser.com",
       note: "Test 1"
   }]
@@ -85,6 +85,27 @@ export const updateApplicationNoteRequestBody = {
   id: 1,
   atApplicationId: 10,
   noteEntryDate: new Date(),
+  noteEnteredByUsername: "bdyer@sharklaser.com",
+  note: "Test 1"
+};
+
+//
+// createApplicationNote
+//
+export const createApplicationNoteRequestBody = {
+  atApplicationId: 1,
+  noteEnteredByUsername: "bdyer@sharklaser.com",
+  note: "Test 1"
+};
+
+export const createApplicationNoteDBResponse = {
+  recordset: [{ ID: 33 }],
+};
+
+export const createApplicationNoteAPIResponse = {
+  id: "1",
+  atApplicationId: "10",
+  noteEntryDate: null,
   noteEnteredByUsername: "bdyer@sharklaser.com",
   note: "Test 1"
 };

@@ -98,6 +98,74 @@ export async function getApplicationNoteById(
     }
 }
 
+
+/**
+ * Create ATApplicationNote.
+ */
+export async function createApplicationNote(
+    tenantId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IApplicationNotePOST
+): Promise<atInterfaces.IApplicationNoteGET> {
+    console.info('ApplicationNote.Service.createApplicationNote');
+
+    try {
+        //
+        // inserting data
+        //
+        const query = new ParameterizedQuery('createApplicationNote', Queries.createApplicationNote);
+        query.setParameter('@ATApplicationID', requestBody.atApplicationId);
+        query.setDateOrNullParameter('@NoteEntryDate', requestBody.noteEntryDate);
+        query.setStringOrNullParameter('@NoteEnteredByUserName', requestBody.noteEnteredByUsername);
+        query.setStringOrNullParameter('@Note', requestBody.note);
+        
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        const queryResult: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const id: any = queryResult.recordset[0].ID;
+        if (id) {
+            //
+            // getting data
+            //
+            const apiresult = await getApplicationNoteById(tenantId, id);
+
+            //
+            // auditing log
+            //
+            const logResult = { ...apiresult };
+            logResult.noteEnteredByUsername = utilService.sanitizeStringForSql(logResult.noteEnteredByUsername);
+            logResult.note = utilService.sanitizeStringForSql(logResult.note);
+
+            utilService.logToAuditTrail({
+                userEmail,
+                newFields: logResult,
+                type: AuditActionType.Insert,
+                companyId: '',
+                areaOfChange: AuditAreaOfChange.ApplicantTracking,
+                tenantId,
+            } as IAudit);
+
+            //
+            // api response
+            //
+            return apiresult;
+        } else {
+            throw errorService.getErrorResponse(74).setDeveloperMessage('Was not possible to create the resource');
+        }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
 /**
  * Update ATApplicationNote.
  */
