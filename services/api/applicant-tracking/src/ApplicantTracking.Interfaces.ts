@@ -624,15 +624,15 @@ export interface IApplicationNoteGET {
 	note?: string
 }
 
-export interface IApplicationNotePUT {
-    id: number,
+export interface IApplicationNotePOST {
     atApplicationId: number,
     noteEntryDate?: Date,
     noteEnteredByUsername?: string,
 	note?: string
 }
 
-export interface IApplicationNotePOST {
+export interface IApplicationNotePUT {
+    id: number,
     atApplicationId: number,
     noteEntryDate?: Date,
     noteEnteredByUsername?: string,

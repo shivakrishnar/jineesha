@@ -111,3 +111,11 @@ export const createApplicationNoteAPIResponse = {
 };
 
 export const updateApplicationNoteAPIResponse = true;
+
+//
+// deleteApplicationNote
+//
+export const applicationNoteToDeleteId = '33';
+export const applicationNoteToDeleteAnotherId = '4444';
+export const applicationNoteToDeleteIdWithCharacter = '33abc';
+export const deleteApplicationNoteAPIResponse = true;

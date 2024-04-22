@@ -113,3 +113,30 @@ export const updateApplicationNote = utilService.gatewayEventHandlerV2(async ({ 
 
     return { statusCode: 200, body: apiResult }
 });
+
+/**
+ * Delete ATApplicationNote.
+ */
+export const deleteApplicationNote = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerApplicationNote.deleteApplicationNote');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId, id } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    const apiResult = await applicantTrackingService.applicationNoteService.deleteApplicationNote(tenantId, userEmail, id);
+
+    return { statusCode: 200, body: apiResult }
+});

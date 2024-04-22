@@ -98,7 +98,6 @@ export async function getApplicationNoteById(
     }
 }
 
-
 /**
  * Create ATApplicationNote.
  */
@@ -216,6 +215,75 @@ export async function updateApplicationNote(
             oldFields: oldValues,
             newFields: logResult,
             type: AuditActionType.Update,
+            companyId: '',
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Delete ATApplicationNote.
+ */
+export async function deleteApplicationNote(
+    tenantId: string,
+    userEmail: string,
+    id: string
+): Promise<boolean> {
+    console.info('ApplicationNote.Service.deleteApplicationNote');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(id))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid number`);
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getApplicationNoteById(tenantId, id);
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+
+        //
+        // deleting data
+        //
+        const query = new ParameterizedQuery('deleteApplicationNote', Queries.deleteApplicationNote);
+        query.setParameter('@ID', id);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        oldValues.noteEnteredByUsername = utilService.sanitizeStringForSql(oldValues.noteEnteredByUsername);
+        oldValues.note = utilService.sanitizeStringForSql(oldValues.note);
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            type: AuditActionType.Delete,
             companyId: '',
             areaOfChange: AuditAreaOfChange.ApplicantTracking,
             tenantId,
