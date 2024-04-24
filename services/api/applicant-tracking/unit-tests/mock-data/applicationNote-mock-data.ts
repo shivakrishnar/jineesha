@@ -18,7 +18,7 @@ export const getApplicationNoteByApplicationIdDBResponse = {
           {
             id: "1",
             atApplicationId: "10",
-            noteEntryDate: "2024-04-17T00:00:00.000Z",
+            noteEntryDate: null,
             noteEnteredByUsername: "bdyer@sharklaser.com",
             note: "Test 1"
           }
@@ -44,7 +44,7 @@ export const getApplicationNoteByApplicationIdAPIResponse = [
     {
       id: "1",
       atApplicationId: "10",
-      noteEntryDate: "2024-04-17T00:00:00.000Z",
+      noteEntryDate: null,
       noteEnteredByUsername: "bdyer@sharklaser.com",
       note: "Test 1"
     }
@@ -73,7 +73,7 @@ export const getApplicationNoteByIdDBResponseEmpty = {
 export const getApplicationNoteByIdAPIResponse = {
   id: "1",
   atApplicationId: "10",
-  noteEntryDate: "2024-04-17T00:00:00.000Z",
+  noteEntryDate: null,
   noteEnteredByUsername: "bdyer@sharklaser.com",
   note: "Test 1"
 };
@@ -84,7 +84,7 @@ export const getApplicationNoteByIdAPIResponse = {
 export const updateApplicationNoteRequestBody = {
   id: 1,
   atApplicationId: 10,
-  noteEntryDate: new Date(),
+  noteEntryDate: null,
   noteEnteredByUsername: "bdyer@sharklaser.com",
   note: "Test 1"
 };
