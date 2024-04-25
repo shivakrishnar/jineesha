@@ -638,3 +638,14 @@ export interface IApplicationNotePUT {
     noteEnteredByUsername?: string,
 	note?: string
 }
+
+
+export interface IApplicationStatusHistoryGET {
+    id: number,
+	companyId: number,
+	companyName: string,
+    atApplicationId: number,
+    statusChangedDate?: Date,
+    statusChangedByUsername?: string,
+	changedStatusTitle?: string
+}

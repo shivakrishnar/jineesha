@@ -10,6 +10,7 @@ import * as JobPostingResponsibleUserService from './JobPostingResponsibleUser.S
 import * as ApplicationService from './Application.Service';
 import * as ApplicationQuestionBankAnswerService from './ApplicationQuestionBankAnswer.Service';
 import * as ApplicationNoteService from './ApplicationNote.Service';
+import * as ApplicationStatusHistoryService from './ApplicationStatusHistory.Service';
 
 const questionTypeService = QuestionTypeService;
 const questionBankService = QuestionBankService;
@@ -23,6 +24,7 @@ const jobPostingResponsibleUserService = JobPostingResponsibleUserService;
 const applicationService = ApplicationService;
 const applicationQuestionBankAnswerService = ApplicationQuestionBankAnswerService;
 const applicationNoteService = ApplicationNoteService;
+const applicationStatusHistoryService = ApplicationStatusHistoryService;
 
 export { 
     questionTypeService,
@@ -36,5 +38,6 @@ export {
     jobPostingResponsibleUserService,
     applicationService,
     applicationQuestionBankAnswerService,
-    applicationNoteService
+    applicationNoteService,
+    applicationStatusHistoryService
 };
