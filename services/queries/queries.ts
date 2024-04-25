@@ -362,4 +362,8 @@ export const Queries = {
     createApplicationNote: fs.readFileSync(path.join(basePath, 'applicant-tracking/createApplicationNote.sql')).toString(),
     updateApplicationNote: fs.readFileSync(path.join(basePath, 'applicant-tracking/updateApplicationNote.sql')).toString(),
     deleteApplicationNote: fs.readFileSync(path.join(basePath, 'applicant-tracking/deleteApplicationNote.sql')).toString(),
+
+    getApplicationStatusHistoryById: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationStatusHistoryById.sql')).toString(),
+    getApplicationStatusHistoryByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationStatusHistoryByTenant.sql')).toString(),
+    getApplicationStatusHistoryByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationStatusHistoryByCompany.sql')).toString(),
 };

@@ -591,6 +591,33 @@ functions:
             cors:
               origin: '*'
 
+  getAppStatusHistoryById:
+    handler: src/handlerApplicationStatusHistory.getApplicationStatusHistoryById
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-status-history/{id}
+            method: get
+            cors:
+              origin: '*'
+
+  getAppStatusHistoryByTenant:
+    handler: src/handlerApplicationStatusHistory.getApplicationStatusHistoryByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/application-status-history
+            method: get
+            cors:
+              origin: '*'
+
+  getAppStatusHistoryByCompany:
+    handler: src/handlerApplicationStatusHistory.getApplicationStatusHistoryByCompany
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-status-history
+            method: get
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
