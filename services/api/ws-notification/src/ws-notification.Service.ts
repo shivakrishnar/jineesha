@@ -84,6 +84,7 @@ export async function notifyClient(connectionId: string, message: Message): Prom
       Data: JSON.stringify(message),
     }).promise();
   } catch (e) {
+    console.log('notifyClient error');
     console.error(e);
     throw e;
   }
