@@ -151,3 +151,27 @@ export const getApplicationStatusHistoryByCompanyDBResponse = {
         changedStatusTitle: 'Application Completed'
     }
   ];
+
+//
+// createApplicationStatusHistory
+//
+export const createApplicationStatusHistoryRequestBody = {
+  atApplicationId: 38,
+  statusChangedDate: new Date('2024-04-22'),
+  statusChangedByUsername: 'applicant',
+  changedStatusTitle: 'Application Completed'
+};
+
+export const createApplicationStatusHistoryDBResponse = {
+  recordset: [{ ID: 1 }],
+};
+
+export const createApplicationStatusHistoryAPIResponse = {
+  id: 1,
+  companyId: 3,
+  companyName: 'Artsy Tartsy Bakery',
+  atApplicationId: 38,
+  statusChangedDate: '2024-04-22',
+  statusChangedByUsername: 'applicant',
+  changedStatusTitle: 'Application Completed'
+};

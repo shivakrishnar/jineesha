@@ -213,3 +213,69 @@ describe('getApplicationStatusHistoryByCompany', () => {
     });
 
 });
+
+describe('createApplicationStatusHistory', () => {
+
+    test('companyId must be an integer', () => {
+        return ApplicationStatusHistoryService.createApplicationStatusHistory(
+            sharedMockData.tenantId, 
+            sharedMockData.companyIdWithCharacter,
+            sharedMockData.userEmail,
+            mockData.createApplicationStatusHistoryRequestBody,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${sharedMockData.companyIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('statusChangedDate must be valid', () => {
+        const requestBody = { ...mockData.createApplicationStatusHistoryRequestBody };
+        requestBody.statusChangedDate = new Date('2024-14-08');
+        return ApplicationStatusHistoryService.createApplicationStatusHistory(
+            sharedMockData.tenantId, 
+            sharedMockData.companyId,
+            sharedMockData.userEmail,
+            requestBody,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${requestBody.statusChangedDate} is not a valid date`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('creates and returns a ApplicationStatusHistory', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'createApplicationStatusHistory'){
+                const result = await Promise.resolve(mockData.createApplicationStatusHistoryDBResponse);
+                return result;
+            } else if (payload.queryName === 'getApplicationStatusHistoryById') {
+                const result = await Promise.resolve(mockData.getApplicationStatusHistoryByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await ApplicationStatusHistoryService
+            .createApplicationStatusHistory(
+                sharedMockData.tenantId,
+                sharedMockData.companyId,
+                sharedMockData.userEmail,
+                mockData.createApplicationStatusHistoryRequestBody,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.createApplicationStatusHistoryAPIResponse);
+            });
+    });
+});
