@@ -918,3 +918,17 @@ export const updateApplicationNoteCheckPropertiesSchema = {
     noteEnteredByUsername: { required: false, type: String },
     note: { required: false, type: String }
 };
+
+export const createApplicationStatusHistoryValidationSchema = Yup.object().shape({
+    atApplicationId: Yup.number().required('atApplicationId is required'),
+    statusChangedDate: Yup.date().nullable(),
+    statusChangedByUsername: Yup.string().required('statusChangedByUsername is required'),
+    changedStatusTitle: Yup.string().required('changedStatusTitle is required')
+});
+
+export const createApplicationStatusHistoryCheckPropertiesSchema = {
+    atApplicationId: { required: true, type: Number },
+    statusChangedDate: { required: false, type: Date },
+    statusChangedByUsername: { required: false, type: String },
+    changedStatusTitle: { required: false, type: String }
+};

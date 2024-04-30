@@ -618,6 +618,15 @@ functions:
             cors:
               origin: '*'
 
+  createtAppStatusHistory:
+    handler: src/handlerApplicationStatusHistory.createApplicationStatusHistory
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-status-history
+            method: post
+            cors:
+              origin: '*'              
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
