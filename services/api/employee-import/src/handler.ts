@@ -265,7 +265,7 @@ export const setProcessingStatusGlobal = async (event: any, context: Context, ca
 
         console.log('Variables parsed');
 
-        employeeImportService.setDataImportEventStatusGlobal(tenantId, dataImportEventId, dataImportTypeId, 'Processing', 1, hrAccessToken);
+        await employeeImportService.setDataImportEventStatusGlobal(tenantId, dataImportEventId, dataImportTypeId, 'Processing', 1, hrAccessToken);
 
         console.log('Status processed');
 

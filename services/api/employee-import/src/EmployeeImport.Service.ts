@@ -1236,23 +1236,33 @@ export async function setDataImportEventStatusGlobal(
         if (!result || !result.recordset.length || !result.recordset[0].Name) {
             console.error('Employee import type not found');
         } else {
-            const dataImportTypeName = result.recordset[0].Name;
+            try {
+                const dataImportTypeName = result.recordset[0].Name;
 
-            const connections = await utilService.getConnectionsFromDynamoDBUsingAccessToken(accessToken);
-            if (connections && connections.Items && connections.Items.length > 0) {
-                const message: webSocketNotification.Message = {
-                    data: `Employee import, type '${dataImportTypeName}' is ${status.toLowerCase()}`,
-                    types: ['Global'],
-                };
-
-                const messages = connections.Items.map(async (connection) => {
-                    return webSocketNotification.notifyClient(connection.ConnectionId, message);
-                });
-                await Promise.all(messages);
-            } else {
-                console.info('no active connections found');
+                const connections = await utilService.getConnectionsFromDynamoDBUsingAccessToken(accessToken);
+                if (connections && connections.Items && connections.Items.length > 0) {
+                
+                    const message: webSocketNotification.Message = {
+                        data: `Employee import, type '${dataImportTypeName}' is ${status.toLowerCase()}`,
+                        types: ['Global'],
+                    };
+    
+                    const messages = connections.Items.map(async (connection) => {
+                        return webSocketNotification.notifyClient(connection.ConnectionId, message);
+                    });
+                    return await Promise.all(messages);
+                                       
+                } else {
+                    console.info('no active connections found');
+                }  
+            }
+            catch {
+                //We don't want to stop the importation if some errors happens in this step
+                console.info('Error trying to send the notification through WebSocket protocol');
             }
         }
+
+        return Promise.resolve();
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
