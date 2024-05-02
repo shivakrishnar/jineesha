@@ -178,7 +178,7 @@ export async function createApplicationStatusHistory(
         // inserting data
         //
         const query = new ParameterizedQuery('createApplicationStatusHistory', Queries.createApplicationStatusHistory);
-        query.setIntegerOrNullParameter('@ATApplicationID', requestBody.atApplicationId);
+        query.setParameter('@ATApplicationID', requestBody.atApplicationId);
         query.setDateOrNullParameter('@StatusChangedDate', requestBody.statusChangedDate?.toString());
         query.setStringOrNullParameter('@StatusChangedByUsername', requestBody.statusChangedByUsername);
         query.setStringOrNullParameter('@ChangedStatusTitle', requestBody.changedStatusTitle);
@@ -223,6 +223,92 @@ export async function createApplicationStatusHistory(
         } else {
             throw errorService.getErrorResponse(74).setDeveloperMessage('Was not possible to create the resource');
         }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Update ATApplicationStatusHistory.
+ */
+export async function updateApplicationStatusHistory(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IApplicationStatusHistoryPUT
+): Promise<Boolean> {
+    console.info('ApplicationStatusHistory.Service.updateApplicationStatusHistory');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (requestBody.statusChangedDate && Number.isNaN(Date.parse(requestBody.statusChangedDate.toString()))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${requestBody.statusChangedDate} is not a valid date`);
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getApplicationStatusHistoryById(tenantId, companyId, requestBody.id.toString());     
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+        if (oldValues.companyId.toString() != companyId) {
+            throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+        }
+
+        //
+        // updating data
+        //
+        const query = new ParameterizedQuery('updateApplicationStatusHistory', Queries.updateApplicationStatusHistory);
+        query.setParameter('@ID', requestBody.id);
+        query.setParameter('@ATApplicationID', requestBody.atApplicationId);
+        query.setDateOrNullParameter('@StatusChangedDate', requestBody.statusChangedDate?.toString());
+        query.setStringOrNullParameter('@StatusChangedByUsername', requestBody.statusChangedByUsername);
+        query.setStringOrNullParameter('@ChangedStatusTitle', requestBody.changedStatusTitle);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        const logResult = { ...requestBody };
+        logResult.statusChangedByUsername = utilService.sanitizeStringForSql(logResult.statusChangedByUsername);
+        logResult.changedStatusTitle = utilService.sanitizeStringForSql(logResult.changedStatusTitle);
+        oldValues.statusChangedByUsername = utilService.sanitizeStringForSql(oldValues.statusChangedByUsername);
+        oldValues.changedStatusTitle = utilService.sanitizeStringForSql(oldValues.changedStatusTitle);
+        delete oldValues.companyId;
+        delete oldValues.companyName;
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            newFields: logResult,
+            type: AuditActionType.Update,
+            companyId: companyId,
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

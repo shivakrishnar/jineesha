@@ -932,3 +932,19 @@ export const createApplicationStatusHistoryCheckPropertiesSchema = {
     statusChangedByUsername: { required: false, type: String },
     changedStatusTitle: { required: false, type: String }
 };
+
+export const updateApplicationStatusHistoryValidationSchema = Yup.object().shape({
+	id: Yup.number().required('id is required'),
+    atApplicationId: Yup.number().required('atApplicationId is required'),
+    statusChangedDate: Yup.date().nullable(),
+    statusChangedByUsername: Yup.string().required('statusChangedByUsername is required'),
+    changedStatusTitle: Yup.string().required('changedStatusTitle is required')
+});
+
+export const updateApplicationStatusHistoryCheckPropertiesSchema = {
+	id: { required: true, type: Number },
+    atApplicationId: { required: true, type: Number },
+    statusChangedDate: { required: false, type: Date },
+    statusChangedByUsername: { required: false, type: String },
+    changedStatusTitle: { required: false, type: String }
+};

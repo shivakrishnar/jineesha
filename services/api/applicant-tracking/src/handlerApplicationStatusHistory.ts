@@ -110,3 +110,33 @@ export const createApplicationStatusHistory = utilService.gatewayEventHandlerV2(
 
     return { statusCode: 201, body: apiResult }
 });
+
+/**
+ * Update ATApplicationStatusHistory.
+ */
+export const updateApplicationStatusHistory = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerApplicationStatusHistory.updateApplicationStatusHistory');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId, companyId } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    await utilService.validateRequestBody(schemas.updateApplicationStatusHistoryValidationSchema, requestBody);
+    utilService.checkAdditionalProperties(schemas.updateApplicationStatusHistoryCheckPropertiesSchema, requestBody, 'ApplicationStatusHistory');
+
+    const apiResult = await applicantTrackingService.applicationStatusHistoryService.updateApplicationStatusHistory(tenantId, companyId, userEmail, requestBody);
+
+    return { statusCode: 200, body: apiResult }
+});

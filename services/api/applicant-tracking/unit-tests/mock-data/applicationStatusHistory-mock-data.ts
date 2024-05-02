@@ -175,3 +175,16 @@ export const createApplicationStatusHistoryAPIResponse = {
   statusChangedByUsername: 'applicant',
   changedStatusTitle: 'Application Completed'
 };
+
+//
+// updateApplicationStatusHistory
+//
+export const updateApplicationStatusHistoryRequestBody = {
+  id: 1,
+  atApplicationId: 38,
+  statusChangedDate: new Date('2024-04-28'),
+  statusChangedByUsername: 'Marden',
+  changedStatusTitle: 'Application Pending'
+};
+
+export const updateApplicationStatusHistoryAPIResponse = true;
