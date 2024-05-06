@@ -506,7 +506,7 @@ describe('employeeImport.Service.setDataImportEventStatusGlobal', () => {
                 mockDataCommon.accessToken,
             )
             .then((response) => {
-                expect(response).toBe(undefined);
+                expect(response).toStrictEqual([ undefined, undefined ]);
             });
     });
 });

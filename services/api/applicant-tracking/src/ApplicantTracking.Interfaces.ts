@@ -656,3 +656,11 @@ export interface IApplicationStatusHistoryPOST {
     statusChangedByUsername?: string,
 	changedStatusTitle?: string
 }
+
+export interface IApplicationStatusHistoryPUT {
+	id: number,
+    atApplicationId: number,
+    statusChangedDate?: Date,
+    statusChangedByUsername?: string,
+	changedStatusTitle?: string	
+}
