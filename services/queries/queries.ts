@@ -368,4 +368,5 @@ export const Queries = {
     getApplicationStatusHistoryByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getApplicationStatusHistoryByCompany.sql')).toString(),
     createApplicationStatusHistory: fs.readFileSync(path.join(basePath, 'applicant-tracking/createApplicationStatusHistory.sql')).toString(),
     updateApplicationStatusHistory: fs.readFileSync(path.join(basePath, 'applicant-tracking/updateApplicationStatusHistory.sql')).toString(),
+    deleteApplicationStatusHistory: fs.readFileSync(path.join(basePath, 'applicant-tracking/deleteApplicationStatusHistory.sql')).toString(),
 };

@@ -636,6 +636,15 @@ functions:
             cors:
               origin: '*'
 
+  deleteAppStatusHistory:
+    handler: src/handlerApplicationStatusHistory.deleteApplicationStatusHistory
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/application-status-history/{id}
+            method: delete
+            cors:
+              origin: '*'              
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

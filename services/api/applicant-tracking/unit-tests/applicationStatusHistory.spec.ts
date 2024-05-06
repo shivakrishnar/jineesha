@@ -398,3 +398,121 @@ describe('updateApplicationStatusHistory', () => {
             });
     });
 });
+
+describe('deleteApplicationStatusHistory', () => {
+
+    test('companyId must be an integer', () => {
+        return ApplicationStatusHistoryService.deleteApplicationStatusHistory(
+            sharedMockData.tenantId, 
+            sharedMockData.companyIdWithCharacter,
+            sharedMockData.userEmail,
+            mockData.ApplicationStatusHistoryToDeleteId,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${sharedMockData.companyIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('id must be an integer', () => {
+        return ApplicationStatusHistoryService.deleteApplicationStatusHistory(
+            sharedMockData.tenantId, 
+            sharedMockData.companyId,
+            sharedMockData.userEmail,
+            mockData.ApplicationStatusHistoryToDeleteIdWithCharacter,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.ApplicationStatusHistoryToDeleteIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('The requested resource must exist', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'getApplicationStatusHistoryById') {
+                const result = await Promise.resolve(mockData.getApplicationStatusHistoryByIdDBResponseEmpty);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return ApplicationStatusHistoryService.deleteApplicationStatusHistory(
+            sharedMockData.tenantId, 
+            sharedMockData.companyId,
+            sharedMockData.userEmail,
+            mockData.ApplicationStatusHistoryToDeleteId,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toEqual('');
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('URL companyId must be the same as the requested resource companyId', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'getApplicationStatusHistoryById') {
+                const result = await Promise.resolve(mockData.getApplicationStatusHistoryByIdDBResponse);
+                result.recordset[0].companyId = 3;
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        return ApplicationStatusHistoryService.deleteApplicationStatusHistory(
+            sharedMockData.tenantId, 
+            sharedMockData.anotherCompanyId,
+            sharedMockData.userEmail,
+            mockData.ApplicationStatusHistoryToDeleteId,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual('');
+                expect(error.moreInfo).toEqual('this record does not belong to this company');
+            });
+    });
+
+    test('deletes ApplicationStatusHistory', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'deleteApplicationStatusHistory'){
+                return true;
+            } else if (payload.queryName === 'getApplicationStatusHistoryById') {
+                const result = await Promise.resolve(mockData.getApplicationStatusHistoryByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await ApplicationStatusHistoryService
+            .deleteApplicationStatusHistory(
+                sharedMockData.tenantId,
+                sharedMockData.companyId,
+                sharedMockData.userEmail,
+                mockData.ApplicationStatusHistoryToDeleteId,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.deleteApplicationStatusHistoryAPIResponse);
+            });
+    });
+});

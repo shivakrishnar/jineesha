@@ -188,3 +188,11 @@ export const updateApplicationStatusHistoryRequestBody = {
 };
 
 export const updateApplicationStatusHistoryAPIResponse = true;
+
+//
+// deleteApplicationStatusHistory
+//
+export const ApplicationStatusHistoryToDeleteId = '1';
+export const ApplicationStatusHistoryToDeleteAnotherId = '4444';
+export const ApplicationStatusHistoryToDeleteIdWithCharacter = '1abc';
+export const deleteApplicationStatusHistoryAPIResponse = true;

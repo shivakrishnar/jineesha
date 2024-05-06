@@ -1,0 +1,1 @@
+delete from ATApplicationStatusHistory where ID = @ID
