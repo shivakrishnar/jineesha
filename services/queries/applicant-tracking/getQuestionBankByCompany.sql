@@ -1,4 +1,4 @@
-declare @_companyId int = @companyId
+declare @_companyId nvarchar(max) = @companyId
 declare @_searchBy nvarchar(50) = @searchBy
 
 select
@@ -6,7 +6,7 @@ select
 from
 	ATQuestionBank
 where
-	CompanyID = @_companyId
+	CompanyID in(select * from dbo.SplitString(@_companyId, '-'))
 and concat(QuestionTitle, QuestionText) like '%' + @_searchBy + '%'
 
 select
@@ -23,7 +23,7 @@ from
 	ATQuestionBank qb inner join
 	Company comp on qb.CompanyID = comp.ID
 where
-	qb.CompanyID = @_companyId
+	qb.CompanyID in(select * from dbo.SplitString(@_companyId, '-'))
 and	concat(qb.QuestionTitle, qb.QuestionText) like '%' + @_searchBy + '%'
 order by
 	comp.CompanyName,
