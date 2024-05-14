@@ -71,14 +71,17 @@ export async function getJobPostingByCompany(
     utilService.validateQueryParams(queryParams, validQueryStringParameters);
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
 
-    if (Number.isNaN(Number(companyId))) {
-        const errorMessage = `${companyId} is not a valid number`;
-        throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
-    }
+    const companyIds = companyId.split("-");
+    companyIds.forEach(id => {
+        if (Number.isNaN(Number(id))) {
+            const errorMessage = `${id} is not a valid number`;
+            throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        }
+    });
 
     try {
         const query = new ParameterizedQuery('getJobPostingByCompany', Queries.getJobPostingByCompany);
-        query.setParameter('@CompanyID', companyId);
+        query.setStringParameter('@CompanyID', companyId);
 
         const paginatedQuery = await paginationService.appendPaginationFilter(query, page);
         const payload = { 
