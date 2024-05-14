@@ -194,6 +194,8 @@ export interface IJobPostingResponsibleUser {
 
 export interface IApplicationGET {
     id: number,
+	companyId: number,
+	companyName: string,
 	atSoftStatusTypeId?: number,
 	atApplicationKey?: string,
 	receivedDate?: Date,
