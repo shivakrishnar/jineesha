@@ -55,16 +55,20 @@ export async function getApplicationVersionByCompany(
     //
     // validation
     //
-    if (Number.isNaN(Number(companyId))) {
-        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
-    }
+    const companyIds = companyId.split("-");
+    companyIds.forEach(id => {
+        if (Number.isNaN(Number(id))) {
+            const errorMessage = `${id} is not a valid number`;
+            throw errorService.getErrorResponse(30).setDeveloperMessage(errorMessage);
+        }
+    });
 
     const validQueryStringParameters = [];
     utilService.validateQueryParams(queryParams, validQueryStringParameters);
 
     try {
         const query = new ParameterizedQuery('getApplicationVersionByCompany', Queries.getApplicationVersionByCompany);
-        query.setParameter('@CompanyID', companyId);
+        query.setStringParameter('@CompanyID', companyId);
 
         const payload = {
             tenantId,
