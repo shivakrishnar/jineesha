@@ -1,5 +1,5 @@
 declare @_searchBy nvarchar(50) = @searchBy
-declare @_companyId bigint = @companyId
+declare @_companyId nvarchar(max) = @companyId
 
 select count(*) as totalCount
 from
@@ -7,7 +7,7 @@ from
 	ATQuestionBank qb on qbmca.ATQuestionBankID = qb.ID inner join
 	Company comp on qb.CompanyID = comp.ID
 where
-	qb.CompanyID = @_companyId
+	qb.CompanyID in(select * from dbo.SplitString(@_companyId, '-'))
 and concat(qb.QuestionTitle, qbmca.Answer) like '%' + @_searchBy + '%'
 
 select
@@ -22,9 +22,10 @@ from
 	ATQuestionBank qb on qbmca.ATQuestionBankID = qb.ID inner join
 	Company comp on qb.CompanyID = comp.ID
 where
-	qb.CompanyID = @_companyId
+	qb.CompanyID in(select * from dbo.SplitString(@_companyId, '-'))
 and concat(qb.QuestionTitle, qbmca.Answer) like '%' + @_searchBy + '%'
 order by
 	comp.CompanyName,
     qb.QuestionTitle,
-	qbmca.Answer
+	qbmca.Answer,
+	qbmca.ID
