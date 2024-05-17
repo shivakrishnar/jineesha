@@ -1,4 +1,4 @@
-declare @_companyId int = @companyId
+declare @_companyId nvarchar(max) = @companyId
 declare @_searchBy nvarchar(50) = @searchBy
 
 select
@@ -9,7 +9,7 @@ from
 	ATJobPosting jp on app.ATJobPostingID = jp.ID inner join
 	Company comp on jp.CompanyID = comp.ID
 where
-	jp.CompanyID = @_companyId
+	jp.CompanyID in(select * from dbo.SplitString(@_companyId, '-'))
 and aqba.OriginalQuestionText like '%' + @_searchBy + '%'
 
 select
@@ -29,7 +29,7 @@ from
 	ATJobPosting jp on app.ATJobPostingID = jp.ID inner join
 	Company comp on jp.CompanyID = comp.ID
 where
-	jp.CompanyID = @_companyId
+	jp.CompanyID in(select * from dbo.SplitString(@_companyId, '-'))
 and aqba.OriginalQuestionText like '%' + @_searchBy + '%'
 order by
 	jp.CompanyID,
