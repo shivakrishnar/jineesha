@@ -1,5 +1,6 @@
 insert into ATQuestionBank(
 	CompanyID,
+	ATQuestionBankGroupID,
 	ATQuestionTypeID,
 	QuestionTitle,
 	QuestionText,
@@ -8,6 +9,7 @@ insert into ATQuestionBank(
 	IsRequired
 ) values (
 	@CompanyID,
+	@ATQuestionBankGroupID,
 	@ATQuestionTypeID,
 	@QuestionTitle,
 	@QuestionText,

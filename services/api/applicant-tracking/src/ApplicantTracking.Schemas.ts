@@ -60,6 +60,7 @@ export const pathParametersForTenantIdAndJobPostingIdAndHRnextUserIdSchema = {
 
 export const createQuestionBankValidationSchema = Yup.object().shape({
     companyId: Yup.number().required('companyId is required'),
+	atQuestionBankGroupId: Yup.number().nullable(),
     atQuestionTypeId: Yup.number().required('atQuestionTypeId is required'),
     questionTitle: Yup.string()
         .required('questionTitle is required')
@@ -72,6 +73,7 @@ export const createQuestionBankValidationSchema = Yup.object().shape({
 
 export const createQuestionBankCheckPropertiesSchema = {
     companyId: { required: true, type: Number },
+	atQuestionBankGroupId: { required: false, type: Number },
     atQuestionTypeId: { required: true, type: Number },
     questionTitle: { required: true, type: String },
     questionText: { required: false, type: String },
@@ -83,6 +85,7 @@ export const createQuestionBankCheckPropertiesSchema = {
 export const updateQuestionBankValidationSchema = Yup.object().shape({
     id: Yup.number().required('id is required'),
     companyId: Yup.number().required('companyId is required'),
+	atQuestionBankGroupId: Yup.number().nullable(),
     atQuestionTypeId: Yup.number().required('atQuestionTypeId is required'),
     questionTitle: Yup.string()
         .required('questionTitle is required')
@@ -96,6 +99,7 @@ export const updateQuestionBankValidationSchema = Yup.object().shape({
 export const updateQuestionBankCheckPropertiesSchema = {
     id: { required: true, type: Number },
     companyId: { required: true, type: Number },
+	atQuestionBankGroupId: { required: false, type: Number },
     atQuestionTypeId: { required: true, type: Number },
     questionTitle: { required: true, type: String },
     questionText: { required: false, type: String },

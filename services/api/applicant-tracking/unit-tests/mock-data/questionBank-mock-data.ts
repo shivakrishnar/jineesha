@@ -1,3 +1,31 @@
+const defaultObjCompany3 = {
+  id: 33,
+  companyId: 3,
+  companyName: 'Artsy Tartsy Bakery',
+  atQuestionBankGroupId: 1,
+  groupName: 'Group Test',
+  atQuestionTypeId: 2,
+  questionTitle: 'Testing title',
+  questionText: 'Testing text',
+  active: true,
+  sequence: 1,
+  isRequired: false
+};
+
+const defaultObjCompany4 = {
+  id: 17,
+  companyId: 4,
+  companyName: 'Artsy Tartsy Bakery',
+  atQuestionBankGroupId: 2,
+  groupName: 'Group Test 2',
+  atQuestionTypeId: 4,
+  questionTitle: 'Survey Q 3',
+  questionText: 'Question 3 seq 1',
+  active: false,
+  sequence: 1,
+  isRequired: false
+};
+
 //
 // getQuestionBankByTenant
 //
@@ -12,26 +40,10 @@ export const getQuestionBankByTenantDBResponse = {
       ],
       [
         {
-          id: 33,
-          companyId: 3,
-          companyName: 'Artsy Tartsy Bakery',
-          atQuestionTypeId: 2,
-          questionTitle: 'Testing title',
-          questionText: 'Testing text',
-          active: true,
-          sequence: 1,
-          isRequired: false
+          ...defaultObjCompany3
         },
         {
-          id: 17,
-          companyId: 4,
-          companyName: 'Artsy Tartsy Bakery',
-          atQuestionTypeId: 4,
-          questionTitle: 'Survey Q 3',
-          questionText: 'Question 3 seq 1',
-          active: false,
-          sequence: 1,
-          isRequired: false
+          ...defaultObjCompany4
         }
       ]
     ],
@@ -53,26 +65,10 @@ export const getQuestionBankByTenantDBResponseEmpty = {
 
 export const getQuestionBankByTenantAPIResponse = [
   {
-    id: 33,
-    companyId: 3,
-    companyName: 'Artsy Tartsy Bakery',
-    atQuestionTypeId: 2,
-    questionTitle: 'Testing title',
-    questionText: 'Testing text',
-    active: true,
-    sequence: 1,
-    isRequired: false
+    ...defaultObjCompany3
   },
   {
-    id: 17,
-    companyId: 4,
-    companyName: 'Artsy Tartsy Bakery',
-    atQuestionTypeId: 4,
-    questionTitle: 'Survey Q 3',
-    questionText: 'Question 3 seq 1',
-    active: false,
-    sequence: 1,
-    isRequired: false
+    ...defaultObjCompany4
   }
 ];
 
@@ -90,15 +86,7 @@ export const getQuestionBankByCompanyDBResponse = {
     ],
     [
       {
-        id: 33,
-        companyId: 3,
-        companyName: 'Artsy Tartsy Bakery',
-        atQuestionTypeId: 2,
-        questionTitle: 'Testing title',
-        questionText: 'Testing text',
-        active: true,
-        sequence: 1,
-        isRequired: false
+        ...defaultObjCompany3
       }
     ]
   ],
@@ -120,15 +108,7 @@ export const getQuestionBankByCompanyDBResponseEmpty = {
 
 export const getQuestionBankByCompanyAPIResponse = [
   {
-    id: 33,
-    companyId: 3,
-    companyName: 'Artsy Tartsy Bakery',
-    atQuestionTypeId: 2,
-    questionTitle: 'Testing title',
-    questionText: 'Testing text',
-    active: true,
-    sequence: 1,
-    isRequired: false
+    ...defaultObjCompany3
   }
 ];
 
@@ -140,15 +120,7 @@ export const questionBankToGetByIdWithCharacter = '33abc';
 
 export const getQuestionBankByIdDBResponse = {
   recordset: [{
-    id: 33,
-    companyId: 3,
-    companyName: 'Artsy Tartsy Bakery',
-    atQuestionTypeId: 2,
-    questionTitle: "What is your name",
-    questionText: "My name is Tom",
-    active: true,
-    sequence: 1,
-    isRequired: true
+    ...defaultObjCompany3
   }]
 };
 
@@ -157,28 +129,14 @@ export const getQuestionBankByIdDBResponseEmpty = {
 };
 
 export const getQuestionBankByIdAPIResponse = {
-  id: 33,
-  companyId: 3,
-  companyName: 'Artsy Tartsy Bakery',
-  atQuestionTypeId: 2,
-  questionTitle: "What is your name",
-  questionText: "My name is Tom",
-  active: true,
-  sequence: 1,
-  isRequired: true
+  ...defaultObjCompany3
 };
 
 //
 // createQuestionBank
 //
 export const createQuestionBankRequestBody = {
-  companyId: 3,
-  atQuestionTypeId: 2,
-  questionTitle: "What is your name",
-  questionText: "My name is Tom",
-  active: true,
-  sequence: 1,
-  isRequired: true
+  ...defaultObjCompany3
 };
 
 export const createQuestionBankDBResponse = {
@@ -186,29 +144,14 @@ export const createQuestionBankDBResponse = {
 };
 
 export const createQuestionBankAPIResponse = {
-  id: 33,
-  companyId: 3,
-  companyName: 'Artsy Tartsy Bakery',
-  atQuestionTypeId: 2,
-  questionTitle: "What is your name",
-  questionText: "My name is Tom",
-  active: true,
-  sequence: 1,
-  isRequired: true
+  ...defaultObjCompany3
 };
 
 //
 // updateQuestionBank
 //
 export const updateQuestionBankRequestBody = {
-  id: 33,
-  companyId: 3,
-  atQuestionTypeId: 2,
-  questionTitle: "What is your name",
-  questionText: "My name is Tom",
-  active: true,
-  sequence: 1,
-  isRequired: true
+  ...defaultObjCompany3
 };
 
 export const updateQuestionBankAPIResponse = true;

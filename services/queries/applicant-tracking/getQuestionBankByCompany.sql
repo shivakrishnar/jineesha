@@ -4,15 +4,18 @@ declare @_searchBy nvarchar(50) = @searchBy
 select
 	count(*) as totalCount
 from
-	ATQuestionBank
+	ATQuestionBank qb left join
+	ATQuestionBankGroup qbg on qb.ATQuestionBankGroupID = qbg.ID
 where
-	CompanyID in(select * from dbo.SplitString(@_companyId, '-'))
-and concat(QuestionTitle, QuestionText) like '%' + @_searchBy + '%'
+	qb.CompanyID in(select * from dbo.SplitString(@_companyId, '-'))
+and concat(qb.QuestionTitle, qb.QuestionText, qbg.GroupName) like '%' + @_searchBy + '%'
 
 select
 	qb.ID as id,
 	qb.CompanyID as companyId,
 	comp.CompanyName as companyName,
+	qb.ATQuestionBankGroupID as atQuestionBankGroupId,
+	qbg.GroupName as groupName,
 	qb.ATQuestionTypeID as atQuestionTypeId,
 	qb.QuestionTitle as questionTitle,
 	qb.QuestionText as questionText,
@@ -21,11 +24,13 @@ select
 	qb.IsRequired as isRequired
 from
 	ATQuestionBank qb inner join
-	Company comp on qb.CompanyID = comp.ID
+	Company comp on qb.CompanyID = comp.ID left join
+	ATQuestionBankGroup qbg on qb.ATQuestionBankGroupID = qbg.ID
 where
 	qb.CompanyID in(select * from dbo.SplitString(@_companyId, '-'))
-and	concat(qb.QuestionTitle, qb.QuestionText) like '%' + @_searchBy + '%'
+and	concat(qb.QuestionTitle, qb.QuestionText, qbg.GroupName) like '%' + @_searchBy + '%'
 order by
 	comp.CompanyName,
+	qbg.GroupName,
 	qb.Sequence,
     qb.QuestionTitle

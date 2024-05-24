@@ -182,6 +182,7 @@ export async function createQuestionBank(
         //
         const query = new ParameterizedQuery('createQuestionBank', Queries.createQuestionBank);
         query.setParameter('@CompanyID', requestBody.companyId);
+        query.setIntegerOrNullParameter('@ATQuestionBankGroupID', requestBody.atQuestionBankGroupId);
         query.setParameter('@ATQuestionTypeID', requestBody.atQuestionTypeId);
         query.setStringOrNullParameter('@QuestionTitle', requestBody.questionTitle);
         query.setStringOrNullParameter('@QuestionText', requestBody.questionText);
@@ -275,6 +276,7 @@ export async function updateQuestionBank(
         //
         const query = new ParameterizedQuery('updateQuestionBank', Queries.updateQuestionBank);
         query.setParameter('@ID', requestBody.id);
+        query.setIntegerOrNullParameter('@ATQuestionBankGroupID', requestBody.atQuestionBankGroupId);
         query.setParameter('@ATQuestionTypeID', requestBody.atQuestionTypeId);
         query.setStringOrNullParameter('@QuestionTitle', requestBody.questionTitle);
         query.setStringOrNullParameter('@QuestionText', requestBody.questionText);

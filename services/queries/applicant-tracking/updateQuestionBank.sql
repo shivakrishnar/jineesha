@@ -1,4 +1,5 @@
 update ATQuestionBank set
+	ATQuestionBankGroupID = @ATQuestionBankGroupID,
 	ATQuestionTypeID = @ATQuestionTypeID,
 	QuestionTitle = @QuestionTitle,
 	QuestionText = @QuestionText,
