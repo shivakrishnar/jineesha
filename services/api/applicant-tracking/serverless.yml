@@ -645,6 +645,33 @@ functions:
             cors:
               origin: '*'              
 
+  getQuestionBankGroupByTenant:
+    handler: src/handlerQuestionBankGroup.getQuestionBankGroupByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/question-bank-group
+            method: get
+            cors:
+              origin: '*'
+
+  getQuestionBankGroupByCompany:
+    handler: src/handlerQuestionBankGroup.getQuestionBankGroupByCompany
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank-group
+            method: get
+            cors:
+              origin: '*'
+
+  getQuestionBankGroupById:
+    handler: src/handlerQuestionBankGroup.getQuestionBankGroupById
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank-group/{id}
+            method: get
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

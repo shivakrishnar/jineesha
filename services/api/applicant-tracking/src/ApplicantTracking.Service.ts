@@ -11,6 +11,7 @@ import * as ApplicationService from './Application.Service';
 import * as ApplicationQuestionBankAnswerService from './ApplicationQuestionBankAnswer.Service';
 import * as ApplicationNoteService from './ApplicationNote.Service';
 import * as ApplicationStatusHistoryService from './ApplicationStatusHistory.Service';
+import * as QuestionBankGroupService from './QuestionBankGroup.Service';
 
 const questionTypeService = QuestionTypeService;
 const questionBankService = QuestionBankService;
@@ -25,6 +26,7 @@ const applicationService = ApplicationService;
 const applicationQuestionBankAnswerService = ApplicationQuestionBankAnswerService;
 const applicationNoteService = ApplicationNoteService;
 const applicationStatusHistoryService = ApplicationStatusHistoryService;
+const questionBankGroupService = QuestionBankGroupService;
 
 export { 
     questionTypeService,
@@ -39,5 +41,6 @@ export {
     applicationService,
     applicationQuestionBankAnswerService,
     applicationNoteService,
-    applicationStatusHistoryService
+    applicationStatusHistoryService,
+    questionBankGroupService
 };
