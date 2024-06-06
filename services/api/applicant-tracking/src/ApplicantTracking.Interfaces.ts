@@ -670,3 +670,10 @@ export interface IApplicationStatusHistoryPUT {
     statusChangedByUsername?: string,
 	changedStatusTitle?: string	
 }
+
+export interface IQuestionBankGroupGET {
+	id: number,
+	companyId: number,
+	companyName: string,
+	groupName: string
+}
