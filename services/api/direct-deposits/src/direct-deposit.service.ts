@@ -276,6 +276,11 @@ export async function create(
 
         let accountNumberValue = accountNumber;
         if (nachaBetaFlagIsOn === 'Y') {
+            if (!accountNumber || accountNumber.length === 0 || !/^\d/.test(accountNumber)) {
+                console.info('accountNumber: ' + accountNumber);
+                throw errorService.getErrorResponse(0).setMoreInfo("Account must start with a digit.");
+            }
+
             const tokenizationResponse = await getTokenizedOutput(tenantId, [accountNumber]);
             const tokenizedValue = tokenizationResponse[0];
             accountNumberValue = tokenizedValue;
