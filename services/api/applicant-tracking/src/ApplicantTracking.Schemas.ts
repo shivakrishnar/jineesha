@@ -65,7 +65,7 @@ export const createQuestionBankValidationSchema = Yup.object().shape({
     questionTitle: Yup.string()
         .required('questionTitle is required')
         .max(100, 'questionTitle must be a maximum of 100 characters.'),
-    questionText: Yup.string().nullable(),
+    questionText: Yup.string().required('questionText is required'),
     active: Yup.boolean().required('active is required'),
     sequence: Yup.number().required('sequence is required'),
     isRequired: Yup.boolean().required('isRequired is required'),
@@ -76,7 +76,7 @@ export const createQuestionBankCheckPropertiesSchema = {
 	atQuestionBankGroupId: { required: false, type: Number },
     atQuestionTypeId: { required: true, type: Number },
     questionTitle: { required: true, type: String },
-    questionText: { required: false, type: String },
+    questionText: { required: true, type: String },
     active: { required: true, type: Boolean },
     sequence: { required: true, type: Number },
     isRequired: { required: true, type: Boolean },
@@ -90,7 +90,7 @@ export const updateQuestionBankValidationSchema = Yup.object().shape({
     questionTitle: Yup.string()
         .required('questionTitle is required')
         .max(100, 'questionTitle must be a maximum of 100 characters.'),
-    questionText: Yup.string().nullable(),
+    questionText: Yup.string().required('questionText is required'),
     active: Yup.boolean().required('active is required'),
     sequence: Yup.number().required('sequence is required'),
     isRequired: Yup.boolean().required('isRequired is required'),
@@ -102,7 +102,7 @@ export const updateQuestionBankCheckPropertiesSchema = {
 	atQuestionBankGroupId: { required: false, type: Number },
     atQuestionTypeId: { required: true, type: Number },
     questionTitle: { required: true, type: String },
-    questionText: { required: false, type: String },
+    questionText: { required: true, type: String },
     active: { required: true, type: Boolean },
     sequence: { required: true, type: Number },
     isRequired: { required: true, type: Boolean },
