@@ -7,7 +7,7 @@ import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
-//import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
+import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
 
 
 /**
@@ -146,6 +146,82 @@ export async function getQuestionBankGroupById(
         }
 
         return result;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Create ATQuestionBankGroup.
+ */
+export async function createQuestionBankGroup(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IQuestionBankGroupPOST
+): Promise<atInterfaces.IQuestionBankGroupGET> {
+    console.info('QuestionBankGroup.Service.createQuestionBankGroup');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (companyId != requestBody.companyId.toString()) {
+        throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+    }
+
+    try {
+        //
+        // inserting data
+        //
+        const query = new ParameterizedQuery('createQuestionBankGroup', Queries.createQuestionBankGroup);
+        query.setParameter('@CompanyID', requestBody.companyId);
+        query.setStringParameter('@GroupName', requestBody.groupName);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        const queryResult: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const id: any = queryResult.recordset[0].ID;
+        if (id) {
+            //
+            // getting data
+            //
+            const apiresult = await getQuestionBankGroupById(tenantId, companyId, id);
+
+            //
+            // auditing log
+            //
+            const logResult = { ...apiresult };
+            logResult.groupName = utilService.sanitizeStringForSql(logResult.groupName);
+            delete logResult.companyName;
+
+            utilService.logToAuditTrail({
+                userEmail,
+                newFields: logResult,
+                type: AuditActionType.Insert,
+                companyId: companyId,
+                areaOfChange: AuditAreaOfChange.ApplicantTracking,
+                tenantId,
+            } as IAudit);
+
+            //
+            // api response
+            //
+            return apiresult;
+        } else {
+            throw errorService.getErrorResponse(74).setDeveloperMessage('Was not possible to create the resource');
+        }
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;

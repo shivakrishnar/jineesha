@@ -79,3 +79,33 @@ export const getQuestionBankGroupById = utilService.gatewayEventHandlerV2(async 
 
     return await applicantTrackingService.questionBankGroupService.getQuestionBankGroupById(tenantId, companyId, id);
 });
+
+/**
+ * Create ATQuestionBankGroup.
+ */
+export const createQuestionBankGroup = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerQuestionBankGroup.createQuestionBankGroup');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndCompanyIdSchema);
+
+    await utilService.checkAuthorization(securityContext, event, [
+        Role.globalAdmin, 
+        Role.serviceBureauAdmin, 
+        Role.superAdmin, 
+        Role.hrAdmin, 
+        Role.hrManager, 
+        Role.hrEmployee
+    ]);
+
+    const { tenantId, companyId } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    await utilService.validateRequestBody(schemas.createQuestionBankGroupValidationSchema, requestBody);
+    utilService.checkAdditionalProperties(schemas.createQuestionBankGroupCheckPropertiesSchema, requestBody, 'QuestionBankGroup');
+
+    const apiResult = await applicantTrackingService.questionBankGroupService.createQuestionBankGroup(tenantId, companyId, userEmail, requestBody);
+
+    return { statusCode: 201, body: apiResult }
+});

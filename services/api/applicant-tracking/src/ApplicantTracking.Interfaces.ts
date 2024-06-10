@@ -677,3 +677,8 @@ export interface IQuestionBankGroupGET {
 	companyName: string,
 	groupName: string
 }
+
+export interface IQuestionBankGroupPOST {
+	companyId: number,
+	groupName: string
+}

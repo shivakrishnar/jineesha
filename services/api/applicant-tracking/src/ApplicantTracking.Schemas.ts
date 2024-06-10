@@ -952,3 +952,13 @@ export const updateApplicationStatusHistoryCheckPropertiesSchema = {
     statusChangedByUsername: { required: false, type: String },
     changedStatusTitle: { required: false, type: String }
 };
+
+export const createQuestionBankGroupValidationSchema = Yup.object().shape({
+    companyId: Yup.number().required('companyId is required'),
+	groupName: Yup.string().required('groupName is required'),
+});
+
+export const createQuestionBankGroupCheckPropertiesSchema = {
+    companyId: { required: true, type: Number },
+	groupName: { required: true, type: String },
+};
