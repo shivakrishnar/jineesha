@@ -679,6 +679,15 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/question-bank-group
             method: post
             cors:
+              origin: '*'
+              
+  updateQuestionBankGroup:
+    handler: src/handlerQuestionBankGroup.updateQuestionBankGroup
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank-group
+            method: put
+            cors:
               origin: '*'              
 
 resources:
