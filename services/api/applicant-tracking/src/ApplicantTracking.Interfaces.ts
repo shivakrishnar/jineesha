@@ -682,3 +682,9 @@ export interface IQuestionBankGroupPOST {
 	companyId: number,
 	groupName: string
 }
+
+export interface IQuestionBankGroupPUT {
+	id: number,
+	companyId: number,
+	groupName: string
+}

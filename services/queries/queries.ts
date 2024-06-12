@@ -374,4 +374,5 @@ export const Queries = {
     getQuestionBankGroupByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBankGroupByTenant.sql')).toString(),
     getQuestionBankGroupByCompany: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionBankGroupByCompany.sql')).toString(),
     createQuestionBankGroup: fs.readFileSync(path.join(basePath, 'applicant-tracking/createQuestionBankGroup.sql')).toString(),
+    updateQuestionBankGroup: fs.readFileSync(path.join(basePath, 'applicant-tracking/updateQuestionBankGroup.sql')).toString(),
 };

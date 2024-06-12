@@ -230,3 +230,83 @@ export async function createQuestionBankGroup(
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * Update ATQuestionBankGroup.
+ */
+export async function updateQuestionBankGroup(
+    tenantId: string,
+    companyId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IQuestionBankGroupPUT
+): Promise<Boolean> {
+    console.info('QuestionBankGroup.Service.updateQuestionBankGroup');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(companyId))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${companyId} is not a valid number`);
+    }
+    if (companyId != requestBody.companyId.toString()) {
+        throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getQuestionBankGroupById(tenantId, companyId, requestBody.id.toString());     
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+        if (oldValues.companyId != requestBody.companyId) {
+            throw errorService.getErrorResponse(30).setMoreInfo('this record does not belong to this company');
+        }
+
+        //
+        // updating data
+        //
+        const query = new ParameterizedQuery('updateQuestionBankGroup', Queries.updateQuestionBankGroup);
+        query.setParameter('@ID', requestBody.id);
+        query.setStringParameter('@GroupName', requestBody.groupName);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        const logResult = { ...requestBody };
+        logResult.groupName = utilService.sanitizeStringForSql(logResult.groupName);
+        oldValues.groupName = utilService.sanitizeStringForSql(oldValues.groupName);
+        delete oldValues.companyName;
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            newFields: logResult,
+            type: AuditActionType.Update,
+            companyId: companyId,
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
