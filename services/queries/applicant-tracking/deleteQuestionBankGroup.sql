@@ -1,0 +1,1 @@
+delete from ATQuestionBankGroup where ID = @ID

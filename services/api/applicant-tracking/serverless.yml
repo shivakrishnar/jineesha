@@ -688,7 +688,16 @@ functions:
             path: /tenants/{tenantId}/companies/{companyId}/question-bank-group
             method: put
             cors:
-              origin: '*'              
+              origin: '*'
+
+  deleteQuestionBankGroup:
+    handler: src/handlerQuestionBankGroup.deleteQuestionBankGroup
+    events:
+        - http:
+            path: /tenants/{tenantId}/companies/{companyId}/question-bank-group/{id}
+            method: delete
+            cors:
+              origin: '*'
 
 resources:
   Resources:
