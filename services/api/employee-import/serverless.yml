@@ -26,6 +26,7 @@ provider:
     hrDatabaseCreatorStateMachineArn: arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrDatabaseCreator-${self:provider.stage}
     hrCompanyMigratorStateMachineArn: arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrCompanyMigrator-${self:provider.stage}
     hrEmployeeImportStateMachineArn: arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrEmployeeImportStateMachine-${self:provider.stage}
+    hrEmployeeImportInBulkStateMachineArn: arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrEmployeeImportInBulkStateMachine-${self:provider.stage}
     teamNotificationTopicArn: arn:aws:sns:us-east-1:#{AWS::AccountId}:mojojojo-status-notification
     scopeBaseDomain: ${file(${self:custom.configFile}):scopeBaseDomain}
     goldilocksApplicationId: ${file(${self:custom.configFile}):goldilocksApplicationId}
@@ -93,6 +94,7 @@ provider:
         - "arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrDatabaseCreator${opt:branchName, ''}-${self:provider.stage}"
         - "arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrCompanyMigrator${opt:branchName, ''}-${self:provider.stage}"
         - "arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrEmployeeImportStateMachine${opt:branchName, ''}-${self:provider.stage}"
+        - "arn:aws:states:us-east-1:#{AWS::AccountId}:stateMachine:HrEmployeeImportInBulkStateMachine${opt:branchName, ''}-${self:provider.stage}"
 
     - Effect: Allow
       Action:
@@ -153,11 +155,29 @@ functions:
             cors:
               origin: '*'
 
+  getDataImportTypesImpProcess:
+    handler: src/handler.getDataImportTypes
+    events:
+        - http:
+            path: /tenants/{tenantId}/import-process/{importProcess}/data-import-types
+            method: get
+            cors:
+              origin: '*'
+
   getDataImportEvent:
     handler: src/handler.getDataImportEvent
     events:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/data-imports
+            method: get
+            cors:
+              origin: '*'
+
+  getAllDataImportEvent:
+    handler: src/handler.getAllDataImportEvent
+    events:
+        - http:
+            path: /tenants/{tenantId}/data-imports
             method: get
             cors:
               origin: '*'
@@ -175,7 +195,7 @@ functions:
     handler: src/handler.getDataImportEventDetails
     events:
         - http:
-            path: /tenants/{tenantId}/companies/{companyId}/data-imports/{dataImportId}/data-import-details
+            path: /tenants/{tenantId}/data-imports/{dataImportId}/data-import-details
             method: get
             cors:
               origin: '*'
@@ -207,11 +227,29 @@ functions:
             cors:
               origin: '*'
 
+  uploadUrlInBulk:
+    handler: src/handler.uploadUrlInBulk
+    events:
+        - http:
+            path: /tenants/{tenantId}/data-imports/upload-url
+            method: post
+            cors:
+              origin: '*'
+
   dataImports:
     handler: src/handler.dataImports
     events:
         - http:
             path: /tenants/{tenantId}/companies/{companyId}/data-imports
+            method: post
+            cors:
+              origin: '*'
+
+  dataImportsInBulk:
+    handler: src/handler.dataImportsInBulk
+    events:
+        - http:
+            path: /tenants/{tenantId}/data-imports
             method: post
             cors:
               origin: '*'
@@ -238,6 +276,22 @@ functions:
 
   updateAlternateRate:
     handler: src/handler.updateAlternateRate
+    memorySize: 1024
+
+  updateEmployeeInBulk:
+    handler: src/handler.updateEmployeeInBulk
+    memorySize: 1024
+
+  updateCompensationInBulk:
+    handler: src/handler.updateCompensationInBulk
+    memorySize: 1024
+
+  updateAlternateRateInBulk:
+    handler: src/handler.updateAlternateRateInBulk
+    memorySize: 1024
+
+  clearCache:
+    handler: src/handler.clearCache
     memorySize: 1024
 
 resources:

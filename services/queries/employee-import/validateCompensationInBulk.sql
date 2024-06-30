@@ -80,6 +80,10 @@ BEGIN TRY
 		select @cErrorMessage = @cErrorMessage + 'Invalid Change Reason\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 
 	  select @cDataValue = value from #CSVtable where Row_Num = 8
+		if len(trim(@cDataValue)) = 0
+		select @cErrorMessage = @cErrorMessage + 'Company Code is required\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+
+	  select @cDataValue = value from #CSVtable where Row_Num = 9
 	  if len(trim(@cDataValue)) = 0
 		select @cColumnsToUpdate = @cColumnsToUpdate + 'N'
 	  else

@@ -134,6 +134,10 @@ BEGIN TRY
 					OT.HomeStateID = (select id from CountryStateType where StateCode = replace(replace(right(@cDataValue,4), '(',''), ')',''))) < 1
 			select @cErrorMessage = @cErrorMessage + 'Invalid Organization Level 4\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
 
+	  select @cDataValue = value from #CSVtable where Row_Num = 12
+		if len(trim(@cDataValue)) = 0
+		select @cErrorMessage = @cErrorMessage + 'Company Code is required\n', @cStatus = 0, @nGlobalError_Nbr = @nGlobalError_Nbr + 1
+
 	if @nGlobalError_Nbr > 0
 		begin
 			select @cStatus = 0

@@ -635,6 +635,9 @@ export async function clearCache(tenantId: string, accessToken: string): Promise
     } as DatabaseEvent;
     const result: any = await invokeInternalService('queryExecutor', payload, InvocationType.RequestResponse);
 
+    console.info('==> result:');
+    console.info(result);
+
     const tenant: TenantDetails[] = (result.recordset || []).map((entry) => {
         return {
             accountName: entry.AccountName,
@@ -647,11 +650,19 @@ export async function clearCache(tenantId: string, accessToken: string): Promise
         };
     });
 
-    if (tenant.length > 0) {
-        await request
+    if (tenant.length > 0) {        
+        try {
+            console.info(`Clear cache in ${tenant[0].applicationUrl}`);
+
+            const clearCacheResult = await request
             .post(`https://${tenant[0].applicationUrl}/Classes/Service/hrnextDataService.asmx/ClearCache`)
-            .send(JSON.stringify({ accessToken }))
-            .set('Content-Type', 'application/json');
+            .set('Content-Type', 'application/json')
+            .send(JSON.stringify({ accessToken }));
+
+            console.info(clearCacheResult);
+        } catch (error) {
+            console.info(error);
+        }
     }
 }
 
