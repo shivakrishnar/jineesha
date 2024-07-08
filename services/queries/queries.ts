@@ -376,4 +376,8 @@ export const Queries = {
     createQuestionBankGroup: fs.readFileSync(path.join(basePath, 'applicant-tracking/createQuestionBankGroup.sql')).toString(),
     updateQuestionBankGroup: fs.readFileSync(path.join(basePath, 'applicant-tracking/updateQuestionBankGroup.sql')).toString(),
     deleteQuestionBankGroup: fs.readFileSync(path.join(basePath, 'applicant-tracking/deleteQuestionBankGroup.sql')).toString(),
+
+    getUserPermissions: fs.readFileSync(path.join(basePath, 'applicant-tracking/security-user-access/getUserPermissions.sql')).toString(),
+    getSystemsById: fs.readFileSync(path.join(basePath, 'applicant-tracking/security-user-access/getSystemsById.sql')).toString(),
+    getSystemsByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/security-user-access/getSystemsByTenant.sql')).toString(),
 };

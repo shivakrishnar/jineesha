@@ -688,3 +688,31 @@ export interface IQuestionBankGroupPUT {
 	companyId: number,
 	groupName: string
 }
+
+export interface ISystemsGET {
+	id: number,
+	name: string,
+	description: string
+}
+
+export interface IUserPermissionsGET {
+	roleId: number,
+	roleName: string,
+	isAdmin: boolean,
+	systemId: number,
+	systemName: string,
+	systemDescription: string,
+	roleClaimsId: number,
+	claimId: number,
+	claimsValue: string,
+	claimsDescription: string,
+	canAdd: boolean,
+	canEdit: boolean,
+	canDelete: boolean,
+	roleCompaniesId?: number,
+	companyId?: number,
+	companyName?: string,
+	roleUsersId?: number,
+	userId?: number,
+	userName?: string
+}

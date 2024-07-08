@@ -699,6 +699,24 @@ functions:
             cors:
               origin: '*'
 
+  getSystemsById:
+    handler: src/handlerSystems.getSystemsById
+    events:
+        - http:
+            path: /tenants/{tenantId}/systems/{id}
+            method: get
+            cors:
+              origin: '*'
+
+  getSystemsByTenant:
+    handler: src/handlerSystems.getSystemsByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/systems
+            method: get
+            cors:
+              origin: '*'            
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
