@@ -12,6 +12,8 @@ import * as errorService from './errors/error.service';
 import * as ssoService from './remote-services/sso.service';
 // utilService is being imported in itself so that jest can mock this function
 import * as utilService from './util.service';
+import * as atInterfaces from './api/applicant-tracking/src/ApplicantTracking.Interfaces';
+import * as atEnums from './api/applicant-tracking/src/ApplicantTracking.Enums';
 
 import {
     APIGatewayEvent,
@@ -1510,3 +1512,193 @@ export function sanitizeStringForSql(value: string): string {
     }
     return value;
 }
+
+/**
+ * Validates if the user have access to the requested resource.
+ * @param {SecurityContext} securityContext: represents data pulled from the token when it is verified.
+ * @param {APIGatewayProxyEvent} event: The API request event.
+ * @param {atEnums.Systems} systemName: The name of the system that owns the resource.
+ * @param {atEnums.ATSClaims} resourceName: The unique identifier of the resource.
+ * @param {atEnums.Operation} operationName: The unique identifier of the operation.
+ * @param {boolean} mustHaveCompanyIdInPathParameters: A flag to check if companyId is mandatory.
+ */
+export async function checkUserAccessPermissions(
+    securityContext: SecurityContext,
+    event: APIGatewayProxyEvent,
+    systemName: atEnums.Systems, 
+    resourceName: atEnums.ATSClaims,
+    operationName: atEnums.Operations = atEnums.Operations.READ,
+    mustHaveCompanyIdInPathParameters: boolean = true,
+): Promise<void> {
+    console.info('utilService.checkUserAccessPermissions');
+
+    try {
+        let isAuthorized: boolean = false;
+
+        //
+        // extracting information
+        //
+        const { principal: { username: userName, enabled: userEnabled, givenName: firstName, surname: lastName } } = securityContext;
+        const { tenantId, companyId } = event.pathParameters;
+        const companies = companyId ? companyId.split('-').map(val => parseInt(val)) : [];
+        //console.log({ userName, userEnabled, firstName, lastName, systemName, operationName, resourceName, tenantId, companyId, companies });
+
+        //
+	    // query database to get user permissions
+        //
+        const query = new ParameterizedQuery('getUserPermissions', Queries.getUserPermissions);
+        query.setStringParameter('@UserName', userName);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        const dbResults: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const permissions: atInterfaces.IUserPermissionsGET[] = dbResults.recordset;
+        //console.log(permissions);
+
+	    //
+        // checking permissions
+        //
+        if (!userEnabled) {
+            throw errorService.getErrorResponse(11).setMoreInfo(`The user [${lastName}, ${firstName}] with unique name [${userName}] is disabled`);
+        }
+        if (permissions && permissions.length > 0){
+            //
+            // if user is admin just authorize, doesn't matter the company or the operation
+            //
+            if (permissions.filter(p => p.systemName.toUpperCase() === systemName.toUpperCase() && p.isAdmin === true).length > 0) {
+                isAuthorized = true;
+            } else {
+                if (mustHaveCompanyIdInPathParameters) {
+                    //
+                    // checking if the user have access to the companies
+                    //
+                    if (companies && companies.length > 0) {
+                        let companyWithoutAccess = '';
+                        for(let i = 0; i < companies.length; i++) {
+                            switch (operationName) {
+                                case atEnums.Operations.READ:
+                                    if (permissions.filter(p => 
+                                        p.companyId == companies[i] &&
+                                        p.systemName.toUpperCase() === systemName.toUpperCase() && 
+                                        p.claimsValue.toUpperCase() === resourceName.toUpperCase()).length === 0)
+                                    {
+                                        companyWithoutAccess += `${companies[i]}-`;
+                                    }
+                                    break;
+                                case atEnums.Operations.ADD:
+                                    if (permissions.filter(p =>
+                                        p.companyId == companies[i] &&
+                                        p.systemName.toUpperCase() === systemName.toUpperCase() && 
+                                        p.claimsValue.toUpperCase() === resourceName.toUpperCase() &&
+                                        p.canAdd === true).length === 0)
+                                    {
+                                        companyWithoutAccess += `${companies[i]}-`;
+                                    }
+                                    break;
+                                case atEnums.Operations.EDIT:
+                                    if (permissions.filter(p =>
+                                        p.companyId == companies[i] &&
+                                        p.systemName.toUpperCase() === systemName.toUpperCase() && 
+                                        p.claimsValue.toUpperCase() === resourceName.toUpperCase() &&
+                                        p.canEdit === true).length === 0)
+                                    {
+                                        companyWithoutAccess += `${companies[i]}-`;
+                                    }
+                                    break;
+                                case atEnums.Operations.DELETE:
+                                    if (permissions.filter(p =>
+                                        p.companyId == companies[i] &&
+                                        p.systemName.toUpperCase() === systemName.toUpperCase() && 
+                                        p.claimsValue.toUpperCase() === resourceName.toUpperCase() &&
+                                        p.canDelete === true).length === 0)
+                                    {
+                                        companyWithoutAccess += `${companies[i]}-`;
+                                    }
+                                    break;
+                                default:
+                                    throw errorService.getErrorResponse(11).setMoreInfo(`The operation [${operationName}] is invalid`);
+                            }
+                        }
+                        
+                        if (companyWithoutAccess.length > 0) {
+                            throw errorService.getErrorResponse(11).setMoreInfo(`The user does not have the access to the companies: ${companyWithoutAccess.substring(0, companyWithoutAccess.length - 1)} to do the operation: [${operationName}] on the resource: [${resourceName}]`);
+                        }
+                        
+                        isAuthorized = true;
+    
+                    } else {
+                        throw errorService.getErrorResponse(11).setMoreInfo(`The user does not have the access ${companyId ? `to the companies: ${companyId}` : ''} to do the operation: [${operationName}] on the resource: [${resourceName}]`);
+                    }
+                } else {
+                    //
+                    // we don't need to check for companies so we will check if the user have access to the resource
+                    //
+                    let resourceWithoutAccess = '';
+                    switch (operationName) {
+                        case atEnums.Operations.READ:
+                            if (permissions.filter(p => 
+                                p.systemName.toUpperCase() === systemName.toUpperCase() && 
+                                p.claimsValue.toUpperCase() === resourceName.toUpperCase()).length === 0)
+                            {
+                                resourceWithoutAccess += resourceName;
+                            }
+                            break;
+                        case atEnums.Operations.ADD:
+                            if (permissions.filter(p =>
+                                p.systemName.toUpperCase() === systemName.toUpperCase() && 
+                                p.claimsValue.toUpperCase() === resourceName.toUpperCase() &&
+                                p.canAdd === true).length === 0)
+                            {
+                                resourceWithoutAccess += resourceName;
+                            }
+                            break;
+                        case atEnums.Operations.EDIT:
+                            if (permissions.filter(p =>
+                                p.systemName.toUpperCase() === systemName.toUpperCase() && 
+                                p.claimsValue.toUpperCase() === resourceName.toUpperCase() &&
+                                p.canEdit === true).length === 0)
+                            {
+                                resourceWithoutAccess += resourceName;
+                            }
+                            break;
+                        case atEnums.Operations.DELETE:
+                            if (permissions.filter(p =>
+                                p.systemName.toUpperCase() === systemName.toUpperCase() && 
+                                p.claimsValue.toUpperCase() === resourceName.toUpperCase() &&
+                                p.canDelete === true).length === 0)
+                            {
+                                resourceWithoutAccess += resourceName;
+                            }
+                            break;
+                        default:
+                            throw errorService.getErrorResponse(11).setMoreInfo(`The operation [${operationName}] is invalid`);
+                    }
+                    
+                    if (resourceWithoutAccess.length > 0) {
+                        throw errorService.getErrorResponse(11).setMoreInfo(`The user does not have the access to do the operation: [${operationName}] on the resource: [${resourceName}]`);
+                    }
+                    
+                    isAuthorized = true;
+                }
+            }
+        } else {
+            throw errorService.getErrorResponse(11).setMoreInfo(`The user does not have permissions configured`);
+        }
+
+        if (!isAuthorized) {
+            throw errorService.getErrorResponse(11).setMoreInfo('The user does not have the access right to use this endpoint');
+        }
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
