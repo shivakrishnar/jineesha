@@ -149,6 +149,35 @@ export async function listAvailableDatabases(rdsInstanceEndpoint: string): Promi
     return databaseList;
 }
 
+async function queryDynamoDBTableUsingIndex(key: { [key: string]: any }) {
+
+    // Define the table name
+    const tableName = "ConnectionStrings";
+
+    // Create DynamoDB DocumentClient
+    const docClient = new AWS.DynamoDB.DocumentClient();
+
+    const params = {
+        TableName: tableName,
+        IndexName: "tenantId-index", // Specify the index name
+        KeyConditionExpression: "#tenantId = :tenantIdValue",
+        ExpressionAttributeNames: {
+            "#tenantId": "TenantID", // Specify the attribute name used in the index
+        },
+        ExpressionAttributeValues: {
+            ":tenantIdValue": key.TenantID, // Provide the value for the tenantId you are querying
+        },
+    };
+
+    try {
+        const data = await docClient.query(params).promise();
+        return data.Items;
+    } catch (err) {
+        console.error("Error", err);
+        throw err;
+    }
+}
+
 /**
  *  Finds the RDS instance and associated database name  a given tenant is hosted on.
  * @param {string} tenantId: The unique identifier for a tenant.
@@ -157,28 +186,12 @@ export async function listAvailableDatabases(rdsInstanceEndpoint: string): Promi
 export async function findConnectionString(tenantId: string): Promise<ConnectionString> {
     console.info('database.service.findConnectionString');
 
-    const rdsClient = new AWS.RDS({
-        region: configService.getAwsRegion(),
-    });
-
     try {
-        const response = await rdsClient.describeDBInstances().promise();
-        console.info('RDS instances: ', response.DBInstances);
-
-        //filter out RDS instances that are not in 'available' status (e.g. 'creating', 'deleting', etc.)
-        const availableInstances: DBInstance[] = response.DBInstances.filter((instance: DBInstance) => {
-            return instance.DBInstanceStatus === 'available';
-        });
-        console.info('RDS instances in available status: ', availableInstances);
-
-        const rdsInstances: string[] = availableInstances.map((instance: DBInstance) => {
-            return instance.Endpoint.Address;
-        });
 
         /**
          * NB: This is temporary until pre-production RDS instances switch to using
          * the tenant GUID  as database names.
-         */
+        */
         if (configService.getStage() === 'development' && tenantId === 'c807d7f9-b391-4525-ac0e-31dbc0cf202b') {
             return {
                 rdsEndpoint: 'hrnext.cvm5cdcqwljp.us-east-1.rds.amazonaws.com',
@@ -193,17 +206,65 @@ export async function findConnectionString(tenantId: string): Promise<Connection
             };
         }
 
-        for (const instance of rdsInstances) {
-            const databaseList: string[] = await listAvailableDatabases(instance);
+        try {
 
-            if (databaseList.includes(tenantId)) {
-                return {
-                    rdsEndpoint: instance,
-                    databaseName: tenantId,
-                };
+            const result = await queryDynamoDBTableUsingIndex({
+                TenantID: tenantId,
+            });
+
+            if (result && result[0] && result[0].ConnectionString) {
+
+                const regex = /data source=([^;]+);/;
+                const match = result[0].ConnectionString.match(regex);
+                
+                if (match) {
+                    const extractedDBAddress = match[1];
+
+                    return {
+                        rdsEndpoint: extractedDBAddress,
+                        databaseName: tenantId,
+                    };
+
+                } else {
+                    throw new Error(`${result[0].ConnectionString} does not match expected connection string regex`);
+                }                
+            }
+            else {
+                throw new Error(`ConnectionString for ${tenantId} not found in DynamoDB table`);
+            }            
+
+        } catch (err) {
+            console.error(err);
+
+            const rdsClient = new AWS.RDS({
+                region: configService.getAwsRegion(),
+            });
+
+            const response = await rdsClient.describeDBInstances().promise();
+            console.info('RDS instances: ', response.DBInstances);
+
+            //filter out RDS instances that are not in 'available' status (e.g. 'creating', 'deleting', etc.)
+            const availableInstances: DBInstance[] = response.DBInstances.filter((instance: DBInstance) => {
+                return instance.DBInstanceStatus === 'available';
+            });
+            console.info('RDS instances in available status: ', availableInstances);
+
+            const rdsInstances: string[] = availableInstances.map((instance: DBInstance) => {
+                return instance.Endpoint.Address;
+            });
+
+            for (const instance of rdsInstances) {
+                const databaseList: string[] = await listAvailableDatabases(instance);
+
+                if (databaseList.includes(tenantId)) {
+                    return {
+                        rdsEndpoint: instance,
+                        databaseName: tenantId,
+                    };
+                }
             }
         }
-
+        
         const errorMessage: ErrorMessage = getErrorResponse(50);
         errorMessage.setDeveloperMessage(`tenantId: ${tenantId} not found`);
         throw errorMessage;
