@@ -85,6 +85,8 @@ provider:
     - Effect: Allow
       Action:
         - rds:DescribeDBInstances
+        - dynamodb:GetItem
+        - dynamodb:Query
       Resource: "*"
     - Effect: Allow
       Action: # Gives permission to SES in a specific region
