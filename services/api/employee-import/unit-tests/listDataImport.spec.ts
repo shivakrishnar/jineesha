@@ -18,7 +18,7 @@ describe('employeeImport.service.listDataImportTypes', () => {
             }
         });
 
-        await employeeImportService.listDataImportTypes(mockDataCommon.tenantId).then((response) => {
+        await employeeImportService.listDataImportTypes(mockDataCommon.tenantId, undefined).then((response) => {
             expect(response).toEqual(mockData.dataImportTypeResponse.recordset);
         });
     });
@@ -30,7 +30,7 @@ describe('employeeImport.service.listDataImportTypes', () => {
             }
         });
 
-        await employeeImportService.listDataImportTypes('123456789').then((response) => {
+        await employeeImportService.listDataImportTypes('123456789', undefined).then((response) => {
             expect(response).toEqual([]);
         });
     });
@@ -105,7 +105,6 @@ describe('employeeImport.service.listDataImportEventDetails', () => {
         await employeeImportService
             .listDataImportEventDetails(
                 mockDataCommon.tenantId,
-                mockDataCommon.companyId,
                 mockDataCommon.dataImportEventId,
                 null,
                 mockDataCommon.domainName,
@@ -128,7 +127,6 @@ describe('employeeImport.service.listDataImportEventDetails', () => {
         await employeeImportService
             .listDataImportEventDetails(
                 mockDataCommon.tenantId,
-                mockDataCommon.companyId,
                 mockDataCommon.dataImportEventId,
                 null,
                 mockDataCommon.domainName,

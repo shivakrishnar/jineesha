@@ -26,19 +26,28 @@ import * as mime from 'mime-types';
 import { IEvolutionKey } from '../../models/IEvolutionKey';
 import * as ssoService from '../../../remote-services/sso.service';
 import * as webSocketNotification from '../../ws-notification/src/ws-notification.Service';
+import * as request from 'superagent';
 
 const employeeImportPageSize = '6';
 
 /**
  * Returns a listing of data importing type for a specific tenant
  * @param {string} tenantId: The unique identifier for the tenant the data importing type belongs to.
+ * @param {string} importProcess: The type of importation process (optional).
  * @returns {Promise<DataImportTypes>}: Promise of an array of DataImportType
  */
-export async function listDataImportTypes(tenantId: string): Promise<IDataImportType[]> {
+export async function listDataImportTypes(tenantId: string, importProcess: string): Promise<IDataImportType[]> {
     console.info('EmployeeImport.Service.ListDataImportTypes');
 
     try {
         const query = new ParameterizedQuery('listDataImportTypes', Queries.listDataImportTypes);
+
+        if (importProcess) {
+            query.setStringParameter('@ImportProcess', importProcess);
+        }
+        else {
+            query.setStringParameter('@ImportProcess', '%');
+        }
 
         const payload = {
             tenantId,
@@ -92,7 +101,7 @@ export async function listDataImports(
 ): Promise<PaginatedResult> {
     console.info('EmployeeImport.Service.ListDataImports');
 
-    const validQueryStringParameters = ['pageToken', 'search', 'status', 'active'];
+    const validQueryStringParameters = ['pageToken', 'search', 'status', 'active', 'importProcess'];
 
     // Pagination validation
     const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
@@ -112,6 +121,18 @@ export async function listDataImports(
                 query = new ParameterizedQuery('listDataImportByCompanyWithSearch', Queries.listDataImportByCompanyWithSearch);
                 query.setStringParameter('@searchFilter1', '%' + queryParams['search'] + '%');
                 query.setStringParameter('@searchFilter2', '%' + queryParams['search'] + '%');
+            }
+
+            if (queryParams['importProcess']) {
+                if (!queryParams['search']) {
+                    query = new ParameterizedQuery('listDataImportByCompanyWithSearch', Queries.listDataImportByCompanyWithSearch);
+                    query.setStringParameter('@searchFilter1', '%');
+                    query.setStringParameter('@searchFilter2', '%');
+                }
+
+                query.setStringParameter('@importProcess', queryParams['importProcess']);
+            } else {
+                query.setStringParameter('@importProcess', '%');
             }
 
             if (queryParams['status']) {
@@ -178,11 +199,117 @@ export async function listDataImports(
 /**
  * Returns a listing of data importing type for a specific tenant
  * @param {string} tenantId: The unique identifier for the tenant the data importing type belongs to.
+ * @returns {Promise<DataImportTypes>}: Promise of an array of DataImportType
+ */
+export async function listAllDataImports(
+    tenantId: string,
+    dataImportTypeId: string,
+    queryParams: any,
+    domainName: string,
+    path: string,
+): Promise<PaginatedResult> {
+    console.info('EmployeeImport.Service.ListAllDataImports');
+
+    const validQueryStringParameters = ['pageToken', 'search', 'status', 'active', 'importProcess'];
+
+    // Pagination validation
+    const { page, baseUrl } = await paginationService.retrievePaginationData(validQueryStringParameters, domainName, path, queryParams);
+
+    try {
+        let query = new ParameterizedQuery('listDataImport', Queries.listDataImport);
+
+        if (dataImportTypeId) {
+            query = new ParameterizedQuery('listDataImportByType', Queries.listDataImportByType);
+            query.setParameter('@dataImportTypeId', dataImportTypeId);
+        }
+
+        if (queryParams) {
+            utilService.validateQueryParams(queryParams, validQueryStringParameters);
+
+            if (queryParams['search']) {
+                query = new ParameterizedQuery('listDataImportWithSearch', Queries.listDataImportWithSearch);
+                query.setStringParameter('@searchFilter1', '%' + queryParams['search'] + '%');
+                query.setStringParameter('@searchFilter2', '%' + queryParams['search'] + '%');
+            }
+
+            if (queryParams['importProcess']) {
+                if (!queryParams['search']) {
+                    query = new ParameterizedQuery('listDataImportWithSearch', Queries.listDataImportWithSearch);
+                    query.setStringParameter('@searchFilter1', '%');
+                    query.setStringParameter('@searchFilter2', '%');
+                }
+
+                query.setStringParameter('@importProcess', queryParams['importProcess']);
+            } else {
+                query.setStringParameter('@importProcess', '%');
+            }
+            
+            if (queryParams['status']) {
+                query.setStringParameter('@status', queryParams['status']);
+            } else {
+                query.setStringParameter('@status', '%');
+            }
+
+            if (queryParams['active']) {
+                query.setStringParameter('@active', queryParams['active']);
+            } else {
+                query.setStringParameter('@active', '%');
+            }
+        } else {
+            query.setStringParameter('@status', '%');
+            query.setStringParameter('@active', '%');
+        }
+
+        const paginatedQuery = await paginationService.appendPaginationFilter(query, page, true, parseInt(employeeImportPageSize));
+
+        const payload = {
+            tenantId,
+            queryName: paginatedQuery.name,
+            query: paginatedQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        if (!result || !result.recordset.length) {
+            return undefined;
+        }
+
+        const totalCount = result.recordsets[0][0].totalCount;
+
+        const results: IDataImport[] = result.recordsets[1].map((record) => {
+            return {
+                id: record.ID,
+                companyId: record.CompanyID,
+                dataImportTypeId: record.DataImportTypeID,
+                dataImportTypeName: record.DataImportTypeName,
+                status: record.Status,
+                lastUserId: record.LastUserID,
+                lastProgramEvent: record.LastProgramEvent,
+                creationDate: record.CreationDate,
+                lastUpdatedDate: record.LastUpdatedDate,
+                userName: record.Username,
+            };
+        });
+
+        return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page, employeeImportPageSize);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Returns a listing of data importing type for a specific tenant
+ * @param {string} tenantId: The unique identifier for the tenant the data importing type belongs to.
  * @returns {Promise<DataImportEventDetails>}: Promise of an array of DataImportEventDetails
  */
 export async function listDataImportEventDetails(
     tenantId: string,
-    companyId: string,
     dataImportEventId: string,
     queryParams: any,
     domainName: string,
@@ -201,8 +328,6 @@ export async function listDataImportEventDetails(
         if (queryParams) {
             utilService.validateQueryParams(queryParams, validQueryStringParameters);
         }
-
-        query.setParameter('@CompanyId', companyId);
 
         query.setParameter('@DataImportEventId', dataImportEventId);
 
@@ -327,7 +452,60 @@ export async function uploadUrl(tenantId: string, companyId: string, fileName: s
 
         const uploadS3Filename = fileName.replace(/[^a-zA-Z0-9.]/g, '');
 
-        let key = `imports/${tenantId}/${companyId}/${uploadS3Filename}`;
+        let key = `imports/${tenantId}/${companyId}/${uploadS3Filename}`;        
+        key = utilService.sanitizeForS3(key);
+
+        const mimeType = 'text/csv';
+
+        const params = {
+            Bucket: bucketName,
+            Key: key,
+            ACL: 'bucket-owner-full-control',
+            ContentType: mimeType,
+            ContentEncoding: 'base64',
+        };
+
+        const url = await utilService.getSignedUrlSync('putObject', params);
+        if (!url || url === '') {
+            throw new Error(`URL pre-signed not found.`);
+        }
+
+        return { url, mimeType };
+    } catch (e) {
+        if (e.message) {
+            if (e.message.includes('pre-signed not found')) {
+                throw errorService.getErrorResponse(50).setDeveloperMessage(e.message);
+            }
+        }
+
+        if (e instanceof ErrorMessage) {
+            throw e;
+        }
+
+        console.error(JSON.stringify(e));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * This method will generate a signed URL that will give you access to upload a file
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} fileName: File name with extension
+ * @returns {Promise<any>}: A Promise of a URL or file
+ */
+export async function uploadUrlInBulk(tenantId: string, fileName: string): Promise<any> {
+    console.info('EmployeeImport.Service.uploadUrlInBulk');
+
+    try {
+        if (!fileName || fileName.length === 0) {
+            throw new Error(`The parameter fileName is required`);
+        }
+
+        const bucketName = configService.getEmployeeImportBucketName();
+
+        const uploadS3Filename = fileName.replace(/[^a-zA-Z0-9.]/g, '');
+
+        let key = `imports/${tenantId}/NoCompany/${uploadS3Filename}`;       
         key = utilService.sanitizeForS3(key);
 
         const mimeType = 'text/csv';
@@ -449,6 +627,110 @@ export async function dataImports(
         const stepFunctionInputs = {
             tenantId,
             companyId,
+            dataImportTypeId,
+            fileName,
+            dataImportEventId,
+            csvRelativePath: key,
+            userId,
+            hrAccessToken,
+        };
+
+        await utilService.StartStateMachineExecution(stepFunctionArnName, stepFunctionInputs);
+
+        return stepFunctionInputs;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(error);
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * This method will get the CSV file from S3 and import into the database
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} dataImportTypeId: The unique identifier for the data import type
+ * @param {string} fileName: File name with extension
+ * @param {number} userId: The unique identifer for the user
+ * @param {string} hrAccessToken: The access token from AHR
+ * @returns {Promise<any>}: A Promise of a URL or file
+ */
+export async function dataImportsInBulk(
+    tenantId: string,
+    dataImportTypeId: string,
+    fileName: string,
+    userId: number,
+    hrAccessToken: string,
+): Promise<any> {
+    console.info('EmployeeImport.Service.dataImportsInBulk');
+
+    try {
+        //
+        // Getting the csv file from S3 bucket...
+        //
+        const bucketName = configService.getEmployeeImportBucketName();
+        let key = `imports/${tenantId}/NoCompany/${fileName}`;
+        key = utilService.sanitizeForS3(key);
+        const params = {
+            Bucket: bucketName,
+            Key: key,
+        };
+
+        const signedUrl = await utilService.getSignedUrlSync('getObject', params);
+        const csvData = await helpers.getFileFromPreSignedURL(signedUrl);
+        const csvLines = csvData.split('\n');
+        csvLines.shift();
+
+        if (!csvLines.length) {
+            console.error('===> csvLines have no data');
+            return undefined;
+        }
+
+        //
+        // Putting the file contents into the database...
+        //
+        const dataEventQuery = new ParameterizedQuery('insertDataImportEvent', Queries.insertDataImportEvent);
+        dataEventQuery.setValueOrNullParameter('@CompanyID', -1);
+        dataEventQuery.setParameter('@DataImportTypeID', dataImportTypeId);
+        dataEventQuery.setParameter('@UserID', userId);
+        dataEventQuery.setStringParameter('@FileName', fileName);
+
+        const insertDataImportEventDetailSqlTemplate = Queries.insertDataImportEventDetail;
+
+        let counter = 0;
+        for (const line of csvLines) {
+            if (line) {
+                counter++;
+                const dataEventDetailQuery = new ParameterizedQuery('insertDataImportEventDetail', insertDataImportEventDetailSqlTemplate);
+                dataEventDetailQuery.setParameter('@CSVRowNumber', counter);
+                dataEventDetailQuery.setStringParameter('@CSVRowData', line.trim());
+                dataEventQuery.combineQueries(dataEventDetailQuery, false);
+            }
+        }
+        const getDataEventIdQuery = new ParameterizedQuery('dataEventIdQuery', 'select @DataImportEventID as DataImportEventID');
+        dataEventQuery.combineQueries(getDataEventIdQuery, false);
+
+        const payload = {
+            tenantId,
+            queryName: dataEventQuery.name,
+            query: dataEventQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        if (!result || !result.recordset.length || !result.recordset[0].DataImportEventID) {
+            console.error('===> DataImportEventID was not returned from the database');
+            return undefined;
+        }
+        const dataImportEventId: number = result.recordset[0].DataImportEventID;
+
+        // Calling the step function to do the validation and update for each row of the csv file...
+        // I've leave the line below as a example for local test, please DO NOT remove this line.
+        //const stepFunctionArnName = 'arn:aws:states:us-east-1:317299412255:stateMachine:HrEmployeeImportStateMachine-development';
+        const stepFunctionArnName = configService.getHrEmployeeImportInBulkStateMachineArn();
+        const stepFunctionInputs = {
+            tenantId,
             dataImportTypeId,
             fileName,
             dataImportEventId,
@@ -627,6 +909,8 @@ export function mapAHRExcelUpdateEmployee(jsonCsvRowReordered, ahrEmployee) {
  * @param {string} dataImportTypeId: The ID of DataImportType
  * @param {string} dataImportEventId: The ID of DataImportEvent
  * @param {string} hrAccessToken: The access token from AHR
+ * @param {string} tenantName: The tenant name from EVO
+ * @param {string} evoAccessToken: The access token from EVO
  * @returns {Promise<any>}: A Promise of the result [true or false]
  */
 export async function updateEmployee(
@@ -637,6 +921,8 @@ export async function updateEmployee(
     dataImportTypeId: string,
     dataImportEventId: string,
     hrAccessToken: string,
+    tenantName: string,
+    evoAccessToken: string,
 ): Promise<any> {
     console.info('EmployeeImport.Service.updateEmployee');
 
@@ -689,7 +975,12 @@ export async function updateEmployee(
         //
         console.info('===> Validating employee details');
 
-        const validateEmployeeDetailsDataEventQuery = new ParameterizedQuery('validateEmployeeDetails', Queries.validateEmployeeDetails);
+        let validateEmployeeDetailsDataEventQuery = new ParameterizedQuery('validateEmployeeDetails', Queries.validateEmployeeDetails);
+        //If it has Employee Code in the header, it means it is a bulk import, in this case, use specific validation
+        if (jsonCsvRow['Company Code']) {
+            validateEmployeeDetailsDataEventQuery = new ParameterizedQuery('validateEmployeeDetailsInBulk', Queries.validateEmployeeDetailsInBulk);
+        }
+
         validateEmployeeDetailsDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
         validateEmployeeDetailsDataEventQuery.setParameter('@RowNumber', rowNumber);
         validateEmployeeDetailsDataEventQuery.setStringParameter('@TenantId', tenantId);
@@ -809,13 +1100,8 @@ export async function updateEmployee(
         console.info('===> Mapping between AHR and Excel data');
         mapAHRExcelUpdateEmployee(jsonCsvRowReordered, getAllFieldsForUpdateEmployeeResult.recordset[0])
 
-        console.log(jsonCsvRowReordered);
-
         console.info('===> Configuring EVO object information before API call');
 
-        const evoAccessToken: string = await utilService.getEvoTokenWithHrToken(tenantId, hrAccessToken);
-        const tenantObject = await ssoService.getTenantById(tenantId, evoAccessToken);
-        const tenantName = tenantObject.subdomain;
         const evoEmployee: any = await payrollService.getEmployeeFromEvo(tenantName, evoKeys, evoAccessToken);
 
         if (!evoEmployee) {
@@ -883,7 +1169,54 @@ export async function updateEmployee(
 
         console.info('===> Configuring the others fields of the EVO object');
 
-        evoEmployee.employeeNumber = jsonCsvRowReordered['Employee Identifier'];
+        if (jsonCsvRowReordered['New Employee Identifier'] && jsonCsvRowReordered['New Employee Identifier'] != '') {
+
+            //
+            // Validates whether the new EmployeeCode already exists in AHR...
+            //
+            console.info('===> Validating whether the new EmployeeCode already exists in AHR');
+
+            const checksNewEmployeeCodeIsInUseQuery = new ParameterizedQuery('checksNewEmployeeCodeIsInUse', Queries.checksNewEmployeeCodeIsInUse);
+            checksNewEmployeeCodeIsInUseQuery.setStringParameter('@NewEmployeeCode', jsonCsvRowReordered['New Employee Identifier']);
+            checksNewEmployeeCodeIsInUseQuery.setParameter('@CompanyId', companyId);
+
+            const checksNewEmployeeCodeIsInUsePayload = {
+                tenantId,
+                queryName: checksNewEmployeeCodeIsInUseQuery.name,
+                query: checksNewEmployeeCodeIsInUseQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+
+            const checksNewEmployeeCodeIsInUseResult: any = await utilService.invokeInternalService(
+                'queryExecutor',
+                checksNewEmployeeCodeIsInUsePayload,
+                utilService.InvocationType.RequestResponse,
+            );
+
+            if (
+                !checksNewEmployeeCodeIsInUseResult ||
+                !checksNewEmployeeCodeIsInUseResult.recordset.length ||
+                checksNewEmployeeCodeIsInUseResult.recordset[0].Total === undefined ||
+                checksNewEmployeeCodeIsInUseResult.recordset[0].Total === null
+            ) {
+                console.error('===> Total was not returned from the validation new employee code in AHR script');
+                throw new Error(`Total was not returned from the validation new employee code in AHR script`);
+            }
+
+            if (Number(checksNewEmployeeCodeIsInUseResult.recordset[0].Total) > 0) {
+                console.error('===> New employee identifier is already in use');
+                throw new Error(`New employee identifier is already in use`);
+            }
+
+            //Validates whether the new EmployeeCode already exists in EVO
+            //We do not need this extra validation, as "Employee Customer Code" (or Employee Number) is unique in the EVO database.
+
+            evoEmployee.employeeNumber = jsonCsvRowReordered['New Employee Identifier'];
+        }
+        else {
+            evoEmployee.employeeNumber = jsonCsvRowReordered['Employee Identifier'];
+        }
+        
         evoEmployee.email = jsonCsvRowReordered['Email'] || null;
         evoEmployee.standardHours = jsonCsvRowReordered['Standard Payroll Hours'] || null;
         evoEmployee.timeClockNumber = jsonCsvRowReordered['Time Clock Number'] || null;
@@ -1021,7 +1354,13 @@ export async function updateEmployee(
 
         console.info('===> Updating employee on AHR');
 
-        const updateEmployeeDataEventQuery = new ParameterizedQuery('updateEmployee', Queries.updateEmployee);
+        let updateEmployeeDataEventQuery = new ParameterizedQuery('updateEmployee', Queries.updateEmployee);
+
+        //If it has Employee Code in the header, it means it is a bulk import, in this case, use specific script to update
+        if (jsonCsvRow['Company Code']) {
+            updateEmployeeDataEventQuery = new ParameterizedQuery('updateEmployeeInBulk', Queries.updateEmployeeInBulk);
+        }
+
         updateEmployeeDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
         updateEmployeeDataEventQuery.setParameter('@RowNumber', rowNumber);
         updateEmployeeDataEventQuery.setStringParameter('@TenantId', tenantId);
@@ -1058,8 +1397,6 @@ export async function updateEmployee(
             );
             return { isSuccess: false, message: 'The employee update script was not executed successfully' };
         }
-
-        utilService.clearCache(tenantId, hrAccessToken);
 
         return { isSuccess: true, message: 'Employee was updated successfully' };
     } catch (error) {
@@ -1656,6 +1993,8 @@ async function UpdateEvoWage(myEvoWage: IWage, empComp, evoWageKeys: IEvolutionK
  * @param {string} dataImportTypeId: The ID of DataImportType
  * @param {string} dataImportEventId: The ID of DataImportEvent
  * @param {string} hrAccessToken: The access token from AHR
+ * @param {string} tenantName: The tenant name from EVO
+ * @param {string} evoAccessToken: The access token from EVO
  * @returns {Promise<any>}: A Promise of the result [true or false]
  */
 export async function updateCompensation(
@@ -1666,6 +2005,8 @@ export async function updateCompensation(
     dataImportTypeId: string,
     dataImportEventId: string,
     hrAccessToken: string,
+    tenantName: string,
+    evoAccessToken: string,
 ): Promise<any> {
     console.info('EmployeeImport.Service.updateCompensation');
 
@@ -1718,7 +2059,12 @@ export async function updateCompensation(
 
         console.info('===> Validating compensation details');
 
-        const validateCompensationDataEventQuery = new ParameterizedQuery('validateCompensation', Queries.validateCompensation);
+        let validateCompensationDataEventQuery = new ParameterizedQuery('validateCompensation', Queries.validateCompensation);
+        //If it has Employee Code in the header, it means it is a bulk import, in this case, use specific validation
+        if (jsonCsvRow['Company Code']) {
+            validateCompensationDataEventQuery = new ParameterizedQuery('validateCompensationInBulk', Queries.validateCompensationInBulk);
+        }
+
         validateCompensationDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
         validateCompensationDataEventQuery.setParameter('@RowNumber', rowNumber);
         validateCompensationDataEventQuery.setStringParameter('@TenantId', tenantId);
@@ -1762,7 +2108,12 @@ export async function updateCompensation(
 
         console.info('===> Updating compensation on AHR');
 
-        const insertCompensationDataEventQuery = new ParameterizedQuery('insertCompensation', Queries.insertCompensation);
+        let insertCompensationDataEventQuery = new ParameterizedQuery('insertCompensation', Queries.insertCompensation);
+        //If it has Employee Code in the header, it means it is a bulk import, in this case, use specific script
+        if (jsonCsvRow['Company Code']) {
+            insertCompensationDataEventQuery = new ParameterizedQuery('insertCompensationInBulk', Queries.insertCompensationInBulk);
+        }
+
         insertCompensationDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
         insertCompensationDataEventQuery.setParameter('@RowNumber', rowNumber);
         insertCompensationDataEventQuery.setStringParameter('@TenantId', tenantId);
@@ -1803,12 +2154,6 @@ export async function updateCompensation(
         //
         // Updating compensation on EVO...
         //
-
-        console.info('===> Configuring EVO object information before API call');
-
-        const evoAccessToken: string = await utilService.getEvoTokenWithHrToken(tenantId, hrAccessToken);
-        const tenantObject = await ssoService.getTenantById(tenantId, evoAccessToken);
-        const tenantName = tenantObject.subdomain;
 
         console.info('===> Getting EVO information from AHR');
 
@@ -1998,8 +2343,6 @@ export async function updateCompensation(
         );
         console.info(updateDataImportEventDetailProcessedResult);
 
-        utilService.clearCache(tenantId, hrAccessToken);
-
         return { isSuccess: true, message: 'Compensation was inserted successfully' };
     } catch (error) {
         console.info(error);
@@ -2153,6 +2496,8 @@ async function UpdateAltRate(tenantName, evoWageKeys: IEvolutionKey, evoAccessTo
  * @param {string} dataImportTypeId: The ID of DataImportType
  * @param {string} dataImportEventId: The ID of DataImportEvent
  * @param {string} hrAccessToken: The access token from AHR
+ * @param {string} tenantName: The tenant name from EVO
+ * @param {string} evoAccessToken: The access token from EVO
  * @returns {Promise<any>}: A Promise of the result [true or false]
  */
 export async function updateAlternateRate(
@@ -2163,6 +2508,8 @@ export async function updateAlternateRate(
     dataImportTypeId: string,
     dataImportEventId: string,
     hrAccessToken: string,
+    tenantName: string,
+    evoAccessToken: string,
 ): Promise<any> {
     console.info('EmployeeImport.Service.updateAlternateRate');
 
@@ -2215,7 +2562,12 @@ export async function updateAlternateRate(
 
         console.info('===> Validating alternate rate');
 
-        const validateAlternateRateDataEventQuery = new ParameterizedQuery('validateAlternateRate', Queries.validateAlternateRate);
+        let validateAlternateRateDataEventQuery = new ParameterizedQuery('validateAlternateRate', Queries.validateAlternateRate);
+        //If it has Employee Code in the header, it means it is a bulk import, in this case, use specific validation
+        if (jsonCsvRow['Company Code']) {
+            validateAlternateRateDataEventQuery = new ParameterizedQuery('validateAlternateRateInBulk', Queries.validateAlternateRateInBulk);
+        }
+
         validateAlternateRateDataEventQuery.setStringParameter('@CsvRow', stringCsvRow);
         validateAlternateRateDataEventQuery.setParameter('@RowNumber', rowNumber);
         validateAlternateRateDataEventQuery.setStringParameter('@TenantId', tenantId);
@@ -2556,8 +2908,6 @@ export async function updateAlternateRate(
         );
         console.info(updateDataImportEventDetailProcessedResult);
 
-        utilService.clearCache(tenantId, hrAccessToken);
-
         return { isSuccess: true, message: 'Alternate rate was inserted successfully' };
     } catch (error) {
         console.info(error);
@@ -2599,4 +2949,547 @@ export async function updateAlternateRate(
 
         return { isSuccess: false, message: msgError };
     }
+}
+
+/**
+ * @param {EmployeeUpdateCsvRowType} jsonCsvRow: The csv row with employee data
+ * @param {number} rowNumber: Current row number of the csv row
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} dataImportTypeId: The ID of DataImportType
+ * @param {string} dataImportEventId: The ID of DataImportEvent
+ * @param {string} hrAccessToken: The access token from AHR
+ * @param {string} tenantName: The tenant name from EVO
+ * @param {string} evoAccessToken: The access token from EVO
+ * @returns {Promise<any>}: A Promise of the result [true or false]
+ */
+export async function updateEmployeeInBulk(
+    jsonCsvRow: EmployeeUpdateCsvRowType,
+    rowNumber: number,
+    tenantId: string,
+    dataImportTypeId: string,
+    dataImportEventId: string,
+    hrAccessToken: string,
+    tenantName: string,
+    evoAccessToken: string,
+): Promise<any> {
+    console.info('EmployeeImport.Service.updateEmployeeInBulk');
+
+    try {
+        if (!hrAccessToken || !hrAccessToken.length) {
+            console.info('===> hrAccessToken not found and we need him to update the employee on EVO');
+            throw new Error(`Token not found`);
+        }
+
+        //
+        // Handling the csv columns order
+        //
+        console.info('===> Handling the csv columns order');
+
+        const queryCSVHeader = new ParameterizedQuery(
+            'getImportTypeAndImportedFilePathByImportEventID',
+            Queries.getImportTypeAndImportedFilePathByImportEventID,
+        );
+        queryCSVHeader.setParameter('@ID', dataImportEventId);
+
+        const payloadCSVHeader = {
+            tenantId,
+            queryName: queryCSVHeader.name,
+            query: queryCSVHeader.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const resultCSVHeader: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payloadCSVHeader,
+            utilService.InvocationType.RequestResponse,
+        );
+        console.info(resultCSVHeader);
+
+        if (resultCSVHeader.recordsets[0].length === 0) {
+            throw new Error(`The CSV header could not be found`);
+        }
+
+        const csvRowDesiredOrder = resultCSVHeader.recordset[0].CSVHeader.split(',');
+        const jsonCsvRowReordered = {};
+        csvRowDesiredOrder.forEach((key) => {
+            jsonCsvRowReordered[key] = jsonCsvRow[key];
+        });
+        console.info(jsonCsvRowReordered);
+
+        //
+        // Getting companyId by Company Code...
+        //
+        console.info('===> Getting companyId by Company Code');
+
+        const getCompanyIdByCompanyCodeQuery = new ParameterizedQuery('getCompanyIdByCompanyCode', Queries.getCompanyIdByCompanyCode);
+        getCompanyIdByCompanyCodeQuery.setStringParameter('@CompanyCode', jsonCsvRowReordered['Company Code']);
+
+        const getCompanyIdByCompanyCodePayload = {
+            tenantId,
+            queryName: getCompanyIdByCompanyCodeQuery.name,
+            query: getCompanyIdByCompanyCodeQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const getCompanyIdByCompanyCodeResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            getCompanyIdByCompanyCodePayload,
+            utilService.InvocationType.RequestResponse,
+        );
+
+        if (
+            !getCompanyIdByCompanyCodeResult ||
+            !getCompanyIdByCompanyCodeResult.recordset.length ||
+            getCompanyIdByCompanyCodeResult.recordset[0].id === undefined ||
+            getCompanyIdByCompanyCodeResult.recordset[0].id === null
+        ) {
+            console.error('===> Company not found');
+            throw new Error(`Company not found`);
+        }
+        
+        const companyId = getCompanyIdByCompanyCodeResult.recordset[0].id;
+
+        return await updateEmployee(jsonCsvRow, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId, hrAccessToken, tenantName, evoAccessToken);
+    } catch (error) {
+        console.info(error);
+
+        let msgError = '';
+        if (error instanceof ErrorMessage) {
+            msgError = error.message;
+        } else if (error.error && error.error.developerMessage) {
+            msgError = error.error.developerMessage;
+        } else if (typeof error === 'object') {
+            msgError = error.toString();
+        } else {
+            msgError = error;
+        }
+
+        console.info(msgError);
+
+        const updateDataImportEventDetailErrorQuery = new ParameterizedQuery(
+            'updateDataImportEventDetailError',
+            Queries.updateDataImportEventDetailError,
+        );
+        updateDataImportEventDetailErrorQuery.setParameter('@DataImportEventId', dataImportEventId);
+        updateDataImportEventDetailErrorQuery.setParameter('@CSVRowNumber', rowNumber + 1);
+        updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError);
+
+        const updateDataImportEventDetailErrorPayload = {
+            tenantId,
+            queryName: updateDataImportEventDetailErrorQuery.name,
+            query: updateDataImportEventDetailErrorQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const updateDataImportEventDetailErrorResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            updateDataImportEventDetailErrorPayload,
+            utilService.InvocationType.RequestResponse,
+        );
+        console.info(updateDataImportEventDetailErrorResult);
+        
+        return { isSuccess: false, message: msgError };
+
+    }
+}
+
+/**
+ * @param {CompensationUpdateCsvRowType} jsonCsvRow: The csv row with compensation data
+ * @param {number} rowNumber: Current row number of the csv row
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} dataImportTypeId: The ID of DataImportType
+ * @param {string} dataImportEventId: The ID of DataImportEvent
+ * @param {string} hrAccessToken: The access token from AHR
+ * @param {string} tenantName: The tenant name from EVO
+ * @param {string} evoAccessToken: The access token from EVO
+ * @returns {Promise<any>}: A Promise of the result [true or false]
+ */
+export async function updateCompensationInBulk(
+    jsonCsvRow: CompensationUpdateCsvRowType,
+    rowNumber: number,
+    tenantId: string,
+    dataImportTypeId: string,
+    dataImportEventId: string,
+    hrAccessToken: string,
+    tenantName: string,
+    evoAccessToken: string,
+): Promise<any> {
+    console.info('EmployeeImport.Service.updateCompensationInBulk');
+
+    try {
+        if (!hrAccessToken || !hrAccessToken.length) {
+            console.info('===> hrAccessToken not found and we need him to update the compensation');
+            throw new Error(`Token not found`);
+        }
+
+        //
+        // Handling the csv columns order
+        //
+
+        console.info('===> Handling the csv columns order');
+
+        const queryCSVHeader = new ParameterizedQuery(
+            'getImportTypeAndImportedFilePathByImportEventID',
+            Queries.getImportTypeAndImportedFilePathByImportEventID,
+        );
+        queryCSVHeader.setParameter('@ID', dataImportEventId);
+
+        const payloadCSVHeader = {
+            tenantId,
+            queryName: queryCSVHeader.name,
+            query: queryCSVHeader.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const resultCSVHeader: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payloadCSVHeader,
+            utilService.InvocationType.RequestResponse,
+        );
+        console.info(resultCSVHeader);
+
+        if (resultCSVHeader.recordsets[0].length === 0) {
+            throw new Error(`The CSV header could not be found`);
+        }
+
+        const csvRowDesiredOrder = resultCSVHeader.recordset[0].CSVHeader.split(',');
+        const jsonCsvRowReordered = {};
+        csvRowDesiredOrder.forEach((key) => {
+            jsonCsvRowReordered[key] = jsonCsvRow[key];
+        });
+        console.info(jsonCsvRowReordered);
+
+        //
+        // Getting companyId by Company Code...
+        //
+        console.info('===> Getting companyId by Company Code');
+
+        const getCompanyIdByCompanyCodeQuery = new ParameterizedQuery('getCompanyIdByCompanyCode', Queries.getCompanyIdByCompanyCode);
+        getCompanyIdByCompanyCodeQuery.setStringParameter('@CompanyCode', jsonCsvRowReordered['Company Code']);
+
+        const getCompanyIdByCompanyCodePayload = {
+            tenantId,
+            queryName: getCompanyIdByCompanyCodeQuery.name,
+            query: getCompanyIdByCompanyCodeQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const getCompanyIdByCompanyCodeResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            getCompanyIdByCompanyCodePayload,
+            utilService.InvocationType.RequestResponse,
+        );
+
+        if (
+            !getCompanyIdByCompanyCodeResult ||
+            !getCompanyIdByCompanyCodeResult.recordset.length ||
+            getCompanyIdByCompanyCodeResult.recordset[0].id === undefined ||
+            getCompanyIdByCompanyCodeResult.recordset[0].id === null
+        ) {
+            console.error('===> Company not found');
+            throw new Error(`Company not found`);
+        }
+        
+        const companyId = getCompanyIdByCompanyCodeResult.recordset[0].id;
+
+        return await updateCompensation(jsonCsvRow, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId, hrAccessToken, tenantName, evoAccessToken);
+    } catch (error) {
+        console.info(error);
+
+        let msgError = '';
+        if (error instanceof ErrorMessage) {
+            msgError = error.message;
+        } else if (error.error && error.error.developerMessage) {
+            msgError = error.error.developerMessage;
+        } else if (typeof error === 'object') {
+            msgError = error.toString();
+        } else {
+            msgError = error;
+        }
+
+        console.info(msgError);
+
+        const updateDataImportEventDetailErrorQuery = new ParameterizedQuery(
+            'updateDataImportEventDetailError',
+            Queries.updateDataImportEventDetailError,
+        );
+        updateDataImportEventDetailErrorQuery.setParameter('@DataImportEventId', dataImportEventId);
+        updateDataImportEventDetailErrorQuery.setParameter('@CSVRowNumber', rowNumber + 1);
+        updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError);
+
+        const updateDataImportEventDetailErrorPayload = {
+            tenantId,
+            queryName: updateDataImportEventDetailErrorQuery.name,
+            query: updateDataImportEventDetailErrorQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const updateDataImportEventDetailErrorResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            updateDataImportEventDetailErrorPayload,
+            utilService.InvocationType.RequestResponse,
+        );
+        console.info(updateDataImportEventDetailErrorResult);
+
+        return { isSuccess: false, message: msgError };
+    }
+}
+
+/**
+ * @param {AlternateRateUpdateCsvRowType} jsonCsvRow: The csv row with altenate rate data
+ * @param {number} rowNumber: Current row number of the csv row
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} dataImportTypeId: The ID of DataImportType
+ * @param {string} dataImportEventId: The ID of DataImportEvent
+ * @param {string} hrAccessToken: The access token from AHR
+ * @param {string} tenantName: The tenant name from EVO
+ * @param {string} evoAccessToken: The access token from EVO
+ * @returns {Promise<any>}: A Promise of the result [true or false]
+ */
+export async function updateAlternateRateInBulk(
+    jsonCsvRow: AlternateRateUpdateCsvRowType,
+    rowNumber: number,
+    tenantId: string,
+    dataImportTypeId: string,
+    dataImportEventId: string,
+    hrAccessToken: string,
+    tenantName: string,
+    evoAccessToken: string,
+): Promise<any> {
+    console.info('EmployeeImport.Service.updateAlternateRateInBulk');
+
+    try {
+        if (!hrAccessToken || !hrAccessToken.length) {
+            console.info('===> hrAccessToken not found and we need him to update the alternate rate');
+            throw new Error(`Token not found`);
+        }
+
+        //
+        // Handling the csv columns order
+        //
+
+        console.info('===> Handling the csv columns order');
+
+        const queryCSVHeader = new ParameterizedQuery(
+            'getImportTypeAndImportedFilePathByImportEventID',
+            Queries.getImportTypeAndImportedFilePathByImportEventID,
+        );
+        queryCSVHeader.setParameter('@ID', dataImportEventId);
+
+        const payloadCSVHeader = {
+            tenantId,
+            queryName: queryCSVHeader.name,
+            query: queryCSVHeader.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const resultCSVHeader: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payloadCSVHeader,
+            utilService.InvocationType.RequestResponse,
+        );
+        console.info(resultCSVHeader);
+
+        if (resultCSVHeader.recordsets[0].length === 0) {
+            throw new Error(`The CSV header could not be found`);
+        }
+
+        const csvRowDesiredOrder = resultCSVHeader.recordset[0].CSVHeader.split(',');
+        const jsonCsvRowReordered = {};
+        csvRowDesiredOrder.forEach((key) => {
+            jsonCsvRowReordered[key] = jsonCsvRow[key];
+        });
+        console.info(jsonCsvRowReordered);
+
+        //
+        // Getting companyId by Company Code...
+        //
+        console.info('===> Getting companyId by Company Code');
+
+        const getCompanyIdByCompanyCodeQuery = new ParameterizedQuery('getCompanyIdByCompanyCode', Queries.getCompanyIdByCompanyCode);
+        getCompanyIdByCompanyCodeQuery.setStringParameter('@CompanyCode', jsonCsvRowReordered['Company Code']);
+
+        const getCompanyIdByCompanyCodePayload = {
+            tenantId,
+            queryName: getCompanyIdByCompanyCodeQuery.name,
+            query: getCompanyIdByCompanyCodeQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const getCompanyIdByCompanyCodeResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            getCompanyIdByCompanyCodePayload,
+            utilService.InvocationType.RequestResponse,
+        );
+
+        if (
+            !getCompanyIdByCompanyCodeResult ||
+            !getCompanyIdByCompanyCodeResult.recordset.length ||
+            getCompanyIdByCompanyCodeResult.recordset[0].id === undefined ||
+            getCompanyIdByCompanyCodeResult.recordset[0].id === null
+        ) {
+            console.error('===> Company not found');
+            throw new Error(`Company not found`);
+        }
+        
+        const companyId = getCompanyIdByCompanyCodeResult.recordset[0].id;
+
+        return await updateAlternateRate(jsonCsvRow, rowNumber, tenantId, companyId, dataImportTypeId, dataImportEventId, hrAccessToken, tenantName, evoAccessToken);
+    } catch (error) {
+        console.info(error);
+
+        let msgError = '';
+        if (error instanceof ErrorMessage) {
+            msgError = error.message;
+        } else if (error.error && error.error.developerMessage) {
+            msgError = error.error.developerMessage;
+        } else if (typeof error === 'object') {
+            msgError = error.toString();
+        } else {
+            msgError = error;
+        }
+
+        console.info(msgError);
+
+        const updateDataImportEventDetailErrorQuery = new ParameterizedQuery(
+            'updateDataImportEventDetailError',
+            Queries.updateDataImportEventDetailError,
+        );
+        updateDataImportEventDetailErrorQuery.setParameter('@DataImportEventId', dataImportEventId);
+        updateDataImportEventDetailErrorQuery.setParameter('@CSVRowNumber', rowNumber + 1);
+        updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError);
+
+        const updateDataImportEventDetailErrorPayload = {
+            tenantId,
+            queryName: updateDataImportEventDetailErrorQuery.name,
+            query: updateDataImportEventDetailErrorQuery.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const updateDataImportEventDetailErrorResult: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            updateDataImportEventDetailErrorPayload,
+            utilService.InvocationType.RequestResponse,
+        );
+        console.info(updateDataImportEventDetailErrorResult);
+
+        return { isSuccess: false, message: msgError };
+    }
+}
+
+type TenantDetails = {
+    accountName: string;
+    applicationUrl: string;
+    contact: {
+        firstName: string;
+        lastName: string;
+        emailAddress: string;
+    };
+};
+
+/**
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} hrAccessToken: The access token from AHR
+ * @returns {Promise<any>}: A Promise of the result [true or false]
+ */
+export async function clearCache(tenantId: string, hrAccessToken: string): Promise<any> {
+    console.info('EmployeeImport.Service.clearCache');
+
+    try {
+        if (!hrAccessToken || !hrAccessToken.length) {
+            console.info('===> hrAccessToken not found and we need him to update the alternate rate');
+            throw new Error(`Token not found`);
+        }
+
+        const tenantInfo = new ParameterizedQuery('TenantInfo', Queries.tenantInfo,);
+        const payload = {
+            tenantId,
+            queryName: tenantInfo.name,
+            query: tenantInfo.value,
+            queryType: QueryType.Simple,
+        } as DatabaseEvent;
+
+        const result: any = await utilService.invokeInternalService(
+            'queryExecutor',
+            payload,
+            utilService.InvocationType.RequestResponse,
+        );
+
+        console.info('==> result:');
+        console.info(result);
+
+        const tenant: TenantDetails[] = (result.recordset || []).map((entry) => {
+            return {
+                accountName: entry.AccountName,
+                applicationUrl: `${(entry.TenantUrls as string).split(';')[0]}`,
+                contact: {
+                    firstName: entry.ContactFirstName,
+                    lastName: entry.ContactLastName,
+                    emailAddress: entry.PrimaryContactEmail,
+                },
+            };
+        });
+
+        if (tenant.length > 0) {        
+            console.info(`Clear cache in ${tenant[0].applicationUrl}`);
+
+            const clearCacheResult = await request
+            .post(`https://${tenant[0].applicationUrl}/Classes/Service/hrnextDataService.asmx`)
+            .set('Content-Type', 'application/soap+xml; charset=utf-8')
+            .send(`<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:tem="http://tempuri.org/">
+   <soap:Header/>
+   <soap:Body>
+      <tem:ClearCache>
+         <tem:accessToken>${hrAccessToken}</tem:accessToken>
+      </tem:ClearCache>
+   </soap:Body>
+</soap:Envelope>`);
+
+            console.info(clearCacheResult);
+
+            return { isSuccess: true, message: clearCacheResult };
+        }
+
+        return { isSuccess: false, message: 'No endpoint found to trigger cache clearing.' };
+
+    } catch (error) {
+        console.info(error);
+
+        let msgError = '';
+        if (error instanceof ErrorMessage) {
+            msgError = error.message;
+        } else if (error.error && error.error.developerMessage) {
+            msgError = error.error.developerMessage;
+        } else if (typeof error === 'object') {
+            msgError = error.toString();
+        } else {
+            msgError = error;
+        }
+
+        console.info(msgError);
+
+        return { isSuccess: false, message: msgError };
+    }
+}
+
+/**
+ * @param {string} tenantId: The unique identifer for the tenant
+ * @param {string} hrAccessToken: The access token from AHR
+ * @returns {Promise<any>}: A Promise of the result json object with EVO token and tenant name
+ */
+export async function getEvoTokenAndTenantName(tenantId: string, hrAccessToken: string,): Promise<any> {
+    console.info('EmployeeImport.Service.getEvoTokenAndTenantName');
+    const evoAccessToken: string = await utilService.getEvoTokenWithHrToken(tenantId, hrAccessToken);
+    
+    console.info('==> evoAccessToken');
+    console.info(evoAccessToken);
+    const tenantObject = await ssoService.getTenantById(tenantId, evoAccessToken);
+    
+    console.info('==> tenantObject');
+    console.info(tenantObject);
+    const tenantName = tenantObject.subdomain;
+    return {
+        tenantName,
+        evoAccessToken
+    };
 }

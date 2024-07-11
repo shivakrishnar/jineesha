@@ -19,7 +19,9 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             mockDataCommon.companyId, 
             mockDataCommon.dataImportTypeId,
             mockDataCommon.dataImportEventId,
-            '').then((response) => {
+            '', 
+            mockDataCommon.tenantName, 
+            mockDataCommon.accessTokenEvo).then((response) => {
                 expect(response).toHaveProperty('isSuccess');      
                 expect(response).toHaveProperty('message');
                 expect(response.isSuccess).toBe(false);
@@ -41,7 +43,9 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             mockDataCommon.companyId, 
             mockDataCommon.dataImportTypeId,
             mockDataCommon.dataImportEventId,
-            mockDataCommon.accessToken).then((response) => {
+            mockDataCommon.accessToken, 
+            mockDataCommon.tenantName, 
+            mockDataCommon.accessTokenEvo).then((response) => {
                 expect(response).toHaveProperty('isSuccess');      
                 expect(response).toHaveProperty('message');
                 expect(response.isSuccess).toBe(false);
@@ -66,7 +70,9 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             mockDataCommon.companyId, 
             mockDataCommon.dataImportTypeId,
             mockDataCommon.dataImportEventId,
-            mockDataCommon.accessToken).then((response) => {
+            mockDataCommon.accessToken, 
+            mockDataCommon.tenantName, 
+            mockDataCommon.accessTokenEvo).then((response) => {
                 expect(response).toHaveProperty('isSuccess');      
                 expect(response).toHaveProperty('message');
                 expect(response.isSuccess).toBe(false);
@@ -91,7 +97,9 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             mockDataCommon.companyId, 
             mockDataCommon.dataImportTypeId,
             mockDataCommon.dataImportEventId,
-            mockDataCommon.accessToken).then((response) => {
+            mockDataCommon.accessToken, 
+            mockDataCommon.tenantName, 
+            mockDataCommon.accessTokenEvo).then((response) => {
                 expect(response).toHaveProperty('isSuccess');      
                 expect(response).toHaveProperty('message');
                 expect(response.isSuccess).toBe(false);
@@ -119,7 +127,9 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             mockDataCommon.companyId, 
             mockDataCommon.dataImportTypeId,
             mockDataCommon.dataImportEventId,
-            mockDataCommon.accessToken).then((response) => {
+            mockDataCommon.accessToken, 
+            mockDataCommon.tenantName, 
+            mockDataCommon.accessTokenEvo).then((response) => {
                 expect(response).toHaveProperty('isSuccess');      
                 expect(response).toHaveProperty('message');
                 expect(response.isSuccess).toBe(false);
@@ -150,7 +160,9 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             mockDataCommon.companyId, 
             mockDataCommon.dataImportTypeId,
             mockDataCommon.dataImportEventId,
-            mockDataCommon.accessToken).then((response) => {
+            mockDataCommon.accessToken, 
+            mockDataCommon.tenantName, 
+            mockDataCommon.accessTokenEvo).then((response) => {
                 expect(response).toHaveProperty('isSuccess');      
                 expect(response).toHaveProperty('message');
                 expect(response.isSuccess).toBe(true);
@@ -184,7 +196,9 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             mockDataCommon.companyId, 
             mockDataCommon.dataImportTypeId,
             mockDataCommon.dataImportEventId,
-            mockDataCommon.accessToken).then((response) => {
+            mockDataCommon.accessToken, 
+            mockDataCommon.tenantName, 
+            mockDataCommon.accessTokenEvo).then((response) => {
                 expect(response).toHaveProperty('isSuccess');      
                 expect(response).toHaveProperty('message');
                 expect(response.isSuccess).toBe(false);
@@ -222,7 +236,9 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             mockDataCommon.companyId, 
             mockDataCommon.dataImportTypeId,
             mockDataCommon.dataImportEventId,
-            mockDataCommon.accessToken).then((response) => {
+            mockDataCommon.accessToken, 
+            mockDataCommon.tenantName, 
+            mockDataCommon.accessTokenEvo).then((response) => {
                 expect(response).toHaveProperty('isSuccess');      
                 expect(response).toHaveProperty('message');
                 expect(response.isSuccess).toBe(true);
@@ -278,7 +294,9 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             mockDataCommon.companyId, 
             mockDataCommon.dataImportTypeId,
             mockDataCommon.dataImportEventId,
-            mockDataCommon.accessToken).then((response) => {
+            mockDataCommon.accessToken, 
+            mockDataCommon.tenantName, 
+            mockDataCommon.accessTokenEvo).then((response) => {
                 expect(response).toHaveProperty('isSuccess');      
                 expect(response).toHaveProperty('message');
                 expect(response.isSuccess).toBe(false);
@@ -337,7 +355,9 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             mockDataCommon.companyId, 
             mockDataCommon.dataImportTypeId,
             mockDataCommon.dataImportEventId,
-            mockDataCommon.accessToken).then((response) => {
+            mockDataCommon.accessToken, 
+            mockDataCommon.tenantName, 
+            mockDataCommon.accessTokenEvo).then((response) => {
                 expect(response).toHaveProperty('isSuccess');      
                 expect(response).toHaveProperty('message');
                 expect(response.isSuccess).toBe(true);
@@ -396,7 +416,9 @@ describe('employeeImport.Service.updateAlternateRate', () => {
             mockDataCommon.companyId, 
             mockDataCommon.dataImportTypeId,
             mockDataCommon.dataImportEventId,
-            mockDataCommon.accessToken).then((response) => {
+            mockDataCommon.accessToken, 
+            mockDataCommon.tenantName, 
+            mockDataCommon.accessTokenEvo).then((response) => {
                 expect(response).toHaveProperty('isSuccess');      
                 expect(response).toHaveProperty('message');
                 expect(response.isSuccess).toBe(true);

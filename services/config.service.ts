@@ -74,6 +74,8 @@ export const getHrCompanyMigratorStateMachineArn = () => process.env.hrCompanyMi
 
 export const getHrEmployeeImportStateMachineArn = () => process.env.hrEmployeeImportStateMachineArn;
 
+export const getHrEmployeeImportInBulkStateMachineArn = () => process.env.hrEmployeeImportInBulkStateMachineArn;
+
 export const getTeamNotificationTopicArn = () => process.env.teamNotificationTopicArn;
 
 export const getHrCredentialsId = () => process.env.hrCredentialsId;

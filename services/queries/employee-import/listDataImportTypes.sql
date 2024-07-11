@@ -5,4 +5,5 @@ select
     dit.ImportProcess, 
     dit.LastProgramEvent
 from dbo.DataImportType dit 
-where dit.Active = 1
+where dit.Active = 1 and
+      dit.ImportProcess like @ImportProcess
