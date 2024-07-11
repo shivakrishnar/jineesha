@@ -53,7 +53,7 @@ export async function getTokenizedOutput(tenantId: string, values: string[]): Pr
 
         const accessToken = await getAccessTokenForTokenization();
 
-        const apiUrl = `${configService.getTokenizationServiceHostUrl()}/api/v1.0/${TokenizationTenantID}/tokenization/Encrypt`;
+        const apiUrl = `${configService.getTokenizationServiceHostUrl()}/api/v1.0/${TokenizationTenantID}/tokenization/TryEncrypt`;
         const result = await request.post({
             url: apiUrl,
             headers: {
@@ -65,10 +65,11 @@ export async function getTokenizedOutput(tenantId: string, values: string[]): Pr
                 Values: values,
             },
         });
-        if (!result || result.length === 0) {
+
+        if (!result || result.errors > 0) {
             throw errorService.getErrorResponse(0).setDeveloperMessage('Unable to obtain tokenization response');
         } 
-        const tokenizationList =  result.map(tokenizationObj => tokenizationObj.tokenizedValue);
+        const tokenizationList =  result.values.map(tokenizationObj => tokenizationObj.tokenizedValue);
         return tokenizationList;
     } catch (error) {
         console.log("Unable to tokenize input values");
