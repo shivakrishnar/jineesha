@@ -119,7 +119,7 @@ declare @cStatus			int = 1
 			commit transaction
 			select @cStatus = 1, @alternaterateId = SCOPE_IDENTITY()
 			update DataImportEventDetail 
-				set CSVRowStatus = 'Processing', CSVRowNotes = 'Update Processed', LastUserID = 0, LastProgramEvent = 'usp_DataImportEvent_ADU_Employee', LastUpdatedDate = getdate()
+				set CSVRowStatus = 'Processed', CSVRowNotes = 'Update Processed', LastUserID = 0, LastProgramEvent = 'usp_DataImportEvent_ADU_Employee', LastUpdatedDate = getdate()
 				where DataImportEventID = @nDataImportEventId and CSVRowNumber = @nRowNumber
 			select @cStatus as StatusResult, @alternaterateId as AlternateRateIdResult
 		end
