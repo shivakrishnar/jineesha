@@ -97,3 +97,34 @@ describe('getSystemsById', () => {
             });
     });
 });
+
+describe('createSystems', () => {
+
+    test('creates and returns a Systems', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'createSystems'){
+                const result = await Promise.resolve(mockData.createSystemsDBResponse);
+                return result;
+            } else if (payload.queryName === 'getSystemsById') {
+                const result = await Promise.resolve(mockData.getSystemsByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await SystemsService
+            .createSystems(
+                sharedMockData.tenantId,
+                sharedMockData.userEmail,
+                mockData.createSystemsRequestBody,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.createSystemsAPIResponse);
+            });
+    });
+});

@@ -54,3 +54,33 @@ export const getSystemsByTenant = utilService.gatewayEventHandlerV2(async ({ eve
 
     return await applicantTrackingService.systemsService.getSystemsByTenant(tenantId, event.queryStringParameters, domainName, path);
 });
+
+/**
+ * Create Systems.
+ */
+export const createSystems = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerSystems.createSystems');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdSchema);
+
+    await utilService.checkUserAccessPermissions(
+        securityContext, 
+        event, 
+        atEnums.Systems.ATS, 
+        atEnums.ATSClaims.SystemsPage, 
+        atEnums.Operations.ADD, 
+        false
+    );
+
+    const { tenantId } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    await utilService.validateRequestBody(schemas.createSystemsValidationSchema, requestBody);
+    utilService.checkAdditionalProperties(schemas.createSystemsCheckPropertiesSchema, requestBody, 'Systems');
+
+    const apiResult = await applicantTrackingService.systemsService.createSystems(tenantId, userEmail, requestBody);
+
+    return { statusCode: 201, body: apiResult }
+});
