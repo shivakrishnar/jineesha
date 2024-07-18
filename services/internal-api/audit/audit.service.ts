@@ -134,7 +134,7 @@ async function createAuditDetailEntries(tenantId: string, auditId: number, audit
     for (let i = 0; i < fieldKeys.length; i++) {
         const fieldQuery = new ParameterizedQuery(`CreateAuditDetailFor${fieldKeys[i]}`, Queries.createAuditDetailEntry);
         fieldQuery.setParameter('@auditId', auditId);
-        fieldQuery.setParameter('@companyId', companyId);
+        fieldQuery.setStringOrNullParameter('@companyId', companyId);
         fieldQuery.setStringOrNullParameter('@affectedEmployee', employeeDisplayName);
         fieldQuery.setParameter('@actionType', type);
         fieldQuery.setParameter('@fieldChanged', fieldKeys[i]);
@@ -144,13 +144,21 @@ async function createAuditDetailEntries(tenantId: string, auditId: number, audit
         fieldQuery.setParameter('@keyDetails', keyDetails || 'null')
         auditDetailQuery.appendFilter(fieldQuery.value, false);
 
-        const companyDetails: CompanyInfo = await utilService.validateCompany(tenantId, companyId);
+        let companyDetails: CompanyInfo = {
+            CompanyName: '',
+            ClientID: '',
+            MatchingUrls: '',
+            CreateDate: ''
+        };
+        if (companyId) {
+            companyDetails = await utilService.validateCompany(tenantId, companyId);
+        }
         const date = new Date().toISOString();
         const auditPayload = {
             tenantID: tenantId,
             company: {
-                name: companyDetails.CompanyName,
-                id: Number(companyId),
+                name: companyDetails.CompanyName ? companyDetails.CompanyName : null,
+                id: companyId ? Number(companyId) : null,
             },
             employee: employeeDisplayName,
             changes: {

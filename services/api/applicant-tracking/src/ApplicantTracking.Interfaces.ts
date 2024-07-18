@@ -689,12 +689,6 @@ export interface IQuestionBankGroupPUT {
 	groupName: string
 }
 
-export interface ISystemsGET {
-	id: number,
-	name: string,
-	description: string
-}
-
 export interface IUserPermissionsGET {
 	roleId: number,
 	roleName: string,
@@ -715,4 +709,15 @@ export interface IUserPermissionsGET {
 	roleUsersId?: number,
 	userId?: number,
 	userName?: string
+}
+
+export interface ISystemsGET {
+	id: number,
+	name: string,
+	description: string
+}
+
+export interface ISystemsPOST {
+	name: string,
+	description: string
 }

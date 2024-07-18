@@ -717,6 +717,15 @@ functions:
             cors:
               origin: '*'            
 
+  createSystems:
+    handler: src/handlerSystems.createSystems
+    events:
+        - http:
+            path: /tenants/{tenantId}/systems
+            method: post
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

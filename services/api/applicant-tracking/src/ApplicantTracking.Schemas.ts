@@ -974,3 +974,13 @@ export const updateQuestionBankGroupCheckPropertiesSchema = {
     companyId: { required: true, type: Number },
 	groupName: { required: true, type: String },
 };
+
+export const createSystemsValidationSchema = Yup.object().shape({
+    name: Yup.string().required('name is required'),
+	description: Yup.string().required('description is required'),
+});
+
+export const createSystemsCheckPropertiesSchema = {
+    name: { required: true, type: String },
+	description: { required: true, type: String },
+};

@@ -7,7 +7,7 @@ import { ParameterizedQuery } from '../../../queries/parameterizedQuery';
 import { Queries } from '../../../queries/queries';
 import { DatabaseEvent, QueryType } from '../../../internal-api/database/events';
 import { PaginatedResult } from '../../../pagination/paginatedResult';
-//import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
+import { AuditActionType, AuditAreaOfChange, IAudit } from '../../../internal-api/audit/audit';
 
 
 /**
@@ -87,6 +87,71 @@ export async function getSystemsByTenant(
         const totalCount = dbResults.recordsets[0][0].totalCount;
         const results: atInterfaces.ISystemsGET[] = dbResults.recordsets[1];
         return await paginationService.createPaginatedResult(results, baseUrl, totalCount, page);
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
+
+/**
+ * Create Systems.
+ */
+export async function createSystems(
+    tenantId: string,
+    userEmail: string,
+    requestBody: atInterfaces.ISystemsPOST
+): Promise<atInterfaces.ISystemsGET> {
+    console.info('Systems.Service.createSystems');
+
+    try {
+        //
+        // inserting data
+        //
+        const query = new ParameterizedQuery('createSystems', Queries.createSystems);
+        query.setStringParameter('@Name', requestBody.name);
+        query.setStringParameter('@Description', requestBody.description);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        const queryResult: any = await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+        const id: any = queryResult.recordset[0].ID;
+        if (id) {
+            //
+            // getting data
+            //
+            const apiresult = await getSystemsById(tenantId, id);
+
+            //
+            // auditing log
+            //
+            const logResult = { ...apiresult };
+            logResult.name = utilService.sanitizeStringForSql(logResult.name);
+            logResult.description = utilService.sanitizeStringForSql(logResult.description);
+
+            utilService.logToAuditTrail({
+                userEmail,
+                newFields: logResult,
+                type: AuditActionType.Insert,
+                companyId: null,
+                areaOfChange: AuditAreaOfChange.ApplicantTracking,
+                tenantId,
+            } as IAudit);
+
+            //
+            // api response
+            //
+            return apiresult;
+        } else {
+            throw errorService.getErrorResponse(74).setDeveloperMessage('Was not possible to create the resource');
+        }
     } catch (error) {
         if (error instanceof ErrorMessage) {
             throw error;
