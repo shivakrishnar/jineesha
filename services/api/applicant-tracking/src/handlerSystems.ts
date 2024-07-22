@@ -84,3 +84,33 @@ export const createSystems = utilService.gatewayEventHandlerV2(async ({ security
 
     return { statusCode: 201, body: apiResult }
 });
+
+/**
+ * Update Systems.
+ */
+export const updateSystems = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerSystems.updateSystems');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdSchema);
+
+    await utilService.checkUserAccessPermissions(
+        securityContext, 
+        event, 
+        atEnums.Systems.ATS, 
+        atEnums.ATSClaims.SystemsPage, 
+        atEnums.Operations.EDIT, 
+        false
+    );
+
+    const { tenantId } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    await utilService.validateRequestBody(schemas.updateSystemsValidationSchema, requestBody);
+    utilService.checkAdditionalProperties(schemas.updateSystemsCheckPropertiesSchema, requestBody, 'Systems');
+
+    const apiResult = await applicantTrackingService.systemsService.updateSystems(tenantId, userEmail, requestBody);
+
+    return { statusCode: 200, body: apiResult }
+});

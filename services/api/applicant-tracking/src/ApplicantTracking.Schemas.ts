@@ -984,3 +984,15 @@ export const createSystemsCheckPropertiesSchema = {
     name: { required: true, type: String },
 	description: { required: true, type: String },
 };
+
+export const updateSystemsValidationSchema = Yup.object().shape({
+	id: Yup.number().required('id is required'),
+    name: Yup.string().required('name is required'),
+	description: Yup.string().required('description is required'),
+});
+
+export const updateSystemsCheckPropertiesSchema = {
+	id: { required: true, type: Number },
+    name: { required: true, type: String },
+	description: { required: true, type: String },
+};

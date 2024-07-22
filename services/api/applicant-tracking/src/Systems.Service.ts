@@ -160,3 +160,69 @@ export async function createSystems(
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * Update Systems.
+ */
+export async function updateSystems(
+    tenantId: string,
+    userEmail: string,
+    requestBody: atInterfaces.ISystemsPUT
+): Promise<Boolean> {
+    console.info('Systems.Service.updateSystems');
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getSystemsById(tenantId, requestBody.id.toString());     
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+
+        //
+        // updating data
+        //
+        const query = new ParameterizedQuery('updateSystems', Queries.updateSystems);
+        query.setParameter('@ID', requestBody.id);
+        query.setStringParameter('@Name', requestBody.name);
+        query.setStringParameter('@Description', requestBody.description);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        const logResult = { ...requestBody };
+        logResult.name = utilService.sanitizeStringForSql(logResult.name);
+        logResult.description = utilService.sanitizeStringForSql(logResult.description);
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            newFields: logResult,
+            type: AuditActionType.Update,
+            companyId: null,
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
