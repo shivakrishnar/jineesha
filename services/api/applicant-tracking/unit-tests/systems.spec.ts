@@ -128,3 +128,33 @@ describe('createSystems', () => {
             });
     });
 });
+
+describe('updateSystems', () => {
+
+    test('updates Systems', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'updateSystems'){
+                return true;
+            } else if (payload.queryName === 'getSystemsById') {
+                const result = await Promise.resolve(mockData.getSystemsByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await SystemsService
+            .updateSystems(
+                sharedMockData.tenantId,
+                sharedMockData.userEmail,
+                mockData.updateSystemsRequestBody,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.updateSystemsAPIResponse);
+            });
+    });
+});

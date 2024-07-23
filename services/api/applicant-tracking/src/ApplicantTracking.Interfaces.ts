@@ -721,3 +721,9 @@ export interface ISystemsPOST {
 	name: string,
 	description: string
 }
+
+export interface ISystemsPUT {
+	id: number,
+	name: string,
+	description: string
+}

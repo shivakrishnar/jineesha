@@ -726,6 +726,15 @@ functions:
             cors:
               origin: '*'
 
+  updateSystems:
+    handler: src/handlerSystems.updateSystems
+    events:
+        - http:
+            path: /tenants/{tenantId}/systems
+            method: put
+            cors:
+              origin: '*'              
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
