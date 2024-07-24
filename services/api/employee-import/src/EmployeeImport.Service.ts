@@ -1421,7 +1421,13 @@ export async function updateEmployee(
         );
         updateDataImportEventDetailErrorQuery.setParameter('@DataImportEventId', dataImportEventId);
         updateDataImportEventDetailErrorQuery.setParameter('@CSVRowNumber', rowNumber + 1);
-        updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError);
+        
+        if (msgError.length > 199) {
+            updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError.substring(0, 199));
+        }
+        else {
+            updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError);
+        }
 
         const updateDataImportEventDetailErrorPayload = {
             tenantId,
@@ -2155,171 +2161,199 @@ export async function updateCompensation(
         // Updating compensation on EVO...
         //
 
-        console.info('===> Getting EVO information from AHR');
+        const compensationId = insertCompensationResult.recordset[0].CompensationIdResult;
 
-        const getEmployeeByEmployeeCodeDataEventQuery = new ParameterizedQuery(
-            'getEmployeeByEmployeeCode',
-            Queries.getEmployeeByEmployeeCode,
-        );
-        getEmployeeByEmployeeCodeDataEventQuery.setParameter('@CompanyID', companyId);
-        getEmployeeByEmployeeCodeDataEventQuery.setStringParameter('@EmployeeCode', jsonCsvRowReordered['Employee Identifier']);
+        try {
+            console.info('===> Getting EVO information from AHR');
 
-        const getEmployeeByEmployeeCodePayload = {
-            tenantId,
-            queryName: getEmployeeByEmployeeCodeDataEventQuery.name,
-            query: getEmployeeByEmployeeCodeDataEventQuery.value,
-            queryType: QueryType.Simple,
-        } as DatabaseEvent;
+            const getEmployeeByEmployeeCodeDataEventQuery = new ParameterizedQuery(
+                'getEmployeeByEmployeeCode',
+                Queries.getEmployeeByEmployeeCode,
+            );
+            getEmployeeByEmployeeCodeDataEventQuery.setParameter('@CompanyID', companyId);
+            getEmployeeByEmployeeCodeDataEventQuery.setStringParameter('@EmployeeCode', jsonCsvRowReordered['Employee Identifier']);
 
-        const getEmployeeByEmployeeCodeResult: any = await utilService.invokeInternalService(
-            'queryExecutor',
-            getEmployeeByEmployeeCodePayload,
-            utilService.InvocationType.RequestResponse,
-        );
+            const getEmployeeByEmployeeCodePayload = {
+                tenantId,
+                queryName: getEmployeeByEmployeeCodeDataEventQuery.name,
+                query: getEmployeeByEmployeeCodeDataEventQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
 
-        if (
-            !getEmployeeByEmployeeCodeResult ||
-            !getEmployeeByEmployeeCodeResult.recordset.length ||
-            getEmployeeByEmployeeCodeResult.recordset[0].EvoEmployeeId === undefined ||
-            getEmployeeByEmployeeCodeResult.recordset[0].EvoEmployeeId === null ||
-            getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === undefined ||
-            getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === null ||
-            getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === undefined ||
-            getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === null
-        ) {
-            console.error('===> getEmployeeByEmployeeCodeResult do not have what we need to update on EVO');
-            throw new Error(`Do not have what we need to update on EVO`);
-        }
+            const getEmployeeByEmployeeCodeResult: any = await utilService.invokeInternalService(
+                'queryExecutor',
+                getEmployeeByEmployeeCodePayload,
+                utilService.InvocationType.RequestResponse,
+            );
 
-        const hrEmployee: any = getEmployeeByEmployeeCodeResult.recordset[0];
-        const evoKeys: IEvolutionKey = {
-            clientId: hrEmployee.EvoClientId,
-            companyId: hrEmployee.EvoCompanyId,
-            employeeId: hrEmployee.EvoEmployeeId,
-        };
+            if (
+                !getEmployeeByEmployeeCodeResult ||
+                !getEmployeeByEmployeeCodeResult.recordset.length ||
+                getEmployeeByEmployeeCodeResult.recordset[0].EvoEmployeeId === undefined ||
+                getEmployeeByEmployeeCodeResult.recordset[0].EvoEmployeeId === null ||
+                getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === undefined ||
+                getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === null ||
+                getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === undefined ||
+                getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === null
+            ) {
+                console.error('===> getEmployeeByEmployeeCodeResult do not have what we need to update on EVO');
+                throw new Error(`Do not have what we need to update on EVO`);
+            }
 
-        if (evoKeys.clientId && evoKeys.companyId) {
-            console.info('===> Getting EVO Wage information');
+            const hrEmployee: any = getEmployeeByEmployeeCodeResult.recordset[0];
+            const evoKeys: IEvolutionKey = {
+                clientId: hrEmployee.EvoClientId,
+                companyId: hrEmployee.EvoCompanyId,
+                employeeId: hrEmployee.EvoEmployeeId,
+            };
 
-            const evoEmployeeWagesResult: any = await payrollService.getWagesFromEvoEmployee(tenantName, evoKeys, evoAccessToken);
-            if (evoEmployeeWagesResult && evoEmployeeWagesResult.results) {
-                let myEvoWage: IWage;
-                let myEmpPatch: IEvoPatch;
-                let myWagePatch: IEvoPatch;
+            if (evoKeys.clientId && evoKeys.companyId) {
+                console.info('===> Getting EVO Wage information');
 
-                if (
-                    evoEmployeeWagesResult.results.length == 0 ||
-                    evoEmployeeWagesResult.results.filter((a) => a.rate.id == 1).length == 0
-                ) {
-                    myEvoWage = InsertEvoWage(evoKeys, tenantName, evoAccessToken);
-                } else {
-                    myEvoWage = evoEmployeeWagesResult.results.filter((a) => a.rate.id == 1)[0];
-                }
+                const evoEmployeeWagesResult: any = await payrollService.getWagesFromEvoEmployee(tenantName, evoKeys, evoAccessToken);
+                if (evoEmployeeWagesResult && evoEmployeeWagesResult.results) {
+                    let myEvoWage: IWage;
+                    let myEmpPatch: IEvoPatch;
+                    let myWagePatch: IEvoPatch;
 
-                //Get all compensation from AHR by EmployeeID
-                const getEmployeeCompensationsQuery = new ParameterizedQuery(
-                    'getEmployeeCompensationByEmployeeID',
-                    Queries.getEmployeeCompensationByEmployeeID,
-                );
-                getEmployeeCompensationsQuery.setParameter('@EmployeeID', hrEmployee.ID);
-
-                const getEmployeeCompensationsPayload = {
-                    tenantId,
-                    queryName: getEmployeeCompensationsQuery.name,
-                    query: getEmployeeCompensationsQuery.value,
-                    queryType: QueryType.Simple,
-                } as DatabaseEvent;
-
-                const getEmployeeCompensationsResult: any = await utilService.invokeInternalService(
-                    'queryExecutor',
-                    getEmployeeCompensationsPayload,
-                    utilService.InvocationType.RequestResponse,
-                );
-                if (!getEmployeeCompensationsResult || !getEmployeeCompensationsResult.recordset.length) {
-                    console.error('===> No Compensation found in AHR database');
-                    throw new Error(`No Compensation found in AHR database`);
-                } else {
-                    const evoWageKeys: IEvolutionKey = {
-                        clientId: hrEmployee.EvoClientId,
-                        companyId: hrEmployee.EvoCompanyId,
-                        employeeId: hrEmployee.EvoEmployeeId,
-                        wageId: `${myEvoWage.id}`,
-                    };
-
-                    let executedUpdate = false;
-                    getEmployeeCompensationsResult.recordset.forEach((empComp) => {
-                        if (empComp.payTypeCode && empComp.payTypeCode === 'H') {
-                            if (!executedUpdate && new Date(empComp.EffectiveDate) <= new Date()) {
-                                myWagePatch = CreateDefaultPatchOperation(myWagePatch, myEvoWage.id, empComp.EffectiveDate, empComp.Rate);
-                                UpdateEvoWage(myEvoWage, empComp, evoWageKeys, tenantName, evoAccessToken);
-                                executedUpdate = true;
-                            } else {
-                                myWagePatch = LoadToPatchWage(myWagePatch, empComp, myEvoWage.id);
-                            }
-
-                            const myOldRate = empComp.Rate;
-                            empComp.Rate = 0;
-                            myEmpPatch = LoadToPatchEmp(myEmpPatch, empComp, myEvoWage.id);
-                            empComp = myOldRate;
-                        } else {
-                            myEmpPatch = LoadToPatchEmp(myEmpPatch, empComp, myEvoWage.id);
-                            myWagePatch = CreateDefaultPatchOperation(myWagePatch, myEvoWage.id, empComp.EffectiveDate, 0);
-
-                            UpdateEvoWage(myEvoWage, empComp, evoWageKeys, tenantName, evoAccessToken);
-                        }
-                    });
-
-                    if (myWagePatch.patchOperations) {
-                        myWagePatch.id = myEvoWage.id;
-                        const evoPatchWageResult: any = await payrollService.patchWageInEvo(
-                            tenantName,
-                            evoWageKeys,
-                            evoAccessToken,
-                            myWagePatch,
-                        );
-                        console.info('===> evoPatchWageResult');
-                        console.info(evoPatchWageResult);
+                    if (
+                        evoEmployeeWagesResult.results.length == 0 ||
+                        evoEmployeeWagesResult.results.filter((a) => a.rate.id == 1).length == 0
+                    ) {
+                        myEvoWage = InsertEvoWage(evoKeys, tenantName, evoAccessToken);
+                    } else {
+                        myEvoWage = evoEmployeeWagesResult.results.filter((a) => a.rate.id == 1)[0];
                     }
 
-                    if (myEmpPatch.patchOperations) {
-                        myEmpPatch.id = Number(evoKeys.employeeId);
-                        const evoPatchEmployeeResult: any = await payrollService.patchEmployeeInEvo(
-                            tenantName,
-                            evoKeys,
-                            evoAccessToken,
-                            myEmpPatch,
-                        );
-                        console.info('===> evoPatchEmployeeResult');
-                        console.info(evoPatchEmployeeResult);
-                    }
+                    //Get all compensation from AHR by EmployeeID
+                    const getEmployeeCompensationsQuery = new ParameterizedQuery(
+                        'getEmployeeCompensationByEmployeeID',
+                        Queries.getEmployeeCompensationByEmployeeID,
+                    );
+                    getEmployeeCompensationsQuery.setParameter('@EmployeeID', hrEmployee.ID);
 
-                    // Update PR_Integration_PK column of the last compensation inserted above in the AHR
-                    const compensationId = insertCompensationResult.recordset[0].CompensationIdResult;
-
-                    const updateCompensationWageIdQuery = new ParameterizedQuery('updateCompensation', Queries.updateCompensation);
-                    updateCompensationWageIdQuery.setParameter('@evoWageId', myEvoWage.id);
-                    updateCompensationWageIdQuery.setParameter('@employeeCompensationId', compensationId);
-
-                    const updateCompensationPayload = {
+                    const getEmployeeCompensationsPayload = {
                         tenantId,
-                        queryName: updateCompensationWageIdQuery.name,
-                        query: updateCompensationWageIdQuery.value,
+                        queryName: getEmployeeCompensationsQuery.name,
+                        query: getEmployeeCompensationsQuery.value,
                         queryType: QueryType.Simple,
                     } as DatabaseEvent;
 
-                    const updateCompensationResult: any = await utilService.invokeInternalService(
+                    const getEmployeeCompensationsResult: any = await utilService.invokeInternalService(
                         'queryExecutor',
-                        updateCompensationPayload,
+                        getEmployeeCompensationsPayload,
                         utilService.InvocationType.RequestResponse,
                     );
-                    if (!updateCompensationResult) {
-                        console.error('===> The column responsible for integrating Evo and AHR was not updated');
-                        throw new Error(`The column responsible for integrating Evo and AHR was not updated`);
+                    if (!getEmployeeCompensationsResult || !getEmployeeCompensationsResult.recordset.length) {
+                        console.error('===> No Compensation found in AHR database');
+                        throw new Error(`No Compensation found in AHR database`);
+                    } else {
+                        const evoWageKeys: IEvolutionKey = {
+                            clientId: hrEmployee.EvoClientId,
+                            companyId: hrEmployee.EvoCompanyId,
+                            employeeId: hrEmployee.EvoEmployeeId,
+                            wageId: `${myEvoWage.id}`,
+                        };
+
+                        let executedUpdate = false;
+                        getEmployeeCompensationsResult.recordset.forEach((empComp) => {
+                            if (empComp.payTypeCode && empComp.payTypeCode === 'H') {
+                                if (!executedUpdate && new Date(empComp.EffectiveDate) <= new Date()) {
+                                    myWagePatch = CreateDefaultPatchOperation(myWagePatch, myEvoWage.id, empComp.EffectiveDate, empComp.Rate);
+                                    UpdateEvoWage(myEvoWage, empComp, evoWageKeys, tenantName, evoAccessToken);
+                                    executedUpdate = true;
+                                } else {
+                                    myWagePatch = LoadToPatchWage(myWagePatch, empComp, myEvoWage.id);
+                                }
+
+                                const myOldRate = empComp.Rate;
+                                empComp.Rate = 0;
+                                myEmpPatch = LoadToPatchEmp(myEmpPatch, empComp, myEvoWage.id);
+                                empComp = myOldRate;
+                            } else {
+                                myEmpPatch = LoadToPatchEmp(myEmpPatch, empComp, myEvoWage.id);
+                                myWagePatch = CreateDefaultPatchOperation(myWagePatch, myEvoWage.id, empComp.EffectiveDate, 0);
+
+                                UpdateEvoWage(myEvoWage, empComp, evoWageKeys, tenantName, evoAccessToken);
+                            }
+                        });
+
+                        if (myWagePatch.patchOperations) {
+                            myWagePatch.id = myEvoWage.id;
+                            const evoPatchWageResult: any = await payrollService.patchWageInEvo(
+                                tenantName,
+                                evoWageKeys,
+                                evoAccessToken,
+                                myWagePatch,
+                            );
+                            console.info('===> evoPatchWageResult');
+                            console.info(evoPatchWageResult);
+                        }
+
+                        if (myEmpPatch.patchOperations) {
+                            myEmpPatch.id = Number(evoKeys.employeeId);
+                            const evoPatchEmployeeResult: any = await payrollService.patchEmployeeInEvo(
+                                tenantName,
+                                evoKeys,
+                                evoAccessToken,
+                                myEmpPatch,
+                            );
+                            console.info('===> evoPatchEmployeeResult');
+                            console.info(evoPatchEmployeeResult);
+                        }
+
+                        // Update PR_Integration_PK column of the last compensation inserted above in the AHR
+                        const updateCompensationWageIdQuery = new ParameterizedQuery('updateCompensation', Queries.updateCompensation);
+                        updateCompensationWageIdQuery.setParameter('@evoWageId', myEvoWage.id);
+                        updateCompensationWageIdQuery.setParameter('@employeeCompensationId', compensationId);
+
+                        const updateCompensationPayload = {
+                            tenantId,
+                            queryName: updateCompensationWageIdQuery.name,
+                            query: updateCompensationWageIdQuery.value,
+                            queryType: QueryType.Simple,
+                        } as DatabaseEvent;
+
+                        const updateCompensationResult: any = await utilService.invokeInternalService(
+                            'queryExecutor',
+                            updateCompensationPayload,
+                            utilService.InvocationType.RequestResponse,
+                        );
+                        if (!updateCompensationResult) {
+                            console.error('===> The column responsible for integrating Evo and AHR was not updated');
+                            throw new Error(`The column responsible for integrating Evo and AHR was not updated`);
+                        }
                     }
+                } else {
+                    console.info('===> Path not mapped');
                 }
-            } else {
-                console.info('===> Path not mapped');
             }
+
+        } catch (err) {
+            console.info(err);
+
+            //Rollback implemented in case Evo fail
+            const deleteCompensationQuery = new ParameterizedQuery('deleteCompensation', Queries.deleteCompensation);
+            deleteCompensationQuery.setParameter('@id', compensationId);
+
+            const deleteCompensationPayload = {
+                tenantId,
+                queryName: deleteCompensationQuery.name,
+                query: deleteCompensationQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+
+            console.info(deleteCompensationPayload);
+
+            const deleteCompensationResult: any = await utilService.invokeInternalService(
+                'queryExecutor',
+                deleteCompensationPayload,
+                utilService.InvocationType.RequestResponse,
+            );
+
+            console.info(deleteCompensationResult);
+
+            throw err;
         }
 
         const updateDataImportEventDetailProcessed = new ParameterizedQuery(
@@ -2366,7 +2400,12 @@ export async function updateCompensation(
         );
         updateDataImportEventDetailErrorQuery.setParameter('@DataImportEventId', dataImportEventId);
         updateDataImportEventDetailErrorQuery.setParameter('@CSVRowNumber', rowNumber + 1);
-        updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError);
+        if (msgError.length > 199) {
+            updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError.substring(0, 199));
+        }
+        else {
+            updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError);
+        }        
 
         const updateDataImportEventDetailErrorPayload = {
             tenantId,
@@ -2649,243 +2688,269 @@ export async function updateAlternateRate(
             throw new Error(`The alternate rate row was not inserted on AHR`);
         }
 
-        // Checking if company has integration with EVO
+        const alternaterateId = insertAlternateRateResult.recordset[0].AlternateRateIdResult;
 
-        const isEVOIntegratedCompanyQuery = new ParameterizedQuery('isEVOIntegratedCompany', Queries.isEVOIntegratedCompany);
-        isEVOIntegratedCompanyQuery.setParameter('@CompanyID', companyId);
+        try {
 
-        const isEVOIntegratedCompanyPayload = {
-            tenantId,
-            queryName: isEVOIntegratedCompanyQuery.name,
-            query: isEVOIntegratedCompanyQuery.value,
-            queryType: QueryType.Simple,
-        } as DatabaseEvent;
+            // Checking if company has integration with EVO
 
-        const isEVOIntegratedCompanyResult: any = await utilService.invokeInternalService(
-            'queryExecutor',
-            isEVOIntegratedCompanyPayload,
-            utilService.InvocationType.RequestResponse,
-        );
+            const isEVOIntegratedCompanyQuery = new ParameterizedQuery('isEVOIntegratedCompany', Queries.isEVOIntegratedCompany);
+            isEVOIntegratedCompanyQuery.setParameter('@CompanyID', companyId);
 
-        console.info('===> isEVOIntegratedCompanyResult');
-        console.info(isEVOIntegratedCompanyResult);
-
-        if (
-            !isEVOIntegratedCompanyResult ||
-            !isEVOIntegratedCompanyResult.recordset.length ||
-            isEVOIntegratedCompanyResult.recordset[0].PRIntegration_ClientID === undefined ||
-            isEVOIntegratedCompanyResult.recordset[0].PR_Integration_PK === null
-        ) {
-            console.info('===> Company not integrated with EVO');
-        } else {
-            //
-            // Inserting alternate rate on EVO...
-            //
-
-            console.info('===> Configuring EVO object information before API call');
-
-            const evoAccessToken: string = await utilService.getEvoTokenWithHrToken(tenantId, hrAccessToken);
-            const tenantObject = await ssoService.getTenantById(tenantId, evoAccessToken);
-            const tenantName = tenantObject.subdomain;
-
-            console.info('===> Getting EVO information from AHR');
-
-            const getEmployeeByEmployeeCodeDataEventQuery = new ParameterizedQuery(
-                'getEmployeeByEmployeeCode',
-                Queries.getEmployeeByEmployeeCode,
-            );
-            getEmployeeByEmployeeCodeDataEventQuery.setParameter('@CompanyID', companyId);
-            getEmployeeByEmployeeCodeDataEventQuery.setStringParameter('@EmployeeCode', jsonCsvRowReordered['Employee Identifier']);
-
-            const getEmployeeByEmployeeCodePayload = {
+            const isEVOIntegratedCompanyPayload = {
                 tenantId,
-                queryName: getEmployeeByEmployeeCodeDataEventQuery.name,
-                query: getEmployeeByEmployeeCodeDataEventQuery.value,
+                queryName: isEVOIntegratedCompanyQuery.name,
+                query: isEVOIntegratedCompanyQuery.value,
                 queryType: QueryType.Simple,
             } as DatabaseEvent;
 
-            const getEmployeeByEmployeeCodeResult: any = await utilService.invokeInternalService(
+            const isEVOIntegratedCompanyResult: any = await utilService.invokeInternalService(
                 'queryExecutor',
-                getEmployeeByEmployeeCodePayload,
+                isEVOIntegratedCompanyPayload,
                 utilService.InvocationType.RequestResponse,
             );
 
+            console.info('===> isEVOIntegratedCompanyResult');
+            console.info(isEVOIntegratedCompanyResult);
+
             if (
-                !getEmployeeByEmployeeCodeResult ||
-                !getEmployeeByEmployeeCodeResult.recordset.length ||
-                getEmployeeByEmployeeCodeResult.recordset[0].EvoEmployeeId === undefined ||
-                getEmployeeByEmployeeCodeResult.recordset[0].EvoEmployeeId === null ||
-                getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === undefined ||
-                getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === null ||
-                getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === undefined ||
-                getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === null
+                !isEVOIntegratedCompanyResult ||
+                !isEVOIntegratedCompanyResult.recordset.length ||
+                isEVOIntegratedCompanyResult.recordset[0].PRIntegration_ClientID === undefined ||
+                isEVOIntegratedCompanyResult.recordset[0].PR_Integration_PK === null
             ) {
-                console.error('===> getEmployeeByEmployeeCodeResult do not have what we need to update on EVO');
-                throw new Error(`Do not have what we need to update on EVO`);
-            }
+                console.info('===> Company not integrated with EVO');
+            } else {
 
-            const hrEmployee: any = getEmployeeByEmployeeCodeResult.recordset[0];
-            const evoKeys: IEvolutionKey = {
-                clientId: hrEmployee.EvoClientId,
-                companyId: hrEmployee.EvoCompanyId,
-                employeeId: hrEmployee.EvoEmployeeId,
-            };
+                //
+                // Inserting alternate rate on EVO...
+                //
 
-            if (evoKeys.clientId && evoKeys.companyId) {
-                console.info('===> Getting EVO Wage information');
+                console.info('===> Getting EVO information from AHR');
 
-                const myRateNumber_PKList = {};
-                const evoEmployeeWagesResult: any = await payrollService.getWagesFromEvoEmployee(tenantName, evoKeys, evoAccessToken);
-                console.info('===> evoEmployeeWagesResult');
-                console.info(evoEmployeeWagesResult);
+                const getEmployeeByEmployeeCodeDataEventQuery = new ParameterizedQuery(
+                    'getEmployeeByEmployeeCode',
+                    Queries.getEmployeeByEmployeeCode,
+                );
+                getEmployeeByEmployeeCodeDataEventQuery.setParameter('@CompanyID', companyId);
+                getEmployeeByEmployeeCodeDataEventQuery.setStringParameter('@EmployeeCode', jsonCsvRowReordered['Employee Identifier']);
 
-                if (evoEmployeeWagesResult && evoEmployeeWagesResult.results) {
-                    if (evoEmployeeWagesResult.results.length > 0) {
-                        evoEmployeeWagesResult.results.forEach((wage) => {
-                            if (wage.rate && wage.rate.id) {
-                                if (wage.rate.id in myRateNumber_PKList) {
-                                    if (myRateNumber_PKList[wage.rate.id] !== wage.id) {
-                                        console.info('==> bad data');
+                const getEmployeeByEmployeeCodePayload = {
+                    tenantId,
+                    queryName: getEmployeeByEmployeeCodeDataEventQuery.name,
+                    query: getEmployeeByEmployeeCodeDataEventQuery.value,
+                    queryType: QueryType.Simple,
+                } as DatabaseEvent;
+
+                const getEmployeeByEmployeeCodeResult: any = await utilService.invokeInternalService(
+                    'queryExecutor',
+                    getEmployeeByEmployeeCodePayload,
+                    utilService.InvocationType.RequestResponse,
+                );
+
+                if (
+                    !getEmployeeByEmployeeCodeResult ||
+                    !getEmployeeByEmployeeCodeResult.recordset.length ||
+                    getEmployeeByEmployeeCodeResult.recordset[0].EvoEmployeeId === undefined ||
+                    getEmployeeByEmployeeCodeResult.recordset[0].EvoEmployeeId === null ||
+                    getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === undefined ||
+                    getEmployeeByEmployeeCodeResult.recordset[0].EvoCompanyId === null ||
+                    getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === undefined ||
+                    getEmployeeByEmployeeCodeResult.recordset[0].EvoClientId === null
+                ) {
+                    console.error('===> getEmployeeByEmployeeCodeResult do not have what we need to update on EVO');
+                    throw new Error(`Do not have what we need to update on EVO`);
+                }
+
+                const hrEmployee: any = getEmployeeByEmployeeCodeResult.recordset[0];
+                const evoKeys: IEvolutionKey = {
+                    clientId: hrEmployee.EvoClientId,
+                    companyId: hrEmployee.EvoCompanyId,
+                    employeeId: hrEmployee.EvoEmployeeId,
+                };
+
+                if (evoKeys.clientId && evoKeys.companyId) {
+                    console.info('===> Getting EVO Wage information');
+
+                    const myRateNumber_PKList = {};
+                    const evoEmployeeWagesResult: any = await payrollService.getWagesFromEvoEmployee(tenantName, evoKeys, evoAccessToken);
+                    console.info('===> evoEmployeeWagesResult');
+                    console.info(evoEmployeeWagesResult);
+
+                    if (evoEmployeeWagesResult && evoEmployeeWagesResult.results) {
+                        if (evoEmployeeWagesResult.results.length > 0) {
+                            evoEmployeeWagesResult.results.forEach((wage) => {
+                                if (wage.rate && wage.rate.id) {
+                                    if (wage.rate.id in myRateNumber_PKList) {
+                                        if (myRateNumber_PKList[wage.rate.id] !== wage.id) {
+                                            console.info('==> bad data');
+                                        }
+                                    } else {
+                                        myRateNumber_PKList[wage.rate.id] = wage.id;
                                     }
-                                } else {
-                                    myRateNumber_PKList[wage.rate.id] = wage.id;
-                                }
-                            }
-                        });
-                    }
-
-                    let isNewWage = false;
-                    if (!myRateNumber_PKList[jsonCsvRowReordered['Rate Number']]) {
-                        isNewWage = true;
-                    }
-
-                    let myPatch: IEvoPatch;
-                    const alternaterateId = insertAlternateRateResult.recordset[0].AlternateRateIdResult;
-
-                    let myEvoWage: IWage;
-
-                    const lstRateNumberAlternateRates = await GetAlternateRatesByEmployee(
-                        tenantId,
-                        hrEmployee.ID,
-                        jsonCsvRowReordered['Rate Number'],
-                    );
-                    if (lstRateNumberAlternateRates.length > 0) {
-                        lstRateNumberAlternateRates.forEach((altRate) => {
-                            myPatch = LoadToPatchWageAlternateRate(myPatch, altRate, 0);
-                        });
-                    }
-
-                    if (myPatch && myPatch.patchOperations && myPatch.patchOperations.length > 0) {
-                        let myEvoWageID;
-                        if (isNewWage) {
-                            myEvoWage = {
-                                employeeId: Number(evoKeys.employeeId),
-                                rate: {
-                                    id: jsonCsvRowReordered['Rate Number'],
-                                    isDefault: false,
-                                    amount: jsonCsvRowReordered['Hourly Rate'],
-                                },
-                            };
-
-                            const postEvoWageResult: any = await payrollService.postWageInEvo(
-                                tenantName,
-                                evoKeys,
-                                evoAccessToken,
-                                myEvoWage,
-                            );
-                            console.info('===> postEvoWageResult');
-                            console.info(postEvoWageResult);
-
-                            myEvoWageID = postEvoWageResult.id;
-                            myEvoWage.id = myEvoWageID;
-                            myPatch.id = myEvoWageID;
-
-                            lstRateNumberAlternateRates.forEach((altRate) => {
-                                if (Number(altRate.ID) === Number(alternaterateId)) {
-                                    myEvoWage.divisionId = altRate.org1Id;
-                                    myEvoWage.branchId = altRate.org2Id;
-                                    myEvoWage.departmentId = altRate.org3Id;
-                                    myEvoWage.teamId = altRate.org4Id;
-
-                                    myEvoWage.jobId = altRate.jobId;
-                                    myEvoWage.payGradeId = altRate.payGradeId;
-                                    myEvoWage.positionId = altRate.positionId;
-
-                                    myEvoWage.workersCompensation = {
-                                        id: altRate.workerCompensationId,
-                                        description: altRate.workerCompDesc,
-                                        state: {
-                                            id: altRate.stateId,
-                                        },
-                                    };
                                 }
                             });
-                        } else {
-                            myEvoWageID = myRateNumber_PKList[jsonCsvRowReordered['Rate Number']];
-                            myPatch.id = myEvoWageID;
+                        }
 
+                        let isNewWage = false;
+                        if (!myRateNumber_PKList[jsonCsvRowReordered['Rate Number']]) {
+                            isNewWage = true;
+                        }
+
+                        let myPatch: IEvoPatch;
+                        
+
+                        let myEvoWage: IWage;
+
+                        const lstRateNumberAlternateRates = await GetAlternateRatesByEmployee(
+                            tenantId,
+                            hrEmployee.ID,
+                            jsonCsvRowReordered['Rate Number'],
+                        );
+                        if (lstRateNumberAlternateRates.length > 0) {
                             lstRateNumberAlternateRates.forEach((altRate) => {
-                                if (Number(altRate.ID) === Number(alternaterateId)) {
-                                    myEvoWage = {
-                                        divisionId: altRate.org1Id,
-                                        branchId: altRate.org2Id,
-                                        departmentId: altRate.org3Id,
-                                        teamId: altRate.org4Id,
-                                        employeeId: Number(evoKeys.employeeId),
-                                        id: altRate.altRateId,
-                                        jobId: altRate.jobId,
-                                        rate: {
-                                            id: jsonCsvRowReordered['Rate Number'],
-                                            isDefault: false,
-                                            amount: jsonCsvRowReordered['Hourly Rate'],
-                                        },
-                                        payGradeId: altRate.payGradeId,
-                                        positionId: altRate.positionId,
-                                        workersCompensation: {
+                                myPatch = LoadToPatchWageAlternateRate(myPatch, altRate, 0);
+                            });
+                        }
+
+                        if (myPatch && myPatch.patchOperations && myPatch.patchOperations.length > 0) {
+                            let myEvoWageID;
+                            if (isNewWage) {
+                                myEvoWage = {
+                                    employeeId: Number(evoKeys.employeeId),
+                                    rate: {
+                                        id: jsonCsvRowReordered['Rate Number'],
+                                        isDefault: false,
+                                        amount: jsonCsvRowReordered['Hourly Rate'],
+                                    },
+                                };
+
+                                const postEvoWageResult: any = await payrollService.postWageInEvo(
+                                    tenantName,
+                                    evoKeys,
+                                    evoAccessToken,
+                                    myEvoWage,
+                                );
+                                console.info('===> postEvoWageResult');
+                                console.info(postEvoWageResult);
+
+                                myEvoWageID = postEvoWageResult.id;
+                                myEvoWage.id = myEvoWageID;
+                                myPatch.id = myEvoWageID;
+
+                                lstRateNumberAlternateRates.forEach((altRate) => {
+                                    if (Number(altRate.ID) === Number(alternaterateId)) {
+                                        myEvoWage.divisionId = altRate.org1Id;
+                                        myEvoWage.branchId = altRate.org2Id;
+                                        myEvoWage.departmentId = altRate.org3Id;
+                                        myEvoWage.teamId = altRate.org4Id;
+
+                                        myEvoWage.jobId = altRate.jobId;
+                                        myEvoWage.payGradeId = altRate.payGradeId;
+                                        myEvoWage.positionId = altRate.positionId;
+
+                                        myEvoWage.workersCompensation = {
                                             id: altRate.workerCompensationId,
                                             description: altRate.workerCompDesc,
                                             state: {
                                                 id: altRate.stateId,
                                             },
-                                        },
-                                    };
-                                }
-                            });
-                        }
+                                        };
+                                    }
+                                });
+                            } else {
+                                myEvoWageID = myRateNumber_PKList[jsonCsvRowReordered['Rate Number']];
+                                myPatch.id = myEvoWageID;
 
-                        // Run Patch
-                        await UpdateAltRate(tenantName, evoKeys, evoAccessToken, myEvoWage, myPatch);
+                                lstRateNumberAlternateRates.forEach((altRate) => {
+                                    if (Number(altRate.ID) === Number(alternaterateId)) {
+                                        myEvoWage = {
+                                            divisionId: altRate.org1Id,
+                                            branchId: altRate.org2Id,
+                                            departmentId: altRate.org3Id,
+                                            teamId: altRate.org4Id,
+                                            employeeId: Number(evoKeys.employeeId),
+                                            id: altRate.altRateId,
+                                            jobId: altRate.jobId,
+                                            rate: {
+                                                id: jsonCsvRowReordered['Rate Number'],
+                                                isDefault: false,
+                                                amount: jsonCsvRowReordered['Hourly Rate'],
+                                            },
+                                            payGradeId: altRate.payGradeId,
+                                            positionId: altRate.positionId,
+                                            workersCompensation: {
+                                                id: altRate.workerCompensationId,
+                                                description: altRate.workerCompDesc,
+                                                state: {
+                                                    id: altRate.stateId,
+                                                },
+                                            },
+                                        };
+                                    }
+                                });
+                            }
 
-                        // Update PR_Integration_PK column of the last compensation inserted above in the AHR
-                        const updateAlternateRateWageIdQuery = new ParameterizedQuery('updateAlternateRate', Queries.updateAlternateRate);
-                        updateAlternateRateWageIdQuery.setParameter('@evoWageId', myEvoWageID);
-                        updateAlternateRateWageIdQuery.setParameter('@employeeAlternateRateId', alternaterateId);
+                            // Run Patch
+                            await UpdateAltRate(tenantName, evoKeys, evoAccessToken, myEvoWage, myPatch);
 
-                        const pdateAlternateRatePayload = {
-                            tenantId,
-                            queryName: updateAlternateRateWageIdQuery.name,
-                            query: updateAlternateRateWageIdQuery.value,
-                            queryType: QueryType.Simple,
-                        } as DatabaseEvent;
+                            // Update PR_Integration_PK column of the last compensation inserted above in the AHR
+                            const updateAlternateRateWageIdQuery = new ParameterizedQuery('updateAlternateRate', Queries.updateAlternateRate);
+                            updateAlternateRateWageIdQuery.setParameter('@evoWageId', myEvoWageID);
+                            updateAlternateRateWageIdQuery.setParameter('@employeeAlternateRateId', alternaterateId);
 
-                        const updateAlternateRateResult: any = await utilService.invokeInternalService(
-                            'queryExecutor',
-                            pdateAlternateRatePayload,
-                            utilService.InvocationType.RequestResponse,
-                        );
-                        if (!updateAlternateRateResult) {
-                            console.error('===> The column responsible for integrating Evo and AHR was not updated');
-                            throw new Error(`The column responsible for integrating Evo and AHR was not updated`);
+                            const pdateAlternateRatePayload = {
+                                tenantId,
+                                queryName: updateAlternateRateWageIdQuery.name,
+                                query: updateAlternateRateWageIdQuery.value,
+                                queryType: QueryType.Simple,
+                            } as DatabaseEvent;
+
+                            const updateAlternateRateResult: any = await utilService.invokeInternalService(
+                                'queryExecutor',
+                                pdateAlternateRatePayload,
+                                utilService.InvocationType.RequestResponse,
+                            );
+                            if (!updateAlternateRateResult) {
+                                console.error('===> The column responsible for integrating Evo and AHR was not updated');
+                                throw new Error(`The column responsible for integrating Evo and AHR was not updated`);
+                            }
+                        } else {
+                            console.info('Rate Number does not exist in EVO, so there is nothing to update');
+                            return undefined;
                         }
                     } else {
-                        console.info('Rate Number does not exist in EVO, so there is nothing to update');
-                        return undefined;
+                        console.info('No alternate rates found on EVO');
                     }
-                } else {
-                    console.info('No alternate rates found on EVO');
                 }
             }
-        }
+
+        } catch(err) {
+            console.error(err);
+
+            //Rollback implemented in case Evo fail
+            const deleteAlternateRateQuery = new ParameterizedQuery('deleteAlternateRate', Queries.deleteAlternateRate);
+            deleteAlternateRateQuery.setParameter('@id', alternaterateId);
+
+            const deleteAlternateRatePayload = {
+                tenantId,
+                queryName: deleteAlternateRateQuery.name,
+                query: deleteAlternateRateQuery.value,
+                queryType: QueryType.Simple,
+            } as DatabaseEvent;
+
+            console.info(deleteAlternateRatePayload);
+
+            const deleteAlternateRateResult: any = await utilService.invokeInternalService(
+                'queryExecutor',
+                deleteAlternateRatePayload,
+                utilService.InvocationType.RequestResponse,
+            );
+
+            console.info(deleteAlternateRateResult);
+
+            throw err;
+        }        
 
         const updateDataImportEventDetailProcessed = new ParameterizedQuery(
             'updateDataImportEventDetailProcessed',
@@ -2931,7 +2996,13 @@ export async function updateAlternateRate(
         );
         updateDataImportEventDetailErrorQuery.setParameter('@DataImportEventId', dataImportEventId);
         updateDataImportEventDetailErrorQuery.setParameter('@CSVRowNumber', rowNumber + 1);
-        updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError);
+
+        if (msgError.length > 199) {
+            updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError.substring(0, 199));
+        }
+        else {
+            updateDataImportEventDetailErrorQuery.setStringParameter('@CSVRowNotes', msgError);
+        } 
 
         const updateDataImportEventDetailErrorPayload = {
             tenantId,

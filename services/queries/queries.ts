@@ -307,6 +307,8 @@ export const Queries = {
     listDataImportByType: fs.readFileSync(path.join(basePath, 'employee-import/listDataImportByType.sql')).toString(),
     listDataImportWithSearch: fs.readFileSync(path.join(basePath, 'employee-import/listDataImportWithSearch.sql')).toString(),
     checksNewEmployeeCodeIsInUse: fs.readFileSync(path.join(basePath, 'employee-import/checksNewEmployeeCodeIsInUse.sql')).toString(),
+    deleteAlternateRate: fs.readFileSync(path.join(basePath, 'employee-import/deleteAlternateRate.sql')).toString(),
+    deleteCompensation: fs.readFileSync(path.join(basePath, 'employee-import/deleteCompensation.sql')).toString(),
 
     // Aplicant Tracking
     getQuestionTypeByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/getQuestionTypeByTenant.sql')).toString(),
