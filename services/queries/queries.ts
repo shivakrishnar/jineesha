@@ -394,4 +394,5 @@ export const Queries = {
     getSystemsByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/security-user-access/getSystemsByTenant.sql')).toString(),
     createSystems: fs.readFileSync(path.join(basePath, 'applicant-tracking/security-user-access/createSystems.sql')).toString(),
     updateSystems: fs.readFileSync(path.join(basePath, 'applicant-tracking/security-user-access/updateSystems.sql')).toString(),
+    deleteSystems: fs.readFileSync(path.join(basePath, 'applicant-tracking/security-user-access/deleteSystems.sql')).toString(),
 };

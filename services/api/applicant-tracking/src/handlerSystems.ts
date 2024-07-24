@@ -114,3 +114,30 @@ export const updateSystems = utilService.gatewayEventHandlerV2(async ({ security
 
     return { statusCode: 200, body: apiResult }
 });
+
+/**
+ * Delete Systems.
+ */
+export const deleteSystems = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerSystems.deleteSystems');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndIdSchema);
+
+    await utilService.checkUserAccessPermissions(
+        securityContext, 
+        event, 
+        atEnums.Systems.ATS, 
+        atEnums.ATSClaims.SystemsPage, 
+        atEnums.Operations.DELETE, 
+        false
+    );
+
+    const { tenantId, id } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    const apiResult = await applicantTrackingService.systemsService.deleteSystems(tenantId, userEmail, id);
+
+    return { statusCode: 200, body: apiResult }
+});

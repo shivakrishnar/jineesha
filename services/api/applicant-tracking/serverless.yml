@@ -733,7 +733,16 @@ functions:
             path: /tenants/{tenantId}/systems
             method: put
             cors:
-              origin: '*'              
+              origin: '*'
+
+  deleteSystems:
+    handler: src/handlerSystems.deleteSystems
+    events:
+        - http:
+            path: /tenants/{tenantId}/systems/{id}
+            method: delete
+            cors:
+              origin: '*'                            
 
 resources:
   Resources:

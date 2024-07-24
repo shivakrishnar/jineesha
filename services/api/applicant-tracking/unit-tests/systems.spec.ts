@@ -158,3 +158,76 @@ describe('updateSystems', () => {
             });
     });
 });
+
+describe('deleteSystems', () => {
+
+    test('id must be an integer', () => {
+        return SystemsService.deleteSystems(
+            sharedMockData.tenantId,
+            sharedMockData.userEmail,
+            mockData.SystemsToDeleteIdWithCharacter,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.SystemsToDeleteIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('The requested resource must exist', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'getSystemsById') {
+                const result = await Promise.resolve(mockData.getSystemsByIdDBResponseEmpty);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return SystemsService.deleteSystems(
+            sharedMockData.tenantId,
+            sharedMockData.userEmail,
+            mockData.SystemsToDeleteId,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toEqual('');
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('deletes Systems', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'deleteSystems'){
+                return true;
+            } else if (payload.queryName === 'getSystemsById') {
+                const result = await Promise.resolve(mockData.getSystemsByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await SystemsService
+            .deleteSystems(
+                sharedMockData.tenantId,
+                sharedMockData.userEmail,
+                mockData.SystemsToDeleteId,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.deleteSystemsAPIResponse);
+            });
+    });
+});
