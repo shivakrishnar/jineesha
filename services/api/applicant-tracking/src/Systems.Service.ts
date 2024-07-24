@@ -226,3 +226,72 @@ export async function updateSystems(
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * Delete Systems.
+ */
+export async function deleteSystems(
+    tenantId: string,
+    userEmail: string,
+    id: string
+): Promise<boolean> {
+    console.info('Systems.Service.deleteSystems');
+
+    //
+    // validation
+    //
+    if (Number.isNaN(Number(id))) {
+        throw errorService.getErrorResponse(30).setDeveloperMessage(`${id} is not a valid number`);
+    }
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getSystemsById(tenantId, id);
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+
+        //
+        // deleting data
+        //
+        const query = new ParameterizedQuery('deleteSystems', Queries.deleteSystems);
+        query.setParameter('@ID', id);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        oldValues.name = utilService.sanitizeStringForSql(oldValues.name);
+        oldValues.description = utilService.sanitizeStringForSql(oldValues.description);
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            type: AuditActionType.Delete,
+            companyId: null,
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}
