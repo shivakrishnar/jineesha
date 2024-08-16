@@ -16,4 +16,6 @@ export enum ATSClaims {
     QuestionBankPage = 'QuestionBankPage',
     QuestionBankModal = 'QuestionBankModal',
     ReportsPage = 'ReportsPage',
+    RolesPage = 'RolesPage',
+    RolesModal = 'RolesModal',
 }

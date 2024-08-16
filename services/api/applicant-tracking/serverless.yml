@@ -742,7 +742,25 @@ functions:
             path: /tenants/{tenantId}/systems/{id}
             method: delete
             cors:
-              origin: '*'                            
+              origin: '*'
+
+  getRolesById:
+    handler: src/handlerRoles.getRolesById
+    events:
+        - http:
+            path: /tenants/{tenantId}/roles/{id}
+            method: get
+            cors:
+              origin: '*'
+
+  getRolesByTenant:
+    handler: src/handlerRoles.getRolesByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/roles
+            method: get
+            cors:
+              origin: '*'                                          
 
 resources:
   Resources:

@@ -727,3 +727,11 @@ export interface ISystemsPUT {
 	name: string,
 	description: string
 }
+
+export interface IRolesGET {
+	id: number,
+	name: string,
+	systemId: number,
+	systemName: string,
+	isAdmin: boolean
+}
