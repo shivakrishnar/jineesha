@@ -54,3 +54,33 @@ export const getRolesByTenant = utilService.gatewayEventHandlerV2(async ({ event
 
     return await applicantTrackingService.rolesService.getRolesByTenant(tenantId, event.queryStringParameters, domainName, path);
 });
+
+/**
+ * Create Roles.
+ */
+export const createRoles = utilService.gatewayEventHandlerV2(async ({ securityContext, event, requestBody }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerRoles.createRoles');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdSchema);
+
+    await utilService.checkUserAccessPermissions(
+        securityContext, 
+        event, 
+        atEnums.Systems.ATS, 
+        atEnums.ATSClaims.RolesPage, 
+        atEnums.Operations.ADD, 
+        false
+    );
+
+    const { tenantId } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    await utilService.validateRequestBody(schemas.createRolesValidationSchema, requestBody);
+    utilService.checkAdditionalProperties(schemas.createRolesCheckPropertiesSchema, requestBody, 'Roles');
+
+    const apiResult = await applicantTrackingService.rolesService.createRoles(tenantId, userEmail, requestBody);
+
+    return { statusCode: 201, body: apiResult }
+});

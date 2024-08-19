@@ -735,3 +735,9 @@ export interface IRolesGET {
 	systemName: string,
 	isAdmin: boolean
 }
+
+export interface IRolesPOST {
+	systemId: number,
+	name: string,
+	isAdmin: boolean
+}

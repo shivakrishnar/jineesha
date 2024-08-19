@@ -97,3 +97,34 @@ describe('getRolesById', () => {
             });
     });
 });
+
+describe('createRoles', () => {
+
+    test('creates and returns a Roles', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'createRoles'){
+                const result = await Promise.resolve(mockData.createRolesDBResponse);
+                return result;
+            } else if (payload.queryName === 'getRolesById') {
+                const result = await Promise.resolve(mockData.getRolesByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await RolesService
+            .createRoles(
+                sharedMockData.tenantId,
+                sharedMockData.userEmail,
+                mockData.createRolesRequestBody,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.createRolesAPIResponse);
+            });
+    });
+});

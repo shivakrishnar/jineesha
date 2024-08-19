@@ -996,3 +996,15 @@ export const updateSystemsCheckPropertiesSchema = {
     name: { required: true, type: String },
 	description: { required: true, type: String },
 };
+
+export const createRolesValidationSchema = Yup.object().shape({
+	systemId: Yup.number().required('systemId is required'),
+    name: Yup.string().required('name is required'),
+	isAdmin: Yup.boolean().required('isAdmin is required'),
+});
+
+export const createRolesCheckPropertiesSchema = {
+	systemId: { required: true, type: Yup.number },
+    name: { required: true, type: String },
+	isAdmin: { required: true, type: Boolean },
+};

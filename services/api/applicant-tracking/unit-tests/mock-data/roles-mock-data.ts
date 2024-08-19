@@ -3,7 +3,7 @@ const defaultObj1 = {
     systemId: 1,
     systemName: 'ATS',
 	name: 'Admin ATS',
-	isAdmin: 1
+	isAdmin: true
 };
   
 const defaultObj2 = {
@@ -11,7 +11,7 @@ const defaultObj2 = {
     systemId: 1,
     systemName: 'ATS',
 	name: 'Manager ATS',
-	isAdmin: 0
+	isAdmin: false
 };
   
 //
@@ -77,4 +77,18 @@ export const getRolesByIdDBResponseEmpty = {
 export const getRolesByIdAPIResponse = {
     ...defaultObj1
 };
-  
+
+//
+// createRoles
+//
+export const createRolesRequestBody = {
+	...defaultObj1
+};
+
+export const createRolesDBResponse = {
+	recordset: [{ ID: 1 }],
+};
+
+export const createRolesAPIResponse = {
+	...defaultObj1
+};

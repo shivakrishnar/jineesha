@@ -762,6 +762,15 @@ functions:
             cors:
               origin: '*'                                          
 
+  createRoles:
+    handler: src/handlerRoles.createRoles
+    events:
+        - http:
+            path: /tenants/{tenantId}/roles
+            method: post
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
