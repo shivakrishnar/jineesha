@@ -741,3 +741,10 @@ export interface IRolesPOST {
 	name: string,
 	isAdmin: boolean
 }
+
+export interface IRolesPUT {
+	id: number,
+	systemId: number,
+	name: string,
+	isAdmin: boolean
+}

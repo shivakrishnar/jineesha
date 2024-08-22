@@ -92,3 +92,12 @@ export const createRolesDBResponse = {
 export const createRolesAPIResponse = {
 	...defaultObj1
 };
+
+//
+// updateRoles
+//
+export const updateRolesRequestBody = {
+	...defaultObj1
+};
+
+export const updateRolesAPIResponse = true;
