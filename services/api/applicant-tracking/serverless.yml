@@ -771,6 +771,15 @@ functions:
             cors:
               origin: '*'
 
+  updateRoles:
+    handler: src/handlerRoles.updateRoles
+    events:
+        - http:
+            path: /tenants/{tenantId}/roles
+            method: put
+            cors:
+              origin: '*'              
+
 resources:
   Resources:
     GatewayResponseDefault4XX:

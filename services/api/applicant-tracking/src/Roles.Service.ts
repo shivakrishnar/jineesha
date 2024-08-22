@@ -160,3 +160,71 @@ export async function createRoles(
         throw errorService.getErrorResponse(0);
     }
 }
+
+/**
+ * Update Roles.
+ */
+export async function updateRoles(
+    tenantId: string,
+    userEmail: string,
+    requestBody: atInterfaces.IRolesPUT
+): Promise<Boolean> {
+    console.info('Roles.Service.updateRoles');
+
+    try {
+        //
+        // getting the old values for audit log
+        //
+        const oldValues = await getRolesById(tenantId, requestBody.id.toString());     
+        if (!oldValues) {
+            throw errorService.getErrorResponse(50);
+        }
+
+        //
+        // updating data
+        //
+        const query = new ParameterizedQuery('updateRoles', Queries.updateRoles);
+        query.setParameter('@ID', requestBody.id);
+        query.setParameter('@SystemID', requestBody.systemId);
+        query.setStringParameter('@Name', requestBody.name);
+        query.setBooleanParameter('@IsAdmin', requestBody.isAdmin);
+
+        const payload = { 
+            tenantId, 
+            queryName: query.name, 
+            query: query.value, 
+            queryType: QueryType.Simple 
+        } as DatabaseEvent;
+
+        await utilService.invokeInternalService('queryExecutor', payload, utilService.InvocationType.RequestResponse);
+
+        //
+        // auditing log
+        //
+        const logResult = { ...requestBody };
+        logResult.name = utilService.sanitizeStringForSql(logResult.name);
+        oldValues.name = utilService.sanitizeStringForSql(oldValues.name);
+        delete oldValues.systemName;
+
+        utilService.logToAuditTrail({
+            userEmail,
+            oldFields: oldValues,
+            newFields: logResult,
+            type: AuditActionType.Update,
+            companyId: null,
+            areaOfChange: AuditAreaOfChange.ApplicantTracking,
+            tenantId,
+        } as IAudit);
+
+        //
+        // api response
+        //
+        return true;
+    } catch (error) {
+        if (error instanceof ErrorMessage) {
+            throw error;
+        }
+        console.error(JSON.stringify(error));
+        throw errorService.getErrorResponse(0);
+    }
+}

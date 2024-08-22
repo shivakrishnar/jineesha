@@ -203,6 +203,8 @@ export async function updateSystems(
         const logResult = { ...requestBody };
         logResult.name = utilService.sanitizeStringForSql(logResult.name);
         logResult.description = utilService.sanitizeStringForSql(logResult.description);
+        oldValues.name = utilService.sanitizeStringForSql(oldValues.name);
+        oldValues.description = utilService.sanitizeStringForSql(oldValues.description);
 
         utilService.logToAuditTrail({
             userEmail,

@@ -128,3 +128,33 @@ describe('createRoles', () => {
             });
     });
 });
+
+describe('updateRoles', () => {
+
+    test('updates Roles', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'updateRoles'){
+                return true;
+            } else if (payload.queryName === 'getRolesById') {
+                const result = await Promise.resolve(mockData.getRolesByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await RolesService
+            .updateRoles(
+                sharedMockData.tenantId,
+                sharedMockData.userEmail,
+                mockData.updateRolesRequestBody,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.updateRolesAPIResponse);
+            });
+    });
+});
