@@ -158,3 +158,76 @@ describe('updateRoles', () => {
             });
     });
 });
+
+describe('deleteRoles', () => {
+
+    test('id must be an integer', () => {
+        return RolesService.deleteRoles(
+            sharedMockData.tenantId,
+            sharedMockData.userEmail,
+            mockData.RolesToDeleteIdWithCharacter,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(400);
+                expect(error.code).toEqual(30);
+                expect(error.message).toEqual('The provided request object was not valid for the requested operation.');
+                expect(error.developerMessage).toEqual(`${mockData.RolesToDeleteIdWithCharacter} is not a valid number`);
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('The requested resource must exist', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'getRolesById') {
+                const result = await Promise.resolve(mockData.getRolesByIdDBResponseEmpty);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return RolesService.deleteRoles(
+            sharedMockData.tenantId,
+            sharedMockData.userEmail,
+            mockData.RolesToDeleteId,
+            ).catch((error) => {
+                expect(error).toBeInstanceOf(ErrorMessage);
+                expect(error.statusCode).toEqual(404);
+                expect(error.code).toEqual(50);
+                expect(error.message).toEqual('The requested resource does not exist.');
+                expect(error.developerMessage).toEqual('');
+                expect(error.moreInfo).toEqual('');
+            });
+    });
+
+    test('deletes Roles', async () => {
+        (utilService as any).invokeInternalService = jest.fn(async(transaction, payload) => {
+            if (payload.queryName === 'deleteRoles'){
+                return true;
+            } else if (payload.queryName === 'getRolesById') {
+                const result = await Promise.resolve(mockData.getRolesByIdDBResponse);
+                return result;
+            } else {
+                return {};
+            }
+        });
+
+        (utilService as any).logToAuditTrail = jest.fn(() => {
+            return {};
+        });
+
+        return await RolesService
+            .deleteRoles(
+                sharedMockData.tenantId,
+                sharedMockData.userEmail,
+                mockData.RolesToDeleteId,
+            )
+            .then((result) => {
+                expect(result).toEqual(mockData.deleteRolesAPIResponse);
+            });
+    });
+});

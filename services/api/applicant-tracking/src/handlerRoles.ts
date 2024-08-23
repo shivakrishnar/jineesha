@@ -114,3 +114,30 @@ export const updateRoles = utilService.gatewayEventHandlerV2(async ({ securityCo
 
     return { statusCode: 200, body: apiResult }
 });
+
+/**
+ * Delete Roles.
+ */
+export const deleteRoles = utilService.gatewayEventHandlerV2(async ({ securityContext, event }: IGatewayEventInput) => {
+    console.info('ApplicantTracking.handlerRoles.deleteRoles');
+
+    utilService.normalizeHeaders(event);
+    utilService.validateAndThrow(event.headers, schemas.authorizationHeaderSchema);
+    utilService.validateAndThrow(event.pathParameters, schemas.pathParametersForTenantIdAndIdSchema);
+
+    await utilService.checkUserAccessPermissions(
+        securityContext, 
+        event, 
+        atEnums.Systems.ATS, 
+        atEnums.ATSClaims.RolesPage, 
+        atEnums.Operations.DELETE, 
+        false
+    );
+
+    const { tenantId, id } = event.pathParameters;
+    const userEmail = securityContext.principal.email;
+
+    const apiResult = await applicantTrackingService.rolesService.deleteRoles(tenantId, userEmail, id);
+
+    return { statusCode: 200, body: apiResult }
+});

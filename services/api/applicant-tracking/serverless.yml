@@ -778,7 +778,16 @@ functions:
             path: /tenants/{tenantId}/roles
             method: put
             cors:
-              origin: '*'              
+              origin: '*'
+
+  deleteRoles:
+    handler: src/handlerRoles.deleteRoles
+    events:
+        - http:
+            path: /tenants/{tenantId}/roles/{id}
+            method: delete
+            cors:
+              origin: '*'                            
 
 resources:
   Resources:
