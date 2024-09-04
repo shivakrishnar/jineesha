@@ -101,3 +101,11 @@ export const updateRolesRequestBody = {
 };
 
 export const updateRolesAPIResponse = true;
+
+//
+// deleteRoles
+//
+export const RolesToDeleteId = '1';
+export const RolesToDeleteAnotherId = '4';
+export const RolesToDeleteIdWithCharacter = '1abc';
+export const deleteRolesAPIResponse = true;
