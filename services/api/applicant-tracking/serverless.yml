@@ -789,6 +789,24 @@ functions:
             cors:
               origin: '*'                            
 
+  getClaimsById:
+    handler: src/handlerClaims.getClaimsById
+    events:
+        - http:
+            path: /tenants/{tenantId}/claims/{id}
+            method: get
+            cors:
+              origin: '*'
+
+  getClaimsByTenant:
+    handler: src/handlerClaims.getClaimsByTenant
+    events:
+        - http:
+            path: /tenants/{tenantId}/claims
+            method: get
+            cors:
+              origin: '*'
+
 resources:
   Resources:
     GatewayResponseDefault4XX:
