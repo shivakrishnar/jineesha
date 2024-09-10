@@ -18,4 +18,6 @@ export enum ATSClaims {
     ReportsPage = 'ReportsPage',
     RolesPage = 'RolesPage',
     RolesModal = 'RolesModal',
+    ClaimsPage = 'ClaimsPage',
+    ClaimsModal = 'ClaimsModal',
 }

@@ -401,4 +401,7 @@ export const Queries = {
     createRoles: fs.readFileSync(path.join(basePath, 'applicant-tracking/security-user-access/createRoles.sql')).toString(),
     updateRoles: fs.readFileSync(path.join(basePath, 'applicant-tracking/security-user-access/updateRoles.sql')).toString(),
     deleteRoles: fs.readFileSync(path.join(basePath, 'applicant-tracking/security-user-access/deleteRoles.sql')).toString(),
+
+    getClaimsById: fs.readFileSync(path.join(basePath, 'applicant-tracking/security-user-access/getClaimsById.sql')).toString(),
+    getClaimsByTenant: fs.readFileSync(path.join(basePath, 'applicant-tracking/security-user-access/getClaimsByTenant.sql')).toString(),
 };

@@ -748,3 +748,11 @@ export interface IRolesPUT {
 	name: string,
 	isAdmin: boolean
 }
+
+export interface IClaimsGET {
+	id: number,
+	systemId: number,
+	systemName: string,
+	value: string,
+	description: string
+}

@@ -14,6 +14,7 @@ import * as ApplicationStatusHistoryService from './ApplicationStatusHistory.Ser
 import * as QuestionBankGroupService from './QuestionBankGroup.Service';
 import * as SystemsService from './Systems.Service';
 import * as RolesService from './Roles.Service';
+import * as ClaimsService from './Claims.Service';
 
 const questionTypeService = QuestionTypeService;
 const questionBankService = QuestionBankService;
@@ -31,6 +32,7 @@ const applicationStatusHistoryService = ApplicationStatusHistoryService;
 const questionBankGroupService = QuestionBankGroupService;
 const systemsService = SystemsService;
 const rolesService = RolesService;
+const claimsService = ClaimsService;
 
 export { 
     questionTypeService,
@@ -49,4 +51,5 @@ export {
     questionBankGroupService,
     systemsService,
     rolesService,
+    claimsService,
 };
