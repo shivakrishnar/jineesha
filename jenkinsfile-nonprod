@@ -1,7 +1,0 @@
-library 'common-lib@main'
-
-dynamic {
-    project = "asure.hr.services"
-    serviceAccount = "jenkins-nonprod"
-    modules = [ "NODE" ]
-}

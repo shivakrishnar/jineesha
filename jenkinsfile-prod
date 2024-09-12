@@ -1,8 +1,0 @@
-library 'common-lib@main'
-
-dynamic {
-    project = "asure.hr.services"
-    serviceAccount = "jenkins-prod-hr"
-    modules = [ "NODE" ]
-    stages = [ production: "production"]
-}
