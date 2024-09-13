@@ -21,9 +21,6 @@ dynamic {
         deploy: [
             name: "deploy.sh",
             params: [ "{accountId}", "{environment}" ]
-        ],
-        postDeploy: [
-            name: "postDeploy.sh"
         ]
     ]
 }
