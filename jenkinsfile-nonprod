@@ -10,7 +10,7 @@ dynamic {
         dir: "test/customscripts",
         accountIds: [ development: "959371771112" ],
         build: [
-            name: "build.sh",
+            name: "services/build.sh",
             container: "snyk",
             params: [ "SomeValue", "{branch}" ]
         ],
