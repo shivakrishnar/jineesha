@@ -1,0 +1,26 @@
+library "common-lib@main"
+
+dynamic {
+    project = "common-jenkins-lib/customscript"
+    serviceAccount = "jenkins-nonprod"
+    modules = [ "CUSTOMSCRIPT" ]
+    stages = [ 
+        development: "development",
+        staging: "staging",
+        production: "production"
+    ]
+    scriptConfig = [
+        dir: "test/customscripts",  // Updated to the specific path where the HR Service Lambdas are located
+        accountIds: [ 
+            development: "317299412255", // Development AWS Account ID
+        ],
+        build: [
+            name: "build.sh",
+           // params: [ "{branch}" ]
+        ],
+        deploy: [
+            name: "deploy.sh",
+            params: [ "{accountId}", "{environment}" ]
+        ]
+    ]
+}
