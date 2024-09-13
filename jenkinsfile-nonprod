@@ -10,7 +10,7 @@ dynamic {
         production: "production"
     ]
     scriptConfig = [
-        dir: "services/api/direct-deposits/serverless.yml",  // Updated to the specific path where the HR Service Lambdas are located
+        dir: "test/customscripts",  // Updated to the specific path where the HR Service Lambdas are located
         accountIds: [ 
             development: "317299412255", // Development AWS Account ID
         ],
