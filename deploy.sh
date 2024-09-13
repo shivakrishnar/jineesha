@@ -1,5 +1,3 @@
-!/bin/bash
-
 # Define the IAM Role ARN to assume
 ROLE_ARN="arn:aws:iam::317299412255:role/JenkinsAccess"
 
