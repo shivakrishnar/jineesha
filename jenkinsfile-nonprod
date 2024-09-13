@@ -1,7 +1,7 @@
 library "common-lib@main"
 
 dynamic {
-    project = "asure.hr.services"
+    project = "common-jenkins-lib/customscript"
     serviceAccount = "jenkins-nonprod"
     modules = [ "CUSTOMSCRIPT" ]
     stages = [ 
