@@ -7,7 +7,6 @@ dynamic {
     stages = [ 
         development: "development",
         staging: "staging",
-        production: "production"
     ]
     scriptConfig = [
         dir: "services",  // Updated to the specific path where the HR Service Lambdas are located
