@@ -1,28 +1,26 @@
 library "common-lib@main"
 
-echo "Running Dynamic Custom Script Pipeline"
 dynamic {
     project = "common-jenkins-lib/customscript"
     serviceAccount = "jenkins-nonprod"
     modules = [ "CUSTOMSCRIPT" ]
-    stages = [ development: "development" ]
+    stages = [ 
+        development: "development",
+        staging: "staging",
+        production: "production"
+    ]
     scriptConfig = [
-        dir: "test/customscripts",
-        accountIds: [ development: "959371771112" ],
-        build: [
-            name: "services/build.sh",
-            container: "snyk",
-            params: [ "SomeValue", "{branch}" ]
+        dir: "services",  // Updated to the specific path where the HR Service Lambdas are located
+        accountIds: [ 
+            development: "317299412255", // Development AWS Account ID
         ],
-        test: [
-            name: "test.sh" 
+        build: [
+            name: "build.sh",
+           // params: [ "{branch}" ]
         ],
         deploy: [
             name: "deploy.sh",
-            params: [ "{accountId}", "{environment}", "{branch}" ]
-        ],
-        postDeploy: [
-            name: "postDeploy.sh"
+            params: [ "{accountId}", "{environment}" ]
         ]
     ]
 }
