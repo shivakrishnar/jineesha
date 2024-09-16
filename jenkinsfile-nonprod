@@ -14,7 +14,7 @@ dynamic {
             development: "317299412255", // Development AWS Account ID
         ],
         build: [
-            name: "build.sh",
+            name: "build.sh"
            // params: [ "{branch}" ]
         ],
         deploy: [

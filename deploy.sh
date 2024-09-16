@@ -5,9 +5,10 @@ ROLE_ARN="arn:aws:iam::317299412255:role/JenkinsAccess"
 ASSUMED_ROLE=$(aws sts assume-role --role-arn "$ROLE_ARN" --role-session-name "jenkins-deploy")
 
 # Extract the temporary credentials
-AWS_ACCESS_KEY_ID=$(echo $ASSUMED_ROLE | jq -r '.Credentials.AccessKeyId')
-AWS_SECRET_ACCESS_KEY=$(echo $ASSUMED_ROLE | jq -r '.Credentials.SecretAccessKey')
-AWS_SESSION_TOKEN=$(echo $ASSUMED_ROLE | jq -r '.Credentials.SessionToken')
+
+AWS_ACCESS_KEY_ID=$(echo $ASSUMED_ROLE | grep -oP '(?<="AccessKeyId": ")[^"]*')
+AWS_SECRET_ACCESS_KEY=$(echo $ASSUMED_ROLE | grep -oP '(?<="SecretAccessKey": ")[^"]*')
+AWS_SESSION_TOKEN=$(echo $ASSUMED_ROLE | grep -oP '(?<="SessionToken": ")[^"]*')
 
 # Export the credentials for AWS CLI
 export AWS_ACCESS_KEY_ID
@@ -18,7 +19,7 @@ export AWS_SESSION_TOKEN
 aws sts get-caller-identity
 
 # Proceed with deployment
-serverless deploy --stage development --aws-profile $AWS_PROFILE
+serverless deploy --stage development
 
 # Clean up environment variables
 unset AWS_ACCESS_KEY_ID
