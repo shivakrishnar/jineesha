@@ -1,0 +1,168 @@
+// write a jenkins pipeline with snyk and sonarqube
+pipeline {
+    agent any
+    environment {
+        SONARQUBE_SCANNER_HOME = '/usr/local/sonar-scanner-4.6.2.2472-linux'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git '
+                    url: '
+                    credentialsId: 'github'
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Snyk') {
+            steps {
+                sh 'npx snyk test --all-projects'
+            }
+        }
+        stage('SonarQube analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh "${SONARQUBE_SCANNER_HOME}/bin/sonar-scanner"
+                }
+            }
+        }
+    }
+}
+```
+
+### 3. Create a Jenkins job
+- Go to Jenkins dashboard
+- Click on New Item
+- Enter the item name as `snyk-sonarqube`
+- Select Pipeline and click OK
+- In the Pipeline section, select Pipeline script from SCM
+- In the SCM section, select Git
+- Enter the Repository URL
+- Click Save
+
+### 4. Run the Jenkins job
+- Click on Build Now
+- The job will run and you can see the output in the console
+
+### 5. Check the SonarQube dashboard
+- Go to SonarQube dashboard
+- You can see the project and the analysis report
+
+### 6. Check the Snyk dashboard
+- Go to Snyk dashboard
+- You can see the project and the vulnerabilities
+
+### 7. Update the Jenkinsfile
+- Update the Jenkinsfile with the following code
+
+```groovy
+pipeline {
+    agent any
+    environment {
+        SONARQUBE_SCANNER_HOME = '/usr/local/sonar-scanner-4.6.2.2472-linux'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git '
+                    url: '
+                    credentialsId: 'github'
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Snyk') {
+            steps {
+                sh 'npx snyk test --all-projects'
+            }
+        }
+        stage('SonarQube analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh "${SONARQUBE_SCANNER_HOME}/bin/sonar-scanner"
+                }
+            }
+        }
+        stage('Snyk monitor') {
+            steps {
+                sh 'npx snyk monitor --all-projects'
+            }
+        }
+    }
+}
+```
+
+### 8. Update the Jenkins job
+- Go to Jenkins dashboard
+- Click on snyk-sonarqube
+- Click on Configure
+- Update the Pipeline script
+- Click Save
+
+### 9. Run the Jenkins job
+- Click on Build Now
+- The job will run and you can see the output in the console
+
+### 10. Check the Snyk dashboard
+- Go to Snyk dashboard
+- You can see the project and the vulnerabilities
+
+### 11. Check the Snyk monitor dashboard
+- Go to Snyk dashboard
+- You can see the project and the vulnerabilities
+
+### 12. Update the Jenkinsfile
+- Update the Jenkinsfile with the following code
+
+```groovy
+pipeline {
+    agent any
+    environment {
+        SONARQUBE_SCANNER_HOME = '/usr/local/sonar-scanner-4.6.2.2472-linux'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git '
+                    url: '
+                    credentialsId: 'github'
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Snyk') {
+            steps {
+                sh 'npx snyk test --all-projects'
+            }
+        }
+        stage('SonarQube analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh "${SONARQUBE_SCANNER_HOME}/bin/sonar-scanner"
+                }
+            }
+        }
+        stage('Snyk monitor') {
+            steps {
+                sh 'npx snyk monitor --all-projects'
+            }
+        }
+        stage('Snyk test') {
+            steps {
+                sh 'npx snyk test --all-projects'
+            }
+        }
+    }
+}

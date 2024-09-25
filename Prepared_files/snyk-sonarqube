@@ -1,0 +1,44 @@
+```groovy
+pipeline {
+    agent any
+    environment {
+        SONARQUBE_SCANNER_HOME = '/usr/local/sonar-scanner-4.6.2.2472-linux'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git '
+                    url: '
+                    credentialsId: 'github'
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Snyk') {
+            steps {
+                sh 'npx snyk test --all-projects'
+            }
+        }
+        stage('SonarQube analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh "${SONARQUBE_SCANNER_HOME}/bin/sonar-scanner"
+                }
+            }
+        }
+        stage('Snyk monitor') {
+            steps {
+                sh 'npx snyk monitor --all-projects'
+            }
+        }
+        stage('Snyk test') {
+            steps {
+                sh 'npx snyk test --all-projects'
+            }
+        }
+    }
+}
